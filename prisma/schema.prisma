@@ -1,0 +1,148 @@
+// KOKPIT APP - Prisma Semasi
+//
+// Mimari not: Bu sema iki katmandan olusur:
+//   1) CEKIRDEK (Core)   - tum modullerin ortak kullandigi altyapi
+//                          (kullanicilar, rolleri; genisletilebilir secenek listeleri)
+//   2) MODUL             - her modul kendi tablolarini bu dosyaya ekler, ama
+//                          mumkun oldugunca diger modullerin ic yapisina dogrudan
+//                          FK ile baglanmaz (bkz. ARCHITECTURE.md - "gevsek baglilik").
+//
+// Yeni bir modul eklerken:
+//   - Yeni tablolarini bu dosyanin sonuna, ayri bir "MODUL: <isim>" blogu olarak ekle.
+//   - "durum", "tip" gibi kategori alanlari icin SecenekListesi/SecenekDegeri
+//     desenini kullan; yeni bir enum TANIMLAMA. Yeni bir deger eklemek bir veri
+//     satiri eklemek olsun, semayi degistirmek olmasin.
+//   - Baska bir modulun kaydina referans gerekiyorsa (orn. "ilgili dosya"),
+//     once o modul yoksa serbest metin/opsiyonel id alani olarak birak (bkz.
+//     MusteriParaTrafigi.ilgiliDosyaId), modul eklenince FK'ya cevir.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// CEKIRDEK (CORE)
+// ============================================================
+
+enum KullaniciRolu {
+  YONETICI // sistem yonetici - tam yetki
+  ORTAK // buro ortagi
+  SORUMLU_AVUKAT // dosya/musteri sorumlusu avukat
+  PERSONEL // diger buro personeli
+
+  @@map("kullanici_rolu")
+}
+
+model Kullanici {
+  id               String        @id @default(cuid())
+  adSoyad          String
+  eposta           String        @unique
+  sifreHash        String
+  rol              KullaniciRolu @default(PERSONEL)
+  aktifMi          Boolean       @default(true)
+  olusturmaTarihi  DateTime      @default(now())
+  guncellemeTarihi DateTime      @updatedAt
+
+  sorumluOlduguMusteriler Musteri[] @relation("MusteriSorumluAvukat")
+
+  @@map("kullanicilar")
+}
+
+// Genisletilebilir liste/etiket altyapisi.
+// "durum", "tip", "kaynak" gibi kategori alanlari icin kullanilir; boylece
+// yeni bir deger eklemek (orn. "kismi tahsilat") semayi bozmadan, sadece
+// yeni bir SecenekDegeri satiri eklemekle yapilir.
+model SecenekListesi {
+  id       String  @id @default(cuid())
+  anahtar  String  @unique // orn. "musteri_tipi", "musteri_durumu", "para_trafigi_tipi"
+  ad       String // insan-okunur ad, orn. "Musteri Tipi"
+  aciklama String?
+
+  degerler SecenekDegeri[]
+
+  @@map("secenek_listeleri")
+}
+
+model SecenekDegeri {
+  id              String         @id @default(cuid())
+  listeId         String
+  liste           SecenekListesi @relation(fields: [listeId], references: [id], onDelete: Cascade)
+  kod             String // makine-okunur anahtar, orn. "gercek_kisi"
+  etiket          String // ekranda gosterilen ad, orn. "Gerçek Kişi"
+  siraNo          Int            @default(0)
+  aktifMi         Boolean        @default(true)
+  olusturmaTarihi DateTime       @default(now())
+
+  musterilerTip     Musteri[]            @relation("MusteriTipi")
+  musterilerDurum   Musteri[]            @relation("MusteriDurumu")
+  paraTrafigiTip    MusteriParaTrafigi[] @relation("ParaTrafigiTipi")
+  paraTrafigiDurum  MusteriParaTrafigi[] @relation("ParaTrafigiDurumu")
+  paraTrafigiKaynak MusteriParaTrafigi[] @relation("ParaTrafigiKaynagi")
+
+  @@unique([listeId, kod])
+  @@map("secenek_degerleri")
+}
+
+// ============================================================
+// MODUL: Musteri Veritabani (Müvekkil İlişkileri)
+// ============================================================
+
+// Musteri Fihristi
+model Musteri {
+  id               String        @id @default(cuid())
+  adSoyadUnvan     String
+  tipId            String
+  tip              SecenekDegeri @relation("MusteriTipi", fields: [tipId], references: [id])
+  telefon          String?
+  eposta           String?
+  adres            String?
+  durumId          String
+  durum            SecenekDegeri @relation("MusteriDurumu", fields: [durumId], references: [id])
+  sorumluAvukatId  String?
+  sorumluAvukat    Kullanici?    @relation("MusteriSorumluAvukat", fields: [sorumluAvukatId], references: [id])
+  notlar           String?
+  olusturmaTarihi  DateTime      @default(now())
+  guncellemeTarihi DateTime      @updatedAt
+
+  paraTrafigi MusteriParaTrafigi[]
+
+  @@index([durumId])
+  @@index([sorumluAvukatId])
+  @@map("musteriler")
+}
+
+// Musteri Para Trafigi (Musteri Fihristi'ne bagli, 1 musteri -> cok kayit)
+// Ileride Finans/Muhasebe modulune dogrudan baglanacak sekilde tasarlandi.
+model MusteriParaTrafigi {
+  id        String  @id @default(cuid())
+  musteriId String
+  musteri   Musteri @relation(fields: [musteriId], references: [id], onDelete: Cascade)
+
+  tarih    DateTime
+  tipId    String
+  tip      SecenekDegeri @relation("ParaTrafigiTipi", fields: [tipId], references: [id])
+  tutar    Decimal       @db.Decimal(14, 2)
+  aciklama String?
+
+  // Dava Dosyalari modulune referans (o modul henuz yok; ileride FK'ya
+  // cevrilecek serbest/opsiyonel alan - bkz. semanin en ustundeki not).
+  ilgiliDosyaId String?
+
+  durumId String
+  durum   SecenekDegeri @relation("ParaTrafigiDurumu", fields: [durumId], references: [id])
+
+  // manuel / uyap_import / objekt - ileride toplu import icin
+  kaynakId String
+  kaynak   SecenekDegeri @relation("ParaTrafigiKaynagi", fields: [kaynakId], references: [id])
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([musteriId])
+  @@index([durumId])
+  @@map("musteri_para_trafigi")
+}
