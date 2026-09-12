@@ -27,6 +27,20 @@ html {
   color-scheme: dark;
 }
 
+/* Ana ekrana eklenmis (standalone) PWA'da Safari'nin kendi adres cubugu hic
+   gosterilmez/gizlenmez - yani onceki h-svh fix'inin onlemeye calistigi
+   "adres cubugu kayboldugunda tasma" riski burada zaten yok. Ama svh, adres
+   cubugu TAMAMEN aciksmis gibi en kucuk yuksekligi kullandigindan, standalone
+   modda gercekte kullanilabilir olan alttaki bosluk (ekranin geri kalani)
+   doldurulmadan bos kaliyordu. Toolbar'i olmayan bu modda dvh guvenlidir ve
+   ekrani tam dolduruk. */
+@media (display-mode: standalone) {
+  html,
+  body {
+    height: 100dvh;
+  }
+}
+
 body {
   min-height: 100%;
   color: var(--foreground);
