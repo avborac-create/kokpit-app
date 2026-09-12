@@ -113,6 +113,23 @@ büyüyen iş kategorileriyle aynı sınıfta değildir.
   şimdilik eklenmedi; ilk ihtiyaç ortaya çıktığında `kaynakId` ayrımı
   sayesinde mevcut veriye karışmadan eklenebilir.
 
+## İleride Düşünülecek: Masraf Belgesi Ekleri (Henüz Yapılmadı)
+
+Müvekkilden masraf yansıtma (`para_trafigi_tipi = masraf_yansitma`) talep
+edilirken fiş/fatura/makbuz gibi kanıtlayıcı belgelerin (PDF, JPEG) sisteme
+eklenmesi ihtiyacı doğabilir. Konuşulan yaklaşım:
+
+- Belgeler veritabanına DEĞİL, ayrı bir dosya deposuna (ör. Vercel Blob,
+  Cloudflare R2) yüklenir; `MusteriParaTrafigi` kaydında sadece dosya
+  referansı/metadata tutulur.
+- Bu belgeler **geçici** olabilir: örn. yükleme tarihinden **3 ay sonra
+  otomatik silinir** - amaç, çıktı (müvekkile gönderilecek rapor/talep)
+  üretildikten sonra gereksiz yer kaplamamak.
+- Bu, ayrı bir modül olarak (mevcut Müvekkil modülüne dokunmadan) eklenebilir;
+  "kırmızı çizgi" ilkesiyle uyumlu.
+
+Bu henüz geliştirilmedi; ileride bir modül olarak ele alınacak.
+
 ## PWA
 
 - `public/manifest.json` + `public/sw.js`: kullanıcılar Chrome/Safari'nin
