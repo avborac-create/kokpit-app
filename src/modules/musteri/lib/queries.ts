@@ -28,7 +28,7 @@ export async function musteriGetir(id: string) {
       durum: true,
       sorumluAvukat: true,
       paraTrafigi: {
-        include: { tip: true, durum: true, kaynak: true },
+        include: { tip: true, durum: true, kaynak: true, dosya: true },
         orderBy: { tarih: "desc" },
       },
     },

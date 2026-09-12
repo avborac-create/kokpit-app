@@ -1,16 +1,20 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
+import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
 
 export async function ParaTrafigiFormu({
   action,
+  musteriId,
 }: {
   action: (formData: FormData) => void;
+  musteriId: string;
 }) {
-  const [tipler, durumlar, kaynaklar] = await Promise.all([
+  const [tipler, durumlar, kaynaklar, dosyalar] = await Promise.all([
     secenekleriGetir("para_trafigi_tipi"),
     secenekleriGetir("para_trafigi_durumu"),
     secenekleriGetir("kaynak"),
+    musterininDosyalari(musteriId),
   ]);
 
   const bugun = new Date().toISOString().slice(0, 10);
@@ -65,8 +69,20 @@ export async function ParaTrafigiFormu({
         </Secim>
       </Alan>
       <Alan>
-        <Etiket htmlFor="ilgiliDosyaId">İlgili Dosya (opsiyonel)</Etiket>
-        <Girdi id="ilgiliDosyaId" name="ilgiliDosyaId" placeholder="UYAP esas no vb." />
+        <Etiket htmlFor="dosyaId">Dava Dosyası (opsiyonel)</Etiket>
+        <Secim id="dosyaId" name="dosyaId" defaultValue="">
+          <option value="">Yok / genel kayıt</option>
+          {dosyalar.map((dosya) => (
+            <option key={dosya.id} value={dosya.id}>
+              {dosya.dosyaNo ? `${dosya.dosyaNo} — ` : ""}
+              {dosya.konu}
+            </option>
+          ))}
+        </Secim>
+      </Alan>
+      <Alan>
+        <Etiket htmlFor="ilgiliDosyaId">Not (opsiyonel)</Etiket>
+        <Girdi id="ilgiliDosyaId" name="ilgiliDosyaId" placeholder="UYAP esas no, serbest not vb." />
       </Alan>
       <div className="col-span-2 md:col-span-4">
         <Alan>

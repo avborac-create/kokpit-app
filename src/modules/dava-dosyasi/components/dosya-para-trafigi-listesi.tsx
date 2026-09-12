@@ -1,23 +1,16 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
-import { ParaTrafigiSilmeButonu } from "@/modules/musteri/components/para-trafigi-silme-butonu";
 
 type Kayit = Prisma.MusteriParaTrafigiGetPayload<{
-  include: { tip: true; durum: true; kaynak: true; dosya: true };
+  include: { tip: true; durum: true; kaynak: true; musteri: true };
 }>;
 
 const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
 
-export function ParaTrafigiListesi({
-  kayitlar,
-  silmeYetkisiVar,
-}: {
-  kayitlar: Kayit[];
-  silmeYetkisiVar: boolean;
-}) {
+export function DosyaParaTrafigiListesi({ kayitlar }: { kayitlar: Kayit[] }) {
   if (kayitlar.length === 0) {
-    return <p className="text-sm text-white/40">Henüz para trafiği kaydı yok.</p>;
+    return <p className="text-sm text-white/40">Bu dosyaya bağlı para trafiği kaydı yok.</p>;
   }
 
   return (
@@ -26,19 +19,24 @@ export function ParaTrafigiListesi({
         <thead className="text-white/50">
           <tr>
             <th className="px-4 py-3 font-medium">Tarih</th>
+            <th className="px-4 py-3 font-medium">Müvekkil</th>
             <th className="px-4 py-3 font-medium">Tip</th>
             <th className="px-4 py-3 font-medium">Tutar</th>
             <th className="px-4 py-3 font-medium">Durum</th>
-            <th className="px-4 py-3 font-medium">Kaynak</th>
-            <th className="px-4 py-3 font-medium">Dosya</th>
-            <th className="px-4 py-3 font-medium">Açıklama</th>
-            {silmeYetkisiVar && <th className="px-4 py-3" />}
           </tr>
         </thead>
         <tbody>
           {kayitlar.map((kayit) => (
             <tr key={kayit.id} className="border-t border-white/[0.06]">
               <td className="px-4 py-3 text-white/60">{tarihFormatlayici.format(kayit.tarih)}</td>
+              <td className="px-4 py-3">
+                <Link
+                  href={`/kokpit/musteriler/${kayit.musteriId}`}
+                  className="text-white hover:text-[#6db8ff] hover:underline"
+                >
+                  {kayit.musteri.adSoyadUnvan}
+                </Link>
+              </td>
               <td className="px-4 py-3 text-white/85">{kayit.tip.etiket}</td>
               <td className="px-4 py-3 font-medium text-white">
                 {paraFormatlayici.format(Number(kayit.tutar))}
@@ -48,25 +46,6 @@ export function ParaTrafigiListesi({
                   {kayit.durum.etiket}
                 </span>
               </td>
-              <td className="px-4 py-3 text-white/60">{kayit.kaynak.etiket}</td>
-              <td className="px-4 py-3 text-white/60">
-                {kayit.dosya ? (
-                  <Link
-                    href={`/kokpit/dava-dosyalari/${kayit.dosya.id}`}
-                    className="hover:text-[#6db8ff] hover:underline"
-                  >
-                    {kayit.dosya.dosyaNo ?? kayit.dosya.konu}
-                  </Link>
-                ) : (
-                  "—"
-                )}
-              </td>
-              <td className="px-4 py-3 text-white/60">{kayit.aciklama ?? "—"}</td>
-              {silmeYetkisiVar && (
-                <td className="px-4 py-3 text-right">
-                  <ParaTrafigiSilmeButonu musteriId={kayit.musteriId} kayitId={kayit.id} />
-                </td>
-              )}
             </tr>
           ))}
         </tbody>

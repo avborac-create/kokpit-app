@@ -5,6 +5,7 @@ import { paraTrafigiKaydiEkle } from "@/modules/musteri/lib/actions";
 import { ParaTrafigiFormu } from "@/modules/musteri/components/para-trafigi-formu";
 import { ParaTrafigiListesi } from "@/modules/musteri/components/para-trafigi-listesi";
 import { MusteriSilmeButonu } from "@/modules/musteri/components/musteri-silme-butonu";
+import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { Dugme } from "@/core/ui/button";
@@ -15,7 +16,11 @@ export default async function MusteriDetaySayfasi({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [musteri, kullanici] = await Promise.all([musteriGetir(id), mevcutKullanici()]);
+  const [musteri, kullanici, dosyalar] = await Promise.all([
+    musteriGetir(id),
+    mevcutKullanici(),
+    musterininDosyalari(id),
+  ]);
   if (!musteri) notFound();
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
@@ -65,9 +70,53 @@ export default async function MusteriDetaySayfasi({
         )}
       </div>
 
+      <div className="mb-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-tight text-white">Dava Dosyaları</h2>
+          <Link href={`/kokpit/dava-dosyalari/yeni?musteriId=${id}`}>
+            <Dugme varyant="ikincil">+ Yeni Dosya</Dugme>
+          </Link>
+        </div>
+        {dosyalar.length === 0 ? (
+          <p className="text-sm text-white/40">Bu müvekkile bağlı dava dosyası yok.</p>
+        ) : (
+          <div className="glass overflow-x-auto rounded-2xl">
+            <table className="w-full text-left text-sm">
+              <thead className="text-white/50">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Dosya No</th>
+                  <th className="px-4 py-3 font-medium">Konu</th>
+                  <th className="px-4 py-3 font-medium">Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dosyalar.map((dosya) => (
+                  <tr key={dosya.id} className="border-t border-white/[0.06] hover:bg-white/[0.04]">
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/kokpit/dava-dosyalari/${dosya.id}`}
+                        className="font-medium text-white hover:text-[#6db8ff] hover:underline"
+                      >
+                        {dosya.dosyaNo ?? "—"}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
+                        {dosya.durum.etiket}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Para Trafiği</h2>
       <div className="mb-4">
-        <ParaTrafigiFormu action={paraTrafigiKaydiEkle.bind(null, id)} />
+        <ParaTrafigiFormu action={paraTrafigiKaydiEkle.bind(null, id)} musteriId={id} />
       </div>
       <ParaTrafigiListesi kayitlar={musteri.paraTrafigi} silmeYetkisiVar={silmeYetkisiVar} />
     </div>

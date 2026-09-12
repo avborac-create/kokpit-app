@@ -97,6 +97,7 @@ export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData
       tutar,
       aciklama: metinYaAlNull(formData, "aciklama"),
       ilgiliDosyaId: metinYaAlNull(formData, "ilgiliDosyaId"),
+      dosyaId: metinYaAlNull(formData, "dosyaId"),
     },
   });
 

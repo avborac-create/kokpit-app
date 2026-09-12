@@ -51,7 +51,8 @@ model Kullanici {
   olusturmaTarihi  DateTime      @default(now())
   guncellemeTarihi DateTime      @updatedAt
 
-  sorumluOlduguMusteriler Musteri[] @relation("MusteriSorumluAvukat")
+  sorumluOlduguMusteriler Musteri[]     @relation("MusteriSorumluAvukat")
+  sorumluOlduguDosyalar   DavaDosyasi[] @relation("DavaDosyasiSorumluAvukat")
 
   @@map("kullanicilar")
 }
@@ -86,6 +87,7 @@ model SecenekDegeri {
   paraTrafigiTip    MusteriParaTrafigi[] @relation("ParaTrafigiTipi")
   paraTrafigiDurum  MusteriParaTrafigi[] @relation("ParaTrafigiDurumu")
   paraTrafigiKaynak MusteriParaTrafigi[] @relation("ParaTrafigiKaynagi")
+  davaDosyalariDurum DavaDosyasi[]       @relation("DavaDosyasiDurumu")
 
   @@unique([listeId, kod])
   @@map("secenek_degerleri")
@@ -113,6 +115,7 @@ model Musteri {
   guncellemeTarihi DateTime      @updatedAt
 
   paraTrafigi MusteriParaTrafigi[]
+  dosyalar    DosyaMuvekkili[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -132,9 +135,15 @@ model MusteriParaTrafigi {
   tutar    Decimal       @db.Decimal(14, 2)
   aciklama String?
 
-  // Dava Dosyalari modulune referans (o modul henuz yok; ileride FK'ya
-  // cevrilecek serbest/opsiyonel alan - bkz. semanin en ustundeki not).
+  // Serbest not/eski kayitlar icin (orn. henuz bir DavaDosyasi acilmadan
+  // once UYAP esas no notu dusmek). Yeni kayitlarda asagidaki dosyaId
+  // (gercek FK) tercih edilir; bu alan geriye donuk uyumluluk icin durur.
   ilgiliDosyaId String?
+
+  // Dava Dosyalari modulune referans - hangi dosyaya ait oldugunu belirtir
+  // (opsiyonel: bir musteriye ait genel/dosya-disi kayitlar da olabilir).
+  dosyaId String?
+  dosya   DavaDosyasi? @relation(fields: [dosyaId], references: [id], onDelete: SetNull)
 
   durumId String
   durum   SecenekDegeri @relation("ParaTrafigiDurumu", fields: [durumId], references: [id])
@@ -147,5 +156,50 @@ model MusteriParaTrafigi {
 
   @@index([musteriId])
   @@index([durumId])
+  @@index([dosyaId])
   @@map("musteri_para_trafigi")
+}
+
+// ============================================================
+// MODUL: Dava Dosyalari
+// ============================================================
+
+// Bir dava dosyasina birden fazla musteri baglanabilir (ortak davacilar,
+// veraset vb.); bu yuzden Musteri <-> DavaDosyasi iliskisi DosyaMuvekkili
+// ara tablosu uzerinden coka-cok kurulur (bkz. semanin en ustundeki not).
+model DavaDosyasi {
+  id               String        @id @default(cuid())
+  dosyaNo          String?
+  konu             String
+  durumId          String
+  durum            SecenekDegeri @relation("DavaDosyasiDurumu", fields: [durumId], references: [id])
+  sorumluAvukatId  String?
+  sorumluAvukat    Kullanici?    @relation("DavaDosyasiSorumluAvukat", fields: [sorumluAvukatId], references: [id])
+  acilisTarihi     DateTime
+  kapanisTarihi    DateTime?
+  aciklama         String?
+  olusturmaTarihi  DateTime      @default(now())
+  guncellemeTarihi DateTime      @updatedAt
+
+  muvekkiller DosyaMuvekkili[]
+  paraTrafigi MusteriParaTrafigi[]
+
+  @@index([durumId])
+  @@index([sorumluAvukatId])
+  @@map("dava_dosyalari")
+}
+
+// Musteri <-> DavaDosyasi coka-cok iliski (ara) tablosu.
+model DosyaMuvekkili {
+  id        String      @id @default(cuid())
+  dosyaId   String
+  dosya     DavaDosyasi @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+  musteriId String
+  musteri   Musteri     @relation(fields: [musteriId], references: [id], onDelete: Cascade)
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@unique([dosyaId, musteriId])
+  @@index([musteriId])
+  @@map("dosya_muvekkilleri")
 }

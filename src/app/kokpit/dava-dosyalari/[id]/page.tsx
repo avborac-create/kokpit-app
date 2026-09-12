@@ -1,0 +1,92 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { davaDosyasiGetir } from "@/modules/dava-dosyasi/lib/queries";
+import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
+import { DosyaParaTrafigiListesi } from "@/modules/dava-dosyasi/components/dosya-para-trafigi-listesi";
+import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
+import { silebilirMi } from "@/core/auth/yetki";
+import { Dugme } from "@/core/ui/button";
+
+const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
+
+export default async function DavaDosyasiDetaySayfasi({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const [dosya, kullanici] = await Promise.all([davaDosyasiGetir(id), mevcutKullanici()]);
+  if (!dosya) notFound();
+
+  const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
+
+  return (
+    <div className="pt-3">
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">
+            {dosya.dosyaNo ? `${dosya.dosyaNo} — ` : ""}
+            {dosya.konu}
+          </h1>
+          <p className="mt-1 text-sm text-white/55">
+            <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
+              {dosya.durum.etiket}
+            </span>
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Link href={`/kokpit/dava-dosyalari/${id}/duzenle`}>
+            <Dugme varyant="ikincil">Düzenle</Dugme>
+          </Link>
+          {silmeYetkisiVar && <DavaDosyasiSilmeButonu dosyaId={id} />}
+        </div>
+      </div>
+
+      <div className="glass mb-8 grid grid-cols-2 gap-4 rounded-2xl p-5 text-sm md:grid-cols-4">
+        <div>
+          <p className="text-white/45">Müvekkil(ler)</p>
+          <p className="text-white">
+            {dosya.muvekkiller.map((m, i) => (
+              <span key={m.musteriId}>
+                {i > 0 && ", "}
+                <Link
+                  href={`/kokpit/musteriler/${m.musteriId}`}
+                  className="hover:text-[#6db8ff] hover:underline"
+                >
+                  {m.musteri.adSoyadUnvan}
+                </Link>
+              </span>
+            ))}
+          </p>
+        </div>
+        <div>
+          <p className="text-white/45">Sorumlu Avukat</p>
+          <p className="text-white">{dosya.sorumluAvukat?.adSoyad ?? "—"}</p>
+        </div>
+        <div>
+          <p className="text-white/45">Açılış Tarihi</p>
+          <p className="text-white">{tarihFormatlayici.format(dosya.acilisTarihi)}</p>
+        </div>
+        <div>
+          <p className="text-white/45">Kapanış Tarihi</p>
+          <p className="text-white">
+            {dosya.kapanisTarihi ? tarihFormatlayici.format(dosya.kapanisTarihi) : "—"}
+          </p>
+        </div>
+        {dosya.aciklama && (
+          <div className="col-span-2 md:col-span-4">
+            <p className="text-white/45">Açıklama</p>
+            <p className="whitespace-pre-wrap text-white">{dosya.aciklama}</p>
+          </div>
+        )}
+      </div>
+
+      <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Para Trafiği</h2>
+      <p className="mb-3 text-sm text-white/45">
+        Yeni bir kayıt eklemek için ilgili müvekkilin sayfasına gidip &quot;Dava Dosyası&quot; alanından
+        bu dosyayı seçin.
+      </p>
+      <DosyaParaTrafigiListesi kayitlar={dosya.paraTrafigi} />
+    </div>
+  );
+}

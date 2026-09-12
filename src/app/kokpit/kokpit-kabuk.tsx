@@ -36,7 +36,7 @@ export function KokpitKabuk({
         </div>
         <KenarCubugu />
       </aside>
-      <div className={`min-h-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
+      <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
         <header className="glass m-3 flex items-center justify-between rounded-2xl px-4 py-3 md:px-6">
           <div className="flex items-center gap-3">
             <Link
@@ -58,7 +58,7 @@ export function KokpitKabuk({
             </Dugme>
           </form>
         </header>
-        <main className="flex-1 overflow-y-auto px-4 pb-6 md:px-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-6 md:px-6">{children}</main>
       </div>
     </div>
   );

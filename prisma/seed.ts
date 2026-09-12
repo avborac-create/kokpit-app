@@ -54,6 +54,15 @@ const SECENEK_LISTELERI: {
       { kod: "objekt", etiket: "Objekt" },
     ],
   },
+  {
+    anahtar: "dava_dosyasi_durumu",
+    ad: "Dava Dosyası Durumu",
+    degerler: [
+      { kod: "acik", etiket: "Açık" },
+      { kod: "kapali", etiket: "Kapalı" },
+      { kod: "arsiv", etiket: "Arşiv" },
+    ],
+  },
 ];
 
 async function secenekListeleriniOlustur() {
