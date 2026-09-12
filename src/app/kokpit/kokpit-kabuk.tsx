@@ -24,9 +24,9 @@ export function KokpitKabuk({
   const modulSeciliMi = pathname !== "/kokpit";
 
   return (
-    <div className="flex flex-1">
+    <div className="flex min-h-0 flex-1">
       <aside
-        className={`glass m-3 w-full shrink-0 flex-col rounded-3xl md:mr-0 md:flex md:w-60 ${
+        className={`glass m-3 w-full min-h-0 shrink-0 flex-col overflow-y-auto rounded-3xl md:mr-0 md:flex md:w-60 ${
           modulSeciliMi ? "hidden" : "flex"
         }`}
       >
@@ -36,7 +36,7 @@ export function KokpitKabuk({
         </div>
         <KenarCubugu />
       </aside>
-      <div className={`flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
+      <div className={`min-h-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
         <header className="glass m-3 flex items-center justify-between rounded-2xl px-4 py-3 md:px-6">
           <div className="flex items-center gap-3">
             <Link

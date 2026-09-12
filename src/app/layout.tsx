@@ -38,9 +38,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="tr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-dvh antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      {/*
+        iOS Safari'de adres cubugu goruntulenip/gizlendikce viewport
+        yuksekligi degisir. h-full/min-h-full (yuzde bazli) bu degisiklikle
+        uyumsuz kalip sayfanin gorunmez sekilde ekrandan taşmasina (kucuk
+        bir kaydirmaya) yol aciyordu. h-dvh (dynamic viewport height) +
+        overflow-hidden ile govde HER ZAMAN tam olarak gorunen ekran kadar
+        olur; ic kaydirma sadece <main> icinde (overflow-y-auto) gerceklesir.
+      */}
+      <body className="h-dvh flex flex-col overflow-hidden">
         <SwKaydet />
         {children}
       </body>
