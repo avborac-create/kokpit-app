@@ -15,7 +15,7 @@ export function KenarCubugu() {
           return (
             <span
               key={modul.anahtar}
-              className="flex items-center justify-between rounded-xl px-3 py-2 text-sm text-white/30"
+              className="flex items-center justify-between rounded-xl px-3 py-2.5 text-base text-white/30"
               title="Bu modül henüz geliştirilmedi"
             >
               {modul.ad}
@@ -29,7 +29,7 @@ export function KenarCubugu() {
           <Link
             key={modul.anahtar}
             href={modul.yol}
-            className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-xl px-3 py-2.5 text-base font-medium transition-colors ${
               seciliMi
                 ? "bg-[var(--accent)] text-white shadow-[0_6px_16px_-6px_rgba(10,132,255,0.7)]"
                 : "text-white/65 hover:bg-white/[0.08]"

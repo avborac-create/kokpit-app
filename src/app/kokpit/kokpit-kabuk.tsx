@@ -31,8 +31,8 @@ export function KokpitKabuk({
         }`}
       >
         <div className="border-b border-white/10 px-5 py-5">
-          <p className="text-sm font-semibold tracking-tight text-white">KOKPİT</p>
-          <p className="text-xs text-white/45">Eces Hukuk Bürosu</p>
+          <p className="text-base font-semibold tracking-tight text-white">KOKPİT</p>
+          <p className="text-sm text-white/45">Eces Hukuk Bürosu</p>
         </div>
         <KenarCubugu />
       </aside>
