@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { musteriGetir } from "@/modules/musteri/lib/queries";
-import { paraTrafigiKaydiEkle } from "@/modules/musteri/lib/actions";
+import { paraTrafigiKaydiEkle, irtibatKisisiEkle } from "@/modules/musteri/lib/actions";
 import { ParaTrafigiFormu } from "@/modules/musteri/components/para-trafigi-formu";
 import { ParaTrafigiListesi } from "@/modules/musteri/components/para-trafigi-listesi";
 import { MusteriSilmeButonu } from "@/modules/musteri/components/musteri-silme-butonu";
+import { IrtibatKisisiFormu } from "@/modules/musteri/components/irtibat-kisisi-formu";
+import { IrtibatKisileriListesi } from "@/modules/musteri/components/irtibat-kisileri-listesi";
 import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
@@ -47,11 +49,11 @@ export default async function MusteriDetaySayfasi({
 
       <div className="glass mb-8 grid grid-cols-2 gap-4 rounded-2xl p-5 text-sm md:grid-cols-4">
         <div>
-          <p className="text-white/45">Telefon</p>
+          <p className="text-white/45">Genel Telefon</p>
           <p className="text-white">{musteri.telefon ?? "—"}</p>
         </div>
         <div>
-          <p className="text-white/45">E-posta</p>
+          <p className="text-white/45">Genel E-posta</p>
           <p className="text-white">{musteri.eposta ?? "—"}</p>
         </div>
         <div>
@@ -68,6 +70,18 @@ export default async function MusteriDetaySayfasi({
             <p className="whitespace-pre-wrap text-white">{musteri.notlar}</p>
           </div>
         )}
+      </div>
+
+      <div className="mb-8">
+        <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">İrtibat Kişileri</h2>
+        <div className="mb-4">
+          <IrtibatKisisiFormu action={irtibatKisisiEkle.bind(null, id)} />
+        </div>
+        <IrtibatKisileriListesi
+          kisiler={musteri.irtibatKisileri}
+          musteriId={id}
+          silmeYetkisiVar={silmeYetkisiVar}
+        />
       </div>
 
       <div className="mb-8">

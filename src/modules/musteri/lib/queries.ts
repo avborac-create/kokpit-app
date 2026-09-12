@@ -31,6 +31,9 @@ export async function musteriGetir(id: string) {
         include: { tip: true, durum: true, kaynak: true, dosya: true },
         orderBy: { tarih: "desc" },
       },
+      irtibatKisileri: {
+        orderBy: [{ birincilMi: "desc" }, { olusturmaTarihi: "asc" }],
+      },
     },
   });
 }

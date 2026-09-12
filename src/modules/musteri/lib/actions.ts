@@ -113,3 +113,46 @@ export async function paraTrafigiKaydiSil(musteriId: string, kayitId: string) {
   await prisma.musteriParaTrafigi.delete({ where: { id: kayitId } });
   revalidatePath(`/kokpit/musteriler/${musteriId}`);
 }
+
+export async function irtibatKisisiEkle(musteriId: string, formData: FormData) {
+  const adSoyad = String(formData.get("adSoyad") ?? "").trim();
+  const birincilMi = formData.get("birincilMi") === "on";
+
+  if (!adSoyad) {
+    throw new Error("Ad Soyad alanı zorunludur.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (birincilMi) {
+      await tx.irtibatKisisi.updateMany({
+        where: { musteriId, birincilMi: true },
+        data: { birincilMi: false },
+      });
+    }
+
+    await tx.irtibatKisisi.create({
+      data: {
+        musteriId,
+        adSoyad,
+        unvanGorev: metinYaAlNull(formData, "unvanGorev"),
+        konuBasligi: metinYaAlNull(formData, "konuBasligi"),
+        telefon: metinYaAlNull(formData, "telefon"),
+        eposta: metinYaAlNull(formData, "eposta"),
+        notlar: metinYaAlNull(formData, "notlar"),
+        birincilMi,
+      },
+    });
+  });
+
+  revalidatePath(`/kokpit/musteriler/${musteriId}`);
+}
+
+export async function irtibatKisisiSil(musteriId: string, kisiId: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici || !silebilirMi(kullanici.rol)) {
+    throw new Error("Bu işlem için yetkiniz yok.");
+  }
+
+  await prisma.irtibatKisisi.delete({ where: { id: kisiId } });
+  revalidatePath(`/kokpit/musteriler/${musteriId}`);
+}

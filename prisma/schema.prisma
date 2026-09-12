@@ -114,12 +114,36 @@ model Musteri {
   olusturmaTarihi  DateTime      @default(now())
   guncellemeTarihi DateTime      @updatedAt
 
-  paraTrafigi MusteriParaTrafigi[]
-  dosyalar    DosyaMuvekkili[]
+  paraTrafigi     MusteriParaTrafigi[]
+  dosyalar        DosyaMuvekkili[]
+  irtibatKisileri IrtibatKisisi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
   @@map("musteriler")
+}
+
+// Musterinin (ozellikle tuzel kisilerin) irtibat kisileri/temsilcileri.
+// Hangi konuda hangi kisiyle irtibata gecilecegini kayit altina alir;
+// telefon/e-posta gibi iletisim bilgileri her zaman bir kisiye bagli
+// tutulur, boylece "bu numara/e-posta kime ait" belirsizligi olmaz.
+model IrtibatKisisi {
+  id        String  @id @default(cuid())
+  musteriId String
+  musteri   Musteri @relation(fields: [musteriId], references: [id], onDelete: Cascade)
+
+  adSoyad     String
+  unvanGorev  String? // "Genel Müdür", "Muhasebe Sorumlusu" vb.
+  konuBasligi String? // hangi konularda irtibat kurulmali - "Sözleşme onayları" vb.
+  telefon     String?
+  eposta      String?
+  birincilMi  Boolean @default(false) // ilk/asil irtibat kisisi mi
+  notlar      String?
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([musteriId])
+  @@map("irtibat_kisileri")
 }
 
 // Musteri Para Trafigi (Musteri Fihristi'ne bagli, 1 musteri -> cok kayit)
