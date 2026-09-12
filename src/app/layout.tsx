@@ -23,8 +23,10 @@ export const metadata: Metadata = {
     title: "KOKPİT",
   },
   icons: {
-    icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    // iOS Safari, ikonlari agresif sekilde onbelleklediginden, ikon her
+    // degistiginde bu surum numarasi da artirilmali (cache-busting).
+    icon: [{ url: "/icons/favicon-32.png?v=2", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png?v=2", sizes: "180x180", type: "image/png" }],
   },
 };
 
