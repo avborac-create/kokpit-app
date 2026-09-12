@@ -1,15 +1,14 @@
 import Link from "next/link";
-import type { Prisma } from "@prisma/client";
+import type { davaDosyasiGetir } from "@/modules/dava-dosyasi/lib/queries";
 
-type Kayit = Prisma.MusteriParaTrafigiGetPayload<{
-  include: { tip: true; durum: true; kaynak: true; musteri: true };
-}>;
+type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
+type Baglanti = DosyaDetay["paraTrafigiKayitlari"][number];
 
 const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
 
-export function DosyaParaTrafigiListesi({ kayitlar }: { kayitlar: Kayit[] }) {
-  if (kayitlar.length === 0) {
+export function DosyaParaTrafigiListesi({ baglantilar }: { baglantilar: Baglanti[] }) {
+  if (baglantilar.length === 0) {
     return <p className="text-sm text-white/40">Bu dosyaya bağlı para trafiği kaydı yok.</p>;
   }
 
@@ -26,8 +25,8 @@ export function DosyaParaTrafigiListesi({ kayitlar }: { kayitlar: Kayit[] }) {
           </tr>
         </thead>
         <tbody>
-          {kayitlar.map((kayit) => (
-            <tr key={kayit.id} className="border-t border-white/[0.06]">
+          {baglantilar.map(({ id, paraTrafigi: kayit }) => (
+            <tr key={id} className="border-t border-white/[0.06]">
               <td className="px-4 py-3 text-white/60">{tarihFormatlayici.format(kayit.tarih)}</td>
               <td className="px-4 py-3">
                 <Link

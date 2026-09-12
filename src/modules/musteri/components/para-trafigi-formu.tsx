@@ -2,6 +2,7 @@ import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
+import { DosyaSecici } from "@/modules/musteri/components/dosya-secici";
 
 export async function ParaTrafigiFormu({
   action,
@@ -68,22 +69,7 @@ export async function ParaTrafigiFormu({
           ))}
         </Secim>
       </Alan>
-      <Alan>
-        <Etiket htmlFor="dosyaId">Dava Dosyası (opsiyonel)</Etiket>
-        <Secim id="dosyaId" name="dosyaId" defaultValue="">
-          <option value="">Yok / genel kayıt</option>
-          {dosyalar.map((dosya) => (
-            <option key={dosya.id} value={dosya.id}>
-              {dosya.dosyaNo ? `${dosya.dosyaNo} — ` : ""}
-              {dosya.konu}
-            </option>
-          ))}
-        </Secim>
-      </Alan>
-      <Alan>
-        <Etiket htmlFor="ilgiliDosyaId">Not (opsiyonel)</Etiket>
-        <Girdi id="ilgiliDosyaId" name="ilgiliDosyaId" placeholder="UYAP esas no, serbest not vb." />
-      </Alan>
+      <DosyaSecici dosyalar={dosyalar} />
       <div className="col-span-2 md:col-span-4">
         <Alan>
           <Etiket htmlFor="aciklama">Açıklama</Etiket>

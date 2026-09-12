@@ -86,7 +86,7 @@ export default async function DavaDosyasiDetaySayfasi({
         Yeni bir kayıt eklemek için ilgili müvekkilin sayfasına gidip &quot;Dava Dosyası&quot; alanından
         bu dosyayı seçin.
       </p>
-      <DosyaParaTrafigiListesi kayitlar={dosya.paraTrafigi} />
+      <DosyaParaTrafigiListesi baglantilar={dosya.paraTrafigiKayitlari} />
     </div>
   );
 }

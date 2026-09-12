@@ -13,8 +13,9 @@
 //     desenini kullan; yeni bir enum TANIMLAMA. Yeni bir deger eklemek bir veri
 //     satiri eklemek olsun, semayi degistirmek olmasin.
 //   - Baska bir modulun kaydina referans gerekiyorsa (orn. "ilgili dosya"),
-//     once o modul yoksa serbest metin/opsiyonel id alani olarak birak (bkz.
-//     MusteriParaTrafigi.ilgiliDosyaId), modul eklenince FK'ya cevir.
+//     once o modul yoksa serbest metin/opsiyonel id alani olarak birak,
+//     modul eklenince FK'ya (gerekirse coka-cok ara tabloya) cevir - bkz.
+//     ParaTrafigiDosyasi.
 
 generator client {
   provider = "prisma-client-js"
@@ -159,16 +160,6 @@ model MusteriParaTrafigi {
   tutar    Decimal       @db.Decimal(14, 2)
   aciklama String?
 
-  // Serbest not/eski kayitlar icin (orn. henuz bir DavaDosyasi acilmadan
-  // once UYAP esas no notu dusmek). Yeni kayitlarda asagidaki dosyaId
-  // (gercek FK) tercih edilir; bu alan geriye donuk uyumluluk icin durur.
-  ilgiliDosyaId String?
-
-  // Dava Dosyalari modulune referans - hangi dosyaya ait oldugunu belirtir
-  // (opsiyonel: bir musteriye ait genel/dosya-disi kayitlar da olabilir).
-  dosyaId String?
-  dosya   DavaDosyasi? @relation(fields: [dosyaId], references: [id], onDelete: SetNull)
-
   durumId String
   durum   SecenekDegeri @relation("ParaTrafigiDurumu", fields: [durumId], references: [id])
 
@@ -176,12 +167,32 @@ model MusteriParaTrafigi {
   kaynakId String
   kaynak   SecenekDegeri @relation("ParaTrafigiKaynagi", fields: [kaynakId], references: [id])
 
+  // Bir kayit (orn. bir tahsilat) birden fazla dava dosyasina istinaden
+  // gelmis olabilir (bazen tek, bazen cok dosya soz konusu olur) - bkz.
+  // ParaTrafigiDosyasi ara tablosu.
+  dosyalar ParaTrafigiDosyasi[]
+
   olusturmaTarihi DateTime @default(now())
 
   @@index([musteriId])
   @@index([durumId])
-  @@index([dosyaId])
   @@map("musteri_para_trafigi")
+}
+
+// MusteriParaTrafigi <-> DavaDosyasi coka-cok iliski (ara) tablosu. Ileride
+// "tasnif" adimi bu satirlara dosya basina tutar/pay eklenerek genisleyebilir.
+model ParaTrafigiDosyasi {
+  id            String             @id @default(cuid())
+  paraTrafigiId String
+  paraTrafigi   MusteriParaTrafigi @relation(fields: [paraTrafigiId], references: [id], onDelete: Cascade)
+  dosyaId       String
+  dosya         DavaDosyasi        @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@unique([paraTrafigiId, dosyaId])
+  @@index([dosyaId])
+  @@map("para_trafigi_dosyalari")
 }
 
 // ============================================================
@@ -205,8 +216,8 @@ model DavaDosyasi {
   olusturmaTarihi  DateTime      @default(now())
   guncellemeTarihi DateTime      @updatedAt
 
-  muvekkiller DosyaMuvekkili[]
-  paraTrafigi MusteriParaTrafigi[]
+  muvekkiller          DosyaMuvekkili[]
+  paraTrafigiKayitlari ParaTrafigiDosyasi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])

@@ -82,6 +82,7 @@ export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData
   const durumId = String(formData.get("durumId") ?? "");
   const kaynakId = String(formData.get("kaynakId") ?? "");
   const tutar = String(formData.get("tutar") ?? "");
+  const dosyaIdleri = formData.getAll("dosyaIds").map(String).filter(Boolean);
 
   if (!tarih || !tipId || !durumId || !kaynakId || !tutar) {
     throw new Error("Tarih, tip, durum, kaynak ve tutar alanları zorunludur.");
@@ -96,8 +97,9 @@ export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData
       kaynakId,
       tutar,
       aciklama: metinYaAlNull(formData, "aciklama"),
-      ilgiliDosyaId: metinYaAlNull(formData, "ilgiliDosyaId"),
-      dosyaId: metinYaAlNull(formData, "dosyaId"),
+      dosyalar: {
+        create: dosyaIdleri.map((dosyaId) => ({ dosyaId })),
+      },
     },
   });
 

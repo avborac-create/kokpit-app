@@ -3,7 +3,12 @@ import type { Prisma } from "@prisma/client";
 import { ParaTrafigiSilmeButonu } from "@/modules/musteri/components/para-trafigi-silme-butonu";
 
 type Kayit = Prisma.MusteriParaTrafigiGetPayload<{
-  include: { tip: true; durum: true; kaynak: true; dosya: true };
+  include: {
+    tip: true;
+    durum: true;
+    kaynak: true;
+    dosyalar: { include: { dosya: true } };
+  };
 }>;
 
 const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
@@ -30,7 +35,7 @@ export function ParaTrafigiListesi({
             <th className="px-4 py-3 font-medium">Tutar</th>
             <th className="px-4 py-3 font-medium">Durum</th>
             <th className="px-4 py-3 font-medium">Kaynak</th>
-            <th className="px-4 py-3 font-medium">Dosya</th>
+            <th className="px-4 py-3 font-medium">Dosya(lar)</th>
             <th className="px-4 py-3 font-medium">Açıklama</th>
             {silmeYetkisiVar && <th className="px-4 py-3" />}
           </tr>
@@ -50,16 +55,19 @@ export function ParaTrafigiListesi({
               </td>
               <td className="px-4 py-3 text-white/60">{kayit.kaynak.etiket}</td>
               <td className="px-4 py-3 text-white/60">
-                {kayit.dosya ? (
-                  <Link
-                    href={`/kokpit/dava-dosyalari/${kayit.dosya.id}`}
-                    className="hover:text-[#6db8ff] hover:underline"
-                  >
-                    {kayit.dosya.dosyaNo ?? kayit.dosya.konu}
-                  </Link>
-                ) : (
-                  "—"
-                )}
+                {kayit.dosyalar.length === 0
+                  ? "—"
+                  : kayit.dosyalar.map((bag, i) => (
+                      <span key={bag.id}>
+                        {i > 0 && ", "}
+                        <Link
+                          href={`/kokpit/dava-dosyalari/${bag.dosya.id}`}
+                          className="hover:text-[#6db8ff] hover:underline"
+                        >
+                          {bag.dosya.dosyaNo ?? bag.dosya.konu}
+                        </Link>
+                      </span>
+                    ))}
               </td>
               <td className="px-4 py-3 text-white/60">{kayit.aciklama ?? "—"}</td>
               {silmeYetkisiVar && (

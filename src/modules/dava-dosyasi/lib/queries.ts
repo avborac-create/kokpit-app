@@ -36,9 +36,13 @@ export async function davaDosyasiGetir(id: string) {
       durum: true,
       sorumluAvukat: true,
       muvekkiller: { include: { musteri: true } },
-      paraTrafigi: {
-        include: { tip: true, durum: true, kaynak: true, musteri: true },
-        orderBy: { tarih: "desc" },
+      paraTrafigiKayitlari: {
+        include: {
+          paraTrafigi: {
+            include: { tip: true, durum: true, kaynak: true, musteri: true },
+          },
+        },
+        orderBy: { paraTrafigi: { tarih: "desc" } },
       },
     },
   });
