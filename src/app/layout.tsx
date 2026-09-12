@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   icons: {
     // iOS Safari, ikonlari agresif sekilde onbelleklediginden, ikon her
     // degistiginde bu surum numarasi da artirilmali (cache-busting).
-    icon: [{ url: "/icons/favicon-32.png?v=4", sizes: "32x32", type: "image/png" }],
-    apple: [{ url: "/icons/apple-touch-icon.png?v=4", sizes: "180x180", type: "image/png" }],
+    icon: [{ url: "/icons/favicon-32.png?v=5", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png?v=5", sizes: "180x180", type: "image/png" }],
   },
 };
 
