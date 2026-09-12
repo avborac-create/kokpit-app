@@ -35,8 +35,14 @@ html {
    doldurulmadan bos kaliyordu. Toolbar'i olmayan bu modda dvh guvenlidir ve
    ekrani tam dolduruk. */
 @media (display-mode: standalone) {
-  html,
-  body {
+  /* Not: html/body zaten Tailwind'in .h-svh sinif kuraliyla eslesiyor
+     (className="... h-svh ..."). Salt element secici (html, body) bu sinif
+     kuralindan daha DUSUK oncelige (specificity) sahip oldugundan, medya
+     sorgusu aktif olsa bile .h-svh kurali kazaniyor ve yukselik hep svh'de
+     kalip bu duzeltme hicbir zaman uygulanmiyordu. Ayni sinifi da hedefe
+     katarak onceligi esitleyip kazanmasini sagliyoruz. */
+  html.h-svh,
+  body.h-svh {
     height: 100dvh;
   }
 }
