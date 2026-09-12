@@ -18,7 +18,7 @@ export function GirisFormu() {
         <Etiket htmlFor="sifre">Şifre</Etiket>
         <Girdi id="sifre" name="sifre" type="password" autoComplete="current-password" required />
       </Alan>
-      {durum?.hata && <p className="mb-4 text-sm text-red-600">{durum.hata}</p>}
+      {durum?.hata && <p className="mb-4 text-sm text-[#ff7a70]">{durum.hata}</p>}
       <Dugme type="submit" disabled={beklemede} className="w-full">
         {beklemede ? "Giriş yapılıyor…" : "Giriş Yap"}
       </Dugme>

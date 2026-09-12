@@ -21,13 +21,13 @@ export default async function MusteriDetaySayfasi({
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
 
   return (
-    <div>
+    <div className="pt-3">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-black dark:text-white">{musteri.adSoyadUnvan}</h1>
-          <p className="mt-1 text-sm text-black/60 dark:text-white/60">
+          <h1 className="text-2xl font-semibold tracking-tight text-white">{musteri.adSoyadUnvan}</h1>
+          <p className="mt-1 text-sm text-white/55">
             {musteri.tip.etiket} ·{" "}
-            <span className="rounded bg-black/5 px-2 py-0.5 text-xs dark:bg-white/10">
+            <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
               {musteri.durum.etiket}
             </span>
           </p>
@@ -40,32 +40,32 @@ export default async function MusteriDetaySayfasi({
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 gap-4 rounded-lg border border-black/10 p-4 text-sm dark:border-white/10 md:grid-cols-4">
+      <div className="glass mb-8 grid grid-cols-2 gap-4 rounded-2xl p-5 text-sm md:grid-cols-4">
         <div>
-          <p className="text-black/50 dark:text-white/50">Telefon</p>
-          <p className="text-black dark:text-white">{musteri.telefon ?? "—"}</p>
+          <p className="text-white/45">Telefon</p>
+          <p className="text-white">{musteri.telefon ?? "—"}</p>
         </div>
         <div>
-          <p className="text-black/50 dark:text-white/50">E-posta</p>
-          <p className="text-black dark:text-white">{musteri.eposta ?? "—"}</p>
+          <p className="text-white/45">E-posta</p>
+          <p className="text-white">{musteri.eposta ?? "—"}</p>
         </div>
         <div>
-          <p className="text-black/50 dark:text-white/50">Sorumlu Avukat</p>
-          <p className="text-black dark:text-white">{musteri.sorumluAvukat?.adSoyad ?? "—"}</p>
+          <p className="text-white/45">Sorumlu Avukat</p>
+          <p className="text-white">{musteri.sorumluAvukat?.adSoyad ?? "—"}</p>
         </div>
         <div>
-          <p className="text-black/50 dark:text-white/50">Adres</p>
-          <p className="text-black dark:text-white">{musteri.adres ?? "—"}</p>
+          <p className="text-white/45">Adres</p>
+          <p className="text-white">{musteri.adres ?? "—"}</p>
         </div>
         {musteri.notlar && (
           <div className="col-span-2 md:col-span-4">
-            <p className="text-black/50 dark:text-white/50">Notlar</p>
-            <p className="whitespace-pre-wrap text-black dark:text-white">{musteri.notlar}</p>
+            <p className="text-white/45">Notlar</p>
+            <p className="whitespace-pre-wrap text-white">{musteri.notlar}</p>
           </div>
         )}
       </div>
 
-      <h2 className="mb-3 text-lg font-semibold text-black dark:text-white">Para Trafiği</h2>
+      <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Para Trafiği</h2>
       <div className="mb-4">
         <ParaTrafigiFormu action={paraTrafigiKaydiEkle.bind(null, id)} />
       </div>

@@ -15,11 +15,11 @@ export function KenarCubugu() {
           return (
             <span
               key={modul.anahtar}
-              className="flex items-center justify-between rounded-md px-3 py-2 text-sm text-black/35 dark:text-white/30"
+              className="flex items-center justify-between rounded-xl px-3 py-2 text-sm text-white/30"
               title="Bu modül henüz geliştirilmedi"
             >
               {modul.ad}
-              <span className="rounded bg-black/5 px-1.5 py-0.5 text-[10px] font-medium dark:bg-white/10">
+              <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium">
                 Yakında
               </span>
             </span>
@@ -29,10 +29,10 @@ export function KenarCubugu() {
           <Link
             key={modul.anahtar}
             href={modul.yol}
-            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
               seciliMi
-                ? "bg-slate-900 text-white dark:bg-white dark:text-black"
-                : "text-black/70 hover:bg-black/5 dark:text-white/70 dark:hover:bg-white/10"
+                ? "bg-[var(--accent)] text-white shadow-[0_6px_16px_-6px_rgba(10,132,255,0.7)]"
+                : "text-white/65 hover:bg-white/[0.08]"
             }`}
           >
             {modul.ad}

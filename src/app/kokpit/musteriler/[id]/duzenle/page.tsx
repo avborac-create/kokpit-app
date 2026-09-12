@@ -13,8 +13,8 @@ export default async function MusteriDuzenlePage({
   if (!musteri) notFound();
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-semibold text-black dark:text-white">
+    <div className="pt-3">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-white">
         {musteri.adSoyadUnvan} — Düzenle
       </h1>
       <MusteriFormu

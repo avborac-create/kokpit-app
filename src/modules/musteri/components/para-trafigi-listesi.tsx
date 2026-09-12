@@ -16,40 +16,40 @@ export function ParaTrafigiListesi({
   silmeYetkisiVar: boolean;
 }) {
   if (kayitlar.length === 0) {
-    return <p className="text-sm text-black/50 dark:text-white/50">Henüz para trafiği kaydı yok.</p>;
+    return <p className="text-sm text-white/40">Henüz para trafiği kaydı yok.</p>;
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+    <div className="glass overflow-x-auto rounded-2xl">
       <table className="w-full text-left text-sm">
-        <thead className="bg-black/5 text-black/60 dark:bg-white/5 dark:text-white/60">
+        <thead className="text-white/50">
           <tr>
-            <th className="px-4 py-2 font-medium">Tarih</th>
-            <th className="px-4 py-2 font-medium">Tip</th>
-            <th className="px-4 py-2 font-medium">Tutar</th>
-            <th className="px-4 py-2 font-medium">Durum</th>
-            <th className="px-4 py-2 font-medium">Kaynak</th>
-            <th className="px-4 py-2 font-medium">Açıklama</th>
-            {silmeYetkisiVar && <th className="px-4 py-2" />}
+            <th className="px-4 py-3 font-medium">Tarih</th>
+            <th className="px-4 py-3 font-medium">Tip</th>
+            <th className="px-4 py-3 font-medium">Tutar</th>
+            <th className="px-4 py-3 font-medium">Durum</th>
+            <th className="px-4 py-3 font-medium">Kaynak</th>
+            <th className="px-4 py-3 font-medium">Açıklama</th>
+            {silmeYetkisiVar && <th className="px-4 py-3" />}
           </tr>
         </thead>
         <tbody>
           {kayitlar.map((kayit) => (
-            <tr key={kayit.id} className="border-t border-black/5 dark:border-white/5">
-              <td className="px-4 py-2 text-black/70 dark:text-white/70">
-                {tarihFormatlayici.format(kayit.tarih)}
+            <tr key={kayit.id} className="border-t border-white/[0.06]">
+              <td className="px-4 py-3 text-white/60">{tarihFormatlayici.format(kayit.tarih)}</td>
+              <td className="px-4 py-3 text-white/85">{kayit.tip.etiket}</td>
+              <td className="px-4 py-3 font-medium text-white">
+                {paraFormatlayici.format(Number(kayit.tutar))}
               </td>
-              <td className="px-4 py-2">{kayit.tip.etiket}</td>
-              <td className="px-4 py-2 font-medium">{paraFormatlayici.format(Number(kayit.tutar))}</td>
-              <td className="px-4 py-2">
-                <span className="rounded bg-black/5 px-2 py-0.5 text-xs dark:bg-white/10">
+              <td className="px-4 py-3">
+                <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
                   {kayit.durum.etiket}
                 </span>
               </td>
-              <td className="px-4 py-2 text-black/70 dark:text-white/70">{kayit.kaynak.etiket}</td>
-              <td className="px-4 py-2 text-black/70 dark:text-white/70">{kayit.aciklama ?? "—"}</td>
+              <td className="px-4 py-3 text-white/60">{kayit.kaynak.etiket}</td>
+              <td className="px-4 py-3 text-white/60">{kayit.aciklama ?? "—"}</td>
               {silmeYetkisiVar && (
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-3 text-right">
                   <ParaTrafigiSilmeButonu musteriId={kayit.musteriId} kayitId={kayit.id} />
                 </td>
               )}

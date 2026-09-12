@@ -2,10 +2,10 @@ import { GirisFormu } from "./giris-formu";
 
 export default function GirisSayfasi() {
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
-      <div className="w-full max-w-sm rounded-lg border border-black/10 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-zinc-950">
-        <h1 className="mb-1 text-xl font-semibold text-black dark:text-white">KOKPİT</h1>
-        <p className="mb-6 text-sm text-black/60 dark:text-white/60">Eces Hukuk Bürosu</p>
+    <div className="flex flex-1 items-center justify-center px-4">
+      <div className="glass-strong w-full max-w-sm rounded-3xl p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)]">
+        <h1 className="mb-1 text-2xl font-semibold tracking-tight text-white">KOKPİT</h1>
+        <p className="mb-6 text-sm text-white/50">Eces Hukuk Bürosu</p>
         <GirisFormu />
       </div>
     </div>
