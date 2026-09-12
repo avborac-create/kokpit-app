@@ -21,14 +21,11 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  // DATABASE_URL: havuzlanmis (pooled) baglanti - uygulama calisirken kullanilir.
-  // Serverless barindirma (ör. Vercel) cok sayida kisa omurlu baglanti actigi icin
-  // havuzlama sart; aksi halde "too many connections" hatasi alinir.
-  url       = env("DATABASE_URL")
-  // DIRECT_URL: havuzsuz dogrudan baglanti - sadece migration calistirirken kullanilir
-  // (PgBouncer transaction modu DDL/prepared statement ile uyumlu degildir).
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  // Vercel'in "Prisma Postgres" entegrasyonu DATABASE_URL'i otomatik olusturur
+  // ve havuzlama (pooling) kendi altyapisinda halleder; ayri bir DIRECT_URL
+  // gerekmez.
+  url      = env("DATABASE_URL")
 }
 
 // ============================================================
