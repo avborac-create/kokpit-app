@@ -3,7 +3,7 @@ import { Dugme } from "@/core/ui/button";
 
 export function IrtibatKisisiFormu({ action }: { action: (formData: FormData) => void }) {
   return (
-    <form action={action} className="glass grid grid-cols-2 gap-3 rounded-2xl p-4 md:grid-cols-4">
+    <form action={action} className="glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-2 md:grid-cols-4">
       <Alan>
         <Etiket htmlFor="adSoyad">Ad Soyad</Etiket>
         <Girdi id="adSoyad" name="adSoyad" required />

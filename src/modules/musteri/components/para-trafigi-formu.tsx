@@ -20,7 +20,7 @@ export async function ParaTrafigiFormu({
   const bugun = new Date().toISOString().slice(0, 10);
 
   return (
-    <form action={action} className="glass grid grid-cols-2 gap-3 rounded-2xl p-4 md:grid-cols-4">
+    <form action={action} className="glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-2 md:grid-cols-4">
       <Alan>
         <Etiket htmlFor="tarih">Tarih</Etiket>
         <Girdi id="tarih" name="tarih" type="date" required defaultValue={bugun} />

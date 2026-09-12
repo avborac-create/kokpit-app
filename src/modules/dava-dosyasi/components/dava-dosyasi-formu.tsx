@@ -35,7 +35,7 @@ export async function DavaDosyasiFormu({
 
   return (
     <form action={action} className="max-w-xl">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Alan>
           <Etiket htmlFor="dosyaNo">Dosya No</Etiket>
           <Girdi
@@ -67,7 +67,7 @@ export async function DavaDosyasiFormu({
 
       <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdler} />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Alan>
           <Etiket htmlFor="acilisTarihi">Açılış Tarihi</Etiket>
           <Girdi

@@ -29,7 +29,7 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
         />
       </Alan>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Alan>
           <Etiket htmlFor="tipId">Tip</Etiket>
           <Secim id="tipId" name="tipId" required defaultValue={musteri?.tipId ?? ""}>
@@ -59,7 +59,7 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
         </Alan>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Alan>
           <Etiket htmlFor="telefon">Telefon</Etiket>
           <Girdi id="telefon" name="telefon" type="tel" defaultValue={musteri?.telefon ?? ""} />
