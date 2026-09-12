@@ -38,17 +38,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="tr"
-      className={`${geistSans.variable} ${geistMono.variable} h-dvh antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-svh overflow-hidden antialiased`}
     >
       {/*
-        iOS Safari'de adres cubugu goruntulenip/gizlendikce viewport
-        yuksekligi degisir. h-full/min-h-full (yuzde bazli) bu degisiklikle
-        uyumsuz kalip sayfanin gorunmez sekilde ekrandan taşmasina (kucuk
-        bir kaydirmaya) yol aciyordu. h-dvh (dynamic viewport height) +
-        overflow-hidden ile govde HER ZAMAN tam olarak gorunen ekran kadar
-        olur; ic kaydirma sadece <main> icinde (overflow-y-auto) gerceklesir.
+        h-dvh (dynamic viewport height) denendiginde bazi iOS Safari
+        surumlerinde adres cubugu gizlenip/gosterilirken dvh degeri anlik
+        olarak gercek gorunur alandan buyuk hesaplanabiliyor ve bu da
+        sayfanin ekran disina tasmasina (taşma) yol aciyordu. h-svh (small
+        viewport height), adres cubugu TAMAMEN acikken olan en kucuk
+        yuksekligi kullanir; bu deger asla gorunur alani asmayacagi icin
+        taşma bir daha olusamaz (bedeli: adres cubugu gizlendiginde altta
+        birkac piksellik bos alan kalabilir - bu, taşmadan cok daha iyi).
       */}
-      <body className="h-dvh flex flex-col overflow-hidden">
+      <body className="h-svh flex flex-col overflow-hidden">
         <SwKaydet />
         {children}
       </body>
