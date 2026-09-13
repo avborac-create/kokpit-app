@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { KullaniciRolu } from "@prisma/client";
 import { cikisYap } from "@/core/auth/actions";
 import { Dugme } from "@/core/ui/button";
+import { OneriButonu } from "@/core/oneri/oneri-butonu";
 import { KenarCubugu } from "./kenar-cubugu";
 
 // Apple'in kendi uygulamalarindaki (Ayarlar, Mail) master-detail deseni:
@@ -18,7 +20,7 @@ export function KokpitKabuk({
 }: {
   children: React.ReactNode;
   kullaniciAdSoyad?: string;
-  kullaniciRol?: string;
+  kullaniciRol?: KullaniciRolu;
 }) {
   const pathname = usePathname();
   const modulSeciliMi = pathname !== "/kokpit";
@@ -34,7 +36,7 @@ export function KokpitKabuk({
           <p className="text-base font-semibold tracking-tight text-white">KOKPİT</p>
           <p className="text-sm text-white/45">Eces Hukuk Bürosu</p>
         </div>
-        <KenarCubugu />
+        <KenarCubugu kullaniciRol={kullaniciRol} />
       </aside>
       <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
         <header className="glass m-3 flex items-center justify-between rounded-2xl px-4 py-3 md:px-6">
@@ -52,11 +54,14 @@ export function KokpitKabuk({
               </span>
             </div>
           </div>
-          <form action={cikisYap}>
-            <Dugme type="submit" varyant="ikincil">
-              Çıkış Yap
-            </Dugme>
-          </form>
+          <div className="flex items-center gap-2">
+            <OneriButonu />
+            <form action={cikisYap}>
+              <Dugme type="submit" varyant="ikincil">
+                Çıkış Yap
+              </Dugme>
+            </form>
+          </div>
         </header>
         <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-6 md:px-6">{children}</main>
       </div>

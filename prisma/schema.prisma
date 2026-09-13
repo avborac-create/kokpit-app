@@ -54,6 +54,7 @@ model Kullanici {
 
   sorumluOlduguMusteriler Musteri[]     @relation("MusteriSorumluAvukat")
   sorumluOlduguDosyalar   DavaDosyasi[] @relation("DavaDosyasiSorumluAvukat")
+  gonderdigiOneriler      Oneri[]
 
   @@map("kullanicilar")
 }
@@ -288,4 +289,28 @@ model DosyaMuvekkili {
   @@unique([dosyaId, musteriId])
   @@index([musteriId])
   @@map("dosya_muvekkilleri")
+}
+
+// ============================================================
+// CEKIRDEK: Sayfa Onerileri (Geri Bildirim)
+// ============================================================
+
+// Kullanicinin herhangi bir sayfada bir bolge secip kisa bir aciklamayla
+// gonderdigi tasarim/veri onerisi. Yonetici/Ortak rolunun gonderdigi
+// oneriler dogrudan hayata gecirilir; diger roller gonderdiginde
+// yoneticiye onay icin sorulur (bkz. ARCHITECTURE.md).
+model Oneri {
+  id          String    @id @default(cuid())
+  kullaniciId String
+  kullanici   Kullanici @relation(fields: [kullaniciId], references: [id], onDelete: Cascade)
+
+  metin     String
+  sayfaYolu String
+  gorselVeri String? // secilen bolgenin ekran goruntusu (data:image/jpeg;base64,...)
+  islendiMi Boolean @default(false)
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([kullaniciId])
+  @@map("oneriler")
 }

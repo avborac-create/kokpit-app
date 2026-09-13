@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { KullaniciRolu } from "@prisma/client";
 import { MODUL_KAYIT_DEFTERI } from "@/core/modul-kayit-defteri";
 
-export function KenarCubugu() {
+export function KenarCubugu({ kullaniciRol }: { kullaniciRol?: KullaniciRolu }) {
   const yol = usePathname();
+  const gorunurModuller = MODUL_KAYIT_DEFTERI.filter(
+    (modul) => !modul.rolGorebilir || (kullaniciRol && modul.rolGorebilir.includes(kullaniciRol)),
+  );
 
   return (
     <nav className="flex flex-col gap-1 p-3">
-      {MODUL_KAYIT_DEFTERI.map((modul) => {
+      {gorunurModuller.map((modul) => {
         const seciliMi = yol.startsWith(modul.yol);
         if (!modul.aktif) {
           return (
