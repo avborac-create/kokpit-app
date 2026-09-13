@@ -15,7 +15,12 @@ export async function musterileriListele(filtre: MusteriFiltre = {}) {
       ...(filtre.durumKod ? { durum: { kod: filtre.durumKod } } : {}),
       ...(filtre.sorumluAvukatId ? { sorumluAvukatId: filtre.sorumluAvukatId } : {}),
     },
-    include: { tip: true, durum: true, sorumluAvukat: true },
+    include: {
+      tip: true,
+      durum: true,
+      sorumluAvukat: true,
+      _count: { select: { paraTrafigi: true } },
+    },
     orderBy: { olusturmaTarihi: "desc" },
   });
 }
