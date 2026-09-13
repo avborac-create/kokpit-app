@@ -6,7 +6,7 @@ export function DosyaSecici({
   return (
     <div className="col-span-2 mb-4 md:col-span-4">
       <p className="mb-1 block text-sm font-medium text-white/70">
-        Hangi Dava Dosyası/Dosyalarına İstinaden (opsiyonel)
+        Hangi Uyuşmazlık Dosyası/Dosyalarına İstinaden (opsiyonel)
       </p>
       {dosyalar.length === 0 ? (
         <p className="glass rounded-xl px-3 py-2 text-sm text-white/40">
