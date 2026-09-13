@@ -6,7 +6,10 @@ import { dosyaMasrafiSil } from "@/modules/dava-dosyasi/lib/actions";
 import { Dugme } from "@/core/ui/button";
 
 type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
-type Masraf = DosyaDetay["masraflar"][number];
+// Prisma'nin Decimal tipi Server->Client Component sinirini gecemez;
+// bu yuzden tutar burada duz number olarak kabul edilir (page.tsx'te
+// Number(...) ile donusturulup gecirilir).
+type Masraf = Omit<DosyaDetay["masraflar"][number], "tutar"> & { tutar: number };
 
 const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");

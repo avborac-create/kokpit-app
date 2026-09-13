@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { davaDosyasiGetir } from "@/modules/dava-dosyasi/lib/queries";
+import { davaDosyasiGetir, dosyaCariHesapOzeti } from "@/modules/dava-dosyasi/lib/queries";
 import { dosyaMasrafiEkle } from "@/modules/dava-dosyasi/lib/actions";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 import { DosyaParaTrafigiListesi } from "@/modules/dava-dosyasi/components/dosya-para-trafigi-listesi";
 import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
 import { MasrafListesi } from "@/modules/dava-dosyasi/components/masraf-listesi";
+import { CariHesapOzeti } from "@/modules/dava-dosyasi/components/cari-hesap-ozeti";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { Dugme } from "@/core/ui/button";
@@ -18,7 +19,11 @@ export default async function DavaDosyasiDetaySayfasi({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [dosya, kullanici] = await Promise.all([davaDosyasiGetir(id), mevcutKullanici()]);
+  const [dosya, kullanici, cariHesapOzeti] = await Promise.all([
+    davaDosyasiGetir(id),
+    mevcutKullanici(),
+    dosyaCariHesapOzeti(id),
+  ]);
   if (!dosya) notFound();
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
@@ -96,6 +101,11 @@ export default async function DavaDosyasiDetaySayfasi({
         )}
       </div>
 
+      <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Cari Hesap Özeti</h2>
+      <div className="mb-8">
+        <CariHesapOzeti ozet={cariHesapOzeti} />
+      </div>
+
       <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Para Trafiği</h2>
       <p className="mb-3 text-sm text-white/45">
         Yeni bir kayıt eklemek için ilgili müvekkilin Finans sayfasına gidip &quot;Hangi Uyuşmazlık
@@ -107,7 +117,11 @@ export default async function DavaDosyasiDetaySayfasi({
       <div className="mb-4">
         <MasrafFormu action={dosyaMasrafiEkle.bind(null, id)} />
       </div>
-      <MasrafListesi masraflar={dosya.masraflar} dosyaId={id} silmeYetkisiVar={silmeYetkisiVar} />
+      <MasrafListesi
+        masraflar={dosya.masraflar.map((m) => ({ ...m, tutar: Number(m.tutar) }))}
+        dosyaId={id}
+        silmeYetkisiVar={silmeYetkisiVar}
+      />
     </div>
   );
 }

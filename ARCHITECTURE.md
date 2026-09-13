@@ -145,6 +145,9 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   etmek için düşünülen ek bir alan (ör. çek seri no, VKN). **Şimdilik
   ERTELENDİ** — ileride "tür" (Müşteri/Çek No/vb.) seçilebilen bir
   seçenek listesi + değer alanı olarak eklenecek; bugün zorunlu değil.
+- **Bloke Paralar**: Teminat, yakalama avansı, satış avansı, peşin
+  yediemin ücreti vb. — dosya kapsamında geçici olarak tutulan, dava/
+  icra sonuçlanınca iade edilecek tutarlar.
 - **Cari Hesap — Borç/Alacak yönü**: Müvekkilin bakış açısından klasik
   çift kolonlu defter:
   - **Alacak** = müvekkilden gelen tahsilat (`para_trafigi_tipi = tahsilat`)
@@ -175,6 +178,20 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   detayı. İkisi ayrı mekanizmalardır; bir cari kodun tasnif tutarı ile o
   kod altındaki masraf kalemlerinin toplamı arasındaki fark, o cari
   koddaki HARCANMAMIŞ/kalan bakiyedir (hata değildir).
+- **Cari Kodlar — beşinci kod "Emanet Hesabı"**: `Bloke Paralar`,
+  `Masraf Hesabı`, `Akdi Vekalet Hesabı`, `Ticari Hesap`'a ek olarak
+  `Emanet Hesabı` eklendi — para büronun geliri DEĞİL, müvekkilin de
+  doğrudan kendisine dönmeyecek, ÜÇÜNCÜ BİR TARAFA (başka bir icra
+  dosyası, ilamlı takip, yediemin/kayyum vb.) ödenmek üzere geçici
+  tutulan tutarlar için (uluslararası hukuk bürosu pratiğindeki "trust/
+  client account" karşılığı). `Ticari Hesap`'tan farkı: Ticari Hesap
+  nihayetinde MÜVEKKİLE ödenir, Emanet Hesabı nihayetinde BAŞKA BİR
+  YERE ödenir. Yalnızca `Akdi Vekalet Hesabı` büronun kesin/geri dönüşü
+  olmayan geliri olduğu için Borç/Alacak net hesabına dahil edilmez;
+  diğer tüm kodlar (Emanet Hesabı dahil) müvekkile ait sayılır.
+- **"Karma" ödeme**: Ayrı bir cari kod DEĞİLDİR — bir tahsilatın tasnifi
+  birden fazla cari koda bölündüğünde (tasnif ekranında birden fazla
+  alan doluysa) o ödeme zaten emergent olarak "karma" sayılır.
 
 ## PWA
 

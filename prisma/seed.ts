@@ -71,6 +71,7 @@ const SECENEK_LISTELERI: {
       { kod: "masraf_hesabi", etiket: "Masraf Hesabı" },
       { kod: "akdi_vekalet_hesabi", etiket: "Akdi Vekalet Hesabı" },
       { kod: "ticari_hesap", etiket: "Ticari Hesap" },
+      { kod: "emanet_hesabi", etiket: "Emanet Hesabı" },
     ],
   },
   {
