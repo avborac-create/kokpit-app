@@ -178,6 +178,14 @@ model MusteriParaTrafigi {
   // ParaTrafigiDosyasi ara tablosu.
   dosyalar ParaTrafigiDosyasi[]
 
+  // Musterinin ayirt edici unsuru (ör. "Asya Park Ticareti") - opsiyonel.
+  // Musteriden gelen bir para her zaman somut bir dava dosyasina
+  // baglanabilecek durumda olmayabilir (henuz dosya acilmamis olabilir),
+  // ama HANGI ticari iliskiye/uyusmazliga ait oldugu bilinebilir. Bu alan
+  // dosya secimi olmadan da grubun cari hesabina dahil olmayi saglar.
+  uyusmazlikGrubuId String?
+  uyusmazlikGrubu   UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])
+
   // Gelen tutarin cari kodlara (Bloke Paralar / Masraf Hesabi / Akdi Vekalet
   // Hesabi / Ticari Hesap vb.) nasil dagitildigi - bkz. ParaTrafigiTasnif.
   tasnif ParaTrafigiTasnif[]
@@ -186,6 +194,7 @@ model MusteriParaTrafigi {
 
   @@index([musteriId])
   @@index([durumId])
+  @@index([uyusmazlikGrubuId])
   @@map("musteri_para_trafigi")
 }
 
@@ -266,7 +275,8 @@ model UyusmazlikGrubu {
 
   olusturmaTarihi DateTime @default(now())
 
-  dosyalar DavaDosyasi[]
+  dosyalar             DavaDosyasi[]
+  paraTrafigiKayitlari MusteriParaTrafigi[]
 
   @@index([musteriId])
   @@map("uyusmazlik_gruplari")
