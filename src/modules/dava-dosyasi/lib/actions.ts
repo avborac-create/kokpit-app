@@ -60,6 +60,7 @@ export async function davaDosyasiOlustur(formData: FormData) {
 
   const karsiTarafId = await karsiTarafIdCozumle(formData, musteriIdleri);
   const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
+  const bagliOlduguDosyaId = metinYaAlNull(formData, "bagliOlduguDosyaId");
 
   const dosya = await prisma.davaDosyasi.create({
     data: {
@@ -68,6 +69,7 @@ export async function davaDosyasiOlustur(formData: FormData) {
       konu,
       karsiTarafId,
       uyusmazlikGrubuId,
+      bagliOlduguDosyaId,
       durumId,
       sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
       acilisTarihi: new Date(acilisTarihi),
@@ -98,6 +100,8 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
 
   const karsiTarafId = await karsiTarafIdCozumle(formData, musteriIdleri);
   const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
+  const bagliOlduguDosyaIdHam = metinYaAlNull(formData, "bagliOlduguDosyaId");
+  const bagliOlduguDosyaId = bagliOlduguDosyaIdHam === id ? null : bagliOlduguDosyaIdHam;
 
   await prisma.$transaction([
     prisma.davaDosyasi.update({
@@ -108,6 +112,7 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
         konu,
         karsiTarafId,
         uyusmazlikGrubuId,
+        bagliOlduguDosyaId,
         durumId,
         sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
         acilisTarihi: new Date(acilisTarihi),

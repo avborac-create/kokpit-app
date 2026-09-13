@@ -61,7 +61,33 @@ export default async function DavaDosyasiDetaySayfasi({
         </div>
         <div>
           <p className="text-white/45">Uyuşmazlık Grubu</p>
-          <p className="text-white">{dosya.uyusmazlikGrubu?.ad ?? "—"}</p>
+          <p className="text-white">
+            {dosya.uyusmazlikGrubu ? (
+              <Link
+                href={`/kokpit/dava-dosyalari/gruplar/${dosya.uyusmazlikGrubu.id}`}
+                className="hover:text-[#6db8ff] hover:underline"
+              >
+                {dosya.uyusmazlikGrubu.ad}
+              </Link>
+            ) : (
+              "—"
+            )}
+          </p>
+        </div>
+        <div>
+          <p className="text-white/45">Bağlı Olduğu Esas Dosya</p>
+          <p className="text-white">
+            {dosya.bagliOlduguDosya ? (
+              <Link
+                href={`/kokpit/dava-dosyalari/${dosya.bagliOlduguDosya.id}`}
+                className="hover:text-[#6db8ff] hover:underline"
+              >
+                {dosya.bagliOlduguDosya.dosyaNo ?? dosya.bagliOlduguDosya.konu}
+              </Link>
+            ) : (
+              "—"
+            )}
+          </p>
         </div>
         <div>
           <p className="text-white/45">Müvekkil(ler)</p>
@@ -101,7 +127,39 @@ export default async function DavaDosyasiDetaySayfasi({
         )}
       </div>
 
+      {dosya.baglananDosyalar.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">
+            Bu Dosyaya Bağlı Dosyalar
+          </h2>
+          <div className="flex flex-col gap-2">
+            {dosya.baglananDosyalar.map((bagli) => (
+              <Link
+                key={bagli.id}
+                href={`/kokpit/dava-dosyalari/${bagli.id}`}
+                className="glass rounded-xl px-4 py-2.5 text-sm text-white/85 hover:bg-white/[0.06] hover:text-[#6db8ff]"
+              >
+                {bagli.dosyaNo ? `${bagli.dosyaNo} — ` : ""}
+                {bagli.konu}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Cari Hesap Özeti</h2>
+      {dosya.uyusmazlikGrubu && (
+        <p className="mb-3 text-sm text-white/45">
+          Bu sadece bu dosyanın kırılımıdır. Müvekkilden gelen bir avans genelde tüm{" "}
+          <Link
+            href={`/kokpit/dava-dosyalari/gruplar/${dosya.uyusmazlikGrubu.id}`}
+            className="text-[#6db8ff] hover:underline"
+          >
+            {dosya.uyusmazlikGrubu.ad}
+          </Link>{" "}
+          grubuna aittir — asıl Borç/Alacak durumunu grup sayfasından takip edin.
+        </p>
+      )}
       <div className="mb-8">
         <CariHesapOzeti ozet={cariHesapOzeti} />
       </div>

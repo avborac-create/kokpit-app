@@ -194,8 +194,29 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   gruplamayı temsil eder (ör. "Asya Park Ticareti", "Hicret Kırtay İş
   Sözleşmesi"); her `DavaDosyasi` isteğe bağlı olarak bir gruba bağlanır.
   Gerçek örnek: "Asya Park Ticareti" grubu altında Ereğli(Konya) dosyası
-  (asıl borçlu), Koz Gıda dosyası (çek) ve Oğuz Han Özçelik TTOK dosyası
-  (kefil, temerrüt sonrası) bir arada tutulur.
+  (asıl borçlu), Koz Gıda dosyası (çek), İhtiyati Haciz mahkeme dosyası
+  (2026/353, farklı bir mahkeme — İstanbul 19 İcra'daki esas takipten
+  AYRI bir dosyadır), Bakırköy Talimat Dosyası ve Oğuz Han Özçelik TTOK
+  dosyası (kefil, temerrüt sonrası) bir arada tutulur.
+- **Uyuşmazlık Grubu = asıl Borç/Alacak/Bakiye seviyesi**: Müvekkilin
+  gözünden grup ayırt edici unsurdur ("bu parayı neye harcadınız?"
+  sorusuna müvekkil grup ismiyle cevap verir, dosya numarasıyla değil).
+  Müvekkilden istenen bir masraf avansı TEK bir dosyaya değil, TÜM
+  gruba aittir — hangi dosyaya harcanırsa harcansın aynı ortak cari
+  hesabın parçasıdır. Bu yüzden `uyusmazlikGrubuCariHesapOzeti()` (grup
+  içindeki TÜM dosyalara bağlı tasnif+masraf toplamı) asıl gösterilecek
+  Borç/Alacak/Bakiye'dir; `dosyaCariHesapOzeti()` (tek dosya) sadece
+  "grup içinde hangi dosyaya ne kadar gitti" diye bakmak için bir alt
+  kırılımdır. Grubun kendi sayfası: `/kokpit/dava-dosyalari/gruplar/[id]`.
+- **Dosya Bağlantısı (`DavaDosyasi.bagliOlduguDosyaId`)**: Talimat
+  dosyası gibi başka bir dosyanın uzantısı olan (o dosyaya SIKI SIKIYA
+  bağlı, tekil) dosyalar için kullanılır — kendi kendine referans veren
+  bir alan. `UyusmazlikGrubu`'ndan farkı: grup gevşek bir gruplamadır
+  (aynı alacağın BAĞIMSIZ kardeş dosyaları — icra ceza, ihtiyati haciz
+  gibi, hiçbiri "diğerinin uzantısı" değildir), bu alan ise "bu dosya
+  SOMUT OLARAK şu belirli esas dosyanın bir eki/talimatıdır" gibi kesin,
+  tekil bir bağı ifade eder. Örnek: Bakırköy Talimat Dosyası'nın
+  `bagliOlduguDosyaId`'si Koz Gıda esas icra dosyasını gösterir.
 - **Dosya Masrafı (`DosyaMasrafi`)**: Bir dosyaya iliişkin tek tek masraf
   kalemleri (harç, pul, dava masrafı, haciz avansı vb.) — gerçek
   muhasebe dökümlerindeki kalem-kalem yapıyı birebir yansıtır. Her kalem

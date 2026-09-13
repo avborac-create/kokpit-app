@@ -39,6 +39,8 @@ export async function davaDosyasiGetir(id: string) {
       sorumluAvukat: true,
       karsiTaraf: true,
       uyusmazlikGrubu: true,
+      bagliOlduguDosya: true,
+      baglananDosyalar: true,
       muvekkiller: { include: { musteri: true } },
       paraTrafigiKayitlari: {
         include: {
@@ -80,12 +82,16 @@ export async function uyusmazlikGruplariniListele(musteriIdleri: string[]) {
   });
 }
 
-// Bir dosyanin cari kod bazinda Borc/Alacak/Bakiye ozeti: tasnif = paranin
-// GELIRKEN bu koda ayrilan kismi (ParaTrafigiTasnif, dosyaya baglanan
-// odemeler uzerinden); masraf = o koddan SONRADAN yapilan harcamalarin
-// toplami (DosyaMasrafi). Bakiye = tasnif - masraf: pozitifse o kodda
-// henuz kullanilmamis/kalan bir tutar var (bkz. ARCHITECTURE.md).
-export async function dosyaCariHesapOzeti(dosyaId: string) {
+// Cari kod bazinda Borc/Alacak/Bakiye ozeti (paylasilan cekirdek): tasnif =
+// paranin GELIRKEN bu koda ayrilan kismi (ParaTrafigiTasnif); masraf = o
+// koddan SONRADAN yapilan harcamalarin toplami (DosyaMasrafi). Bakiye =
+// tasnif - masraf: pozitifse o kodda henuz kullanilmamis/kalan bir tutar
+// var (bkz. ARCHITECTURE.md). `tasnifWhere`/`masrafWhere` cagiran tarafindan
+// (tek dosya ya da butun bir uyusmazlik grubu) verilir.
+async function cariHesapOzetiHesapla(
+  tasnifWhere: Parameters<typeof prisma.paraTrafigiTasnif.groupBy>[0]["where"],
+  masrafWhere: Parameters<typeof prisma.dosyaMasrafi.groupBy>[0]["where"],
+) {
   const [cariKodlar, tasnifToplamlari, masrafToplamlari] = await Promise.all([
     prisma.secenekDegeri.findMany({
       where: { liste: { anahtar: "cari_kod" } },
@@ -93,12 +99,12 @@ export async function dosyaCariHesapOzeti(dosyaId: string) {
     }),
     prisma.paraTrafigiTasnif.groupBy({
       by: ["cariKodId"],
-      where: { paraTrafigi: { dosyalar: { some: { dosyaId } } } },
+      where: tasnifWhere,
       _sum: { tutar: true },
     }),
     prisma.dosyaMasrafi.groupBy({
       by: ["cariKodId"],
-      where: { dosyaId },
+      where: masrafWhere,
       _sum: { tutar: true },
     }),
   ]);
@@ -118,4 +124,38 @@ export async function dosyaCariHesapOzeti(dosyaId: string) {
       };
     })
     .filter((satir) => satir.tasnifToplami !== 0 || satir.masrafToplami !== 0);
+}
+
+export async function dosyaCariHesapOzeti(dosyaId: string) {
+  return cariHesapOzetiHesapla(
+    { paraTrafigi: { dosyalar: { some: { dosyaId } } } },
+    { dosyaId },
+  );
+}
+
+// Uyuşmazlık grubu seviyesinde ozet: mustekilden gelen bir masraf avansi
+// genelde TEK bir dosyaya degil, butun ticari iliskiye (ör. "Asya Park
+// Ticareti") aittir - grup icindeki HERHANGI bir dosyaya baglanan
+// odeme/masraf, grubun ortak cari hesabinin bir parcasidir. Bu yuzden
+// müvekkile/büroya asil gosterilecek Borc/Alacak/Bakiye bu seviyededir;
+// dosyaCariHesapOzeti sadece grup icinde "hangi dosyaya ne kadar gitti"
+// diye bakmak icin bir alt-kirilimdir.
+export async function uyusmazlikGrubuCariHesapOzeti(uyusmazlikGrubuId: string) {
+  return cariHesapOzetiHesapla(
+    { paraTrafigi: { dosyalar: { some: { dosya: { uyusmazlikGrubuId } } } } },
+    { dosya: { uyusmazlikGrubuId } },
+  );
+}
+
+export async function uyusmazlikGrubuGetir(id: string) {
+  return prisma.uyusmazlikGrubu.findUnique({
+    where: { id },
+    include: {
+      musteri: true,
+      dosyalar: {
+        include: { durum: true, karsiTaraf: true, bagliOlduguDosya: true },
+        orderBy: { olusturmaTarihi: "asc" },
+      },
+    },
+  });
 }

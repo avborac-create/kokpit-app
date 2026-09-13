@@ -284,6 +284,15 @@ model DavaDosyasi {
   karsiTaraf        KarsiTaraf?      @relation(fields: [karsiTarafId], references: [id])
   uyusmazlikGrubuId String?
   uyusmazlikGrubu   UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])
+  // Talimat dosyasi gibi baska bir dosyaya siki sikiya bagli (o dosyanin
+  // bir uzantisi olan) dosyalar icin: hangi ESAS dosyaya bagli oldugu.
+  // UyusmazlikGrubu'ndan farki: grup gevsek bir gruplamadir (ayni alacagin
+  // bagimsiz kardes dosyalari - icra ceza, ihtiyati haciz vb.), bu alan ise
+  // "bu dosya somut olarak şu belirli dosyanin bir eki/talimatidir" gibi
+  // kesin, tekil bir bagi ifade eder.
+  bagliOlduguDosyaId String?
+  bagliOlduguDosya   DavaDosyasi?  @relation("DosyaBaglantisi", fields: [bagliOlduguDosyaId], references: [id])
+  baglananDosyalar   DavaDosyasi[] @relation("DosyaBaglantisi")
   durumId           String
   durum             SecenekDegeri    @relation("DavaDosyasiDurumu", fields: [durumId], references: [id])
   sorumluAvukatId   String?
@@ -302,6 +311,7 @@ model DavaDosyasi {
   @@index([sorumluAvukatId])
   @@index([karsiTarafId])
   @@index([uyusmazlikGrubuId])
+  @@index([bagliOlduguDosyaId])
   @@map("dava_dosyalari")
 }
 

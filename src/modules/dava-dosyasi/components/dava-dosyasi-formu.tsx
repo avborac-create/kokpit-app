@@ -5,6 +5,7 @@ import { musterileriListele, avukatlariListele } from "@/modules/musteri/lib/que
 import {
   karsiTaraflariListele,
   uyusmazlikGruplariniListele,
+  musterininDosyalari,
   type davaDosyasiGetir,
 } from "@/modules/dava-dosyasi/lib/queries";
 import { MuvekkilSecici } from "./muvekkil-secici";
@@ -32,10 +33,12 @@ export async function DavaDosyasiFormu({
 
   const seciliIdler =
     dosya?.muvekkiller.map((m) => m.musteriId) ?? (onSecilenMusteriId ? [onSecilenMusteriId] : []);
-  const [karsiTaraflar, uyusmazlikGruplari] = await Promise.all([
+  const [karsiTaraflar, uyusmazlikGruplari, muvekkilinDosyalari] = await Promise.all([
     karsiTaraflariListele(seciliIdler),
     uyusmazlikGruplariniListele(seciliIdler),
+    seciliIdler[0] ? musterininDosyalari(seciliIdler[0]) : Promise.resolve([]),
   ]);
+  const esasDosyaAdaylari = muvekkilinDosyalari.filter((d) => d.id !== dosya?.id);
   const acilisVarsayilan = dosya
     ? dosya.acilisTarihi.toISOString().slice(0, 10)
     : new Date().toISOString().slice(0, 10);
@@ -133,6 +136,28 @@ export async function DavaDosyasiFormu({
         Aynı alacağın/uyuşmazlığın tahsili için birden fazla dosya açılırsa (örn. asıl borçlu ve
         sonradan devreye giren kefil), bu dosyaları aynı grup altında toplayın.
       </p>
+
+      <Alan>
+        <Etiket htmlFor="bagliOlduguDosyaId">Bağlı Olduğu Esas Dosya (opsiyonel)</Etiket>
+        <Secim
+          id="bagliOlduguDosyaId"
+          name="bagliOlduguDosyaId"
+          defaultValue={dosya?.bagliOlduguDosyaId ?? ""}
+        >
+          <option value="">— (bağımsız/esas dosya) —</option>
+          {esasDosyaAdaylari.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.dosyaNo ? `${d.dosyaNo} — ` : ""}
+              {d.konu}
+            </option>
+          ))}
+        </Secim>
+        <p className="mt-1 text-xs text-white/35">
+          Talimat dosyası gibi başka bir dosyanın uzantısı olan dosyalar için: hangi esas dosyaya
+          bağlı olduğunu seçin (örn. bir icra dosyasının haciz için başka bir icra dairesine
+          gönderilen talimat dosyası).
+        </p>
+      </Alan>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Alan>
