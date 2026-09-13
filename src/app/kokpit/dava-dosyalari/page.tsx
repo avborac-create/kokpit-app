@@ -71,7 +71,11 @@ export default async function DavaDosyalariSayfasi({
                 </td>
                 <td className="px-4 py-3 text-white/60">{dosya.birimAdi ?? "—"}</td>
                 <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
-                <td className="px-4 py-3 text-white/60">{dosya.karsiTaraf?.ad ?? "—"}</td>
+                <td className="px-4 py-3 text-white/60">
+                  {dosya.karsiTaraflar.length > 0
+                    ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ")
+                    : "—"}
+                </td>
                 <td className="px-4 py-3 text-white/60">
                   {dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
                 </td>

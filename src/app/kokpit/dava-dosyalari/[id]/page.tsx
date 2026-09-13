@@ -58,8 +58,12 @@ export default async function DavaDosyasiDetaySayfasi({
           <p className="text-white">{dosya.birimAdi ?? "—"}</p>
         </div>
         <div>
-          <p className="text-white/45">Karşı Taraf</p>
-          <p className="text-white">{dosya.karsiTaraf?.ad ?? "—"}</p>
+          <p className="text-white/45">Karşı Taraf(lar)</p>
+          <p className="text-white">
+            {dosya.karsiTaraflar.length > 0
+              ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ")
+              : "—"}
+          </p>
         </div>
         <div>
           <p className="text-white/45">Uyuşmazlık Grubu</p>

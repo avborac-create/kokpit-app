@@ -9,6 +9,7 @@ import {
   type davaDosyasiGetir,
 } from "@/modules/dava-dosyasi/lib/queries";
 import { MuvekkilSecici } from "./muvekkil-secici";
+import { KarsiTarafSecici } from "./karsi-taraf-secici";
 
 type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
 
@@ -89,23 +90,14 @@ export async function DavaDosyasiFormu({
 
       <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdler} />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Alan>
-          <Etiket htmlFor="karsiTarafId">Karşı Taraf</Etiket>
-          <Secim id="karsiTarafId" name="karsiTarafId" defaultValue={dosya?.karsiTarafId ?? ""}>
-            <option value="">Seçiniz…</option>
-            {karsiTaraflar.map((kt) => (
-              <option key={kt.id} value={kt.id}>
-                {kt.ad}
-              </option>
-            ))}
-          </Secim>
-        </Alan>
-        <Alan>
-          <Etiket htmlFor="yeniKarsiTarafAdi">veya Yeni Karşı Taraf Ekle</Etiket>
-          <Girdi id="yeniKarsiTarafAdi" name="yeniKarsiTarafAdi" placeholder="Koz Gıda vb." />
-        </Alan>
-      </div>
+      <KarsiTarafSecici
+        karsiTaraflar={karsiTaraflar}
+        seciliIdler={dosya?.karsiTaraflar.map((kt) => kt.karsiTarafId) ?? []}
+      />
+      <Alan>
+        <Etiket htmlFor="yeniKarsiTarafAdi">veya Yeni Karşı Taraf Ekle</Etiket>
+        <Girdi id="yeniKarsiTarafAdi" name="yeniKarsiTarafAdi" placeholder="Koz Gıda vb." />
+      </Alan>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Alan>

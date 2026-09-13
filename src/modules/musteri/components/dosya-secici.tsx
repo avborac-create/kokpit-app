@@ -6,7 +6,7 @@ export function DosyaSecici({
     id: string;
     dosyaNo: string | null;
     konu: string;
-    karsiTaraf: { ad: string } | null;
+    karsiTaraflar: { karsiTaraf: { ad: string } }[];
   }[];
   seciliDosyaIdler?: string[];
 }) {
@@ -35,8 +35,11 @@ export function DosyaSecici({
               />
               {dosya.dosyaNo ? `${dosya.dosyaNo} — ` : ""}
               {dosya.konu}
-              {dosya.karsiTaraf && (
-                <span className="text-white/45"> ({dosya.karsiTaraf.ad})</span>
+              {dosya.karsiTaraflar.length > 0 && (
+                <span className="text-white/45">
+                  {" "}
+                  ({dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ")})
+                </span>
               )}
             </label>
           ))}

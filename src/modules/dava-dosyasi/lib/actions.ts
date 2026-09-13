@@ -15,18 +15,20 @@ function musteriIdleriniAl(formData: FormData): string[] {
   return formData.getAll("musteriIds").map(String).filter(Boolean);
 }
 
-// Karsi taraf secimini cozumler: "yeniKarsiTarafAdi" doluysa yeni bir
-// KarsiTaraf olusturup id'sini dondurur, degilse secilen "karsiTarafId"yi
-// (varsa) kullanir.
-async function karsiTarafIdCozumle(formData: FormData, musteriIdleri: string[]): Promise<string | null> {
+// Karsi taraf secimini cozumler: secilen "karsiTarafIds" (coklu - bir
+// icra takibi genelde cek/bono zincirindeki TUM muteselsil sorumlulara
+// birden acilir, tek bir karsi tarafa degil) + "yeniKarsiTarafAdi"
+// doluysa yeni bir KarsiTaraf olusturup listeye ekler.
+async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: string[]): Promise<string[]> {
+  const secilenIdler = formData.getAll("karsiTarafIds").map(String).filter(Boolean);
   const yeniAd = metinYaAlNull(formData, "yeniKarsiTarafAdi");
   if (yeniAd) {
     const yeni = await prisma.karsiTaraf.create({
       data: { musteriId: musteriIdleri[0], ad: yeniAd },
     });
-    return yeni.id;
+    return [...secilenIdler, yeni.id];
   }
-  return metinYaAlNull(formData, "karsiTarafId");
+  return secilenIdler;
 }
 
 // Uyusmazlik grubu secimini cozumler: "yeniUyusmazlikGrubuAdi" doluysa yeni
@@ -58,7 +60,7 @@ export async function davaDosyasiOlustur(formData: FormData) {
     throw new Error("En az bir müvekkil seçilmelidir.");
   }
 
-  const karsiTarafId = await karsiTarafIdCozumle(formData, musteriIdleri);
+  const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
   const bagliOlduguDosyaId = metinYaAlNull(formData, "bagliOlduguDosyaId");
 
@@ -67,7 +69,6 @@ export async function davaDosyasiOlustur(formData: FormData) {
       dosyaNo: metinYaAlNull(formData, "dosyaNo"),
       birimAdi: metinYaAlNull(formData, "birimAdi"),
       konu,
-      karsiTarafId,
       uyusmazlikGrubuId,
       bagliOlduguDosyaId,
       durumId,
@@ -76,6 +77,9 @@ export async function davaDosyasiOlustur(formData: FormData) {
       aciklama: metinYaAlNull(formData, "aciklama"),
       muvekkiller: {
         create: musteriIdleri.map((musteriId) => ({ musteriId })),
+      },
+      karsiTaraflar: {
+        create: karsiTarafIdleri.map((karsiTarafId) => ({ karsiTarafId })),
       },
     },
   });
@@ -98,7 +102,7 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
     throw new Error("En az bir müvekkil seçilmelidir.");
   }
 
-  const karsiTarafId = await karsiTarafIdCozumle(formData, musteriIdleri);
+  const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
   const bagliOlduguDosyaIdHam = metinYaAlNull(formData, "bagliOlduguDosyaId");
   const bagliOlduguDosyaId = bagliOlduguDosyaIdHam === id ? null : bagliOlduguDosyaIdHam;
@@ -110,7 +114,6 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
         dosyaNo: metinYaAlNull(formData, "dosyaNo"),
         birimAdi: metinYaAlNull(formData, "birimAdi"),
         konu,
-        karsiTarafId,
         uyusmazlikGrubuId,
         bagliOlduguDosyaId,
         durumId,
@@ -128,6 +131,16 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
         where: { dosyaId_musteriId: { dosyaId: id, musteriId } },
         update: {},
         create: { dosyaId: id, musteriId },
+      }),
+    ),
+    prisma.dosyaKarsiTarafi.deleteMany({
+      where: { dosyaId: id, karsiTarafId: { notIn: karsiTarafIdleri } },
+    }),
+    ...karsiTarafIdleri.map((karsiTarafId) =>
+      prisma.dosyaKarsiTarafi.upsert({
+        where: { dosyaId_karsiTarafId: { dosyaId: id, karsiTarafId } },
+        update: {},
+        create: { dosyaId: id, karsiTarafId },
       }),
     ),
   ]);

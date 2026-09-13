@@ -161,6 +161,17 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   KARIŞTIRILMAMALI. Bir karşı tarafa birden fazla dava dosyası
   bağlanabilir (ör. Koz Gıda'ya karşı hem icra hem ihtiyati haciz hem
   icra ceza dosyası).
+- **Bir dosyanın BİRDEN FAZLA karşı tarafı olabilir (`DosyaKarsiTarafi`)**:
+  `DavaDosyasi <-> KarsiTaraf` ilişkisi `DosyaMuvekkili` ile aynı desende
+  çoka-çok bir ara tablodur (önceden tekil `karsiTarafId` idi). Gerçek
+  örnek: bir çek/bono zincirinde keşideci + cirantalar (ör. Nasip Sac
+  keşideci, Mata Kauçuk ve Gençler Kauçuk cirantalar) genelde AYNI esas
+  icra takibinde birlikte, müteselsil sorumlu olarak takip edilir — üç
+  ayrı dosya değil, tek dosyaya bağlı üç karşı taraf. Buna karşın
+  karşılıksız çek icra ceza davası SADECE keşideci hakkında açılır (bkz.
+  ilgili grup örneği: "Mata Kauçuk Ticareti" grubunda esas icra dosyası
+  Nasip Sac+Mata Kauçuk+Gençler Kauçuk'a birden açık, icra ceza dosyası
+  ise sadece Nasip Sac'a karşı).
 - **MAK (ayırt edici kod)**: Karşı tarafı isim çakışmasına karşı ayırt
   etmek için düşünülen ek bir alan (ör. çek seri no, VKN). **Şimdilik
   ERTELENDİ** — ileride "tür" (Müşteri/Çek No/vb.) seçilebilen bir

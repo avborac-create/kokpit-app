@@ -253,10 +253,29 @@ model KarsiTaraf {
 
   olusturmaTarihi DateTime @default(now())
 
-  dosyalar DavaDosyasi[]
+  dosyalar DosyaKarsiTarafi[]
 
   @@index([musteriId])
   @@map("karsi_taraflar")
+}
+
+// DavaDosyasi <-> KarsiTaraf coka-cok ara tablosu (DosyaMuvekkili ile
+// aynı desen). Bir icra takibi genelde TEK bir karsi tarafa degil, cek/
+// bono zincirindeki TUM muteselsil sorumlulara (kesideci + cirantalar)
+// birden acilir - ayni esas dosyada birden fazla borclu birlikte takip
+// edilir (bkz. ARCHITECTURE.md).
+model DosyaKarsiTarafi {
+  id           String      @id @default(cuid())
+  dosyaId      String
+  dosya        DavaDosyasi @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+  karsiTarafId String
+  karsiTaraf   KarsiTaraf  @relation(fields: [karsiTarafId], references: [id], onDelete: Cascade)
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@unique([dosyaId, karsiTarafId])
+  @@index([karsiTarafId])
+  @@map("dosya_karsi_taraflari")
 }
 
 // Ayni alacagin/uyusmazligin tahsili icin birden fazla karsi taraf ve dosya
@@ -290,8 +309,6 @@ model DavaDosyasi {
   dosyaNo           String?
   birimAdi          String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
   konu              String
-  karsiTarafId      String?
-  karsiTaraf        KarsiTaraf?      @relation(fields: [karsiTarafId], references: [id])
   uyusmazlikGrubuId String?
   uyusmazlikGrubu   UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])
   // Talimat dosyasi gibi baska bir dosyaya siki sikiya bagli (o dosyanin
@@ -314,13 +331,13 @@ model DavaDosyasi {
   guncellemeTarihi  DateTime         @updatedAt
 
   muvekkiller          DosyaMuvekkili[]
+  karsiTaraflar        DosyaKarsiTarafi[]
   paraTrafigiKayitlari ParaTrafigiDosyasi[]
   masraflar            DosyaMasrafi[]
   karsiTarafAlacaklari KarsiTarafAlacagi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
-  @@index([karsiTarafId])
   @@index([uyusmazlikGrubuId])
   @@index([bagliOlduguDosyaId])
   @@map("dava_dosyalari")

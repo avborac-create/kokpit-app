@@ -23,7 +23,7 @@ export async function davaDosyalariniListele(filtre: DavaDosyasiFiltre = {}) {
     include: {
       durum: true,
       sorumluAvukat: true,
-      karsiTaraf: true,
+      karsiTaraflar: { include: { karsiTaraf: true } },
       uyusmazlikGrubu: true,
       muvekkiller: { include: { musteri: true } },
     },
@@ -37,7 +37,7 @@ export async function davaDosyasiGetir(id: string) {
     include: {
       durum: true,
       sorumluAvukat: true,
-      karsiTaraf: true,
+      karsiTaraflar: { include: { karsiTaraf: true } },
       uyusmazlikGrubu: true,
       bagliOlduguDosya: true,
       baglananDosyalar: true,
@@ -64,7 +64,7 @@ export async function davaDosyasiGetir(id: string) {
 export async function musterininDosyalari(musteriId: string) {
   return prisma.davaDosyasi.findMany({
     where: { muvekkiller: { some: { musteriId } } },
-    include: { durum: true, karsiTaraf: true },
+    include: { durum: true, karsiTaraflar: { include: { karsiTaraf: true } } },
     orderBy: { olusturmaTarihi: "desc" },
   });
 }
@@ -195,7 +195,7 @@ export async function uyusmazlikGrubuGetir(id: string) {
     include: {
       musteri: true,
       dosyalar: {
-        include: { durum: true, karsiTaraf: true, bagliOlduguDosya: true },
+        include: { durum: true, karsiTaraflar: { include: { karsiTaraf: true } }, bagliOlduguDosya: true },
         orderBy: { olusturmaTarihi: "asc" },
       },
     },
