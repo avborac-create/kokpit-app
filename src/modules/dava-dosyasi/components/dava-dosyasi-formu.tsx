@@ -26,8 +26,9 @@ export async function DavaDosyasiFormu({
   gonderButonuMetni,
   onSecilenMusteriId,
 }: Props) {
-  const [durumlar, avukatlar, musteriler] = await Promise.all([
+  const [durumlar, turler, avukatlar, musteriler] = await Promise.all([
     secenekleriGetir("dava_dosyasi_durumu"),
+    secenekleriGetir("dosya_turu"),
     avukatlariListele(),
     musterileriListele(),
   ]);
@@ -49,13 +50,17 @@ export async function DavaDosyasiFormu({
     <form action={action} className="max-w-xl">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Alan>
-          <Etiket htmlFor="dosyaNo">Dosya No</Etiket>
-          <Girdi
-            id="dosyaNo"
-            name="dosyaNo"
-            placeholder="Esas no vb."
-            defaultValue={dosya?.dosyaNo ?? ""}
-          />
+          <Etiket htmlFor="turId">Dosya Türü</Etiket>
+          <Secim id="turId" name="turId" required defaultValue={dosya?.turId ?? ""}>
+            <option value="" disabled>
+              Seçiniz…
+            </option>
+            {turler.map((tur) => (
+              <option key={tur.id} value={tur.id}>
+                {tur.etiket}
+              </option>
+            ))}
+          </Secim>
         </Alan>
         <Alan>
           <Etiket htmlFor="durumId">Durum</Etiket>
@@ -72,16 +77,26 @@ export async function DavaDosyasiFormu({
         </Alan>
       </div>
 
-      <Alan>
-        <Etiket htmlFor="birimAdi">Birim Adı (Mahkeme/İcra Dairesi)</Etiket>
-        <Girdi
-          id="birimAdi"
-          name="birimAdi"
-          required
-          placeholder="İstanbul 19. İcra Dairesi vb."
-          defaultValue={dosya?.birimAdi ?? ""}
-        />
-      </Alan>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Alan>
+          <Etiket htmlFor="dosyaNo">Dosya No</Etiket>
+          <Girdi
+            id="dosyaNo"
+            name="dosyaNo"
+            placeholder="Esas no vb."
+            defaultValue={dosya?.dosyaNo ?? ""}
+          />
+        </Alan>
+        <Alan>
+          <Etiket htmlFor="birimAdi">Birim Adı (Mahkeme/İcra Dairesi, varsa)</Etiket>
+          <Girdi
+            id="birimAdi"
+            name="birimAdi"
+            placeholder="İstanbul 19. İcra Dairesi vb."
+            defaultValue={dosya?.birimAdi ?? ""}
+          />
+        </Alan>
+      </div>
 
       <Alan>
         <Etiket htmlFor="konu">Konu</Etiket>

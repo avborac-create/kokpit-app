@@ -90,6 +90,7 @@ model SecenekDegeri {
   paraTrafigiDurum  MusteriParaTrafigi[] @relation("ParaTrafigiDurumu")
   paraTrafigiKaynak MusteriParaTrafigi[] @relation("ParaTrafigiKaynagi")
   davaDosyalariDurum DavaDosyasi[]       @relation("DavaDosyasiDurumu")
+  davaDosyalariTuru  DavaDosyasi[]       @relation("DavaDosyasiTuru")
   paraTrafigiTasnifCariKod ParaTrafigiTasnif[] @relation("ParaTrafigiTasnifCariKod")
   dosyaMasrafiCariKod DosyaMasrafi[] @relation("DosyaMasrafiCariKod")
   dosyaMasrafiTuru    DosyaMasrafi[] @relation("DosyaMasrafiTuru")
@@ -309,6 +310,13 @@ model DavaDosyasi {
   dosyaNo           String?
   birimAdi          String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
   konu              String
+  // Dosya turu: ihtar/arabuluculuk/muzakere gibi dava/icra oncesi
+  // asamalari da, esas icra/talimat/dava/icra ceza gibi resmi dosyalari da
+  // kapsayan tek bir secenek listesi (bkz. ARCHITECTURE.md). Nullable:
+  // eski kayitlar geriye donuk turlendirilene kadar bos kalabilir, ama
+  // yeni dosya formunda zorunlu tutulur.
+  turId             String?
+  tur               SecenekDegeri?   @relation("DavaDosyasiTuru", fields: [turId], references: [id])
   uyusmazlikGrubuId String?
   uyusmazlikGrubu   UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])
   // Talimat dosyasi gibi baska bir dosyaya siki sikiya bagli (o dosyanin
@@ -340,6 +348,7 @@ model DavaDosyasi {
   @@index([sorumluAvukatId])
   @@index([uyusmazlikGrubuId])
   @@index([bagliOlduguDosyaId])
+  @@index([turId])
   @@map("dava_dosyalari")
 }
 

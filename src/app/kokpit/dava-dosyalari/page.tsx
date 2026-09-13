@@ -18,7 +18,7 @@ export default async function DavaDosyalariSayfasi({
   return (
     <div className="pt-3">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">Dava Dosyaları</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">Dosyalar</h1>
         <Link href="/kokpit/dava-dosyalari/yeni">
           <Dugme>+ Yeni Dosya</Dugme>
         </Link>
@@ -50,6 +50,7 @@ export default async function DavaDosyalariSayfasi({
           <thead className="text-white/50">
             <tr>
               <th className="px-4 py-3 font-medium">Dosya No</th>
+              <th className="px-4 py-3 font-medium">Tür</th>
               <th className="px-4 py-3 font-medium">Birim</th>
               <th className="px-4 py-3 font-medium">Konu</th>
               <th className="px-4 py-3 font-medium">Karşı Taraf</th>
@@ -69,6 +70,7 @@ export default async function DavaDosyalariSayfasi({
                     {dosya.dosyaNo ?? "—"}
                   </Link>
                 </td>
+                <td className="px-4 py-3 text-white/60">{dosya.tur?.etiket ?? "—"}</td>
                 <td className="px-4 py-3 text-white/60">{dosya.birimAdi ?? "—"}</td>
                 <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
                 <td className="px-4 py-3 text-white/60">
@@ -89,7 +91,7 @@ export default async function DavaDosyalariSayfasi({
             ))}
             {dosyalar.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={8} className="px-4 py-8 text-center text-white/40">
                   Kayıt bulunamadı.
                 </td>
               </tr>

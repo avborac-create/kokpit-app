@@ -50,11 +50,12 @@ async function uyusmazlikGrubuIdCozumle(formData: FormData, musteriIdleri: strin
 export async function davaDosyasiOlustur(formData: FormData) {
   const konu = String(formData.get("konu") ?? "").trim();
   const durumId = String(formData.get("durumId") ?? "");
+  const turId = String(formData.get("turId") ?? "");
   const acilisTarihi = String(formData.get("acilisTarihi") ?? "");
   const musteriIdleri = musteriIdleriniAl(formData);
 
-  if (!konu || !durumId || !acilisTarihi) {
-    throw new Error("Konu, durum ve açılış tarihi alanları zorunludur.");
+  if (!konu || !durumId || !turId || !acilisTarihi) {
+    throw new Error("Konu, tür, durum ve açılış tarihi alanları zorunludur.");
   }
   if (musteriIdleri.length === 0) {
     throw new Error("En az bir müvekkil seçilmelidir.");
@@ -69,6 +70,7 @@ export async function davaDosyasiOlustur(formData: FormData) {
       dosyaNo: metinYaAlNull(formData, "dosyaNo"),
       birimAdi: metinYaAlNull(formData, "birimAdi"),
       konu,
+      turId,
       uyusmazlikGrubuId,
       bagliOlduguDosyaId,
       durumId,
@@ -91,12 +93,13 @@ export async function davaDosyasiOlustur(formData: FormData) {
 export async function davaDosyasiGuncelle(id: string, formData: FormData) {
   const konu = String(formData.get("konu") ?? "").trim();
   const durumId = String(formData.get("durumId") ?? "");
+  const turId = String(formData.get("turId") ?? "");
   const acilisTarihi = String(formData.get("acilisTarihi") ?? "");
   const kapanisTarihiHam = String(formData.get("kapanisTarihi") ?? "").trim();
   const musteriIdleri = musteriIdleriniAl(formData);
 
-  if (!konu || !durumId || !acilisTarihi) {
-    throw new Error("Konu, durum ve açılış tarihi alanları zorunludur.");
+  if (!konu || !durumId || !turId || !acilisTarihi) {
+    throw new Error("Konu, tür, durum ve açılış tarihi alanları zorunludur.");
   }
   if (musteriIdleri.length === 0) {
     throw new Error("En az bir müvekkil seçilmelidir.");
@@ -114,6 +117,7 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
         dosyaNo: metinYaAlNull(formData, "dosyaNo"),
         birimAdi: metinYaAlNull(formData, "birimAdi"),
         konu,
+        turId,
         uyusmazlikGrubuId,
         bagliOlduguDosyaId,
         durumId,

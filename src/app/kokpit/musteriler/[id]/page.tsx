@@ -97,6 +97,7 @@ export default async function MusteriDetaySayfasi({
               <thead className="text-white/50">
                 <tr>
                   <th className="px-4 py-3 font-medium">Dosya No</th>
+                  <th className="px-4 py-3 font-medium">Tür</th>
                   <th className="px-4 py-3 font-medium">Konu</th>
                   <th className="px-4 py-3 font-medium">Durum</th>
                 </tr>
@@ -112,6 +113,7 @@ export default async function MusteriDetaySayfasi({
                         {dosya.dosyaNo ?? "—"}
                       </Link>
                     </td>
+                    <td className="px-4 py-3 text-white/60">{dosya.tur?.etiket ?? "—"}</td>
                     <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
                     <td className="px-4 py-3">
                       <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">

@@ -155,6 +155,22 @@ Bu henüz geliştirilmedi; ileride bir modül olarak ele alınacak.
 Karışıklığa mahal vermemek için burada netleşen kavramlar kayıt altına
 alınır; yeni bir tartışma açmadan önce buraya bakılır.
 
+- **"Dosyalar" (eski adıyla "Dava Dosyaları")**: Sol menüdeki modül adı
+  bilinçli olarak "Dosyalar"a çevrildi — `DavaDosyasi` modeli artık sadece
+  resmi mahkeme/icra dosyalarını değil, dava/icra ÖNCESİ aşamaları da
+  (ihtar, arabuluculuk, müzakere) kapsıyor. Bunu ayırt eden alan
+  `DavaDosyasi.turId` → `dosya_turu` seçenek listesi: `ihtar_dosyasi`,
+  `arabuluculuk_dosyasi`, `muzakere_dosyasi` (dava/icra hiç açılmadan
+  sadece borçluyla pazarlık edilen dosyalar için), `esas_icra_dosyasi`,
+  `talimat_dosyasi` (esas icranın alt türü, `bagliOlduguDosyaId` ile
+  bağlanır), `ihtiyati_haciz_dosyasi`, `icra_ceza_davasi`, `dava_dosyasi`
+  (genel hukuk/ceza davası). Şimdilik hepsi AYNI `DavaDosyasi` şeması ve
+  formu üzerinden yönetiliyor (tür bazlı ayrı kart/şema tasarımı bilinçli
+  olarak ERTELENDİ — "kart" fikri ileride gerekirse türe göre farklı
+  layout/alan setleri şeklinde genişletilebilir). `turId` nullable: eski
+  kayıtlar geriye dönük türlendirilene kadar boş kalabilir, yeni dosya
+  formunda ise zorunludur. `birimAdi` da bu yüzden artık zorunlu değil —
+  bir ihtar/müzakere dosyasının mahkeme/icra dairesi olmayabilir.
 - **Karşı Taraf (`KarsiTaraf`)**: Müvekkilin KENDİ müşterisi/borçlusu —
   yani büronun müvekkil adına icra/dava takip ettiği taraf (ör. "Koz
   Gıda", "Nasip Sac", "Hicret Kırtay"). Müvekkilin (`Musteri`) kendisiyle

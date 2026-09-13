@@ -10,7 +10,7 @@ export default async function YeniDavaDosyasiSayfasi({
 
   return (
     <div className="pt-3">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-white">Yeni Dava Dosyası</h1>
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-white">Yeni Dosya</h1>
       <DavaDosyasiFormu
         action={davaDosyasiOlustur}
         gonderButonuMetni="Oluştur"

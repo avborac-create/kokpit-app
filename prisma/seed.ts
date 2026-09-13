@@ -75,6 +75,25 @@ const SECENEK_LISTELERI: {
     ],
   },
   {
+    anahtar: "dosya_turu",
+    ad: "Dosya Türü",
+    degerler: [
+      // Dava/icra oncesi asamalar - resmi bir dosya/takip acilmadan once
+      // atilan adimlar (ör. sadece borcluyla pazarlik edildi, baska bir
+      // sey yapilmadi).
+      { kod: "ihtar_dosyasi", etiket: "İhtar Dosyası" },
+      { kod: "arabuluculuk_dosyasi", etiket: "Arabuluculuk Dosyası" },
+      { kod: "muzakere_dosyasi", etiket: "Müzakere Dosyası" },
+      // Resmi icra/dava dosyalari.
+      { kod: "esas_icra_dosyasi", etiket: "Esas İcra Dosyası" },
+      // Talimat dosyasi esas icranin alt turudur (bkz. bagliOlduguDosyaId).
+      { kod: "talimat_dosyasi", etiket: "Talimat Dosyası" },
+      { kod: "ihtiyati_haciz_dosyasi", etiket: "İhtiyati Haciz Dosyası" },
+      { kod: "icra_ceza_davasi", etiket: "İcra Ceza Davası" },
+      { kod: "dava_dosyasi", etiket: "Dava Dosyası (Hukuk/Ceza)" },
+    ],
+  },
+  {
     anahtar: "cari_kod",
     ad: "Cari Kod",
     degerler: [

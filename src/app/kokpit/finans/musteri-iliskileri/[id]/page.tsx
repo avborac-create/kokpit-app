@@ -41,6 +41,7 @@ export default async function MusteriFinansAksiyonSayfasi({
               <thead className="text-white/50">
                 <tr>
                   <th className="px-4 py-3 font-medium">Dosya No</th>
+                  <th className="px-4 py-3 font-medium">Tür</th>
                   <th className="px-4 py-3 font-medium">Konu</th>
                   <th className="px-4 py-3 font-medium">Karşı Taraf(lar)</th>
                   <th className="px-4 py-3 font-medium">Durum</th>
@@ -57,6 +58,7 @@ export default async function MusteriFinansAksiyonSayfasi({
                         {dosya.dosyaNo ?? "—"}
                       </Link>
                     </td>
+                    <td className="px-4 py-3 text-white/60">{dosya.tur?.etiket ?? "—"}</td>
                     <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
                     <td className="px-4 py-3 text-white/60">
                       {dosya.karsiTaraflar.length > 0

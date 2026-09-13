@@ -38,10 +38,15 @@ export default async function DavaDosyasiDetaySayfasi({
             {dosya.dosyaNo ? `${dosya.dosyaNo} — ` : ""}
             {dosya.konu}
           </h1>
-          <p className="mt-1 text-sm text-white/55">
+          <p className="mt-1 flex flex-wrap gap-2 text-sm text-white/55">
             <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
               {dosya.durum.etiket}
             </span>
+            {dosya.tur && (
+              <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs text-white/70">
+                {dosya.tur.etiket}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
