@@ -7,7 +7,6 @@ import { silebilirMi } from "@/core/auth/yetki";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 
 const YOL = "/kokpit/gelistirme-kutusu";
-const DURUM_SIRASI = ["beklemede", "yapiliyor", "tamamlandi"];
 
 export async function gelistirmeTalebiGonder(formData: FormData) {
   const kullanici = await mevcutKullanici();
@@ -37,21 +36,17 @@ export async function gelistirmeTalebiGonder(formData: FormData) {
   revalidatePath(YOL);
 }
 
-export async function gelistirmeTalebiDurumIlerlet(id: string, mevcutDurumKodu: string) {
+export async function gelistirmeTalebiDurumTasi(id: string, hedefDurumKodu: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
   }
 
-  const mevcutSira = DURUM_SIRASI.indexOf(mevcutDurumKodu);
-  const sonrakiKod = DURUM_SIRASI[mevcutSira + 1];
-  if (!sonrakiKod) return;
-
   const durumlar = await secenekleriGetir("gelistirme_talebi_durumu");
-  const sonrakiId = durumlar.find((d) => d.kod === sonrakiKod)?.id;
-  if (!sonrakiId) return;
+  const hedefId = durumlar.find((d) => d.kod === hedefDurumKodu)?.id;
+  if (!hedefId) return;
 
-  await prisma.gelistirmeTalebi.update({ where: { id }, data: { durumId: sonrakiId } });
+  await prisma.gelistirmeTalebi.update({ where: { id }, data: { durumId: hedefId } });
   revalidatePath(YOL);
 }
 

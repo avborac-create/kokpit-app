@@ -181,17 +181,35 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   (bkz. `20260913240000_dava_dosyasi_kokpit_no` migration'ı — elle yazılmış
   autoincrement backfill'i, standart Prisma paterni).
 
-## Geliştirme Kutusu (Developer Inbox)
+## Geliştirme Kutusu (Developer Inbox) — Kanban Panosu
 
 `/kokpit/gelistirme-kutusu` (sadece Yönetici/Ortak), `GelistirmeTalebi`
-modeli. Sohbet sırasında söylenen her istek/fikrin kod yazılmadan önce
-hemen not düşüldüğü, hafif bir bekleme listesi — `Oneri` modelinden
-(ekran görüntülü, bölge seçimli geri bildirim) bilinçli olarak ayrı ve
-daha basit tutuldu: tek alan (`metin`), ekran görüntüsü yok. Durum
-`gelistirme_talebi_durumu` seçenek listesiyle ilerler: `beklemede` →
-`yapiliyor` → `tamamlandi` (sırayla, geri gidilemez — "Sonraki" butonu
-bir sıra ilerletir). Amaç: konuşmada söylenen her geliştirme talebinin
-kaybolmadan sıraya girmesi.
+modeli. Sohbette söylenen her istek/fikrin kaybolmadan sıraya girdiği,
+sürükle-bırak (native HTML5 drag&drop, ek kütüphane yok) bir Kanban
+panosu — 3 sütun: `beklemede` / `yapiliyor` / `tamamlandi`
+(`gelistirme_talebi_durumu` seçenek listesi). Kart bir sütundan diğerine
+sürüklenince `gelistirmeTalebiDurumTasi` server action'ı çağrılır.
+
+**Kartların kaynağı iki türlü olabilir:**
+- Kullanıcının panodaki formdan elle eklediği kartlar (`anahtar: null`).
+- Claude'un konuşma sırasında `prisma/seed.ts` içindeki
+  `GELISTIRME_TALEPLERI` dizisine eklediği, sabit bir `anahtar` (slug)
+  taşıyan kartlar — bu dizi HER `npm run build`'da (dolayısıyla her
+  production deploy'unda) `gelistirmeKutusunuSenkronizeEt()` tarafından
+  senkronize edilir, ama SADECE eksik olan yeni maddeleri ekler; var olan
+  bir kartın durumuna (kullanıcının panoda sürükleyerek değiştirdiği)
+  bir daha ASLA dokunmaz (bkz. `secenekListeleriniOlustur`'daki aynı
+  "sadece eksik olanı ekle" ilkesi). Böylece kullanıcı prod veritabanına
+  hiç erişimim olmayan Claude'un (sandbox'tan sadece yerel geliştirme
+  DB'sine erişimi var) yeni bir istek eklemesi, kod push'u + build'in
+  kendisi üzerinden, kullanıcıdan hiçbir manuel form doldurma talep
+  etmeden gerçekleşir. Ayrıca bkz. repo kökündeki `GELISTIRME_KUTUSU.md`
+  — Claude'un konuşma sırasında ilk not aldığı, insan-okunur ham liste
+  (kaynak metin burada tutulur, `seed.ts`'e oradan taşınır).
+
+`Oneri` modelinden (ekran görüntülü, bölge seçimli geri bildirim)
+bilinçli olarak ayrı ve daha basit tutuldu: tek alan (`metin`), ekran
+görüntüsü yok.
 - **Hukuki İlişki Türü (`DavaDosyasi.hukukiIliskiTuruId`)**: Dosya
   Türü'nden (ihtar/icra/dava — "hangi AŞAMADAYIZ") tamamen farklı, ikinci
   bir sınıflandırma boyutu: "hangi hukuki ARACA/ilişkiye dayanıyor"

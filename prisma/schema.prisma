@@ -478,6 +478,12 @@ model GelistirmeTalebi {
   durumId String
   durum   SecenekDegeri @relation("GelistirmeTalebiDurumu", fields: [durumId], references: [id])
 
+  // Claude'un konusma sirasinda GELISTIRME_KUTUSU.md + seed.ts uzerinden
+  // otomatik ekledigi kartlari ikinci kez eklememek icin kullandigi sabit
+  // anahtar (orn. "sutun-sirasi"). Kullanicinin panodan elle ekledigi
+  // kartlarda null kalir.
+  anahtar String? @unique
+
   olusturmaTarihi DateTime @default(now())
 
   @@index([kullaniciId])

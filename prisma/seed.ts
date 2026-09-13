@@ -204,9 +204,62 @@ async function baslangicKullanicisiniOlustur() {
   console.log("  ÖNEMLİ: İlk girişten sonra bu şifreyi değiştirin.");
 }
 
+// Claude'un sohbet sirasinda GELISTIRME_KUTUSU.md'ye ekledigi maddelerin
+// otomatik olarak Kanban panosunda kart olarak belirmesi icin kullanilir.
+// Her satirin sabit bir "anahtar"i vardir; bu sayede HER deploy'da tekrar
+// calisan bu fonksiyon zaten var olan bir karta bir daha asla dokunmaz
+// (kullanicinin panoda surukleyerek degistirdigi durum boylece hicbir
+// zaman sifirlanmaz) - sadece eksik olan yeni maddeleri ekler. Yeni bir
+// madde eklemek icin bu diziye satir eklemek yeterli.
+const GELISTIRME_TALEPLERI: { anahtar: string; metin: string }[] = [
+  {
+    anahtar: "sutun-sirasi",
+    metin:
+      "Dosyalar tablosundaki sütunların admin tarafından manuel olarak yeniden sıralanabilmesi (dinamik sütun sırası).",
+  },
+  {
+    anahtar: "dosya-listesi-duzenle-sil",
+    metin:
+      "Dosyalar listesinden/detayından kayıtları manuel düzenleme ve silme imkanı (not: Düzenle/Sil dosyanın kendi detay sayfasında zaten var, listeden erişim netleştirilmeli).",
+  },
+];
+
+async function gelistirmeKutusunuSenkronizeEt() {
+  const sahipEposta = process.env.SEED_ADMIN_EPOSTA ?? "admin@eceshukuk.com";
+  const sahip = await prisma.kullanici.findUnique({ where: { eposta: sahipEposta } });
+  const durumListesi = await prisma.secenekListesi.findUnique({
+    where: { anahtar: "gelistirme_talebi_durumu" },
+    include: { degerler: true },
+  });
+  const beklemedeId = durumListesi?.degerler.find((d) => d.kod === "beklemede")?.id;
+
+  if (!sahip || !beklemedeId) {
+    console.log("… Geliştirme Kutusu senkronizasyonu atlandı (kullanıcı/durum bulunamadı).");
+    return;
+  }
+
+  let eklenen = 0;
+  for (const talep of GELISTIRME_TALEPLERI) {
+    const mevcut = await prisma.gelistirmeTalebi.findUnique({ where: { anahtar: talep.anahtar } });
+    if (mevcut) continue;
+
+    await prisma.gelistirmeTalebi.create({
+      data: {
+        anahtar: talep.anahtar,
+        metin: talep.metin,
+        durumId: beklemedeId,
+        kullaniciId: sahip.id,
+      },
+    });
+    eklenen += 1;
+  }
+  console.log(`✓ Geliştirme Kutusu: ${eklenen} yeni kart eklendi.`);
+}
+
 async function main() {
   await secenekListeleriniOlustur();
   await baslangicKullanicisiniOlustur();
+  await gelistirmeKutusunuSenkronizeEt();
 }
 
 main()
