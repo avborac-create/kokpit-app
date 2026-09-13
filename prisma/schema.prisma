@@ -316,6 +316,7 @@ model DavaDosyasi {
   muvekkiller          DosyaMuvekkili[]
   paraTrafigiKayitlari ParaTrafigiDosyasi[]
   masraflar            DosyaMasrafi[]
+  karsiTarafAlacaklari KarsiTarafAlacagi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -323,6 +324,31 @@ model DavaDosyasi {
   @@index([uyusmazlikGrubuId])
   @@index([bagliOlduguDosyaId])
   @@map("dava_dosyalari")
+}
+
+// Muvekkilden gelen para (tasnif/masraf sistemi) ile KARISTIRILMAMALI: bu,
+// karsi tarafin (borclunun) dava/icra sonucu bize/muvekkile ayrica
+// odemesi gereken bir alacaktir (ör. icra vekalet ucreti, yargilama
+// gideri) - cebimizden hicbir sey cikmaz, tersine karsi taraftan bir
+// tahsilat beklenir. Muvekkil emanet/cari hesabindan (ParaTrafigiTasnif/
+// DosyaMasrafi) BILEREK ayri tutulur (bkz. ARCHITECTURE.md); evrensel
+// hukuk burosu pratiginde musteri emanet hesabi (trust account) ile
+// buronun/musvekkilin ucuncu taraflardan alacagi hep ayri muhasebelesir.
+model KarsiTarafAlacagi {
+  id      String      @id @default(cuid())
+  dosyaId String
+  dosya   DavaDosyasi @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+
+  tutar    Decimal @db.Decimal(14, 2)
+  aciklama String // "İcra vekalet ücreti" vb.
+
+  tahsilEdildiMi Boolean   @default(false)
+  tahsilTarihi   DateTime?
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([dosyaId])
+  @@map("karsi_taraf_alacaklari")
 }
 
 // Bir dosyaya iliskin tek tek masraf kalemleri (harc, pul, dava masrafi,

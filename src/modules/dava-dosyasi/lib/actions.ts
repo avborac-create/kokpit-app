@@ -182,3 +182,43 @@ export async function dosyaMasrafiSil(id: string, dosyaId: string) {
   await prisma.dosyaMasrafi.delete({ where: { id } });
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
+
+// Karsi Taraftan Alacak: muvekkil cari hesabindan (tasnif/masraf) BILEREK
+// ayri bir mekanizma - bkz. KarsiTarafAlacagi model yorumu. Cebimizden
+// para cikmaz, tersine karsi taraftan (borclu) beklenen bir tahsilattir.
+export async function karsiTarafAlacagiEkle(dosyaId: string, formData: FormData) {
+  const tutar = String(formData.get("tutar") ?? "");
+  const aciklama = String(formData.get("aciklama") ?? "").trim();
+
+  if (!tutar || !aciklama) {
+    throw new Error("Tutar ve açıklama alanları zorunludur.");
+  }
+
+  await prisma.karsiTarafAlacagi.create({
+    data: { dosyaId, tutar, aciklama },
+  });
+
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+export async function karsiTarafAlacagiTahsilDurumuDegistir(
+  id: string,
+  dosyaId: string,
+  tahsilEdildiMi: boolean,
+) {
+  await prisma.karsiTarafAlacagi.update({
+    where: { id },
+    data: { tahsilEdildiMi, tahsilTarihi: tahsilEdildiMi ? new Date() : null },
+  });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+export async function karsiTarafAlacagiSil(id: string, dosyaId: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici || !silebilirMi(kullanici.rol)) {
+    throw new Error("Bu işlem için yetkiniz yok.");
+  }
+
+  await prisma.karsiTarafAlacagi.delete({ where: { id } });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}

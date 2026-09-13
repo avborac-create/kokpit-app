@@ -54,6 +54,9 @@ export async function davaDosyasiGetir(id: string) {
         include: { cariKod: true, tur: true },
         orderBy: { tarih: "desc" },
       },
+      karsiTarafAlacaklari: {
+        orderBy: { olusturmaTarihi: "desc" },
+      },
     },
   });
 }

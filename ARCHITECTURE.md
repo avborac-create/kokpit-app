@@ -227,6 +227,18 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   detayı. İkisi ayrı mekanizmalardır; bir cari kodun tasnif tutarı ile o
   kod altındaki masraf kalemlerinin toplamı arasındaki fark, o cari
   koddaki HARCANMAMIŞ/kalan bakiyedir (hata değildir).
+- **Karşı Taraftan Alacaklarımız (`KarsiTarafAlacagi`)**: Müvekkil cari
+  hesabından (tasnif/`DosyaMasrafi`) BİLEREK ayrı bir mekanizma. Bu,
+  cebimizden çıkan bir para DEĞİL — karşı tarafın (borçlunun) dava/icra
+  sonucu bize/müvekkile ayrıca ödemesi gereken bir alacaktır (ör. icra
+  vekalet ücreti, yargılama gideri). Akdi vekalet ücretinden farkı:
+  akdi vekalet müvekkilin bize ödediği ücrettir (zaten tahsil edilmiş
+  sayılır); karşı taraf alacağı ise HENÜZ TAHSİL EDİLMEMİŞ, borçludan
+  beklenen ayrı bir tutardır. Evrensel hukuk bürosu pratiğinde müvekkil
+  emanet hesabı (trust account) ile büronun/müvekkilin üçüncü taraflardan
+  alacağı hep ayrı muhasebeleşir — bu ayrım kasıtlıdır, birleştirilmemeli.
+  Dosya detay sayfasında Cari Hesap Özeti'nden ayrı, kendi tutar/açıklama/
+  tahsil-durumu alanlarıyla tutulur.
 - **Cari Kodlar — beşinci kod "Emanet Hesabı"**: `Bloke Paralar`,
   `Masraf Hesabı`, `Akdi Vekalet Hesabı`, `Ticari Hesap`'a ek olarak
   `Emanet Hesabı` eklendi — para büronun geliri DEĞİL, müvekkilin de

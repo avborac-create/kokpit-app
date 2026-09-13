@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { davaDosyasiGetir, dosyaCariHesapOzeti } from "@/modules/dava-dosyasi/lib/queries";
-import { dosyaMasrafiEkle } from "@/modules/dava-dosyasi/lib/actions";
+import { dosyaMasrafiEkle, karsiTarafAlacagiEkle } from "@/modules/dava-dosyasi/lib/actions";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 import { DosyaParaTrafigiListesi } from "@/modules/dava-dosyasi/components/dosya-para-trafigi-listesi";
 import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
 import { MasrafListesi } from "@/modules/dava-dosyasi/components/masraf-listesi";
 import { CariHesapOzeti } from "@/modules/dava-dosyasi/components/cari-hesap-ozeti";
+import { KarsiTarafAlacagiFormu } from "@/modules/dava-dosyasi/components/karsi-taraf-alacagi-formu";
+import { KarsiTarafAlacagiListesi } from "@/modules/dava-dosyasi/components/karsi-taraf-alacagi-listesi";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { Dugme } from "@/core/ui/button";
@@ -177,6 +179,23 @@ export default async function DavaDosyasiDetaySayfasi({
       </div>
       <MasrafListesi
         masraflar={dosya.masraflar.map((m) => ({ ...m, tutar: Number(m.tutar) }))}
+        dosyaId={id}
+        silmeYetkisiVar={silmeYetkisiVar}
+      />
+
+      <h2 className="mb-1 mt-10 text-lg font-semibold tracking-tight text-white">
+        Karşı Taraftan Alacaklarımız
+      </h2>
+      <p className="mb-3 text-sm text-white/45">
+        Müvekkilin cari hesabıyla (yukarısı) karıştırılmamalı: bu, cebimizden çıkan bir para değil
+        — karşı tarafın (borçlunun) dava/icra sonucu bize/müvekkile ayrıca ödemesi gereken bir
+        alacak (ör. icra vekalet ücreti).
+      </p>
+      <div className="mb-4">
+        <KarsiTarafAlacagiFormu action={karsiTarafAlacagiEkle.bind(null, id)} />
+      </div>
+      <KarsiTarafAlacagiListesi
+        alacaklar={dosya.karsiTarafAlacaklari.map((a) => ({ ...a, tutar: Number(a.tutar) }))}
         dosyaId={id}
         silmeYetkisiVar={silmeYetkisiVar}
       />
