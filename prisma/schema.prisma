@@ -308,6 +308,12 @@ model UyusmazlikGrubu {
 // ara tablosu uzerinden coka-cok kurulur (bkz. semanin en ustundeki not).
 model DavaDosyasi {
   id                String           @id @default(cuid())
+  // Kokpit'in kendi ic kayit numarasi - "Dosya No" (mahkeme/icra
+  // dairesinin verdigi esas no) artik opsiyonel oldugu icin, HER dosyanin
+  // (turu ne olursa olsun - ihtar/muzakere/icra/dava) sistemde her zaman
+  // sahip oldugu, otomatik atanan, sirali bir kimlik numarasi. Kullanicinin
+  // girmesi gerekmez, "Kokpit No" olarak gosterilir (ör. "KP-0007").
+  kayitNo           Int              @unique @default(autoincrement())
   dosyaNo           String?
   birimAdi          String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
   konu              String

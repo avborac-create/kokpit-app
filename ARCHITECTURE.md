@@ -171,6 +171,15 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   kayıtlar geriye dönük türlendirilene kadar boş kalabilir, yeni dosya
   formunda ise zorunludur. `birimAdi` da bu yüzden artık zorunlu değil —
   bir ihtar/müzakere dosyasının mahkeme/icra dairesi olmayabilir.
+- **Kokpit No (`DavaDosyasi.kayitNo`)**: "Dosya No" artık opsiyonel olduğu
+  için (mahkeme/icra dairesinin verdiği esas no — bir ihtar/müzakere
+  dosyasında hiç olmayabilir), HER dosyanın türü ne olursa olsun sahip
+  olduğu, sistem tarafından otomatik atanan, sıralı bir kimlik numarası
+  eklendi (`Int @unique @default(autoincrement())`, ekranlarda "KP-0007"
+  şeklinde gösteriliyor). Kullanıcı girmez, formda hiç görünmez. Mevcut
+  kayıtlar geriye dönük `olusturmaTarihi` sırasına göre numaralandırıldı
+  (bkz. `20260913240000_dava_dosyasi_kokpit_no` migration'ı — elle yazılmış
+  autoincrement backfill'i, standart Prisma paterni).
 - **Hukuki İlişki Türü (`DavaDosyasi.hukukiIliskiTuruId`)**: Dosya
   Türü'nden (ihtar/icra/dava — "hangi AŞAMADAYIZ") tamamen farklı, ikinci
   bir sınıflandırma boyutu: "hangi hukuki ARACA/ilişkiye dayanıyor"

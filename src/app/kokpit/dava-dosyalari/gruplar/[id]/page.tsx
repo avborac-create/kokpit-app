@@ -51,6 +51,7 @@ export default async function UyusmazlikGrubuSayfasi({
           <table className="w-full text-left text-sm">
             <thead className="text-white/50">
               <tr>
+                <th className="px-4 py-3 font-medium">Kokpit No</th>
                 <th className="px-4 py-3 font-medium">Dosya No</th>
                 <th className="px-4 py-3 font-medium">Konu</th>
                 <th className="px-4 py-3 font-medium">Birim</th>
@@ -67,9 +68,10 @@ export default async function UyusmazlikGrubuSayfasi({
                       href={`/kokpit/dava-dosyalari/${dosya.id}`}
                       className="font-medium text-white hover:text-[#6db8ff] hover:underline"
                     >
-                      {dosya.dosyaNo ?? "—"}
+                      KP-{String(dosya.kayitNo).padStart(4, "0")}
                     </Link>
                   </td>
+                  <td className="px-4 py-3 text-white/60">{dosya.dosyaNo ?? "—"}</td>
                   <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
                   <td className="px-4 py-3 text-white/60">{dosya.birimAdi ?? "—"}</td>
                   <td className="px-4 py-3 text-white/60">

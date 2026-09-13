@@ -35,7 +35,9 @@ export default async function DavaDosyasiDetaySayfasi({
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">
-            {dosya.dosyaNo ? `${dosya.dosyaNo} — ` : ""}
+            <span className="text-white/45">KP-{String(dosya.kayitNo).padStart(4, "0")}</span>
+            {dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}
+            {" — "}
             {dosya.konu}
           </h1>
           <p className="mt-1 flex flex-wrap gap-2 text-sm text-white/55">
