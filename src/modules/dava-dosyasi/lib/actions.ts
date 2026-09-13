@@ -17,14 +17,15 @@ function musteriIdleriniAl(formData: FormData): string[] {
 
 // Karsi taraf secimini cozumler: secilen "karsiTarafIds" (coklu - bir
 // icra takibi genelde cek/bono zincirindeki TUM muteselsil sorumlulara
-// birden acilir, tek bir karsi tarafa degil) + "yeniKarsiTarafAdi" alani
-// da virgulle ayrilmis birden fazla yeni ad icerebilir (ör. "Koz Gıda,
-// Nasip Sac, Mata Kauçuk") - her biri icin ayri bir KarsiTaraf olusturulup
-// listeye eklenir.
+// birden acilir, tek bir karsi tarafa degil) + "yeniKarsiTarafAdlari"
+// (YeniKarsiTarafEkleyici bilesenindeki "Ekle" butonuyla birer birer
+// eklenen isimler, her biri gizli bir input olarak forma tasinir) - her
+// biri icin ayri bir KarsiTaraf olusturulup listeye eklenir.
 async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: string[]): Promise<string[]> {
   const secilenIdler = formData.getAll("karsiTarafIds").map(String).filter(Boolean);
-  const yeniAdlar = String(formData.get("yeniKarsiTarafAdi") ?? "")
-    .split(",")
+  const yeniAdlar = formData
+    .getAll("yeniKarsiTarafAdlari")
+    .map(String)
     .map((ad) => ad.trim())
     .filter(Boolean);
 

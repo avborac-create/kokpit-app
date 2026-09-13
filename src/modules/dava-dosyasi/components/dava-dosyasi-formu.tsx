@@ -10,6 +10,7 @@ import {
 } from "@/modules/dava-dosyasi/lib/queries";
 import { MuvekkilSecici } from "./muvekkil-secici";
 import { KarsiTarafSecici } from "./karsi-taraf-secici";
+import { YeniKarsiTarafEkleyici } from "./yeni-karsi-taraf-ekleyici";
 import { DosyaDetaylar } from "./dosya-detaylar";
 
 type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
@@ -67,14 +68,7 @@ export async function DavaDosyasiFormu({
         karsiTaraflar={karsiTaraflar}
         seciliIdler={dosya?.karsiTaraflar.map((kt) => kt.karsiTarafId) ?? []}
       />
-      <Alan>
-        <Etiket htmlFor="yeniKarsiTarafAdi">veya Yeni Karşı Taraf Ekle (birden fazlaysa virgülle ayırın)</Etiket>
-        <Girdi
-          id="yeniKarsiTarafAdi"
-          name="yeniKarsiTarafAdi"
-          placeholder="Koz Gıda, Nasip Sac, Mata Kauçuk"
-        />
-      </Alan>
+      <YeniKarsiTarafEkleyici />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Alan>
