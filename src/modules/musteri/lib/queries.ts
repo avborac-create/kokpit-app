@@ -49,6 +49,16 @@ export async function musteriGetir(id: string) {
   });
 }
 
+export async function paraTrafigiKaydiGetir(kayitId: string) {
+  return prisma.musteriParaTrafigi.findUnique({
+    where: { id: kayitId },
+    include: {
+      dosyalar: true,
+      tasnif: true,
+    },
+  });
+}
+
 export async function avukatlariListele() {
   return prisma.kullanici.findMany({
     where: { aktifMi: true },

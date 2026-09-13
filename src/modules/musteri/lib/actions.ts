@@ -139,6 +139,65 @@ export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData
   revalidatePath(`/kokpit/musteriler/${musteriId}`);
 }
 
+export async function paraTrafigiKaydiGuncelle(musteriId: string, kayitId: string, formData: FormData) {
+  const tarih = String(formData.get("tarih") ?? "");
+  const tipId = String(formData.get("tipId") ?? "");
+  const durumId = String(formData.get("durumId") ?? "");
+  const kaynakId = String(formData.get("kaynakId") ?? "");
+  const tutar = String(formData.get("tutar") ?? "");
+  const dosyaIdleri = formData.getAll("dosyaIds").map(String).filter(Boolean);
+
+  if (!tarih || !tipId || !durumId || !kaynakId || !tutar) {
+    throw new Error("Tarih, tip, durum, kaynak ve tutar alanları zorunludur.");
+  }
+
+  const tip = await prisma.secenekDegeri.findUnique({ where: { id: tipId } });
+  const eslesenCariKodKodu = tip ? TIP_KOD_ILE_ESLESEN_CARI_KOD_KODU[tip.kod] : undefined;
+
+  let tasnifSatirlari: { cariKodId: string; tutar: string }[] = [];
+  if (eslesenCariKodKodu) {
+    const cariKod = await prisma.secenekDegeri.findFirst({
+      where: { kod: eslesenCariKodKodu, liste: { anahtar: "cari_kod" } },
+    });
+    if (cariKod) {
+      tasnifSatirlari = [{ cariKodId: cariKod.id, tutar }];
+    }
+  } else {
+    for (const [anahtar, deger] of formData.entries()) {
+      if (anahtar.startsWith("tasnif_") && String(deger).trim() !== "") {
+        tasnifSatirlari.push({ cariKodId: anahtar.slice("tasnif_".length), tutar: String(deger) });
+      }
+    }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.paraTrafigiTasnif.deleteMany({ where: { paraTrafigiId: kayitId } });
+    await tx.paraTrafigiDosyasi.deleteMany({ where: { paraTrafigiId: kayitId } });
+
+    await tx.musteriParaTrafigi.update({
+      where: { id: kayitId },
+      data: {
+        tarih: new Date(tarih),
+        tipId,
+        durumId,
+        kaynakId,
+        tutar,
+        aciklama: metinYaAlNull(formData, "aciklama"),
+        dosyalar: {
+          create: dosyaIdleri.map((dosyaId) => ({ dosyaId })),
+        },
+        tasnif: {
+          create: tasnifSatirlari.map(({ cariKodId, tutar }) => ({ cariKodId, tutar })),
+        },
+      },
+    });
+  });
+
+  revalidatePath(`/kokpit/finans/musteri-iliskileri/${musteriId}/cari-hesap`);
+  revalidatePath(`/kokpit/musteriler/${musteriId}`);
+  redirect(`/kokpit/finans/musteri-iliskileri/${musteriId}/cari-hesap`);
+}
+
 export async function paraTrafigiKaydiSil(musteriId: string, kayitId: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {

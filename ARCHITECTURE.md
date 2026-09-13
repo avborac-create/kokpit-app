@@ -264,6 +264,18 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
 - **"Karma" ödeme**: Ayrı bir cari kod DEĞİLDİR — bir tahsilatın tasnifi
   birden fazla cari koda bölündüğünde (tasnif ekranında birden fazla
   alan doluysa) o ödeme zaten emergent olarak "karma" sayılır.
+- **Para Trafiği kaydı düzenleme (`paraTrafigiKaydiGuncelle`)**: Önceden
+  bir `MusteriParaTrafigi` kaydı sadece silinip yeniden girilebiliyordu
+  (ör. Beklemede bir tutarı Tahsil Edildi'ye çevirmek için tüm kaydı silip
+  yeniden yazmak gerekiyordu). `ParaTrafigiFormu` artık isteğe bağlı bir
+  `duzenlemeVerisi` prop'uyla hem oluşturma hem düzenleme modunda
+  kullanılabiliyor (`/kokpit/finans/musteri-iliskileri/[id]/cari-hesap/
+  [kayitId]/duzenle`, listede "Düzenle" bağlantısı). Güncelleme, mevcut
+  `ParaTrafigiTasnif`/`ParaTrafigiDosyasi` satırlarını silip formdan gelen
+  değerlerle yeniden oluşturur (kısmi patch değil, tam yer değiştirme) —
+  `paraTrafigiKaydiEkle` ile aynı tip→cari-kod eşleme mantığını kullanır.
+  Silme gibi bu da `yetki.ts`'teki "oluşturma/düzenleme herkese açık, sadece
+  silme Yönetici/Ortak'a özel" politikasına tabidir.
 
 ## PWA
 

@@ -39,6 +39,7 @@ export function ParaTrafigiListesi({
             <th className="px-4 py-3 font-medium">Dosya(lar)</th>
             <th className="px-4 py-3 font-medium">Tasnif</th>
             <th className="px-4 py-3 font-medium">Açıklama</th>
+            <th className="px-4 py-3" />
             {silmeYetkisiVar && <th className="px-4 py-3" />}
           </tr>
         </thead>
@@ -102,6 +103,14 @@ export function ParaTrafigiListesi({
                 )}
               </td>
               <td className="px-4 py-3 text-white/60">{kayit.aciklama ?? "—"}</td>
+              <td className="px-4 py-3 text-right">
+                <Link
+                  href={`/kokpit/finans/musteri-iliskileri/${kayit.musteriId}/cari-hesap/${kayit.id}/duzenle`}
+                  className="text-xs text-[#6db8ff] hover:underline"
+                >
+                  Düzenle
+                </Link>
+              </td>
               {silmeYetkisiVar && (
                 <td className="px-4 py-3 text-right">
                   <ParaTrafigiSilmeButonu musteriId={kayit.musteriId} kayitId={kayit.id} />

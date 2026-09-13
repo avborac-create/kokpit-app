@@ -11,8 +11,18 @@ type CariKod = { id: string; etiket: string };
 // "Karma" secilmedigi surece tasnif alanlarini gostermeye gerek yok -
 // sunucu tarafi tutarin tamamini secilen tipe karsilik gelen tek cari koda
 // otomatik yazar (bkz. paraTrafigiKaydiEkle).
-export function TipSeciciVeTasnif({ tipler, cariKodlar }: { tipler: Tip[]; cariKodlar: CariKod[] }) {
-  const [tipId, setTipId] = useState("");
+export function TipSeciciVeTasnif({
+  tipler,
+  cariKodlar,
+  varsayilanTipId = "",
+  varsayilanTasnif = {},
+}: {
+  tipler: Tip[];
+  cariKodlar: CariKod[];
+  varsayilanTipId?: string;
+  varsayilanTasnif?: Record<string, number>;
+}) {
+  const [tipId, setTipId] = useState(varsayilanTipId);
   const secilenTip = tipler.find((t) => t.id === tipId);
   const karmaMi = secilenTip?.kod === "karma";
 
@@ -37,7 +47,7 @@ export function TipSeciciVeTasnif({ tipler, cariKodlar }: { tipler: Tip[]; cariK
           ))}
         </Secim>
       </Alan>
-      {karmaMi && <TasnifGirisi cariKodlar={cariKodlar} />}
+      {karmaMi && <TasnifGirisi cariKodlar={cariKodlar} varsayilanDegerler={varsayilanTasnif} />}
     </>
   );
 }

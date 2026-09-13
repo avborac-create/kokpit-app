@@ -6,12 +6,25 @@ import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
 import { DosyaSecici } from "@/modules/musteri/components/dosya-secici";
 import { TipSeciciVeTasnif } from "@/modules/musteri/components/tip-secici-ve-tasnif";
 
+export type ParaTrafigiDuzenlemeVerisi = {
+  tarih: string;
+  tipId: string;
+  tutar: number;
+  durumId: string;
+  kaynakId: string;
+  aciklama: string | null;
+  seciliDosyaIdler: string[];
+  tasnifVarsayilan: Record<string, number>;
+};
+
 export async function ParaTrafigiFormu({
   action,
   musteriId,
+  duzenlemeVerisi,
 }: {
   action: (formData: FormData) => void;
   musteriId: string;
+  duzenlemeVerisi?: ParaTrafigiDuzenlemeVerisi;
 }) {
   const [tipler, durumlar, kaynaklar, dosyalar, cariKodlar] = await Promise.all([
     secenekleriGetir("para_trafigi_tipi"),
@@ -27,16 +40,21 @@ export async function ParaTrafigiFormu({
     <form action={action} className="glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-2 md:grid-cols-4">
       <Alan>
         <Etiket htmlFor="tarih">Tarih</Etiket>
-        <Girdi id="tarih" name="tarih" type="date" required defaultValue={bugun} />
+        <Girdi id="tarih" name="tarih" type="date" required defaultValue={duzenlemeVerisi?.tarih ?? bugun} />
       </Alan>
-      <TipSeciciVeTasnif tipler={tipler} cariKodlar={cariKodlar} />
+      <TipSeciciVeTasnif
+        tipler={tipler}
+        cariKodlar={cariKodlar}
+        varsayilanTipId={duzenlemeVerisi?.tipId}
+        varsayilanTasnif={duzenlemeVerisi?.tasnifVarsayilan}
+      />
       <Alan>
         <Etiket htmlFor="tutar">Tutar</Etiket>
-        <ParaGirdisi id="tutar" name="tutar" required />
+        <ParaGirdisi id="tutar" name="tutar" required defaultValue={duzenlemeVerisi?.tutar} />
       </Alan>
       <Alan>
         <Etiket htmlFor="durumId">Durum</Etiket>
-        <Secim id="durumId" name="durumId" required defaultValue="">
+        <Secim id="durumId" name="durumId" required defaultValue={duzenlemeVerisi?.durumId ?? ""}>
           <option value="" disabled>
             Seçiniz…
           </option>
@@ -49,7 +67,7 @@ export async function ParaTrafigiFormu({
       </Alan>
       <Alan>
         <Etiket htmlFor="kaynakId">Kaynak</Etiket>
-        <Secim id="kaynakId" name="kaynakId" required defaultValue="">
+        <Secim id="kaynakId" name="kaynakId" required defaultValue={duzenlemeVerisi?.kaynakId ?? ""}>
           <option value="" disabled>
             Seçiniz…
           </option>
@@ -60,15 +78,15 @@ export async function ParaTrafigiFormu({
           ))}
         </Secim>
       </Alan>
-      <DosyaSecici dosyalar={dosyalar} />
+      <DosyaSecici dosyalar={dosyalar} seciliDosyaIdler={duzenlemeVerisi?.seciliDosyaIdler} />
       <div className="col-span-2 md:col-span-4">
         <Alan>
           <Etiket htmlFor="aciklama">Açıklama</Etiket>
-          <MetinAlani id="aciklama" name="aciklama" rows={2} />
+          <MetinAlani id="aciklama" name="aciklama" rows={2} defaultValue={duzenlemeVerisi?.aciklama ?? ""} />
         </Alan>
       </div>
       <div className="col-span-2 md:col-span-4">
-        <Dugme type="submit">Kaydı Ekle</Dugme>
+        <Dugme type="submit">{duzenlemeVerisi ? "Kaydı Güncelle" : "Kaydı Ekle"}</Dugme>
       </div>
     </form>
   );
