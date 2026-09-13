@@ -81,7 +81,14 @@ TANIMLANMAZ (enum değişikliği migration gerektirir). Bunun yerine:
 
 Yeni bir durum eklemek (ör. "kısmi tahsilat") **şema değişikliği değil,
 bir veri satırı eklemektir** (`prisma/seed.ts` içindeki ilgili diziye bir
-satır eklenir ya da ileride bir yönetim ekranından eklenir).
+satır eklenir, ya da artık **Kokpit içinden**: `Ayarlar > Seçenek
+Listeleri` (`/kokpit/ayarlar/secenekler`, yalnızca Yönetici/Ortak) —
+yönetici/ortak rolü kod değişikliği gerektirmeden yeni değer ekleyebilir,
+mevcut bir değerin etiketini değiştirebilir, sırasını değiştirebilir ya
+da pasife alabilir. `kod` alanı (makine-okunur anahtar) bir kez
+oluşturulduktan sonra ASLA değişmez/silinmez — sadece `aktifMi=false`
+ile pasife alınır — böylece geçmiş kayıtlar ve kod içindeki kod-bazlı
+eşlemeler (ör. `TIP_KOD_ILE_ESLESEN_CARI_KOD_KODU`) bozulmaz.
 
 İstisna: kullanıcı **rolü** (`KullaniciRolu`) bilinçli olarak enum olarak
 bırakıldı, çünkü rol değişikliği güvenlik/yetki anlamı taşır ve bir
