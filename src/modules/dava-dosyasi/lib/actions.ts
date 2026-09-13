@@ -15,6 +15,20 @@ function musteriIdleriniAl(formData: FormData): string[] {
   return formData.getAll("musteriIds").map(String).filter(Boolean);
 }
 
+// Karsi taraf secimini cozumler: "yeniKarsiTarafAdi" doluysa yeni bir
+// KarsiTaraf olusturup id'sini dondurur, degilse secilen "karsiTarafId"yi
+// (varsa) kullanir.
+async function karsiTarafIdCozumle(formData: FormData, musteriIdleri: string[]): Promise<string | null> {
+  const yeniAd = metinYaAlNull(formData, "yeniKarsiTarafAdi");
+  if (yeniAd) {
+    const yeni = await prisma.karsiTaraf.create({
+      data: { musteriId: musteriIdleri[0], ad: yeniAd },
+    });
+    return yeni.id;
+  }
+  return metinYaAlNull(formData, "karsiTarafId");
+}
+
 export async function davaDosyasiOlustur(formData: FormData) {
   const konu = String(formData.get("konu") ?? "").trim();
   const durumId = String(formData.get("durumId") ?? "");
@@ -28,11 +42,14 @@ export async function davaDosyasiOlustur(formData: FormData) {
     throw new Error("En az bir müvekkil seçilmelidir.");
   }
 
+  const karsiTarafId = await karsiTarafIdCozumle(formData, musteriIdleri);
+
   const dosya = await prisma.davaDosyasi.create({
     data: {
       dosyaNo: metinYaAlNull(formData, "dosyaNo"),
       birimAdi: metinYaAlNull(formData, "birimAdi"),
       konu,
+      karsiTarafId,
       durumId,
       sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
       acilisTarihi: new Date(acilisTarihi),
@@ -61,6 +78,8 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
     throw new Error("En az bir müvekkil seçilmelidir.");
   }
 
+  const karsiTarafId = await karsiTarafIdCozumle(formData, musteriIdleri);
+
   await prisma.$transaction([
     prisma.davaDosyasi.update({
       where: { id },
@@ -68,6 +87,7 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
         dosyaNo: metinYaAlNull(formData, "dosyaNo"),
         birimAdi: metinYaAlNull(formData, "birimAdi"),
         konu,
+        karsiTarafId,
         durumId,
         sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
         acilisTarihi: new Date(acilisTarihi),

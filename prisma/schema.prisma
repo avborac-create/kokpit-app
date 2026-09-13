@@ -119,6 +119,7 @@ model Musteri {
   paraTrafigi     MusteriParaTrafigi[]
   dosyalar        DosyaMuvekkili[]
   irtibatKisileri IrtibatKisisi[]
+  karsiTaraflar   KarsiTaraf[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -224,6 +225,27 @@ model ParaTrafigiDosyasi {
 // MODUL: Dava Dosyalari
 // ============================================================
 
+// Musterinin (muvekkilin) KENDI musterisi/borclusu - buronun muvekkil adina
+// icra/dava takip ettigi karsi taraf (orn. "Koz Gida", "Nasip Sac"). Musteri
+// (muvekkil) ile KARISTIRILMAMALI - bkz. ARCHITECTURE.md "Finans Modulu"
+// bolumu. Bir karsi tarafa birden fazla dava dosyasi baglanabilir.
+model KarsiTaraf {
+  id        String  @id @default(cuid())
+  musteriId String
+  musteri   Musteri @relation(fields: [musteriId], references: [id], onDelete: Cascade)
+
+  ad             String
+  tanimlayiciKod String? // MAK: cek no, VKN vb. - simdilik serbest metin (bkz. ARCHITECTURE.md)
+  notlar         String?
+
+  olusturmaTarihi DateTime @default(now())
+
+  dosyalar DavaDosyasi[]
+
+  @@index([musteriId])
+  @@map("karsi_taraflar")
+}
+
 // Bir dava dosyasina birden fazla musteri baglanabilir (ortak davacilar,
 // veraset vb.); bu yuzden Musteri <-> DavaDosyasi iliskisi DosyaMuvekkili
 // ara tablosu uzerinden coka-cok kurulur (bkz. semanin en ustundeki not).
@@ -232,6 +254,8 @@ model DavaDosyasi {
   dosyaNo          String?
   birimAdi         String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
   konu             String
+  karsiTarafId     String?
+  karsiTaraf       KarsiTaraf?   @relation(fields: [karsiTarafId], references: [id])
   durumId          String
   durum            SecenekDegeri @relation("DavaDosyasiDurumu", fields: [durumId], references: [id])
   sorumluAvukatId  String?
@@ -247,6 +271,7 @@ model DavaDosyasi {
 
   @@index([durumId])
   @@index([sorumluAvukatId])
+  @@index([karsiTarafId])
   @@map("dava_dosyalari")
 }
 

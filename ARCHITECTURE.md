@@ -130,6 +130,32 @@ eklenmesi ihtiyacı doğabilir. Konuşulan yaklaşım:
 
 Bu henüz geliştirilmedi; ileride bir modül olarak ele alınacak.
 
+## Finans Modülü — Tanımlar/Standartlar
+
+Karışıklığa mahal vermemek için burada netleşen kavramlar kayıt altına
+alınır; yeni bir tartışma açmadan önce buraya bakılır.
+
+- **Karşı Taraf (`KarsiTaraf`)**: Müvekkilin KENDİ müşterisi/borçlusu —
+  yani büronun müvekkil adına icra/dava takip ettiği taraf (ör. "Koz
+  Gıda", "Nasip Sac", "Hicret Kırtay"). Müvekkilin (`Musteri`) kendisiyle
+  KARIŞTIRILMAMALI. Bir karşı tarafa birden fazla dava dosyası
+  bağlanabilir (ör. Koz Gıda'ya karşı hem icra hem ihtiyati haciz hem
+  icra ceza dosyası).
+- **MAK (ayırt edici kod)**: Karşı tarafı isim çakışmasına karşı ayırt
+  etmek için düşünülen ek bir alan (ör. çek seri no, VKN). **Şimdilik
+  ERTELENDİ** — ileride "tür" (Müşteri/Çek No/vb.) seçilebilen bir
+  seçenek listesi + değer alanı olarak eklenecek; bugün zorunlu değil.
+- **Cari Hesap — Borç/Alacak yönü**: Müvekkilin bakış açısından klasik
+  çift kolonlu defter:
+  - **Alacak** = müvekkilden gelen tahsilat (`para_trafigi_tipi = tahsilat`)
+    — büronun müvekkil adına elde tuttuğu/avans tutar.
+  - **Borç** = o tahsilata karşılık yapılan masraf (`masraf_yansitma`) veya
+    manuel borç kaydı (`borc`) — elde tutulan tutardan düşülen kısım.
+  - **Bakiye** = kümülatif (Alacak − Borç). Pozitifse müvekkilin bizde
+    alacağı/avansı var; negatifse müvekkilin bize borcu var.
+- Bu yön ve isimlendirme, evrensel muhasebe cari hesap ekstresi
+  formatıyla (Tarih | Açıklama | Borç | Alacak | Bakiye) uyumlu tutulur.
+
 ## PWA
 
 - `public/manifest.json` + `public/sw.js`: kullanıcılar Chrome/Safari'nin

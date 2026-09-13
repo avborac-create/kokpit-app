@@ -1,7 +1,12 @@
 export function DosyaSecici({
   dosyalar,
 }: {
-  dosyalar: { id: string; dosyaNo: string | null; konu: string }[];
+  dosyalar: {
+    id: string;
+    dosyaNo: string | null;
+    konu: string;
+    karsiTaraf: { ad: string } | null;
+  }[];
 }) {
   return (
     <div className="col-span-2 mb-4 md:col-span-4">
@@ -27,6 +32,9 @@ export function DosyaSecici({
               />
               {dosya.dosyaNo ? `${dosya.dosyaNo} — ` : ""}
               {dosya.konu}
+              {dosya.karsiTaraf && (
+                <span className="text-white/45"> ({dosya.karsiTaraf.ad})</span>
+              )}
             </label>
           ))}
         </div>
