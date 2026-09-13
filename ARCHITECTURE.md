@@ -175,6 +175,17 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   borcu vardır. Eskiden `para_trafigi_tipi` üzerinden (tahsilat/borç/
   masraf_yansıtma) hesaplanıyordu; bu yön artık geçerli değildir (bkz.
   aşağıdaki Tip alanı değişikliği).
+- **Cari Hesap Özeti sadece "Tahsil Edildi" olan tasnifi sayar**:
+  `cariHesapOzetiHesapla`'yı çağıran `dosyaCariHesapOzeti` ve
+  `uyusmazlikGrubuCariHesapOzeti`, tasnif toplamını hesaplarken
+  `paraTrafigi.durum.kod === "tahsil_edildi"` şartını arar. Aksi halde
+  "Beklemede" (henüz tahsil edilmemiş, ör. karşılıksız çek davası için
+  faturalandırılmış ama ödenmemiş bir akdi vekalet ücreti) bir kayıt
+  sanki para fiilen gelmiş gibi Tasnif Edilen'e dahil olur ve müvekkilin
+  o kadar borcu/kullanılabilir avansı varmış gibi yanlış bir Bakiye
+  gösterirdi. `DosyaMasrafi` (masraf tarafı) için böyle bir durum alanı
+  yok — yapılan bir masraf zaten fiilen gerçekleşmiş kabul edilir, o
+  yüzden `masrafWhere` tarafında filtre yok.
 - **Para Trafiği Tipi = tasnifin baskın türü**: `para_trafigi_tipi`
   artık yön (gelen/giden) değil, müvekkilden gelen paranın tasnifteki
   BASKIN türünü ifade eder: `Masraf`, `Bloke Para`, `Akdi Vekalet`,

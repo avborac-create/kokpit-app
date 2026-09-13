@@ -131,7 +131,12 @@ async function cariHesapOzetiHesapla(
 
 export async function dosyaCariHesapOzeti(dosyaId: string) {
   return cariHesapOzetiHesapla(
-    { paraTrafigi: { dosyalar: { some: { dosyaId } } } },
+    {
+      paraTrafigi: {
+        durum: { kod: "tahsil_edildi" },
+        dosyalar: { some: { dosyaId } },
+      },
+    },
     { dosyaId },
   );
 }
@@ -145,7 +150,12 @@ export async function dosyaCariHesapOzeti(dosyaId: string) {
 // diye bakmak icin bir alt-kirilimdir.
 export async function uyusmazlikGrubuCariHesapOzeti(uyusmazlikGrubuId: string) {
   return cariHesapOzetiHesapla(
-    { paraTrafigi: { dosyalar: { some: { dosya: { uyusmazlikGrubuId } } } } },
+    {
+      paraTrafigi: {
+        durum: { kod: "tahsil_edildi" },
+        dosyalar: { some: { dosya: { uyusmazlikGrubuId } } },
+      },
+    },
     { dosya: { uyusmazlikGrubuId } },
   );
 }
