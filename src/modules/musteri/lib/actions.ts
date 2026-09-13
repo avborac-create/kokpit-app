@@ -76,6 +76,17 @@ export async function musteriSil(id: string) {
   redirect("/kokpit/musteriler");
 }
 
+// Tip "Karma" degilse tasnifin tamamı otomatik olarak bu tip'in karşılığı
+// olan tek cari koda yazılır (bkz. ARCHITECTURE.md - Tip = tasnifin baskın
+// türü). "kod" alanları admin panelinden (ileride) düzenlenebilir hale
+// gelse de kalıcı/değişmez tutulacağı için bu eşleme güvenlidir.
+const TIP_KOD_ILE_ESLESEN_CARI_KOD_KODU: Record<string, string> = {
+  masraf: "masraf_hesabi",
+  bloke_para: "bloke_paralar",
+  akdi_vekalet: "akdi_vekalet_hesabi",
+  aktarilacak_para: "emanet_hesabi",
+};
+
 export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData) {
   const tarih = String(formData.get("tarih") ?? "");
   const tipId = String(formData.get("tipId") ?? "");
@@ -88,10 +99,22 @@ export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData
     throw new Error("Tarih, tip, durum, kaynak ve tutar alanları zorunludur.");
   }
 
-  const tasnifSatirlari: { cariKodId: string; tutar: string }[] = [];
-  for (const [anahtar, deger] of formData.entries()) {
-    if (anahtar.startsWith("tasnif_") && String(deger).trim() !== "") {
-      tasnifSatirlari.push({ cariKodId: anahtar.slice("tasnif_".length), tutar: String(deger) });
+  const tip = await prisma.secenekDegeri.findUnique({ where: { id: tipId } });
+  const eslesenCariKodKodu = tip ? TIP_KOD_ILE_ESLESEN_CARI_KOD_KODU[tip.kod] : undefined;
+
+  let tasnifSatirlari: { cariKodId: string; tutar: string }[] = [];
+  if (eslesenCariKodKodu) {
+    const cariKod = await prisma.secenekDegeri.findFirst({
+      where: { kod: eslesenCariKodKodu, liste: { anahtar: "cari_kod" } },
+    });
+    if (cariKod) {
+      tasnifSatirlari = [{ cariKodId: cariKod.id, tutar }];
+    }
+  } else {
+    for (const [anahtar, deger] of formData.entries()) {
+      if (anahtar.startsWith("tasnif_") && String(deger).trim() !== "") {
+        tasnifSatirlari.push({ cariKodId: anahtar.slice("tasnif_".length), tutar: String(deger) });
+      }
     }
   }
 

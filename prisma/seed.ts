@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 const SECENEK_LISTELERI: {
   anahtar: string;
   ad: string;
-  degerler: { kod: string; etiket: string }[];
+  degerler: { kod: string; etiket: string; aktifMi?: boolean }[];
 }[] = [
   {
     anahtar: "musteri_tipi",
@@ -31,9 +31,20 @@ const SECENEK_LISTELERI: {
     anahtar: "para_trafigi_tipi",
     ad: "Para Trafiği Tipi",
     degerler: [
-      { kod: "tahsilat", etiket: "Tahsilat" },
-      { kod: "borc", etiket: "Borç" },
-      { kod: "masraf_yansitma", etiket: "Masraf Yansıtma" },
+      // Müvekkilden gelen paranın tasnifteki baskın türünü doğrudan ifade
+      // eder (bkz. ARCHITECTURE.md). Tek bir cari koda gidiyorsa o tip
+      // seçilir ve tasnif otomatik/tek kalemli yapılır; birden fazla cari
+      // koda bölünüyorsa "Karma" seçilip tasnif alanları elle doldurulur.
+      { kod: "masraf", etiket: "Masraf" },
+      { kod: "bloke_para", etiket: "Bloke Para" },
+      { kod: "akdi_vekalet", etiket: "Akdi Vekalet" },
+      { kod: "aktarilacak_para", etiket: "Aktarılacak Para (Emanet)" },
+      { kod: "karma", etiket: "Karma" },
+      // Eski degerler: gecmis kayitlarin bozulmamasi icin silinmiyor,
+      // sadece yeni giriste secilemesin diye pasife alindi.
+      { kod: "tahsilat", etiket: "Tahsilat (eski)", aktifMi: false },
+      { kod: "borc", etiket: "Borç (eski)", aktifMi: false },
+      { kod: "masraf_yansitma", etiket: "Masraf Yansıtma (eski)", aktifMi: false },
     ],
   },
   {
@@ -100,14 +111,16 @@ async function secenekListeleriniOlustur() {
     });
 
     for (const [index, deger] of liste.degerler.entries()) {
+      const aktifMi = deger.aktifMi ?? true;
       await prisma.secenekDegeri.upsert({
         where: { listeId_kod: { listeId: olusturulanListe.id, kod: deger.kod } },
-        update: { etiket: deger.etiket, siraNo: index },
+        update: { etiket: deger.etiket, siraNo: index, aktifMi },
         create: {
           listeId: olusturulanListe.id,
           kod: deger.kod,
           etiket: deger.etiket,
           siraNo: index,
+          aktifMi,
         },
       });
     }

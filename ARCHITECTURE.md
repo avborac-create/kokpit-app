@@ -148,16 +148,24 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
 - **Bloke Paralar**: Teminat, yakalama avansı, satış avansı, peşin
   yediemin ücreti vb. — dosya kapsamında geçici olarak tutulan, dava/
   icra sonuçlanınca iade edilecek tutarlar.
-- **Cari Hesap — Borç/Alacak yönü**: Müvekkilin bakış açısından klasik
-  çift kolonlu defter:
-  - **Alacak** = müvekkilden gelen tahsilat (`para_trafigi_tipi = tahsilat`)
-    — büronun müvekkil adına elde tuttuğu/avans tutar.
-  - **Borç** = o tahsilata karşılık yapılan masraf (`masraf_yansitma`) veya
-    manuel borç kaydı (`borc`) — elde tutulan tutardan düşülen kısım.
-  - **Bakiye** = kümülatif (Alacak − Borç). Pozitifse müvekkilin bizde
-    alacağı/avansı var; negatifse müvekkilin bize borcu var.
-- Bu yön ve isimlendirme, evrensel muhasebe cari hesap ekstresi
-  formatıyla (Tarih | Açıklama | Borç | Alacak | Bakiye) uyumlu tutulur.
+- **Cari Hesap — Borç/Alacak yönü**: Artık dosya bazında hesaplanır (bkz.
+  `dosyaCariHesapOzeti` / Cari Hesap Özeti): her cari kod için Tasnif
+  Edilen − Masraf Edilen = Bakiye; Akdi Vekalet Hesabı hariç tüm
+  bakiyelerin toplamı pozitifse müvekkilin alacağı/avansı, negatifse
+  borcu vardır. Eskiden `para_trafigi_tipi` üzerinden (tahsilat/borç/
+  masraf_yansıtma) hesaplanıyordu; bu yön artık geçerli değildir (bkz.
+  aşağıdaki Tip alanı değişikliği).
+- **Para Trafiği Tipi = tasnifin baskın türü**: `para_trafigi_tipi`
+  artık yön (gelen/giden) değil, müvekkilden gelen paranın tasnifteki
+  BASKIN türünü ifade eder: `Masraf`, `Bloke Para`, `Akdi Vekalet`,
+  `Aktarılacak Para (Emanet)`, `Karma`. Tek bir cari koda giden bir
+  ödemede ilgili tip seçilir ve tasnif otomatik olarak (tutarın tamamı o
+  cari koda) yazılır — tasnif alanları formda gösterilmez. Birden fazla
+  cari koda bölünen ödemelerde `Karma` seçilir ve tasnif alanları elle
+  doldurulur (bkz. `TIP_KOD_ILE_ESLESEN_CARI_KOD_KODU` eşleme tablosu,
+  `src/modules/musteri/lib/actions.ts`). Eski değerler (Tahsilat, Borç,
+  Masraf Yansıtma) geçmiş kayıtların bozulmaması için silinmedi, sadece
+  `aktifMi=false` ile pasife alındı — yeni girişte seçilemezler.
 - **Uyuşmazlık Grubu (`UyusmazlikGrubu`)**: Aynı alacağın/uyuşmazlığın
   tahsili için birden fazla karşı taraf ve dava dosyası gerekebilir (ör.
   asıl borçlu + protokol/bono temerrüdü sonrası devreye giren kefile

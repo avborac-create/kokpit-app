@@ -3,7 +3,7 @@ import { Dugme } from "@/core/ui/button";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
 import { DosyaSecici } from "@/modules/musteri/components/dosya-secici";
-import { TasnifGirisi } from "@/modules/musteri/components/tasnif-girisi";
+import { TipSeciciVeTasnif } from "@/modules/musteri/components/tip-secici-ve-tasnif";
 
 export async function ParaTrafigiFormu({
   action,
@@ -28,19 +28,7 @@ export async function ParaTrafigiFormu({
         <Etiket htmlFor="tarih">Tarih</Etiket>
         <Girdi id="tarih" name="tarih" type="date" required defaultValue={bugun} />
       </Alan>
-      <Alan>
-        <Etiket htmlFor="tipId">Tip</Etiket>
-        <Secim id="tipId" name="tipId" required defaultValue="">
-          <option value="" disabled>
-            Seçiniz…
-          </option>
-          {tipler.map((tip) => (
-            <option key={tip.id} value={tip.id}>
-              {tip.etiket}
-            </option>
-          ))}
-        </Secim>
-      </Alan>
+      <TipSeciciVeTasnif tipler={tipler} cariKodlar={cariKodlar} />
       <Alan>
         <Etiket htmlFor="tutar">Tutar (₺)</Etiket>
         <Girdi id="tutar" name="tutar" type="number" step="0.01" min="0" required />
@@ -72,7 +60,6 @@ export async function ParaTrafigiFormu({
         </Secim>
       </Alan>
       <DosyaSecici dosyalar={dosyalar} />
-      <TasnifGirisi cariKodlar={cariKodlar} />
       <div className="col-span-2 md:col-span-4">
         <Alan>
           <Etiket htmlFor="aciklama">Açıklama</Etiket>
