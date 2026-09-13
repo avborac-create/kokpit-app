@@ -24,6 +24,7 @@ export async function davaDosyalariniListele(filtre: DavaDosyasiFiltre = {}) {
       durum: true,
       sorumluAvukat: true,
       karsiTaraf: true,
+      uyusmazlikGrubu: true,
       muvekkiller: { include: { musteri: true } },
     },
     orderBy: { olusturmaTarihi: "desc" },
@@ -37,6 +38,7 @@ export async function davaDosyasiGetir(id: string) {
       durum: true,
       sorumluAvukat: true,
       karsiTaraf: true,
+      uyusmazlikGrubu: true,
       muvekkiller: { include: { musteri: true } },
       paraTrafigiKayitlari: {
         include: {
@@ -45,6 +47,10 @@ export async function davaDosyasiGetir(id: string) {
           },
         },
         orderBy: { paraTrafigi: { tarih: "desc" } },
+      },
+      masraflar: {
+        include: { cariKod: true, tur: true },
+        orderBy: { tarih: "desc" },
       },
     },
   });
@@ -61,6 +67,14 @@ export async function musterininDosyalari(musteriId: string) {
 export async function karsiTaraflariListele(musteriIdleri: string[]) {
   if (musteriIdleri.length === 0) return [];
   return prisma.karsiTaraf.findMany({
+    where: { musteriId: { in: musteriIdleri } },
+    orderBy: { ad: "asc" },
+  });
+}
+
+export async function uyusmazlikGruplariniListele(musteriIdleri: string[]) {
+  if (musteriIdleri.length === 0) return [];
+  return prisma.uyusmazlikGrubu.findMany({
     where: { musteriId: { in: musteriIdleri } },
     orderBy: { ad: "asc" },
   });

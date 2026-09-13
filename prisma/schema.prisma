@@ -91,6 +91,8 @@ model SecenekDegeri {
   paraTrafigiKaynak MusteriParaTrafigi[] @relation("ParaTrafigiKaynagi")
   davaDosyalariDurum DavaDosyasi[]       @relation("DavaDosyasiDurumu")
   paraTrafigiTasnifCariKod ParaTrafigiTasnif[] @relation("ParaTrafigiTasnifCariKod")
+  dosyaMasrafiCariKod DosyaMasrafi[] @relation("DosyaMasrafiCariKod")
+  dosyaMasrafiTuru    DosyaMasrafi[] @relation("DosyaMasrafiTuru")
 
   @@unique([listeId, kod])
   @@map("secenek_degerleri")
@@ -117,10 +119,11 @@ model Musteri {
   olusturmaTarihi  DateTime      @default(now())
   guncellemeTarihi DateTime      @updatedAt
 
-  paraTrafigi     MusteriParaTrafigi[]
-  dosyalar        DosyaMuvekkili[]
-  irtibatKisileri IrtibatKisisi[]
-  karsiTaraflar   KarsiTaraf[]
+  paraTrafigi        MusteriParaTrafigi[]
+  dosyalar           DosyaMuvekkili[]
+  irtibatKisileri    IrtibatKisisi[]
+  karsiTaraflar      KarsiTaraf[]
+  uyusmazlikGruplari UyusmazlikGrubu[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -247,33 +250,85 @@ model KarsiTaraf {
   @@map("karsi_taraflar")
 }
 
+// Ayni alacagin/uyusmazligin tahsili icin birden fazla karsi taraf ve dosya
+// gerekebilir (orn. asil borclu + sonradan devreye giren kefil/senet
+// dosyasi, "tekerrur olmasin" notuyla birbirine bagli). UyusmazlikGrubu bu
+// ust gruplamayi temsil eder: "Asya Park Ticareti" gibi tek bir kok
+// alacak/uyusmazlik, altinda birden fazla Uyusmazlik Dosyasi (DavaDosyasi)
+// barindirabilir.
+model UyusmazlikGrubu {
+  id        String  @id @default(cuid())
+  musteriId String
+  musteri   Musteri @relation(fields: [musteriId], references: [id], onDelete: Cascade)
+
+  ad     String // "Asya Park Ticareti", "Hicret Kırtay İş Sözleşmesi" vb.
+  notlar String?
+
+  olusturmaTarihi DateTime @default(now())
+
+  dosyalar DavaDosyasi[]
+
+  @@index([musteriId])
+  @@map("uyusmazlik_gruplari")
+}
+
 // Bir dava dosyasina birden fazla musteri baglanabilir (ortak davacilar,
 // veraset vb.); bu yuzden Musteri <-> DavaDosyasi iliskisi DosyaMuvekkili
 // ara tablosu uzerinden coka-cok kurulur (bkz. semanin en ustundeki not).
 model DavaDosyasi {
-  id               String        @id @default(cuid())
-  dosyaNo          String?
-  birimAdi         String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
-  konu             String
-  karsiTarafId     String?
-  karsiTaraf       KarsiTaraf?   @relation(fields: [karsiTarafId], references: [id])
-  durumId          String
-  durum            SecenekDegeri @relation("DavaDosyasiDurumu", fields: [durumId], references: [id])
-  sorumluAvukatId  String?
-  sorumluAvukat    Kullanici?    @relation("DavaDosyasiSorumluAvukat", fields: [sorumluAvukatId], references: [id])
-  acilisTarihi     DateTime
-  kapanisTarihi    DateTime?
-  aciklama         String?
-  olusturmaTarihi  DateTime      @default(now())
-  guncellemeTarihi DateTime      @updatedAt
+  id                String           @id @default(cuid())
+  dosyaNo           String?
+  birimAdi          String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
+  konu              String
+  karsiTarafId      String?
+  karsiTaraf        KarsiTaraf?      @relation(fields: [karsiTarafId], references: [id])
+  uyusmazlikGrubuId String?
+  uyusmazlikGrubu   UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])
+  durumId           String
+  durum             SecenekDegeri    @relation("DavaDosyasiDurumu", fields: [durumId], references: [id])
+  sorumluAvukatId   String?
+  sorumluAvukat     Kullanici?       @relation("DavaDosyasiSorumluAvukat", fields: [sorumluAvukatId], references: [id])
+  acilisTarihi      DateTime
+  kapanisTarihi     DateTime?
+  aciklama          String?
+  olusturmaTarihi   DateTime         @default(now())
+  guncellemeTarihi  DateTime         @updatedAt
 
   muvekkiller          DosyaMuvekkili[]
   paraTrafigiKayitlari ParaTrafigiDosyasi[]
+  masraflar            DosyaMasrafi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
   @@index([karsiTarafId])
+  @@index([uyusmazlikGrubuId])
   @@map("dava_dosyalari")
+}
+
+// Bir dosyaya iliskin tek tek masraf kalemleri (harc, pul, dava masrafi,
+// haciz avansi vb.) - gercek muhasebe dokumlerindeki kalem-kalem yapiyi
+// birebir yansitir, boylece muvekkile "paranin nereye gittigi" satir
+// satir gosterilebilir. Her kalem, o dosyanin hangi cari koddan
+// (Masraf Hesabi, Bloke Paralar vb.) dusuldugunu de tasir.
+model DosyaMasrafi {
+  id        String        @id @default(cuid())
+  dosyaId   String
+  dosya     DavaDosyasi   @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+  cariKodId String
+  cariKod   SecenekDegeri @relation("DosyaMasrafiCariKod", fields: [cariKodId], references: [id])
+  turId     String
+  tur       SecenekDegeri @relation("DosyaMasrafiTuru", fields: [turId], references: [id])
+
+  tarih    DateTime
+  aciklama String
+  tutar    Decimal  @db.Decimal(14, 2)
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([dosyaId])
+  @@index([cariKodId])
+  @@index([turId])
+  @@map("dosya_masraflari")
 }
 
 // Musteri <-> DavaDosyasi coka-cok iliski (ara) tablosu.

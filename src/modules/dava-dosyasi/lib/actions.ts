@@ -29,6 +29,22 @@ async function karsiTarafIdCozumle(formData: FormData, musteriIdleri: string[]):
   return metinYaAlNull(formData, "karsiTarafId");
 }
 
+// Uyusmazlik grubu secimini cozumler: "yeniUyusmazlikGrubuAdi" doluysa yeni
+// bir UyusmazlikGrubu olusturup id'sini dondurur, degilse secilen
+// "uyusmazlikGrubuId"yi (varsa) kullanir. Ayni alacagin/uyusmazligin birden
+// fazla dosyaya (asil borclu + sonradan devreye giren kefil vb.) yayilmasi
+// durumunda dosyalari tek bir grup altinda toplamak icin kullanilir.
+async function uyusmazlikGrubuIdCozumle(formData: FormData, musteriIdleri: string[]): Promise<string | null> {
+  const yeniAd = metinYaAlNull(formData, "yeniUyusmazlikGrubuAdi");
+  if (yeniAd) {
+    const yeni = await prisma.uyusmazlikGrubu.create({
+      data: { musteriId: musteriIdleri[0], ad: yeniAd },
+    });
+    return yeni.id;
+  }
+  return metinYaAlNull(formData, "uyusmazlikGrubuId");
+}
+
 export async function davaDosyasiOlustur(formData: FormData) {
   const konu = String(formData.get("konu") ?? "").trim();
   const durumId = String(formData.get("durumId") ?? "");
@@ -43,6 +59,7 @@ export async function davaDosyasiOlustur(formData: FormData) {
   }
 
   const karsiTarafId = await karsiTarafIdCozumle(formData, musteriIdleri);
+  const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
 
   const dosya = await prisma.davaDosyasi.create({
     data: {
@@ -50,6 +67,7 @@ export async function davaDosyasiOlustur(formData: FormData) {
       birimAdi: metinYaAlNull(formData, "birimAdi"),
       konu,
       karsiTarafId,
+      uyusmazlikGrubuId,
       durumId,
       sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
       acilisTarihi: new Date(acilisTarihi),
@@ -79,6 +97,7 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
   }
 
   const karsiTarafId = await karsiTarafIdCozumle(formData, musteriIdleri);
+  const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
 
   await prisma.$transaction([
     prisma.davaDosyasi.update({
@@ -88,6 +107,7 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
         birimAdi: metinYaAlNull(formData, "birimAdi"),
         konu,
         karsiTarafId,
+        uyusmazlikGrubuId,
         durumId,
         sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
         acilisTarihi: new Date(acilisTarihi),
@@ -121,4 +141,39 @@ export async function davaDosyasiSil(id: string) {
   await prisma.davaDosyasi.delete({ where: { id } });
   revalidatePath("/kokpit/dava-dosyalari");
   redirect("/kokpit/dava-dosyalari");
+}
+
+export async function dosyaMasrafiEkle(dosyaId: string, formData: FormData) {
+  const tarih = String(formData.get("tarih") ?? "");
+  const cariKodId = String(formData.get("cariKodId") ?? "");
+  const turId = String(formData.get("turId") ?? "");
+  const aciklama = String(formData.get("aciklama") ?? "").trim();
+  const tutar = String(formData.get("tutar") ?? "");
+
+  if (!tarih || !cariKodId || !turId || !aciklama || !tutar) {
+    throw new Error("Tarih, cari kod, tür, açıklama ve tutar alanları zorunludur.");
+  }
+
+  await prisma.dosyaMasrafi.create({
+    data: {
+      dosyaId,
+      cariKodId,
+      turId,
+      tarih: new Date(tarih),
+      aciklama,
+      tutar,
+    },
+  });
+
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+export async function dosyaMasrafiSil(id: string, dosyaId: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici || !silebilirMi(kullanici.rol)) {
+    throw new Error("Bu işlem için yetkiniz yok.");
+  }
+
+  await prisma.dosyaMasrafi.delete({ where: { id } });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }

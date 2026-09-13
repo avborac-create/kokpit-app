@@ -73,6 +73,21 @@ const SECENEK_LISTELERI: {
       { kod: "ticari_hesap", etiket: "Ticari Hesap" },
     ],
   },
+  {
+    anahtar: "masraf_turu",
+    ad: "Masraf Türü",
+    degerler: [
+      { kod: "basvuru_harci", etiket: "Başvuru Harcı" },
+      { kod: "vekaletname_harci", etiket: "Vekaletname Harcı" },
+      { kod: "baro_pulu", etiket: "Baro Pulu" },
+      { kod: "pesin_harc", etiket: "Peşin Harç" },
+      { kod: "pul", etiket: "Pul" },
+      { kod: "dava_masrafi", etiket: "Dava Masrafı" },
+      { kod: "haciz_avansi", etiket: "Haciz Avansı" },
+      { kod: "tevkil_masrafi", etiket: "Tevkil Masrafı" },
+      { kod: "diger", etiket: "Diğer" },
+    ],
+  },
 ];
 
 async function secenekListeleriniOlustur() {

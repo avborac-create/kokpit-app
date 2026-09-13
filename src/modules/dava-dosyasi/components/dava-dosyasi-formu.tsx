@@ -2,7 +2,11 @@ import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterileriListele, avukatlariListele } from "@/modules/musteri/lib/queries";
-import { karsiTaraflariListele, type davaDosyasiGetir } from "@/modules/dava-dosyasi/lib/queries";
+import {
+  karsiTaraflariListele,
+  uyusmazlikGruplariniListele,
+  type davaDosyasiGetir,
+} from "@/modules/dava-dosyasi/lib/queries";
 import { MuvekkilSecici } from "./muvekkil-secici";
 
 type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
@@ -28,7 +32,10 @@ export async function DavaDosyasiFormu({
 
   const seciliIdler =
     dosya?.muvekkiller.map((m) => m.musteriId) ?? (onSecilenMusteriId ? [onSecilenMusteriId] : []);
-  const karsiTaraflar = await karsiTaraflariListele(seciliIdler);
+  const [karsiTaraflar, uyusmazlikGruplari] = await Promise.all([
+    karsiTaraflariListele(seciliIdler),
+    uyusmazlikGruplariniListele(seciliIdler),
+  ]);
   const acilisVarsayilan = dosya
     ? dosya.acilisTarihi.toISOString().slice(0, 10)
     : new Date().toISOString().slice(0, 10);
@@ -96,6 +103,36 @@ export async function DavaDosyasiFormu({
           <Girdi id="yeniKarsiTarafAdi" name="yeniKarsiTarafAdi" placeholder="Koz Gıda vb." />
         </Alan>
       </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Alan>
+          <Etiket htmlFor="uyusmazlikGrubuId">Uyuşmazlık Grubu</Etiket>
+          <Secim
+            id="uyusmazlikGrubuId"
+            name="uyusmazlikGrubuId"
+            defaultValue={dosya?.uyusmazlikGrubuId ?? ""}
+          >
+            <option value="">Seçiniz…</option>
+            {uyusmazlikGruplari.map((grup) => (
+              <option key={grup.id} value={grup.id}>
+                {grup.ad}
+              </option>
+            ))}
+          </Secim>
+        </Alan>
+        <Alan>
+          <Etiket htmlFor="yeniUyusmazlikGrubuAdi">veya Yeni Uyuşmazlık Grubu Ekle</Etiket>
+          <Girdi
+            id="yeniUyusmazlikGrubuAdi"
+            name="yeniUyusmazlikGrubuAdi"
+            placeholder="Asya Park Ticareti vb."
+          />
+        </Alan>
+      </div>
+      <p className="mb-4 -mt-3 text-xs text-white/35">
+        Aynı alacağın/uyuşmazlığın tahsili için birden fazla dosya açılırsa (örn. asıl borçlu ve
+        sonradan devreye giren kefil), bu dosyaları aynı grup altında toplayın.
+      </p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Alan>

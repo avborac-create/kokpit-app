@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { davaDosyasiGetir } from "@/modules/dava-dosyasi/lib/queries";
+import { dosyaMasrafiEkle } from "@/modules/dava-dosyasi/lib/actions";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 import { DosyaParaTrafigiListesi } from "@/modules/dava-dosyasi/components/dosya-para-trafigi-listesi";
+import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
+import { MasrafListesi } from "@/modules/dava-dosyasi/components/masraf-listesi";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { Dugme } from "@/core/ui/button";
@@ -52,6 +55,10 @@ export default async function DavaDosyasiDetaySayfasi({
           <p className="text-white">{dosya.karsiTaraf?.ad ?? "—"}</p>
         </div>
         <div>
+          <p className="text-white/45">Uyuşmazlık Grubu</p>
+          <p className="text-white">{dosya.uyusmazlikGrubu?.ad ?? "—"}</p>
+        </div>
+        <div>
           <p className="text-white/45">Müvekkil(ler)</p>
           <p className="text-white">
             {dosya.muvekkiller.map((m, i) => (
@@ -95,6 +102,12 @@ export default async function DavaDosyasiDetaySayfasi({
         Dosyası/Dosyalarına İstinaden&quot; alanından bu dosyayı seçin.
       </p>
       <DosyaParaTrafigiListesi baglantilar={dosya.paraTrafigiKayitlari} />
+
+      <h2 className="mb-3 mt-8 text-lg font-semibold tracking-tight text-white">Masraflar</h2>
+      <div className="mb-4">
+        <MasrafFormu action={dosyaMasrafiEkle.bind(null, id)} />
+      </div>
+      <MasrafListesi masraflar={dosya.masraflar} dosyaId={id} silmeYetkisiVar={silmeYetkisiVar} />
     </div>
   );
 }

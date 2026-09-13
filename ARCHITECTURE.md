@@ -155,6 +155,26 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
     alacağı/avansı var; negatifse müvekkilin bize borcu var.
 - Bu yön ve isimlendirme, evrensel muhasebe cari hesap ekstresi
   formatıyla (Tarih | Açıklama | Borç | Alacak | Bakiye) uyumlu tutulur.
+- **Uyuşmazlık Grubu (`UyusmazlikGrubu`)**: Aynı alacağın/uyuşmazlığın
+  tahsili için birden fazla karşı taraf ve dava dosyası gerekebilir (ör.
+  asıl borçlu + protokol/bono temerrüdü sonrası devreye giren kefile
+  karşı açılan ayrı "TTOK" dosyası — "aynı alacağın tahsilinde tekerrür
+  olmasın" kaydıyla). `UyusmazlikGrubu`, müvekkil altında bu üst
+  gruplamayı temsil eder (ör. "Asya Park Ticareti", "Hicret Kırtay İş
+  Sözleşmesi"); her `DavaDosyasi` isteğe bağlı olarak bir gruba bağlanır.
+  Gerçek örnek: "Asya Park Ticareti" grubu altında Ereğli(Konya) dosyası
+  (asıl borçlu), Koz Gıda dosyası (çek) ve Oğuz Han Özçelik TTOK dosyası
+  (kefil, temerrüt sonrası) bir arada tutulur.
+- **Dosya Masrafı (`DosyaMasrafi`)**: Bir dosyaya iliişkin tek tek masraf
+  kalemleri (harç, pul, dava masrafı, haciz avansı vb.) — gerçek
+  muhasebe dökümlerindeki kalem-kalem yapıyı birebir yansıtır. Her kalem
+  bir cari koda (Bloke Paralar, Masraf Hesabı vb.) ve bir masraf türüne
+  (`masraf_turu` seçenek listesi) bağlıdır. `ParaTrafigiTasnif` ile
+  ilişkisi: tasnif = paranın GELİRKEN cari kodlara dağılımı (özet/kontrol
+  toplamı); `DosyaMasrafi` = o cari koddan SONRADAN yapılan harcamaların
+  detayı. İkisi ayrı mekanizmalardır; bir cari kodun tasnif tutarı ile o
+  kod altındaki masraf kalemlerinin toplamı arasındaki fark, o cari
+  koddaki HARCANMAMIŞ/kalan bakiyedir (hata değildir).
 
 ## PWA
 
