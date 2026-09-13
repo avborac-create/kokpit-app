@@ -1,4 +1,5 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
+import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { Dugme } from "@/core/ui/button";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
@@ -30,8 +31,8 @@ export async function ParaTrafigiFormu({
       </Alan>
       <TipSeciciVeTasnif tipler={tipler} cariKodlar={cariKodlar} />
       <Alan>
-        <Etiket htmlFor="tutar">Tutar (₺)</Etiket>
-        <Girdi id="tutar" name="tutar" type="number" step="0.01" min="0" required />
+        <Etiket htmlFor="tutar">Tutar</Etiket>
+        <ParaGirdisi id="tutar" name="tutar" required />
       </Alan>
       <Alan>
         <Etiket htmlFor="durumId">Durum</Etiket>

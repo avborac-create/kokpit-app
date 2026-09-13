@@ -1,4 +1,5 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
+import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { Dugme } from "@/core/ui/button";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 
@@ -43,8 +44,8 @@ export async function MasrafFormu({ action }: { action: (formData: FormData) => 
         </Secim>
       </Alan>
       <Alan>
-        <Etiket htmlFor="tutar">Tutar (₺)</Etiket>
-        <Girdi id="tutar" name="tutar" type="number" step="0.01" min="0" required />
+        <Etiket htmlFor="tutar">Tutar</Etiket>
+        <ParaGirdisi id="tutar" name="tutar" required />
       </Alan>
       <div className="col-span-1 sm:col-span-2 md:col-span-4">
         <Alan>
