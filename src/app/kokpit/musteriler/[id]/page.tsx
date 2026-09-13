@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { musteriGetir } from "@/modules/musteri/lib/queries";
-import { paraTrafigiKaydiEkle, irtibatKisisiEkle } from "@/modules/musteri/lib/actions";
-import { ParaTrafigiFormu } from "@/modules/musteri/components/para-trafigi-formu";
-import { ParaTrafigiListesi } from "@/modules/musteri/components/para-trafigi-listesi";
+import { irtibatKisisiEkle } from "@/modules/musteri/lib/actions";
 import { MusteriSilmeButonu } from "@/modules/musteri/components/musteri-silme-butonu";
 import { IrtibatKisisiFormu } from "@/modules/musteri/components/irtibat-kisisi-formu";
 import { IrtibatKisileriListesi } from "@/modules/musteri/components/irtibat-kisileri-listesi";
@@ -128,11 +126,18 @@ export default async function MusteriDetaySayfasi({
         )}
       </div>
 
-      <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Para Trafiği</h2>
-      <div className="mb-4">
-        <ParaTrafigiFormu action={paraTrafigiKaydiEkle.bind(null, id)} musteriId={id} />
+      <div className="glass mb-8 flex items-center justify-between rounded-2xl p-5">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-white">Finansal Kayıtlar</h2>
+          <p className="mt-1 text-sm text-white/45">
+            Para trafiği ve tasnif kayıtları Finans modülünden yönetilir ({musteri.paraTrafigi.length}{" "}
+            kayıt).
+          </p>
+        </div>
+        <Link href={`/kokpit/finans/${id}`}>
+          <Dugme varyant="ikincil">Finansal Kayıtları Görüntüle →</Dugme>
+        </Link>
       </div>
-      <ParaTrafigiListesi kayitlar={musteri.paraTrafigi} silmeYetkisiVar={silmeYetkisiVar} />
     </div>
   );
 }
