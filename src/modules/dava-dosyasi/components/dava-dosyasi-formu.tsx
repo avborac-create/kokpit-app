@@ -48,6 +48,40 @@ export async function DavaDosyasiFormu({
 
   return (
     <form action={action} className="max-w-xl">
+      <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdler} />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Alan>
+          <Etiket htmlFor="uyusmazlikGrubuId">Uyuşmazlık Grubu (müvekkil bakımından ayırt edici unsur)</Etiket>
+          <Secim
+            id="uyusmazlikGrubuId"
+            name="uyusmazlikGrubuId"
+            defaultValue={dosya?.uyusmazlikGrubuId ?? ""}
+          >
+            <option value="">Seçiniz…</option>
+            {uyusmazlikGruplari.map((grup) => (
+              <option key={grup.id} value={grup.id}>
+                {grup.ad}
+              </option>
+            ))}
+          </Secim>
+        </Alan>
+        <Alan>
+          <Etiket htmlFor="yeniUyusmazlikGrubuAdi">veya Yeni Uyuşmazlık Grubu Ekle</Etiket>
+          <Girdi
+            id="yeniUyusmazlikGrubuAdi"
+            name="yeniUyusmazlikGrubuAdi"
+            placeholder="Asya Park Ticareti vb."
+          />
+        </Alan>
+      </div>
+      <p className="mb-4 -mt-3 text-xs text-white/35">
+        Bütün yargısal/icra dosyaları buradan doğar — önce bu işin kiminle/hangi ilişkiyle ilgili
+        olduğunu belirleyin (ör. &quot;Asya Park Ticareti&quot;, &quot;Hicret Kırtay&quot;), tür ve karşı taraf seçimi
+        ondan sonra gelir. Aynı alacağın/uyuşmazlığın tahsili için birden fazla dosya açılırsa
+        (örn. asıl borçlu ve sonradan devreye giren kefil), bu dosyaları aynı grup altında toplayın.
+      </p>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Alan>
           <Etiket htmlFor="turId">Dosya Türü</Etiket>
@@ -77,6 +111,15 @@ export async function DavaDosyasiFormu({
         </Alan>
       </div>
 
+      <KarsiTarafSecici
+        karsiTaraflar={karsiTaraflar}
+        seciliIdler={dosya?.karsiTaraflar.map((kt) => kt.karsiTarafId) ?? []}
+      />
+      <Alan>
+        <Etiket htmlFor="yeniKarsiTarafAdi">veya Yeni Karşı Taraf Ekle</Etiket>
+        <Girdi id="yeniKarsiTarafAdi" name="yeniKarsiTarafAdi" placeholder="Koz Gıda vb." />
+      </Alan>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Alan>
           <Etiket htmlFor="dosyaNo">Dosya No</Etiket>
@@ -102,47 +145,6 @@ export async function DavaDosyasiFormu({
         <Etiket htmlFor="konu">Konu</Etiket>
         <Girdi id="konu" name="konu" required defaultValue={dosya?.konu ?? ""} />
       </Alan>
-
-      <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdler} />
-
-      <KarsiTarafSecici
-        karsiTaraflar={karsiTaraflar}
-        seciliIdler={dosya?.karsiTaraflar.map((kt) => kt.karsiTarafId) ?? []}
-      />
-      <Alan>
-        <Etiket htmlFor="yeniKarsiTarafAdi">veya Yeni Karşı Taraf Ekle</Etiket>
-        <Girdi id="yeniKarsiTarafAdi" name="yeniKarsiTarafAdi" placeholder="Koz Gıda vb." />
-      </Alan>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Alan>
-          <Etiket htmlFor="uyusmazlikGrubuId">Uyuşmazlık Grubu</Etiket>
-          <Secim
-            id="uyusmazlikGrubuId"
-            name="uyusmazlikGrubuId"
-            defaultValue={dosya?.uyusmazlikGrubuId ?? ""}
-          >
-            <option value="">Seçiniz…</option>
-            {uyusmazlikGruplari.map((grup) => (
-              <option key={grup.id} value={grup.id}>
-                {grup.ad}
-              </option>
-            ))}
-          </Secim>
-        </Alan>
-        <Alan>
-          <Etiket htmlFor="yeniUyusmazlikGrubuAdi">veya Yeni Uyuşmazlık Grubu Ekle</Etiket>
-          <Girdi
-            id="yeniUyusmazlikGrubuAdi"
-            name="yeniUyusmazlikGrubuAdi"
-            placeholder="Asya Park Ticareti vb."
-          />
-        </Alan>
-      </div>
-      <p className="mb-4 -mt-3 text-xs text-white/35">
-        Aynı alacağın/uyuşmazlığın tahsili için birden fazla dosya açılırsa (örn. asıl borçlu ve
-        sonradan devreye giren kefil), bu dosyaları aynı grup altında toplayın.
-      </p>
 
       <Alan>
         <Etiket htmlFor="bagliOlduguDosyaId">Bağlı Olduğu Esas Dosya (opsiyonel)</Etiket>
