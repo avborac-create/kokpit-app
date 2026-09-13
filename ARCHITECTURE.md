@@ -180,6 +180,18 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   kayıtlar geriye dönük `olusturmaTarihi` sırasına göre numaralandırıldı
   (bkz. `20260913240000_dava_dosyasi_kokpit_no` migration'ı — elle yazılmış
   autoincrement backfill'i, standart Prisma paterni).
+
+## Geliştirme Kutusu (Developer Inbox)
+
+`/kokpit/gelistirme-kutusu` (sadece Yönetici/Ortak), `GelistirmeTalebi`
+modeli. Sohbet sırasında söylenen her istek/fikrin kod yazılmadan önce
+hemen not düşüldüğü, hafif bir bekleme listesi — `Oneri` modelinden
+(ekran görüntülü, bölge seçimli geri bildirim) bilinçli olarak ayrı ve
+daha basit tutuldu: tek alan (`metin`), ekran görüntüsü yok. Durum
+`gelistirme_talebi_durumu` seçenek listesiyle ilerler: `beklemede` →
+`yapiliyor` → `tamamlandi` (sırayla, geri gidilemez — "Sonraki" butonu
+bir sıra ilerletir). Amaç: konuşmada söylenen her geliştirme talebinin
+kaybolmadan sıraya girmesi.
 - **Hukuki İlişki Türü (`DavaDosyasi.hukukiIliskiTuruId`)**: Dosya
   Türü'nden (ihtar/icra/dava — "hangi AŞAMADAYIZ") tamamen farklı, ikinci
   bir sınıflandırma boyutu: "hangi hukuki ARACA/ilişkiye dayanıyor"

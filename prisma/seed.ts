@@ -134,6 +134,15 @@ const SECENEK_LISTELERI: {
       { kod: "diger", etiket: "Diğer" },
     ],
   },
+  {
+    anahtar: "gelistirme_talebi_durumu",
+    ad: "Geliştirme Talebi Durumu",
+    degerler: [
+      { kod: "beklemede", etiket: "Beklemede" },
+      { kod: "yapiliyor", etiket: "Yapılıyor" },
+      { kod: "tamamlandi", etiket: "Tamamlandı" },
+    ],
+  },
 ];
 
 async function secenekListeleriniOlustur() {

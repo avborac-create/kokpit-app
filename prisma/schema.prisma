@@ -55,6 +55,7 @@ model Kullanici {
   sorumluOlduguMusteriler Musteri[]     @relation("MusteriSorumluAvukat")
   sorumluOlduguDosyalar   DavaDosyasi[] @relation("DavaDosyasiSorumluAvukat")
   gonderdigiOneriler      Oneri[]
+  gonderdigiGelistirmeTalepleri GelistirmeTalebi[]
 
   @@map("kullanicilar")
 }
@@ -95,6 +96,7 @@ model SecenekDegeri {
   paraTrafigiTasnifCariKod ParaTrafigiTasnif[] @relation("ParaTrafigiTasnifCariKod")
   dosyaMasrafiCariKod DosyaMasrafi[] @relation("DosyaMasrafiCariKod")
   dosyaMasrafiTuru    DosyaMasrafi[] @relation("DosyaMasrafiTuru")
+  gelistirmeTalepleriDurum GelistirmeTalebi[] @relation("GelistirmeTalebiDurumu")
 
   @@unique([listeId, kod])
   @@map("secenek_degerleri")
@@ -455,4 +457,30 @@ model Oneri {
 
   @@index([kullaniciId])
   @@map("oneriler")
+}
+
+// ============================================================
+// CEKIRDEK: Gelistirici Kutusu (Developer Inbox)
+// ============================================================
+
+// Musteri (av. Bora) ile Claude arasindaki gelistirme sohbetinde soylenen
+// her istek/fikrin, kod yazilmadan once hemen kaydedildigi basit bir
+// bekleme listesi. Oneri modelinden farki: ekran goruntusu/bolge secimi
+// gerektirmez, sadece kisa bir metin - konusma sirasinda hizlica not
+// dusmek icindir. Sira sira, durumu "beklemede"den "tamamlandi"ya
+// tasinarak islenir.
+model GelistirmeTalebi {
+  id          String    @id @default(cuid())
+  kullaniciId String
+  kullanici   Kullanici @relation(fields: [kullaniciId], references: [id], onDelete: Cascade)
+
+  metin   String
+  durumId String
+  durum   SecenekDegeri @relation("GelistirmeTalebiDurumu", fields: [durumId], references: [id])
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([kullaniciId])
+  @@index([durumId])
+  @@map("gelistirme_talepleri")
 }
