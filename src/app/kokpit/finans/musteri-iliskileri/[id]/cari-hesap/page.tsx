@@ -7,7 +7,7 @@ import { ParaTrafigiListesi } from "@/modules/musteri/components/para-trafigi-li
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 
-export default async function FinansDetaySayfasi({
+export default async function CariHesapSayfasi({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -21,11 +21,14 @@ export default async function FinansDetaySayfasi({
   return (
     <div className="pt-3">
       <div className="mb-6">
-        <Link href="/kokpit/finans" className="text-sm text-[#6db8ff] hover:underline">
-          ‹ Finans
+        <Link
+          href={`/kokpit/finans/musteri-iliskileri/${id}`}
+          className="text-sm text-[#6db8ff] hover:underline"
+        >
+          ‹ {musteri.adSoyadUnvan}
         </Link>
         <div className="mt-1 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">{musteri.adSoyadUnvan}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">Cari Hesap</h1>
           <Link
             href={`/kokpit/musteriler/${id}`}
             className="text-sm text-white/45 hover:text-[#6db8ff] hover:underline"
