@@ -94,6 +94,21 @@ const SECENEK_LISTELERI: {
     ],
   },
   {
+    anahtar: "hukuki_iliski_turu",
+    ad: "Hukuki İlişki Türü",
+    degerler: [
+      // Dosya Turu'nden farkli bir boyut: "hangi ASAMADAYIZ" (ihtar/icra/
+      // dava) degil, "hangi hukuki ARACA/iliskiye dayaniyor" sorusuna
+      // cevap verir. Opsiyonel - her dosyaya uygulanmayabilir.
+      { kod: "cek", etiket: "Çek" },
+      { kod: "senet", etiket: "Senet" },
+      { kod: "ttok", etiket: "TTOK" },
+      { kod: "is_hukuku_uyusmazligi", etiket: "İş Hukuku Uyuşmazlığı" },
+      { kod: "sozlesme_uyusmazligi", etiket: "Sözleşme Uyuşmazlığı" },
+      { kod: "diger", etiket: "Diğer" },
+    ],
+  },
+  {
     anahtar: "cari_kod",
     ad: "Cari Kod",
     degerler: [

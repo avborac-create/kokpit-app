@@ -23,6 +23,7 @@ export async function davaDosyalariniListele(filtre: DavaDosyasiFiltre = {}) {
     include: {
       durum: true,
       tur: true,
+      hukukiIliskiTuru: true,
       sorumluAvukat: true,
       karsiTaraflar: { include: { karsiTaraf: true } },
       uyusmazlikGrubu: true,
@@ -38,6 +39,7 @@ export async function davaDosyasiGetir(id: string) {
     include: {
       durum: true,
       tur: true,
+      hukukiIliskiTuru: true,
       sorumluAvukat: true,
       karsiTaraflar: { include: { karsiTaraf: true } },
       uyusmazlikGrubu: true,

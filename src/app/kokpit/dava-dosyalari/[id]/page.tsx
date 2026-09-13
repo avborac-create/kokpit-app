@@ -47,6 +47,11 @@ export default async function DavaDosyasiDetaySayfasi({
                 {dosya.tur.etiket}
               </span>
             )}
+            {dosya.hukukiIliskiTuru && (
+              <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs text-white/70">
+                {dosya.hukukiIliskiTuru.etiket}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-2">

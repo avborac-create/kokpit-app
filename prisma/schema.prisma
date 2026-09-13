@@ -91,6 +91,7 @@ model SecenekDegeri {
   paraTrafigiKaynak MusteriParaTrafigi[] @relation("ParaTrafigiKaynagi")
   davaDosyalariDurum DavaDosyasi[]       @relation("DavaDosyasiDurumu")
   davaDosyalariTuru  DavaDosyasi[]       @relation("DavaDosyasiTuru")
+  davaDosyalariHukukiIliskiTuru DavaDosyasi[] @relation("DavaDosyasiHukukiIliskiTuru")
   paraTrafigiTasnifCariKod ParaTrafigiTasnif[] @relation("ParaTrafigiTasnifCariKod")
   dosyaMasrafiCariKod DosyaMasrafi[] @relation("DosyaMasrafiCariKod")
   dosyaMasrafiTuru    DosyaMasrafi[] @relation("DosyaMasrafiTuru")
@@ -317,6 +318,13 @@ model DavaDosyasi {
   // yeni dosya formunda zorunlu tutulur.
   turId             String?
   tur               SecenekDegeri?   @relation("DavaDosyasiTuru", fields: [turId], references: [id])
+  // Alacagin/uyusmazligin dayandigi temel hukuki iliski: cek, senet, TTOK,
+  // is hukuku uyusmazligi vb. Dosya Turu'nden (ihtar/icra/dava - hangi
+  // ASAMADAYIZ) farkli bir boyut: bu "hangi hukuki ARACA dayaniyor" sorusuna
+  // cevap verir. Opsiyonel - her dosyaya uygulanabilir bir siniflandirma
+  // olmayabilir.
+  hukukiIliskiTuruId String?
+  hukukiIliskiTuru   SecenekDegeri?   @relation("DavaDosyasiHukukiIliskiTuru", fields: [hukukiIliskiTuruId], references: [id])
   uyusmazlikGrubuId String?
   uyusmazlikGrubu   UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])
   // Talimat dosyasi gibi baska bir dosyaya siki sikiya bagli (o dosyanin
@@ -349,6 +357,7 @@ model DavaDosyasi {
   @@index([uyusmazlikGrubuId])
   @@index([bagliOlduguDosyaId])
   @@index([turId])
+  @@index([hukukiIliskiTuruId])
   @@map("dava_dosyalari")
 }
 

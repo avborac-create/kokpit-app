@@ -171,6 +171,31 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   kayıtlar geriye dönük türlendirilene kadar boş kalabilir, yeni dosya
   formunda ise zorunludur. `birimAdi` da bu yüzden artık zorunlu değil —
   bir ihtar/müzakere dosyasının mahkeme/icra dairesi olmayabilir.
+- **Hukuki İlişki Türü (`DavaDosyasi.hukukiIliskiTuruId`)**: Dosya
+  Türü'nden (ihtar/icra/dava — "hangi AŞAMADAYIZ") tamamen farklı, ikinci
+  bir sınıflandırma boyutu: "hangi hukuki ARACA/ilişkiye dayanıyor"
+  sorusuna cevap verir — `hukuki_iliski_turu` seçenek listesi: çek, senet,
+  TTOK, iş hukuku uyuşmazlığı, sözleşme uyuşmazlığı, diğer. Tamamen
+  opsiyonel (nullable, formda zorunlu değil).
+- **"Yeni Dosya" formu temel veriye indirgendi**: Kullanıcı geri bildirimi
+  — ekran gereğinden karmaşıktı, temel veri sadece karşı taraf isimleri,
+  hukuki ilişki türü ve dosya numarası (hepsi opsiyonel) olmalıydı.
+  Varsayılan görünürde kalan alanlar: Müvekkil, Karşı Taraf(lar), Hukuki
+  İlişki Türü, Dosya Türü (zorunlu), Dosya No, Konu (zorunlu — kaydın
+  başlığı olduğu için). Durum (varsayılan: Açık), Uyuşmazlık Grubu, Birim
+  Adı, Bağlı Olduğu Esas Dosya, tarihler, Sorumlu Avukat ve Açıklama
+  `DosyaDetaylar` (aç/kapa) bileşeniyle gizlendi — `ParaTrafigiDetaylar`
+  ile aynı desen (Durum gizliyken de "Açık" varsayılanıyla önceden dolu,
+  form yine geçerli kalıyor).
+- **Bu ekranların "restorasyon modu"'u zaten Ayarlar'da var**: Kullanıcı
+  bu ekrandaki "her türlü veri giriş panelini" kendisi düzenleyebilmek
+  istedi. Dosya Türü, Hukuki İlişki Türü, Durum gibi TÜM açılır liste
+  seçenekleri zaten `/kokpit/ayarlar/secenekler` (Seçenek Listeleri
+  Yönetimi) üzerinden kod değişikliği gerekmeden eklenip/yeniden
+  adlandırılıp/pasife alınabiliyor — bu, "restorasyon modu" kavramının
+  tam karşılığı. Formun kendi ALAN YAPISI (hangi alanların var olduğu,
+  sırası) ise kod tarafında kalıyor; bu ayrı, çok daha büyük bir
+  form-builder özelliği olurdu ve bilinçli olarak yapılmadı.
 - **Karşı Taraf (`KarsiTaraf`)**: Müvekkilin KENDİ müşterisi/borçlusu —
   yani büronun müvekkil adına icra/dava takip ettiği taraf (ör. "Koz
   Gıda", "Nasip Sac", "Hicret Kırtay"). Müvekkilin (`Musteri`) kendisiyle
