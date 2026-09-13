@@ -2,9 +2,10 @@ import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { Dugme } from "@/core/ui/button";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
-import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
+import { musterininDosyalari, uyusmazlikGruplariniListele } from "@/modules/dava-dosyasi/lib/queries";
 import { DosyaSecici } from "@/modules/musteri/components/dosya-secici";
 import { TipSeciciVeTasnif } from "@/modules/musteri/components/tip-secici-ve-tasnif";
+import { UyusmazlikGrubuSecici } from "@/modules/musteri/components/uyusmazlik-grubu-secici";
 
 export type ParaTrafigiDuzenlemeVerisi = {
   tarih: string;
@@ -15,6 +16,7 @@ export type ParaTrafigiDuzenlemeVerisi = {
   aciklama: string | null;
   seciliDosyaIdler: string[];
   tasnifVarsayilan: Record<string, number>;
+  uyusmazlikGrubuId: string | null;
 };
 
 export async function ParaTrafigiFormu({
@@ -26,12 +28,13 @@ export async function ParaTrafigiFormu({
   musteriId: string;
   duzenlemeVerisi?: ParaTrafigiDuzenlemeVerisi;
 }) {
-  const [tipler, durumlar, kaynaklar, dosyalar, cariKodlar] = await Promise.all([
+  const [tipler, durumlar, kaynaklar, dosyalar, cariKodlar, gruplar] = await Promise.all([
     secenekleriGetir("para_trafigi_tipi"),
     secenekleriGetir("para_trafigi_durumu"),
     secenekleriGetir("kaynak"),
     musterininDosyalari(musteriId),
     secenekleriGetir("cari_kod"),
+    uyusmazlikGruplariniListele([musteriId]),
   ]);
 
   const bugun = new Date().toISOString().slice(0, 10);
@@ -79,6 +82,7 @@ export async function ParaTrafigiFormu({
         </Secim>
       </Alan>
       <DosyaSecici dosyalar={dosyalar} seciliDosyaIdler={duzenlemeVerisi?.seciliDosyaIdler} />
+      <UyusmazlikGrubuSecici gruplar={gruplar} varsayilanGrubuId={duzenlemeVerisi?.uyusmazlikGrubuId ?? ""} />
       <div className="col-span-2 md:col-span-4">
         <Alan>
           <Etiket htmlFor="aciklama">Açıklama</Etiket>

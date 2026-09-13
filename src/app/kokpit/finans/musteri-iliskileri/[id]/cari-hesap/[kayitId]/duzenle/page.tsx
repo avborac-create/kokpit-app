@@ -22,6 +22,7 @@ export default async function ParaTrafigiKaydiDuzenlemeSayfasi({
     aciklama: kayit.aciklama,
     seciliDosyaIdler: kayit.dosyalar.map((d) => d.dosyaId),
     tasnifVarsayilan: Object.fromEntries(kayit.tasnif.map((t) => [t.cariKodId, Number(t.tutar)])),
+    uyusmazlikGrubuId: kayit.uyusmazlikGrubuId,
   };
 
   return (

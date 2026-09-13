@@ -276,6 +276,29 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   `paraTrafigiKaydiEkle` ile aynı tip→cari-kod eşleme mantığını kullanır.
   Silme gibi bu da `yetki.ts`'teki "oluşturma/düzenleme herkese açık, sadece
   silme Yönetici/Ortak'a özel" politikasına tabidir.
+- **Masraf kaydı düzenleme (`dosyaMasrafiGuncelle`)**: Aynı gerekçeyle
+  `DosyaMasrafi` için de eklendi — bir kalemin cari kodu gerçek hayatta
+  değişebilir (ör. Bloke Para olarak tutulan bir araç yakalama avansı,
+  araç yediemine çekilip icra müdürlüğüne bildirildiğinde artık kalıcı bir
+  masrafa/Masraf Hesabı'na dönüşebilir). Silinip yeniden girmek yerine
+  `/kokpit/dava-dosyalari/[id]/masraflar/[masrafId]/duzenle` üzerinden aynı
+  satırın cari kodu/türü/tutarı/açıklaması güncellenir.
+- **`MusteriParaTrafigi.uyusmazlikGrubuId` UI'a bağlandı**: Bir ödeme artık
+  `ParaTrafigiFormu`'ndaki "Uyuşmazlık Grubu (opsiyonel)" alanından
+  doğrudan bir gruba bağlanabilir, hiçbir dosya seçilmeden — ör. henüz
+  dosyası açılmamış planlanan bir haciz işlemi için istenen avans, esas
+  dosya + o haciz işleminin genelini kapsadığından tek bir dosyaya değil
+  doğrudan gruba yazılır. `uyusmazlikGrubuCariHesapOzeti` artık iki yoldan
+  gelen tasnifi birleştirir: dosyalar üzerinden (mevcut) VEYA doğrudan
+  `uyusmazlikGrubuId` eşleşmesiyle (yeni) — `dosyaCariHesapOzeti` (tek
+  dosya seviyesi) bu şekilde bağlanan kayıtları hiç göstermez, sadece grup
+  sayfasında görünürler.
+- **Cari Hesap Özeti'nde basit 3 kutu özet**: Detaylı cari-kod kırılımının
+  üstüne "Müvekkilden Alınan Paralar / Müvekkil Adına Yapılan Harcamalar /
+  Müvekkilin Bize Borcu (veya Alacağı)" şeklinde 3 büyük, sade rakam
+  eklendi — asıl soruyu (müvekkile ne kadar para geldi, adına ne kadar
+  harcandı, net kim kime borçlu) karmaşık kırılıma bakmadan cevaplar;
+  detaylı tablo altında hâlâ durur, denetim/kontrol için.
 
 ## PWA
 

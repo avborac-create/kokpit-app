@@ -19,9 +19,37 @@ export function CariHesapOzeti({ ozet }: { ozet: Ozet }) {
   const netBakiye = ozet
     .filter((satir) => !NET_HESABA_DAHIL_OLMAYAN_KODLAR.includes(satir.cariKod.kod))
     .reduce((toplam, satir) => toplam + satir.bakiye, 0);
+  const toplamHarcanan = ozet.reduce((toplam, satir) => toplam + satir.masrafToplami, 0);
+  const toplamAlinan = ozet.reduce((toplam, satir) => toplam + satir.tasnifToplami, 0);
 
   return (
     <div>
+      {/* Basit ozet: sadece 3 soruya cevap - musteriden ne kadar para
+          alindi, onun adina ne kadar harcandi, ve net olarak kim kime
+          ne kadar borclu. Detayli cari-kod kirilimi asagida ayrica durur. */}
+      <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="glass rounded-2xl p-4">
+          <p className="text-xs text-white/45">Müvekkilden Alınan Paralar</p>
+          <p className="mt-1 text-lg font-semibold text-white">{paraFormatlayici.format(toplamAlinan)}</p>
+        </div>
+        <div className="glass rounded-2xl p-4">
+          <p className="text-xs text-white/45">Müvekkil Adına Yapılan Harcamalar</p>
+          <p className="mt-1 text-lg font-semibold text-white">{paraFormatlayici.format(toplamHarcanan)}</p>
+        </div>
+        <div className="glass rounded-2xl p-4">
+          <p className="text-xs text-white/45">
+            {netBakiye < 0 ? "Müvekkilin Bize Borcu" : "Müvekkilin Alacağı/Avansı"}
+          </p>
+          <p
+            className={`mt-1 text-lg font-semibold ${
+              netBakiye > 0 ? "text-[#32d74b]" : netBakiye < 0 ? "text-[#ff7a70]" : "text-white/60"
+            }`}
+          >
+            {paraFormatlayici.format(Math.abs(netBakiye))}
+          </p>
+        </div>
+      </div>
+
       <div className="glass mb-3 overflow-x-auto rounded-2xl">
         <table className="w-full text-left text-sm">
           <thead className="text-white/50">

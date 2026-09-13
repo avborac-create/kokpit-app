@@ -94,6 +94,7 @@ export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData
   const kaynakId = String(formData.get("kaynakId") ?? "");
   const tutar = String(formData.get("tutar") ?? "");
   const dosyaIdleri = formData.getAll("dosyaIds").map(String).filter(Boolean);
+  const uyusmazlikGrubuId = metinYaAlNull(formData, "uyusmazlikGrubuId");
 
   if (!tarih || !tipId || !durumId || !kaynakId || !tutar) {
     throw new Error("Tarih, tip, durum, kaynak ve tutar alanları zorunludur.");
@@ -127,6 +128,7 @@ export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData
       kaynakId,
       tutar,
       aciklama: metinYaAlNull(formData, "aciklama"),
+      uyusmazlikGrubuId,
       dosyalar: {
         create: dosyaIdleri.map((dosyaId) => ({ dosyaId })),
       },
@@ -146,6 +148,7 @@ export async function paraTrafigiKaydiGuncelle(musteriId: string, kayitId: strin
   const kaynakId = String(formData.get("kaynakId") ?? "");
   const tutar = String(formData.get("tutar") ?? "");
   const dosyaIdleri = formData.getAll("dosyaIds").map(String).filter(Boolean);
+  const uyusmazlikGrubuId = metinYaAlNull(formData, "uyusmazlikGrubuId");
 
   if (!tarih || !tipId || !durumId || !kaynakId || !tutar) {
     throw new Error("Tarih, tip, durum, kaynak ve tutar alanları zorunludur.");
@@ -183,6 +186,7 @@ export async function paraTrafigiKaydiGuncelle(musteriId: string, kayitId: strin
         kaynakId,
         tutar,
         aciklama: metinYaAlNull(formData, "aciklama"),
+        uyusmazlikGrubuId,
         dosyalar: {
           create: dosyaIdleri.map((dosyaId) => ({ dosyaId })),
         },

@@ -153,11 +153,23 @@ export async function uyusmazlikGrubuCariHesapOzeti(uyusmazlikGrubuId: string) {
     {
       paraTrafigi: {
         durum: { kod: "tahsil_edildi" },
-        dosyalar: { some: { dosya: { uyusmazlikGrubuId } } },
+        // Bir odeme ya bir/birden fazla dosya uzerinden (dosyalar iliskisi)
+        // ya da hicbir dosya secilmeden dogrudan gruba (uyusmazlikGrubuId)
+        // baglanmis olabilir - ör. henuz dosyasi acilmamis bir haciz
+        // islemi icin istenen bir avans. Ikisi de grubun ortak cari
+        // hesabinin bir parcasidir.
+        OR: [
+          { dosyalar: { some: { dosya: { uyusmazlikGrubuId } } } },
+          { uyusmazlikGrubuId },
+        ],
       },
     },
     { dosya: { uyusmazlikGrubuId } },
   );
+}
+
+export async function dosyaMasrafiGetir(masrafId: string) {
+  return prisma.dosyaMasrafi.findUnique({ where: { id: masrafId } });
 }
 
 export async function uyusmazlikGrubuGetir(id: string) {

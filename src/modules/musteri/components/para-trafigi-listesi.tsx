@@ -9,6 +9,7 @@ type Kayit = Prisma.MusteriParaTrafigiGetPayload<{
     kaynak: true;
     dosyalar: { include: { dosya: true } };
     tasnif: { include: { cariKod: true } };
+    uyusmazlikGrubu: true;
   };
 }>;
 
@@ -58,19 +59,28 @@ export function ParaTrafigiListesi({
               </td>
               <td className="px-4 py-3 text-white/60">{kayit.kaynak.etiket}</td>
               <td className="px-4 py-3 text-white/60">
-                {kayit.dosyalar.length === 0
-                  ? "—"
-                  : kayit.dosyalar.map((bag, i) => (
-                      <span key={bag.id}>
-                        {i > 0 && ", "}
-                        <Link
-                          href={`/kokpit/dava-dosyalari/${bag.dosya.id}`}
-                          className="hover:text-[#6db8ff] hover:underline"
-                        >
-                          {bag.dosya.dosyaNo ?? bag.dosya.konu}
-                        </Link>
-                      </span>
-                    ))}
+                {kayit.dosyalar.length > 0 ? (
+                  kayit.dosyalar.map((bag, i) => (
+                    <span key={bag.id}>
+                      {i > 0 && ", "}
+                      <Link
+                        href={`/kokpit/dava-dosyalari/${bag.dosya.id}`}
+                        className="hover:text-[#6db8ff] hover:underline"
+                      >
+                        {bag.dosya.dosyaNo ?? bag.dosya.konu}
+                      </Link>
+                    </span>
+                  ))
+                ) : kayit.uyusmazlikGrubu ? (
+                  <Link
+                    href={`/kokpit/dava-dosyalari/gruplar/${kayit.uyusmazlikGrubu.id}`}
+                    className="hover:text-[#6db8ff] hover:underline"
+                  >
+                    {kayit.uyusmazlikGrubu.ad} (grup geneli)
+                  </Link>
+                ) : (
+                  "—"
+                )}
               </td>
               <td className="px-4 py-3 text-white/60">
                 {kayit.tasnif.length === 0 ? (

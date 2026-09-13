@@ -39,6 +39,7 @@ export async function musteriGetir(id: string) {
           kaynak: true,
           dosyalar: { include: { dosya: true } },
           tasnif: { include: { cariKod: true } },
+          uyusmazlikGrubu: true,
         },
         orderBy: { tarih: "desc" },
       },

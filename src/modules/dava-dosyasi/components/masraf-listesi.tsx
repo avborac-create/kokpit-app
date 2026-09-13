@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import type { davaDosyasiGetir } from "@/modules/dava-dosyasi/lib/queries";
 import { dosyaMasrafiSil } from "@/modules/dava-dosyasi/lib/actions";
 import { Dugme } from "@/core/ui/button";
@@ -58,6 +59,7 @@ export function MasrafListesi({
               <th className="px-4 py-3 font-medium">Tür</th>
               <th className="px-4 py-3 font-medium">Açıklama</th>
               <th className="px-4 py-3 font-medium">Tutar</th>
+              <th className="px-4 py-3 font-medium" />
               {silmeYetkisiVar && <th className="px-4 py-3 font-medium" />}
             </tr>
           </thead>
@@ -99,6 +101,14 @@ function MasrafSatiri({
       <td className="px-4 py-3 text-white/60">{masraf.tur.etiket}</td>
       <td className="px-4 py-3 text-white/85">{masraf.aciklama}</td>
       <td className="px-4 py-3 font-medium text-white">{paraFormatlayici.format(Number(masraf.tutar))}</td>
+      <td className="px-4 py-3">
+        <Link
+          href={`/kokpit/dava-dosyalari/${dosyaId}/masraflar/${masraf.id}/duzenle`}
+          className="text-xs text-[#6db8ff] hover:underline"
+        >
+          Düzenle
+        </Link>
+      </td>
       {silmeYetkisiVar && (
         <td className="px-4 py-3">
           <Dugme

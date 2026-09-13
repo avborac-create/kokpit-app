@@ -173,6 +173,37 @@ export async function dosyaMasrafiEkle(dosyaId: string, formData: FormData) {
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
 
+// Bloke Para gibi gecici tutulan bir kalemin gercek hayatta kalici bir
+// masrafa donusmesi (or. arac yakalama avansi, arac yediemine cekilip
+// icra mudurlugune bildirilirse artik geri alinamayabilir) gibi durumlar
+// icin: kalem silinip yeniden girilmek yerine ayni satirin cari kodu/
+// turu/tutari/aciklamasi duzenlenebilir - boylece tarihce/id korunur.
+export async function dosyaMasrafiGuncelle(dosyaId: string, masrafId: string, formData: FormData) {
+  const tarih = String(formData.get("tarih") ?? "");
+  const cariKodId = String(formData.get("cariKodId") ?? "");
+  const turId = String(formData.get("turId") ?? "");
+  const aciklama = String(formData.get("aciklama") ?? "").trim();
+  const tutar = String(formData.get("tutar") ?? "");
+
+  if (!tarih || !cariKodId || !turId || !aciklama || !tutar) {
+    throw new Error("Tarih, cari kod, tür, açıklama ve tutar alanları zorunludur.");
+  }
+
+  await prisma.dosyaMasrafi.update({
+    where: { id: masrafId },
+    data: {
+      cariKodId,
+      turId,
+      tarih: new Date(tarih),
+      aciklama,
+      tutar,
+    },
+  });
+
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+  redirect(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
 export async function dosyaMasrafiSil(id: string, dosyaId: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
