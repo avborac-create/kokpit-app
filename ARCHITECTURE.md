@@ -89,6 +89,19 @@ da pasife alabilir. `kod` alanı (makine-okunur anahtar) bir kez
 oluşturulduktan sonra ASLA değişmez/silinmez — sadece `aktifMi=false`
 ile pasife alınır — böylece geçmiş kayıtlar ve kod içindeki kod-bazlı
 eşlemeler (ör. `TIP_KOD_ILE_ESLESEN_CARI_KOD_KODU`) bozulmaz.
+- **ÖNEMLİ — seed.ts var olan satırlara ASLA dokunmaz**: `npm run build`
+  (dolayısıyla her deploy) `tsx prisma/seed.ts`'i çalıştırır. Bir zamanlar
+  bu script var olan `secenek_degerleri` satırlarının `etiket`/`siraNo`/
+  `aktifMi` alanlarını da güncelliyordu — bu, Ayarlar panelinden yapılan
+  HER admin düzenlemesini bir sonraki deploy'da sessizce sıfırlıyordu
+  (gerçek bir hata olarak yaşandı, bkz. "Emanet Para" adlandırma
+  düzeltmesi). `secenekListeleriniOlustur()` artık sadece EKSİK
+  değerleri oluşturur (`update: {}`), var olan bir satırın görünür
+  alanlarına bir daha asla dokunmaz. Var olan bir değeri kod tarafından
+  kasıtlı değiştirmek gerekirse (nadir), bunun için ayrı, tek seferlik
+  bir veri migrasyonu yazılır (bkz.
+  `prisma/migrations/20260913170000_emanet_para_rename`) — seed.ts'i
+  değil.
 
 İstisna: kullanıcı **rolü** (`KullaniciRolu`) bilinçli olarak enum olarak
 bırakıldı, çünkü rol değişikliği güvenlik/yetki anlamı taşır ve bir

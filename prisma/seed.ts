@@ -38,7 +38,7 @@ const SECENEK_LISTELERI: {
       { kod: "masraf", etiket: "Masraf" },
       { kod: "bloke_para", etiket: "Bloke Para" },
       { kod: "akdi_vekalet", etiket: "Akdi Vekalet" },
-      { kod: "aktarilacak_para", etiket: "Aktarılacak Para (Emanet)" },
+      { kod: "aktarilacak_para", etiket: "Emanet Para" },
       { kod: "karma", etiket: "Karma" },
       // Eski degerler: gecmis kayitlarin bozulmamasi icin silinmiyor,
       // sadece yeni giriste secilemesin diye pasife alindi.
@@ -111,16 +111,26 @@ async function secenekListeleriniOlustur() {
     });
 
     for (const [index, deger] of liste.degerler.entries()) {
-      const aktifMi = deger.aktifMi ?? true;
+      // DIKKAT: "update" burada BILEREK bos birakildi. Bu script "npm run
+      // build" ile HER deploy'da calisir (bkz. package.json); eger burada
+      // etiket/siraNo/aktifMi guncellenseydi, Ayarlar > Secenek Listeleri
+      // panelinden yapilan HER admin duzenlemesi bir sonraki deploy'da
+      // sessizce sifirlanirdi. Bu yuzden seed sadece EKSIK olan degerleri
+      // olusturur; var olan bir satirin gorunur alanlarina bir daha asla
+      // dokunmaz - o noktadan sonra tek yetkili kaynak admin panelidir.
+      // Var olan bir degeri kasitli olarak degistirmek gerekiyorsa (ornek:
+      // "Aktarilacak Para (Emanet)" -> "Emanet Para" degisikligi) bunun
+      // icin ayri, tek seferlik bir veri migrasyonu yazilir (bkz.
+      // prisma/migrations/20260913170000_emanet_para_rename).
       await prisma.secenekDegeri.upsert({
         where: { listeId_kod: { listeId: olusturulanListe.id, kod: deger.kod } },
-        update: { etiket: deger.etiket, siraNo: index, aktifMi },
+        update: {},
         create: {
           listeId: olusturulanListe.id,
           kod: deger.kod,
           etiket: deger.etiket,
           siraNo: index,
-          aktifMi,
+          aktifMi: deger.aktifMi ?? true,
         },
       });
     }
