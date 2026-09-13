@@ -230,6 +230,7 @@ model ParaTrafigiDosyasi {
 model DavaDosyasi {
   id               String        @id @default(cuid())
   dosyaNo          String?
+  birimAdi         String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
   konu             String
   durumId          String
   durum            SecenekDegeri @relation("DavaDosyasiDurumu", fields: [durumId], references: [id])

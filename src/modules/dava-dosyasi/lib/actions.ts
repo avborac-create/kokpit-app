@@ -31,6 +31,7 @@ export async function davaDosyasiOlustur(formData: FormData) {
   const dosya = await prisma.davaDosyasi.create({
     data: {
       dosyaNo: metinYaAlNull(formData, "dosyaNo"),
+      birimAdi: metinYaAlNull(formData, "birimAdi"),
       konu,
       durumId,
       sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
@@ -65,6 +66,7 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
       where: { id },
       data: {
         dosyaNo: metinYaAlNull(formData, "dosyaNo"),
+        birimAdi: metinYaAlNull(formData, "birimAdi"),
         konu,
         durumId,
         sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),

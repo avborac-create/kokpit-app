@@ -61,6 +61,17 @@ export async function DavaDosyasiFormu({
       </div>
 
       <Alan>
+        <Etiket htmlFor="birimAdi">Birim Adı (Mahkeme/İcra Dairesi)</Etiket>
+        <Girdi
+          id="birimAdi"
+          name="birimAdi"
+          required
+          placeholder="İstanbul 19. İcra Dairesi vb."
+          defaultValue={dosya?.birimAdi ?? ""}
+        />
+      </Alan>
+
+      <Alan>
         <Etiket htmlFor="konu">Konu</Etiket>
         <Girdi id="konu" name="konu" required defaultValue={dosya?.konu ?? ""} />
       </Alan>

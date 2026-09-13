@@ -50,6 +50,7 @@ export default async function DavaDosyalariSayfasi({
           <thead className="text-white/50">
             <tr>
               <th className="px-4 py-3 font-medium">Dosya No</th>
+              <th className="px-4 py-3 font-medium">Birim</th>
               <th className="px-4 py-3 font-medium">Konu</th>
               <th className="px-4 py-3 font-medium">Müvekkil(ler)</th>
               <th className="px-4 py-3 font-medium">Durum</th>
@@ -67,6 +68,7 @@ export default async function DavaDosyalariSayfasi({
                     {dosya.dosyaNo ?? "—"}
                   </Link>
                 </td>
+                <td className="px-4 py-3 text-white/60">{dosya.birimAdi ?? "—"}</td>
                 <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
                 <td className="px-4 py-3 text-white/60">
                   {dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
@@ -81,7 +83,7 @@ export default async function DavaDosyalariSayfasi({
             ))}
             {dosyalar.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={6} className="px-4 py-8 text-center text-white/40">
                   Kayıt bulunamadı.
                 </td>
               </tr>

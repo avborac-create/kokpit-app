@@ -44,6 +44,10 @@ export default async function DavaDosyasiDetaySayfasi({
 
       <div className="glass mb-8 grid grid-cols-2 gap-4 rounded-2xl p-5 text-sm md:grid-cols-4">
         <div>
+          <p className="text-white/45">Birim (Mahkeme/İcra Dairesi)</p>
+          <p className="text-white">{dosya.birimAdi ?? "—"}</p>
+        </div>
+        <div>
           <p className="text-white/45">Müvekkil(ler)</p>
           <p className="text-white">
             {dosya.muvekkiller.map((m, i) => (
@@ -83,8 +87,8 @@ export default async function DavaDosyasiDetaySayfasi({
 
       <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Para Trafiği</h2>
       <p className="mb-3 text-sm text-white/45">
-        Yeni bir kayıt eklemek için ilgili müvekkilin sayfasına gidip &quot;Dava Dosyası&quot; alanından
-        bu dosyayı seçin.
+        Yeni bir kayıt eklemek için ilgili müvekkilin Finans sayfasına gidip &quot;Hangi Uyuşmazlık
+        Dosyası/Dosyalarına İstinaden&quot; alanından bu dosyayı seçin.
       </p>
       <DosyaParaTrafigiListesi baglantilar={dosya.paraTrafigiKayitlari} />
     </div>
