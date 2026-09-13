@@ -1,5 +1,6 @@
 export function DosyaSecici({
   dosyalar,
+  seciliDosyaIdler = [],
 }: {
   dosyalar: {
     id: string;
@@ -7,6 +8,7 @@ export function DosyaSecici({
     konu: string;
     karsiTaraf: { ad: string } | null;
   }[];
+  seciliDosyaIdler?: string[];
 }) {
   return (
     <div className="col-span-2 mb-4 md:col-span-4">
@@ -28,6 +30,7 @@ export function DosyaSecici({
                 type="checkbox"
                 name="dosyaIds"
                 value={dosya.id}
+                defaultChecked={seciliDosyaIdler.includes(dosya.id)}
                 className="h-4 w-4 rounded border-white/20 bg-transparent accent-[var(--accent)]"
               />
               {dosya.dosyaNo ? `${dosya.dosyaNo} — ` : ""}

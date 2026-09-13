@@ -23,7 +23,7 @@ export function IrtibatKisileriListesi({
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-medium text-white">{kisi.adSoyad}</p>
                 {kisi.birincilMi && (
-                  <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
+                  <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
                     Birincil
                   </span>
                 )}

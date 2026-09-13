@@ -32,7 +32,7 @@ export default async function MusteriDetaySayfasi({
           <h1 className="text-2xl font-semibold tracking-tight text-white">{musteri.adSoyadUnvan}</h1>
           <p className="mt-1 text-sm text-white/55">
             {musteri.tip.etiket} ·{" "}
-            <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
+            <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
               {musteri.durum.etiket}
             </span>
           </p>
@@ -114,7 +114,7 @@ export default async function MusteriDetaySayfasi({
                     </td>
                     <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
                     <td className="px-4 py-3">
-                      <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
+                      <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
                         {dosya.durum.etiket}
                       </span>
                     </td>

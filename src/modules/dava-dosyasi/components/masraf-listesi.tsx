@@ -45,7 +45,7 @@ export function MasrafListesi({
             {etiket}: {paraFormatlayici.format(tutar)}
           </span>
         ))}
-        <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-medium text-[#6db8ff]">
+        <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-medium text-[#6db8ff]">
           Toplam: {paraFormatlayici.format(genelToplam)}
         </span>
       </div>
