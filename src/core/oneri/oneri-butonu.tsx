@@ -111,7 +111,19 @@ export function OneriButonu() {
 
   return (
     <>
-      <Dugme type="button" varyant="ikincil" onClick={() => setAsama("seciliyor")}>
+      <Dugme
+        type="button"
+        varyant="ikincil"
+        onClick={() => {
+          // Sayfada acik kalmis native bir <select>/input odagi, tarayicinin
+          // kendi acilir kutusunu (native popup) her zaman en ustte,
+          // portal'in z-index'ini yok sayarak cizdirir. Odagi burada
+          // kaldirarak boyle bir kutunun secim/onizleme katmaninin
+          // uzerinde asili kalmasini onluyoruz.
+          (document.activeElement as HTMLElement | null)?.blur();
+          setAsama("seciliyor");
+        }}
+      >
         Öneri Yolla
       </Dugme>
 
@@ -140,7 +152,7 @@ export function OneriButonu() {
       {asama === "yakalaniyor" &&
         createPortal(
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40">
-            <p className="glass-strong rounded-2xl px-6 py-4 text-sm text-white">
+            <p className="rounded-2xl border border-white/10 bg-[var(--background-2)] px-6 py-4 text-sm text-white">
               Görsel yakalanıyor…
             </p>
           </div>,
@@ -150,15 +162,22 @@ export function OneriButonu() {
       {asama === "onizleme" &&
         createPortal(
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
-            <div className="glass-strong w-full max-w-md rounded-2xl p-5">
+            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[var(--background-2)] p-5">
               <p className="mb-3 text-base font-semibold text-white">Öneri</p>
               {gorselVeri && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={gorselVeri}
-                  alt="Seçilen bölge"
-                  className="mb-3 max-h-48 w-full rounded-lg border border-white/10 object-contain"
-                />
+                <div className="mb-3">
+                  <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-white/40">
+                    📷 Seçtiğiniz bölgenin görüntüsü
+                  </p>
+                  <div className="rounded-lg border-2 border-dashed border-white/20 bg-black/30 p-1.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={gorselVeri}
+                      alt="Seçilen bölgenin durağan görüntüsü"
+                      className="max-h-48 w-full rounded object-contain"
+                    />
+                  </div>
+                </div>
               )}
               <form onSubmit={gonderildi}>
                 <textarea
@@ -184,7 +203,7 @@ export function OneriButonu() {
       {asama === "gonderiliyor" &&
         createPortal(
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
-            <p className="glass-strong rounded-2xl px-6 py-4 text-sm text-white">Gönderiliyor…</p>
+            <p className="rounded-2xl border border-white/10 bg-[var(--background-2)] px-6 py-4 text-sm text-white">Gönderiliyor…</p>
           </div>,
           document.body,
         )}
@@ -192,7 +211,7 @@ export function OneriButonu() {
       {asama === "tamamlandi" &&
         createPortal(
           <div className="fixed inset-x-0 bottom-6 z-[100] flex justify-center">
-            <p className="glass-strong rounded-full px-5 py-2.5 text-sm text-white">
+            <p className="rounded-full border border-white/10 bg-[var(--background-2)] px-5 py-2.5 text-sm text-white">
               ✓ Öneriniz iletildi
             </p>
           </div>,
