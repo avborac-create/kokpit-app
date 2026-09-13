@@ -3,6 +3,7 @@ import { Dugme } from "@/core/ui/button";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
 import { DosyaSecici } from "@/modules/musteri/components/dosya-secici";
+import { TasnifGirisi } from "@/modules/musteri/components/tasnif-girisi";
 
 export async function ParaTrafigiFormu({
   action,
@@ -11,11 +12,12 @@ export async function ParaTrafigiFormu({
   action: (formData: FormData) => void;
   musteriId: string;
 }) {
-  const [tipler, durumlar, kaynaklar, dosyalar] = await Promise.all([
+  const [tipler, durumlar, kaynaklar, dosyalar, cariKodlar] = await Promise.all([
     secenekleriGetir("para_trafigi_tipi"),
     secenekleriGetir("para_trafigi_durumu"),
     secenekleriGetir("kaynak"),
     musterininDosyalari(musteriId),
+    secenekleriGetir("cari_kod"),
   ]);
 
   const bugun = new Date().toISOString().slice(0, 10);
@@ -70,6 +72,7 @@ export async function ParaTrafigiFormu({
         </Secim>
       </Alan>
       <DosyaSecici dosyalar={dosyalar} />
+      <TasnifGirisi cariKodlar={cariKodlar} />
       <div className="col-span-2 md:col-span-4">
         <Alan>
           <Etiket htmlFor="aciklama">Açıklama</Etiket>

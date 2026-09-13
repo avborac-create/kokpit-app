@@ -8,6 +8,7 @@ type Kayit = Prisma.MusteriParaTrafigiGetPayload<{
     durum: true;
     kaynak: true;
     dosyalar: { include: { dosya: true } };
+    tasnif: { include: { cariKod: true } };
   };
 }>;
 
@@ -36,6 +37,7 @@ export function ParaTrafigiListesi({
             <th className="px-4 py-3 font-medium">Durum</th>
             <th className="px-4 py-3 font-medium">Kaynak</th>
             <th className="px-4 py-3 font-medium">Dosya(lar)</th>
+            <th className="px-4 py-3 font-medium">Tasnif</th>
             <th className="px-4 py-3 font-medium">Açıklama</th>
             {silmeYetkisiVar && <th className="px-4 py-3" />}
           </tr>
@@ -68,6 +70,36 @@ export function ParaTrafigiListesi({
                         </Link>
                       </span>
                     ))}
+              </td>
+              <td className="px-4 py-3 text-white/60">
+                {kayit.tasnif.length === 0 ? (
+                  "—"
+                ) : (
+                  <div>
+                    <div className="flex flex-wrap gap-1">
+                      {kayit.tasnif.map((satir) => (
+                        <span
+                          key={satir.id}
+                          className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-white/70"
+                        >
+                          {satir.cariKod.etiket}: {paraFormatlayici.format(Number(satir.tutar))}
+                        </span>
+                      ))}
+                    </div>
+                    {(() => {
+                      const tasnifToplam = kayit.tasnif.reduce((t, s) => t + Number(s.tutar), 0);
+                      const fark = Number(kayit.tutar) - tasnifToplam;
+                      const mutabik = Math.abs(fark) < 0.01;
+                      return (
+                        <p className={`mt-1 text-xs ${mutabik ? "text-[#30d158]" : "text-[#ff7a70]"}`}>
+                          {mutabik
+                            ? "✓ Mutabık"
+                            : `⚠ Fark: ${paraFormatlayici.format(fark)}`}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                )}
               </td>
               <td className="px-4 py-3 text-white/60">{kayit.aciklama ?? "—"}</td>
               {silmeYetkisiVar && (

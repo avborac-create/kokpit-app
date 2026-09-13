@@ -88,6 +88,13 @@ export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData
     throw new Error("Tarih, tip, durum, kaynak ve tutar alanları zorunludur.");
   }
 
+  const tasnifSatirlari: { cariKodId: string; tutar: string }[] = [];
+  for (const [anahtar, deger] of formData.entries()) {
+    if (anahtar.startsWith("tasnif_") && String(deger).trim() !== "") {
+      tasnifSatirlari.push({ cariKodId: anahtar.slice("tasnif_".length), tutar: String(deger) });
+    }
+  }
+
   await prisma.musteriParaTrafigi.create({
     data: {
       musteriId,
@@ -99,6 +106,9 @@ export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData
       aciklama: metinYaAlNull(formData, "aciklama"),
       dosyalar: {
         create: dosyaIdleri.map((dosyaId) => ({ dosyaId })),
+      },
+      tasnif: {
+        create: tasnifSatirlari.map(({ cariKodId, tutar }) => ({ cariKodId, tutar })),
       },
     },
   });

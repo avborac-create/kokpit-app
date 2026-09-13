@@ -63,6 +63,16 @@ const SECENEK_LISTELERI: {
       { kod: "arsiv", etiket: "Arşiv" },
     ],
   },
+  {
+    anahtar: "cari_kod",
+    ad: "Cari Kod",
+    degerler: [
+      { kod: "bloke_paralar", etiket: "Bloke Paralar" },
+      { kod: "masraf_hesabi", etiket: "Masraf Hesabı" },
+      { kod: "akdi_vekalet_hesabi", etiket: "Akdi Vekalet Hesabı" },
+      { kod: "ticari_hesap", etiket: "Ticari Hesap" },
+    ],
+  },
 ];
 
 async function secenekListeleriniOlustur() {

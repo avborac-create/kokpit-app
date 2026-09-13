@@ -89,6 +89,7 @@ model SecenekDegeri {
   paraTrafigiDurum  MusteriParaTrafigi[] @relation("ParaTrafigiDurumu")
   paraTrafigiKaynak MusteriParaTrafigi[] @relation("ParaTrafigiKaynagi")
   davaDosyalariDurum DavaDosyasi[]       @relation("DavaDosyasiDurumu")
+  paraTrafigiTasnifCariKod ParaTrafigiTasnif[] @relation("ParaTrafigiTasnifCariKod")
 
   @@unique([listeId, kod])
   @@map("secenek_degerleri")
@@ -172,11 +173,35 @@ model MusteriParaTrafigi {
   // ParaTrafigiDosyasi ara tablosu.
   dosyalar ParaTrafigiDosyasi[]
 
+  // Gelen tutarin cari kodlara (Bloke Paralar / Masraf Hesabi / Akdi Vekalet
+  // Hesabi / Ticari Hesap vb.) nasil dagitildigi - bkz. ParaTrafigiTasnif.
+  tasnif ParaTrafigiTasnif[]
+
   olusturmaTarihi DateTime @default(now())
 
   @@index([musteriId])
   @@index([durumId])
   @@map("musteri_para_trafigi")
+}
+
+// Bir para trafigi kaydinin (ozellikle bir tahsilatin) cari kodlara gore
+// tasnifi/dagitimi. Orn. 330.000 TL'lik bir tahsilat; 285.000 Bloke Paralar,
+// 30.000 Masraf Hesabi, 15.000 Akdi Vekalet Hesabi olarak boluneilir. Toplam,
+// kaydin tutariyla mutabik olmak ZORUNDA degil (UI'da kontrol/uyari olarak
+// gosterilir) - gercek hayatta tasnif sonradan da tamamlanabilir.
+model ParaTrafigiTasnif {
+  id            String             @id @default(cuid())
+  paraTrafigiId String
+  paraTrafigi   MusteriParaTrafigi @relation(fields: [paraTrafigiId], references: [id], onDelete: Cascade)
+  cariKodId     String
+  cariKod       SecenekDegeri      @relation("ParaTrafigiTasnifCariKod", fields: [cariKodId], references: [id])
+  tutar         Decimal            @db.Decimal(14, 2)
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@unique([paraTrafigiId, cariKodId])
+  @@index([cariKodId])
+  @@map("para_trafigi_tasnif")
 }
 
 // MusteriParaTrafigi <-> DavaDosyasi coka-cok iliski (ara) tablosu. Ileride
