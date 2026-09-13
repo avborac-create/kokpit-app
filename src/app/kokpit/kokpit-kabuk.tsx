@@ -28,7 +28,7 @@ export function KokpitKabuk({
   return (
     <div className="flex min-h-0 flex-1">
       <aside
-        className={`glass m-3 w-full min-h-0 shrink-0 flex-col overflow-y-auto rounded-3xl md:mr-0 md:flex md:w-60 ${
+        className={`glass m-3 grow min-h-0 shrink-0 flex-col overflow-y-auto rounded-3xl md:mr-0 md:flex md:w-60 md:grow-0 ${
           modulSeciliMi ? "hidden" : "flex"
         }`}
       >
