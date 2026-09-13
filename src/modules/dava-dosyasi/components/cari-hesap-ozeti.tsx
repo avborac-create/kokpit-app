@@ -13,7 +13,7 @@ const NET_HESABA_DAHIL_OLMAYAN_KODLAR = ["akdi_vekalet_hesabi"];
 
 export function CariHesapOzeti({ ozet }: { ozet: Ozet }) {
   if (ozet.length === 0) {
-    return <p className="text-sm text-white/40">Bu dosyada henüz tasnif veya masraf kaydı yok.</p>;
+    return <p className="text-sm text-white/40">Henüz tasnif veya masraf kaydı yok.</p>;
   }
 
   const netBakiye = ozet

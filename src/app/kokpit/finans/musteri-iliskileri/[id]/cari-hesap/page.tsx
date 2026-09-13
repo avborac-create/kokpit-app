@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { musteriGetir } from "@/modules/musteri/lib/queries";
 import { paraTrafigiKaydiEkle } from "@/modules/musteri/lib/actions";
+import { musteriCariHesapOzeti } from "@/modules/dava-dosyasi/lib/queries";
 import { ParaTrafigiFormu } from "@/modules/musteri/components/para-trafigi-formu";
 import { ParaTrafigiListesi } from "@/modules/musteri/components/para-trafigi-listesi";
+import { CariHesapOzeti } from "@/modules/dava-dosyasi/components/cari-hesap-ozeti";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 
@@ -13,7 +15,11 @@ export default async function CariHesapSayfasi({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [musteri, kullanici] = await Promise.all([musteriGetir(id), mevcutKullanici()]);
+  const [musteri, kullanici, ozet] = await Promise.all([
+    musteriGetir(id),
+    mevcutKullanici(),
+    musteriCariHesapOzeti(id),
+  ]);
   if (!musteri) notFound();
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
@@ -36,6 +42,14 @@ export default async function CariHesapSayfasi({
             Müvekkil Profili →
           </Link>
         </div>
+      </div>
+
+      <p className="mb-3 text-sm text-white/45">
+        Bu müvekkilin tüm uyuşmazlık/dosyalarındaki toplam durumu — dosya veya grup bazında ayrıntı
+        için ilgili dosya/grup sayfasına bakın.
+      </p>
+      <div className="mb-8">
+        <CariHesapOzeti ozet={ozet} />
       </div>
 
       <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Para Trafiği</h2>

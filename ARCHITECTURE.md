@@ -299,6 +299,23 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   eklendi — asıl soruyu (müvekkile ne kadar para geldi, adına ne kadar
   harcandı, net kim kime borçlu) karmaşık kırılıma bakmadan cevaplar;
   detaylı tablo altında hâlâ durur, denetim/kontrol için.
+- **`musteriCariHesapOzeti` + Müvekkil Cari Hesap sayfasında özet**: Aynı 3
+  kutulu özet artık müvekkilin kendi Finans/Cari Hesap sayfasında da
+  (tüm grup/dosyalarının toplamı olarak) görünüyor — önceden bu sayfa
+  sadece ham Para Trafiği formu+listesiydi, kullanıcı "kullanıcı burada
+  karmaşık bir yapı görüyorum" geri bildirimini verdi çünkü üstte hiçbir
+  özet yoktu, sadece uzun bir form ve (uzun açıklamalı) satırlar vardı.
+- **Para Trafiği formu sadeleştirildi**: Kaynak/Dosya Seçici/Uyuşmazlık
+  Grubu alanları güncel kullanımda nadiren değiştirilen "ileri düzey"
+  alanlardır — `ParaTrafigiDetaylar` (aç/kapa) bileşeniyle varsayılan
+  gizlendiler (Kaynak varsayılan olarak "Manuel" ile önceden dolduruluyor,
+  gizliyken de form geçerli kalıyor). Düzenleme modunda ya da bu
+  alanlardan biri zaten doluysa otomatik açık başlar. Formda görünür kalan
+  alanlar: Tarih, Tip(+Tasnif), Tutar, Durum, Açıklama.
+- **Para Trafiği listesinde uzun açıklamalar kırpılıyor**: `line-clamp-2`
+  ile açıklama hücresi 2 satırda kesiliyor (tam metin `title` tooltip'inde)
+  — önceden çok satırlı bir açıklama satırın tamamen boyunu şişirip
+  tabloyu "karmaşık" gösteriyordu.
 
 ## PWA
 

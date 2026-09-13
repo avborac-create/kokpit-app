@@ -112,7 +112,11 @@ export function ParaTrafigiListesi({
                   </div>
                 )}
               </td>
-              <td className="px-4 py-3 text-white/60">{kayit.aciklama ?? "—"}</td>
+              <td className="max-w-xs px-4 py-3 text-white/60">
+                <span className="line-clamp-2" title={kayit.aciklama ?? undefined}>
+                  {kayit.aciklama ?? "—"}
+                </span>
+              </td>
               <td className="px-4 py-3 text-right">
                 <Link
                   href={`/kokpit/finans/musteri-iliskileri/${kayit.musteriId}/cari-hesap/${kayit.id}/duzenle`}

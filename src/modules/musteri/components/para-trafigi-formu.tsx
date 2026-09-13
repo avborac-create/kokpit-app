@@ -6,6 +6,7 @@ import { musterininDosyalari, uyusmazlikGruplariniListele } from "@/modules/dava
 import { DosyaSecici } from "@/modules/musteri/components/dosya-secici";
 import { TipSeciciVeTasnif } from "@/modules/musteri/components/tip-secici-ve-tasnif";
 import { UyusmazlikGrubuSecici } from "@/modules/musteri/components/uyusmazlik-grubu-secici";
+import { ParaTrafigiDetaylar } from "@/modules/musteri/components/para-trafigi-detaylar";
 
 export type ParaTrafigiDuzenlemeVerisi = {
   tarih: string;
@@ -68,21 +69,35 @@ export async function ParaTrafigiFormu({
           ))}
         </Secim>
       </Alan>
-      <Alan>
-        <Etiket htmlFor="kaynakId">Kaynak</Etiket>
-        <Secim id="kaynakId" name="kaynakId" required defaultValue={duzenlemeVerisi?.kaynakId ?? ""}>
-          <option value="" disabled>
-            Seçiniz…
-          </option>
-          {kaynaklar.map((kaynak) => (
-            <option key={kaynak.id} value={kaynak.id}>
-              {kaynak.etiket}
+      <ParaTrafigiDetaylar
+        varsayilanAcikMi={Boolean(
+          duzenlemeVerisi &&
+            (duzenlemeVerisi.seciliDosyaIdler.length > 0 || duzenlemeVerisi.uyusmazlikGrubuId),
+        )}
+      >
+        <Alan>
+          <Etiket htmlFor="kaynakId">Kaynak</Etiket>
+          <Secim
+            id="kaynakId"
+            name="kaynakId"
+            required
+            defaultValue={
+              duzenlemeVerisi?.kaynakId ?? kaynaklar.find((k) => k.kod === "manuel")?.id ?? ""
+            }
+          >
+            <option value="" disabled>
+              Seçiniz…
             </option>
-          ))}
-        </Secim>
-      </Alan>
-      <DosyaSecici dosyalar={dosyalar} seciliDosyaIdler={duzenlemeVerisi?.seciliDosyaIdler} />
-      <UyusmazlikGrubuSecici gruplar={gruplar} varsayilanGrubuId={duzenlemeVerisi?.uyusmazlikGrubuId ?? ""} />
+            {kaynaklar.map((kaynak) => (
+              <option key={kaynak.id} value={kaynak.id}>
+                {kaynak.etiket}
+              </option>
+            ))}
+          </Secim>
+        </Alan>
+        <DosyaSecici dosyalar={dosyalar} seciliDosyaIdler={duzenlemeVerisi?.seciliDosyaIdler} />
+        <UyusmazlikGrubuSecici gruplar={gruplar} varsayilanGrubuId={duzenlemeVerisi?.uyusmazlikGrubuId ?? ""} />
+      </ParaTrafigiDetaylar>
       <div className="col-span-2 md:col-span-4">
         <Alan>
           <Etiket htmlFor="aciklama">Açıklama</Etiket>

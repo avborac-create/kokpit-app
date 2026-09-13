@@ -172,6 +172,23 @@ export async function dosyaMasrafiGetir(masrafId: string) {
   return prisma.dosyaMasrafi.findUnique({ where: { id: masrafId } });
 }
 
+// Musteri seviyesinde ozet: musterinin TUM gruplarina/dosyalarina (ve
+// hicbir dosya/gruba baglanmadan dogrudan musteriye islenmis kayitlara)
+// yayilan toplam Borc/Alacak/Bakiye. Musteri Finans/Cari Hesap sayfasinda
+// -once dosya/grup ayrimina bakmadan- "bu musteriden toplam ne kadar
+// alindi, adina ne kadar harcandi" sorusuna cevap verir.
+export async function musteriCariHesapOzeti(musteriId: string) {
+  return cariHesapOzetiHesapla(
+    {
+      paraTrafigi: {
+        musteriId,
+        durum: { kod: "tahsil_edildi" },
+      },
+    },
+    { dosya: { muvekkiller: { some: { musteriId } } } },
+  );
+}
+
 export async function uyusmazlikGrubuGetir(id: string) {
   return prisma.uyusmazlikGrubu.findUnique({
     where: { id },
