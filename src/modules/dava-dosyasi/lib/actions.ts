@@ -17,18 +17,26 @@ function musteriIdleriniAl(formData: FormData): string[] {
 
 // Karsi taraf secimini cozumler: secilen "karsiTarafIds" (coklu - bir
 // icra takibi genelde cek/bono zincirindeki TUM muteselsil sorumlulara
-// birden acilir, tek bir karsi tarafa degil) + "yeniKarsiTarafAdi"
-// doluysa yeni bir KarsiTaraf olusturup listeye ekler.
+// birden acilir, tek bir karsi tarafa degil) + "yeniKarsiTarafAdi" alani
+// da virgulle ayrilmis birden fazla yeni ad icerebilir (ör. "Koz Gıda,
+// Nasip Sac, Mata Kauçuk") - her biri icin ayri bir KarsiTaraf olusturulup
+// listeye eklenir.
 async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: string[]): Promise<string[]> {
   const secilenIdler = formData.getAll("karsiTarafIds").map(String).filter(Boolean);
-  const yeniAd = metinYaAlNull(formData, "yeniKarsiTarafAdi");
-  if (yeniAd) {
+  const yeniAdlar = String(formData.get("yeniKarsiTarafAdi") ?? "")
+    .split(",")
+    .map((ad) => ad.trim())
+    .filter(Boolean);
+
+  const yeniIdler: string[] = [];
+  for (const ad of yeniAdlar) {
     const yeni = await prisma.karsiTaraf.create({
-      data: { musteriId: musteriIdleri[0], ad: yeniAd },
+      data: { musteriId: musteriIdleri[0], ad },
     });
-    return [...secilenIdler, yeni.id];
+    yeniIdler.push(yeni.id);
   }
-  return secilenIdler;
+
+  return [...secilenIdler, ...yeniIdler];
 }
 
 // Uyusmazlik grubu secimini cozumler: "yeniUyusmazlikGrubuAdi" doluysa yeni

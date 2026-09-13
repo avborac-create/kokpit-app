@@ -68,8 +68,12 @@ export async function DavaDosyasiFormu({
         seciliIdler={dosya?.karsiTaraflar.map((kt) => kt.karsiTarafId) ?? []}
       />
       <Alan>
-        <Etiket htmlFor="yeniKarsiTarafAdi">veya Yeni Karşı Taraf Ekle</Etiket>
-        <Girdi id="yeniKarsiTarafAdi" name="yeniKarsiTarafAdi" placeholder="Koz Gıda vb." />
+        <Etiket htmlFor="yeniKarsiTarafAdi">veya Yeni Karşı Taraf Ekle (birden fazlaysa virgülle ayırın)</Etiket>
+        <Girdi
+          id="yeniKarsiTarafAdi"
+          name="yeniKarsiTarafAdi"
+          placeholder="Koz Gıda, Nasip Sac, Mata Kauçuk"
+        />
       </Alan>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
