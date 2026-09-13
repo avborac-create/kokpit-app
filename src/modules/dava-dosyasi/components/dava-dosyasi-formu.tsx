@@ -1,5 +1,5 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
-import { Dugme } from "@/core/ui/button";
+import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterileriListele, avukatlariListele } from "@/modules/musteri/lib/queries";
 import {
@@ -231,7 +231,7 @@ export async function DavaDosyasiFormu({
         </Alan>
       </DosyaDetaylar>
 
-      <Dugme type="submit">{gonderButonuMetni}</Dugme>
+      <GonderButonu>{gonderButonuMetni}</GonderButonu>
     </form>
   );
 }

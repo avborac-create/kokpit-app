@@ -1,6 +1,6 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
-import { Dugme } from "@/core/ui/button";
+import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 
 export type MasrafDuzenlemeVerisi = {
@@ -68,7 +68,7 @@ export async function MasrafFormu({
         </Alan>
       </div>
       <div className="col-span-1 sm:col-span-2 md:col-span-4">
-        <Dugme type="submit">{duzenlemeVerisi ? "Masrafı Güncelle" : "Masraf Ekle"}</Dugme>
+        <GonderButonu>{duzenlemeVerisi ? "Masrafı Güncelle" : "Masraf Ekle"}</GonderButonu>
       </div>
     </form>
   );

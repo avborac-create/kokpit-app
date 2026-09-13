@@ -1,6 +1,6 @@
 import { Alan, Etiket, Girdi } from "@/core/ui/form";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
-import { Dugme } from "@/core/ui/button";
+import { GonderButonu } from "@/core/ui/gonder-butonu";
 
 export function KarsiTarafAlacagiFormu({ action }: { action: (formData: FormData) => void }) {
   return (
@@ -16,7 +16,7 @@ export function KarsiTarafAlacagiFormu({ action }: { action: (formData: FormData
         </Alan>
       </div>
       <div className="sm:col-span-3">
-        <Dugme type="submit">Alacak Kaydı Ekle</Dugme>
+        <GonderButonu>Alacak Kaydı Ekle</GonderButonu>
       </div>
     </form>
   );

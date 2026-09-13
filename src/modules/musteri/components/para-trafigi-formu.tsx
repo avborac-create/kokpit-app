@@ -1,6 +1,6 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
-import { Dugme } from "@/core/ui/button";
+import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterininDosyalari, uyusmazlikGruplariniListele } from "@/modules/dava-dosyasi/lib/queries";
 import { DosyaSecici } from "@/modules/musteri/components/dosya-secici";
@@ -105,7 +105,7 @@ export async function ParaTrafigiFormu({
         </Alan>
       </div>
       <div className="col-span-2 md:col-span-4">
-        <Dugme type="submit">{duzenlemeVerisi ? "Kaydı Güncelle" : "Kaydı Ekle"}</Dugme>
+        <GonderButonu>{duzenlemeVerisi ? "Kaydı Güncelle" : "Kaydı Ekle"}</GonderButonu>
       </div>
     </form>
   );

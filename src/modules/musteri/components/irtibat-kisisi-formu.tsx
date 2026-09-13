@@ -1,5 +1,5 @@
 import { Alan, Etiket, Girdi, MetinAlani } from "@/core/ui/form";
-import { Dugme } from "@/core/ui/button";
+import { GonderButonu } from "@/core/ui/gonder-butonu";
 
 export function IrtibatKisisiFormu({ action }: { action: (formData: FormData) => void }) {
   return (
@@ -48,7 +48,7 @@ export function IrtibatKisisiFormu({ action }: { action: (formData: FormData) =>
         </label>
       </div>
       <div className="col-span-2 md:col-span-4">
-        <Dugme type="submit">Kişiyi Ekle</Dugme>
+        <GonderButonu>Kişiyi Ekle</GonderButonu>
       </div>
     </form>
   );

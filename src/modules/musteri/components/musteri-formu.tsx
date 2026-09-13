@@ -1,5 +1,5 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
-import { Dugme } from "@/core/ui/button";
+import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { avukatlariListele } from "@/modules/musteri/lib/queries";
 import type { Kullanici, Musteri } from "@prisma/client";
@@ -96,7 +96,7 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
         <MetinAlani id="notlar" name="notlar" rows={4} defaultValue={musteri?.notlar ?? ""} />
       </Alan>
 
-      <Dugme type="submit">{gonderButonuMetni}</Dugme>
+      <GonderButonu>{gonderButonuMetni}</GonderButonu>
     </form>
   );
 }
