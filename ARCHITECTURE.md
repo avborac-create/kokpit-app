@@ -256,6 +256,22 @@ görüntüsü yok.
   etmek için düşünülen ek bir alan (ör. çek seri no, VKN). **Şimdilik
   ERTELENDİ** — ileride "tür" (Müşteri/Çek No/vb.) seçilebilen bir
   seçenek listesi + değer alanı olarak eklenecek; bugün zorunlu değil.
+- **Karşı Taraf formda TEK bir "yaz + Ekle" akışı, "var olan karşı
+  taraflar" checkbox listesi YOK**: Eskiden iki ayrı bileşen vardı
+  (`KarsiTarafSecici` - var olanlardan checkbox ile seç, `YeniKarsiTarafEkleyici`
+  - yeni isim yaz) — kullanıcı bu checkbox listesinin kendisini
+  ("kayıtlı karşı taraflar" listesi olarak görünmesini) istemedi.
+  İkisi `KarsiTarafEkleyici` adında TEK bileşende birleştirildi
+  (`src/modules/dava-dosyasi/components/karsi-taraf-ekleyici.tsx`):
+  düzenleme modunda dosyaya zaten bağlı karşı taraflar chip olarak
+  önceden dolu gelir (kaldırılabilir), yeni bir isim yazıp Ekle'ye
+  basınca o da chip olur. Aynı karşı tarafın birden fazla dosyaya
+  bağlanabilme özelliği (çek zincirindeki müteselsil sorumlular)
+  KAYBOLMADI — `karsiTarafIdleriniCozumle` (actions.ts) yazılan ismi
+  aynı müvekkil altında zaten var olan bir isimle (büyük/küçük harf
+  duyarsız) eşleştirip AYNI kayda bağlar, kullanıcıya bu eşleşmeyi hiç
+  göstermeden. Yani checkbox'lı "seçim" arayüzü kalktı, ama arka
+  plandaki tekilleştirme/yeniden kullanma mantığı aynen duruyor.
 - **Bloke Paralar**: Teminat, yakalama avansı, satış avansı, peşin
   yediemin ücreti vb. — dosya kapsamında geçici olarak tutulan, dava/
   icra sonuçlanınca iade edilecek tutarlar.

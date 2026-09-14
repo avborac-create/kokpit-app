@@ -3,7 +3,6 @@ import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterileriListele, avukatlariListele } from "@/modules/musteri/lib/queries";
 import {
-  karsiTaraflariListele,
   uyusmazlikGruplariniListele,
   musterininDosyalari,
   type davaDosyasiGetir,
@@ -11,8 +10,7 @@ import {
 import { formAlanDuzeniniGetir } from "@/core/form-duzeni/queries";
 import { DAVA_DOSYASI_GIZLENEMEZ_ALANLAR } from "@/core/form-duzeni/dava-dosyasi-alanlari";
 import { MuvekkilSecici } from "./muvekkil-secici";
-import { KarsiTarafSecici } from "./karsi-taraf-secici";
-import { YeniKarsiTarafEkleyici } from "./yeni-karsi-taraf-ekleyici";
+import { KarsiTarafEkleyici } from "./karsi-taraf-ekleyici";
 
 type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
 
@@ -40,8 +38,7 @@ export async function DavaDosyasiFormu({
 
   const seciliIdler =
     dosya?.muvekkiller.map((m) => m.musteriId) ?? (onSecilenMusteriId ? [onSecilenMusteriId] : []);
-  const [karsiTaraflar, uyusmazlikGruplari, muvekkilinDosyalari] = await Promise.all([
-    karsiTaraflariListele(seciliIdler),
+  const [uyusmazlikGruplari, muvekkilinDosyalari] = await Promise.all([
     uyusmazlikGruplariniListele(seciliIdler),
     seciliIdler[0] ? musterininDosyalari(seciliIdler[0]) : Promise.resolve([]),
   ]);
@@ -248,11 +245,11 @@ export async function DavaDosyasiFormu({
     <form action={action} className="max-w-xl">
       <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdler} />
 
-      <KarsiTarafSecici
-        karsiTaraflar={karsiTaraflar}
-        seciliIdler={dosya?.karsiTaraflar.map((kt) => kt.karsiTarafId) ?? []}
+      <KarsiTarafEkleyici
+        baslangicKarsiTaraflar={
+          dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad })) ?? []
+        }
       />
-      <YeniKarsiTarafEkleyici />
 
       {alanDuzeni.map((oge) => {
         const gizli = DAVA_DOSYASI_GIZLENEMEZ_ALANLAR.includes(oge.alanAnahtari) ? false : oge.gizliMi;

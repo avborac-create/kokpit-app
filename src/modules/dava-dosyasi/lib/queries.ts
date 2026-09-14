@@ -73,14 +73,6 @@ export async function musterininDosyalari(musteriId: string) {
   });
 }
 
-export async function karsiTaraflariListele(musteriIdleri: string[]) {
-  if (musteriIdleri.length === 0) return [];
-  return prisma.karsiTaraf.findMany({
-    where: { musteriId: { in: musteriIdleri } },
-    orderBy: { ad: "asc" },
-  });
-}
-
 export async function uyusmazlikGruplariniListele(musteriIdleri: string[]) {
   if (musteriIdleri.length === 0) return [];
   return prisma.uyusmazlikGrubu.findMany({

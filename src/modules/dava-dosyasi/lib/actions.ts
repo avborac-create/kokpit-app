@@ -15,12 +15,15 @@ function musteriIdleriniAl(formData: FormData): string[] {
   return formData.getAll("musteriIds").map(String).filter(Boolean);
 }
 
-// Karsi taraf secimini cozumler: secilen "karsiTarafIds" (coklu - bir
-// icra takibi genelde cek/bono zincirindeki TUM muteselsil sorumlulara
-// birden acilir, tek bir karsi tarafa degil) + "yeniKarsiTarafAdlari"
-// (YeniKarsiTarafEkleyici bilesenindeki "Ekle" butonuyla birer birer
-// eklenen isimler, her biri gizli bir input olarak forma tasinir) - her
-// biri icin ayri bir KarsiTaraf olusturulup listeye eklenir.
+// Karsi taraf secimini cozumler: "karsiTarafIds" (KarsiTarafEkleyici
+// bilesenindeki, dosyaya zaten bagli olup kaldirilmamis kartlarin id'leri -
+// bir icra takibi genelde cek/bono zincirindeki TUM muteselsil sorumlulara
+// birden acilir, tek bir karsi tarafa degil) + "yeniKarsiTarafAdlari" (ayni
+// bilesende "Ekle" ile birer birer eklenen YENI isimler, her biri gizli bir
+// input olarak forma tasinir) - her yeni isim icin ayni musteri altinda
+// zaten ayni isimde bir KarsiTaraf var mi diye bakilir (varsa o kullanilir,
+// yoksa yeni olusturulur) - kullaniciya "var olan karsi taraflar" diye ayri
+// bir liste hic gosterilmez, tek giris noktasi bu "yaz + Ekle" akisidir.
 async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: string[]): Promise<string[]> {
   const secilenIdler = formData.getAll("karsiTarafIds").map(String).filter(Boolean);
   const yeniAdlar = formData
