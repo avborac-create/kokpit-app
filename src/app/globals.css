@@ -27,6 +27,18 @@ html {
   color-scheme: dark;
 }
 
+/* <select>'in acilir listesi (popup) native/OS tarafindan cizilir; sayfanin
+   geri kalanindaki "glass" karanlik tema oraya sizmiyor. Sadece
+   color-scheme:dark bazi tarayicilarda (ozellikle mobil) popup'i yine de
+   acik/beyaz zeminde biraktigindan, metin acik renkte kalinca (sayfanin
+   genel text-white'i miras alinarak) beyaz zemin uzerinde beyaz yazi gibi
+   okunmaz hale geliyordu. option'a dogrudan koyu zemin + acik yazi rengi
+   vererek bunu tum tarayicilarda garanti ediyoruz.*/
+select option {
+  background-color: var(--background-2);
+  color: var(--foreground);
+}
+
 /* Ana ekrana eklenmis (standalone) PWA'da Safari'nin kendi adres cubugu hic
    gosterilmez/gizlenmez - yani onceki h-svh fix'inin onlemeye calistigi
    "adres cubugu kayboldugunda tasma" riski burada zaten yok. Ama svh, adres
