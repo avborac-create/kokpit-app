@@ -359,6 +359,42 @@ async function menuOgeleriniOlustur() {
   }
 }
 
+// Dava Dosyasi formundaki, admin'in surukleyerek sirasini degistirebildigi
+// alanlarin varsayilan sirasi (bkz. dava-dosyasi-formu.tsx). Muvekkil ve
+// Karsi Taraf seciciler burada YOK - onlar sabit/kilitli, FormAlanDuzeni
+// tablosuna hic girmiyor (bkz. ARCHITECTURE.md).
+const VARSAYILAN_DAVA_DOSYASI_ALAN_SIRASI = [
+  "hukukiIliskiTuruId",
+  "turId",
+  "dosyaNo",
+  "konu",
+  "durumId",
+  "birimAdi",
+  "uyusmazlikGrubuId",
+  "bagliOlduguDosyaId",
+  "acilisTarihi",
+  "kapanisTarihi",
+  "sorumluAvukatId",
+  "aciklama",
+];
+
+async function formAlanDuzeniOlustur() {
+  let eklenen = 0;
+  for (const [index, alanAnahtari] of VARSAYILAN_DAVA_DOSYASI_ALAN_SIRASI.entries()) {
+    const mevcut = await prisma.formAlanDuzeni.findUnique({
+      where: { formAnahtari_alanAnahtari: { formAnahtari: "dava-dosyasi", alanAnahtari } },
+    });
+    if (mevcut) continue;
+    await prisma.formAlanDuzeni.create({
+      data: { formAnahtari: "dava-dosyasi", alanAnahtari, siraNo: index },
+    });
+    eklenen += 1;
+  }
+  if (eklenen > 0) {
+    console.log(`✓ Form Düzeni: ${eklenen} yeni alan eklendi.`);
+  }
+}
+
 async function main() {
   await secenekListeleriniOlustur();
   await baslangicKullanicisiniOlustur();
@@ -366,6 +402,7 @@ async function main() {
   await yinelenenKarsiTaraflariBirlestir();
   await yinelenenUyusmazlikGruplariniBirlestir();
   await menuOgeleriniOlustur();
+  await formAlanDuzeniOlustur();
 }
 
 main()

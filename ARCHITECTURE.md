@@ -425,6 +425,60 @@ aynı ilkeyle çalışır: sadece kod tarafında yeni eklenmiş ama henüz
 veritabanında karşılığı olmayan modülleri varsayılan sırada ekler, admin'in
 yaptığı sıralama/gizleme değişikliğine bir daha asla dokunmaz.
 
+## Form Alan Düzeni (admin sürükle-bırak — formların içi)
+
+`/kokpit/ayarlar/form-duzeni`, `FormAlanDuzeni` modeli. Menü Düzeni'nin
+aynı ilkesinin formlara uygulanmış hali: "Yeni Dosya" formundaki her
+küçük düzenleme isteği (alan sırası, hangi alan gizli) beni (Claude)
+gerektiriyordu — kullanıcı bunu "formların içini de ben kurabilmeliyim"
+diye talep etti. Bilinçli sınır: bu tam bir form-builder (herhangi bir
+alan tipini sıfırdan yaratma) DEĞİL — o çok daha büyük ve riskli bir
+özellik olurdu. Kodda tanımlı sabit bir alan kümesi içinde admin sadece
+SIRA ve GÖRÜNÜR/GİZLİ değiştirir; `formAnahtari` ile birden fazla form
+aynı tabloyu paylaşır (şimdilik sadece `"dava-dosyasi"` bağlı — bkz. Faz 2
+notu altta).
+
+**Üç seviyeli alan sınıflandırması** (`dava-dosyasi-formu.tsx`):
+1. **Sabit/kilitli** — Müvekkil ve Karşı Taraf seçiciler. `FormAlanDuzeni`
+   tablosuna hiç girmezler, admin ekranında salt bilgi amaçlı "Sabit"
+   rozetiyle gösterilirler. Gerekçe: tekil scalar input değiller, kendi
+   ilişkisel çoklu-seçim/yeni-kayıt-oluşturma mantıkları var.
+2. **Sürüklenebilir ama gizlenemez** (`turId, konu, durumId, acilisTarihi`)
+   — `davaDosyasiOlustur`/`davaDosyasiGuncelle` bunları DB'den bağımsız
+   olarak EK OLARAK zorunlu kılıyor (`actions.ts` satır ~72-130); admin
+   panelinde "Zorunlu" rozeti gösterilir, gizleme isteği sunucu tarafında
+   da (`DAVA_DOSYASI_GIZLENEMEZ_ALANLAR`) sessizce yok sayılır.
+3. **Tam admin kontrolünde** (8 alan: `hukukiIliskiTuruId, dosyaNo,
+   birimAdi, uyusmazlikGrubuId, bagliOlduguDosyaId, kapanisTarihi,
+   sorumluAvukatId, aciklama`) — DB'de opsiyonel VE action tarafından
+   zorunlu kılınmıyor, admin sırasını VE görünürlüğünü değiştirebilir.
+
+**Kritik veri bütünlüğü mekanizması**: bir alan admin tarafından
+gizlendiğinde DOM'dan TAMAMEN kaldırılmaz — yerine mevcut değerini
+taşıyan bir `<input type="hidden">` render edilir. Neden: aksi halde
+düzenleme modunda o alanın formData'da hiç gelmemesi, sunucu tarafındaki
+`metinYaAlNull` yardımcısı tarafından `null`a çevrilip VAR OLAN veriyi
+SİLERDİ (Playwright ile uçtan uca doğrulandı: birimAdi dolu bir dosya →
+Birim Adı'nı gizle → düzenle ekranını hiç değiştirmeden kaydet → değer
+veritabanında hâlâ duruyor).
+
+Eski `DosyaDetaylar` "+ Detaylar" aç/kapa bileşeni bu formdan tamamen
+kaldırıldı (silindi) — admin artık istemediği alanı doğrudan gizlediği
+için o katman gereksizdi.
+
+**Paylaşılan sürükle-bırak bileşeni**: `Menü Düzeni`de yazılan native
+HTML5 drag&drop mantığı (`src/core/menu/menu-duzeni-listesi.tsx`), ikinci
+gerçek kullanım (form alanları) ortaya çıkınca `src/core/ui/
+siralanabilir-liste.tsx`'e (`SiralanabilirListe`) genellenmiş bileşen
+olarak çıkarıldı; hem Menü Düzeni hem Form Düzeni artık bunun ince birer
+sarmalayıcısı (DB/server action'lardan habersiz, sadece `onSirala`/
+`onGorunurlukDegistir` callback'leri alır).
+
+**Faz 2 (henüz yapılmadı)**: Aynı mekanizma diğer formlara
+(`musteri-formu`, `para-trafigi-formu`, `irtibat-kisisi-formu`) tek tek,
+ayrı oturumlarda genişletilecek — `karsi-taraf-alacagi-formu` ve
+`masraf-formu`'nun tüm alanları zorunlu olduğu için düşük öncelikli.
+
 ## PWA
 
 - `public/manifest.json` + `public/sw.js`: kullanıcılar Chrome/Safari'nin

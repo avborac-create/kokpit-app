@@ -515,3 +515,27 @@ model MenuOgesi {
 
   @@map("menu_ogeleri")
 }
+
+// ============================================================
+// CEKIRDEK: Form Alan Duzeni (MenuOgesi ile ayni ilke, form
+// alanlarina uygulanmis hali - bkz. ARCHITECTURE.md)
+// ============================================================
+
+// Bir formda HANGI ALANLARIN VAR OLDUGU (ve bunlardan hangilerinin hic
+// gizlenemeyecegi) hala kod tarafinda kalir - bu, gercek bir server
+// action'in veri dogrulamasina bagli. Admin'in degistirebildigi SADECE
+// iki sey: alanin SIRASI ve GORUNUR/GIZLI olmasi. formAnahtari birden
+// fazla formun ayni tabloyu paylasmasini saglar (orn. "dava-dosyasi").
+// seed.ts HER deploy'da sadece eksik olan alanlari varsayilan sirada
+// ekler, admin'in yaptigi degisikligie bir daha asla dokunmaz (bkz.
+// MenuOgesi'ndeki ayni ilke).
+model FormAlanDuzeni {
+  id           String  @id @default(cuid())
+  formAnahtari String
+  alanAnahtari String
+  siraNo       Int     @default(0)
+  gizliMi      Boolean @default(false)
+
+  @@unique([formAnahtari, alanAnahtari])
+  @@map("form_alan_duzeni")
+}

@@ -8,10 +8,11 @@ import {
   musterininDosyalari,
   type davaDosyasiGetir,
 } from "@/modules/dava-dosyasi/lib/queries";
+import { formAlanDuzeniniGetir } from "@/core/form-duzeni/queries";
+import { DAVA_DOSYASI_GIZLENEMEZ_ALANLAR } from "@/core/form-duzeni/dava-dosyasi-alanlari";
 import { MuvekkilSecici } from "./muvekkil-secici";
 import { KarsiTarafSecici } from "./karsi-taraf-secici";
 import { YeniKarsiTarafEkleyici } from "./yeni-karsi-taraf-ekleyici";
-import { DosyaDetaylar } from "./dosya-detaylar";
 
 type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
 
@@ -28,12 +29,13 @@ export async function DavaDosyasiFormu({
   gonderButonuMetni,
   onSecilenMusteriId,
 }: Props) {
-  const [durumlar, turler, hukukiIliskiTurleri, avukatlar, musteriler] = await Promise.all([
+  const [durumlar, turler, hukukiIliskiTurleri, avukatlar, musteriler, alanDuzeni] = await Promise.all([
     secenekleriGetir("dava_dosyasi_durumu"),
     secenekleriGetir("dosya_turu"),
     secenekleriGetir("hukuki_iliski_turu"),
     avukatlariListele(),
     musterileriListele(),
+    formAlanDuzeniniGetir("dava-dosyasi"),
   ]);
 
   const seciliIdler =
@@ -50,27 +52,17 @@ export async function DavaDosyasiFormu({
   const kapanisVarsayilan = dosya?.kapanisTarihi ? dosya.kapanisTarihi.toISOString().slice(0, 10) : "";
   const varsayilanDurumId =
     dosya?.durumId ?? durumlar.find((d) => d.kod === "acik")?.id ?? "";
-  const detaylarAcikMi = Boolean(
-    dosya &&
-      (dosya.uyusmazlikGrubuId ||
-        dosya.bagliOlduguDosyaId ||
-        dosya.birimAdi ||
-        dosya.sorumluAvukatId ||
-        dosya.aciklama ||
-        dosya.kapanisTarihi),
-  );
 
-  return (
-    <form action={action} className="max-w-xl">
-      <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdler} />
-
-      <KarsiTarafSecici
-        karsiTaraflar={karsiTaraflar}
-        seciliIdler={dosya?.karsiTaraflar.map((kt) => kt.karsiTarafId) ?? []}
-      />
-      <YeniKarsiTarafEkleyici />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  // Her alan icin: gorunurken tam etkilesimli JSX, gizliyken (admin
+  // "Gizli" yaptiysa) mevcut degeri tasiyan bir <input type="hidden">.
+  // Bu ikincisi kritik: alan DOM'dan tamamen kalkarsa, duzenleme modunda
+  // formData'da hic gelmez ve sunucu tarafi onu null'a cevirip VAR OLAN
+  // veriyi siler - hidden input bunu engeller (bkz. plan).
+  const alanRenderHaritasi: Record<string, (gizli: boolean) => React.ReactNode> = {
+    hukukiIliskiTuruId: (gizli) =>
+      gizli ? (
+        <input type="hidden" name="hukukiIliskiTuruId" value={dosya?.hukukiIliskiTuruId ?? ""} />
+      ) : (
         <Alan>
           <Etiket htmlFor="hukukiIliskiTuruId">Hukuki İlişki Türü (opsiyonel)</Etiket>
           <Secim
@@ -86,52 +78,56 @@ export async function DavaDosyasiFormu({
             ))}
           </Secim>
         </Alan>
-        <Alan>
-          <Etiket htmlFor="turId">Dosya Türü</Etiket>
-          <Secim id="turId" name="turId" required defaultValue={dosya?.turId ?? ""}>
-            <option value="" disabled>
-              Seçiniz…
+      ),
+    turId: () => (
+      <Alan>
+        <Etiket htmlFor="turId">Dosya Türü</Etiket>
+        <Secim id="turId" name="turId" required defaultValue={dosya?.turId ?? ""}>
+          <option value="" disabled>
+            Seçiniz…
+          </option>
+          {turler.map((tur) => (
+            <option key={tur.id} value={tur.id}>
+              {tur.etiket}
             </option>
-            {turler.map((tur) => (
-              <option key={tur.id} value={tur.id}>
-                {tur.etiket}
-              </option>
-            ))}
-          </Secim>
-        </Alan>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          ))}
+        </Secim>
+      </Alan>
+    ),
+    dosyaNo: (gizli) =>
+      gizli ? (
+        <input type="hidden" name="dosyaNo" value={dosya?.dosyaNo ?? ""} />
+      ) : (
         <Alan>
           <Etiket htmlFor="dosyaNo">Dosya No (opsiyonel)</Etiket>
-          <Girdi
-            id="dosyaNo"
-            name="dosyaNo"
-            placeholder="Esas no vb."
-            defaultValue={dosya?.dosyaNo ?? ""}
-          />
+          <Girdi id="dosyaNo" name="dosyaNo" placeholder="Esas no vb." defaultValue={dosya?.dosyaNo ?? ""} />
         </Alan>
-        <Alan>
-          <Etiket htmlFor="konu">Konu</Etiket>
-          <Girdi id="konu" name="konu" required defaultValue={dosya?.konu ?? ""} />
-        </Alan>
-      </div>
-
-      <DosyaDetaylar varsayilanAcikMi={detaylarAcikMi}>
-        <Alan>
-          <Etiket htmlFor="durumId">Durum</Etiket>
-          <Secim id="durumId" name="durumId" required defaultValue={varsayilanDurumId}>
-            <option value="" disabled>
-              Seçiniz…
+      ),
+    konu: () => (
+      <Alan>
+        <Etiket htmlFor="konu">Konu</Etiket>
+        <Girdi id="konu" name="konu" required defaultValue={dosya?.konu ?? ""} />
+      </Alan>
+    ),
+    durumId: () => (
+      <Alan>
+        <Etiket htmlFor="durumId">Durum</Etiket>
+        <Secim id="durumId" name="durumId" required defaultValue={varsayilanDurumId}>
+          <option value="" disabled>
+            Seçiniz…
+          </option>
+          {durumlar.map((durum) => (
+            <option key={durum.id} value={durum.id}>
+              {durum.etiket}
             </option>
-            {durumlar.map((durum) => (
-              <option key={durum.id} value={durum.id}>
-                {durum.etiket}
-              </option>
-            ))}
-          </Secim>
-        </Alan>
-
+          ))}
+        </Secim>
+      </Alan>
+    ),
+    birimAdi: (gizli) =>
+      gizli ? (
+        <input type="hidden" name="birimAdi" value={dosya?.birimAdi ?? ""} />
+      ) : (
         <Alan>
           <Etiket htmlFor="birimAdi">Birim Adı (Mahkeme/İcra Dairesi, varsa)</Etiket>
           <Girdi
@@ -141,39 +137,49 @@ export async function DavaDosyasiFormu({
             defaultValue={dosya?.birimAdi ?? ""}
           />
         </Alan>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Alan>
-            <Etiket htmlFor="uyusmazlikGrubuId">
-              Uyuşmazlık Grubu (müvekkil bakımından ayırt edici unsur)
-            </Etiket>
-            <Secim
-              id="uyusmazlikGrubuId"
-              name="uyusmazlikGrubuId"
-              defaultValue={dosya?.uyusmazlikGrubuId ?? ""}
-            >
-              <option value="">Seçiniz…</option>
-              {uyusmazlikGruplari.map((grup) => (
-                <option key={grup.id} value={grup.id}>
-                  {grup.ad}
-                </option>
-              ))}
-            </Secim>
-          </Alan>
-          <Alan>
-            <Etiket htmlFor="yeniUyusmazlikGrubuAdi">veya Yeni Uyuşmazlık Grubu Ekle</Etiket>
-            <Girdi
-              id="yeniUyusmazlikGrubuAdi"
-              name="yeniUyusmazlikGrubuAdi"
-              placeholder="Asya Park Ticareti vb."
-            />
-          </Alan>
-        </div>
-        <p className="mb-4 -mt-3 text-xs text-white/35">
-          Aynı alacağın/uyuşmazlığın tahsili için birden fazla dosya açılırsa (örn. asıl borçlu ve
-          sonradan devreye giren kefil), bu dosyaları aynı grup altında toplayın.
-        </p>
-
+      ),
+    uyusmazlikGrubuId: (gizli) =>
+      gizli ? (
+        <input type="hidden" name="uyusmazlikGrubuId" value={dosya?.uyusmazlikGrubuId ?? ""} />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Alan>
+              <Etiket htmlFor="uyusmazlikGrubuId">
+                Uyuşmazlık Grubu (müvekkil bakımından ayırt edici unsur)
+              </Etiket>
+              <Secim
+                id="uyusmazlikGrubuId"
+                name="uyusmazlikGrubuId"
+                defaultValue={dosya?.uyusmazlikGrubuId ?? ""}
+              >
+                <option value="">Seçiniz…</option>
+                {uyusmazlikGruplari.map((grup) => (
+                  <option key={grup.id} value={grup.id}>
+                    {grup.ad}
+                  </option>
+                ))}
+              </Secim>
+            </Alan>
+            <Alan>
+              <Etiket htmlFor="yeniUyusmazlikGrubuAdi">veya Yeni Uyuşmazlık Grubu Ekle</Etiket>
+              <Girdi
+                id="yeniUyusmazlikGrubuAdi"
+                name="yeniUyusmazlikGrubuAdi"
+                placeholder="Asya Park Ticareti vb."
+              />
+            </Alan>
+          </div>
+          <p className="mb-4 -mt-3 text-xs text-white/35">
+            Aynı alacağın/uyuşmazlığın tahsili için birden fazla dosya açılırsa (örn. asıl borçlu ve
+            sonradan devreye giren kefil), bu dosyaları aynı grup altında toplayın.
+          </p>
+        </>
+      ),
+    bagliOlduguDosyaId: (gizli) =>
+      gizli ? (
+        <input type="hidden" name="bagliOlduguDosyaId" value={dosya?.bagliOlduguDosyaId ?? ""} />
+      ) : (
         <Alan>
           <Etiket htmlFor="bagliOlduguDosyaId">Bağlı Olduğu Esas Dosya (opsiyonel)</Etiket>
           <Secim
@@ -195,24 +201,26 @@ export async function DavaDosyasiFormu({
             gönderilen talimat dosyası).
           </p>
         </Alan>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Alan>
-            <Etiket htmlFor="acilisTarihi">Açılış Tarihi</Etiket>
-            <Girdi
-              id="acilisTarihi"
-              name="acilisTarihi"
-              type="date"
-              required
-              defaultValue={acilisVarsayilan}
-            />
-          </Alan>
-          <Alan>
-            <Etiket htmlFor="kapanisTarihi">Kapanış Tarihi</Etiket>
-            <Girdi id="kapanisTarihi" name="kapanisTarihi" type="date" defaultValue={kapanisVarsayilan} />
-          </Alan>
-        </div>
-
+      ),
+    acilisTarihi: () => (
+      <Alan>
+        <Etiket htmlFor="acilisTarihi">Açılış Tarihi</Etiket>
+        <Girdi id="acilisTarihi" name="acilisTarihi" type="date" required defaultValue={acilisVarsayilan} />
+      </Alan>
+    ),
+    kapanisTarihi: (gizli) =>
+      gizli ? (
+        <input type="hidden" name="kapanisTarihi" value={kapanisVarsayilan} />
+      ) : (
+        <Alan>
+          <Etiket htmlFor="kapanisTarihi">Kapanış Tarihi</Etiket>
+          <Girdi id="kapanisTarihi" name="kapanisTarihi" type="date" defaultValue={kapanisVarsayilan} />
+        </Alan>
+      ),
+    sorumluAvukatId: (gizli) =>
+      gizli ? (
+        <input type="hidden" name="sorumluAvukatId" value={dosya?.sorumluAvukatId ?? ""} />
+      ) : (
         <Alan>
           <Etiket htmlFor="sorumluAvukatId">Sorumlu Avukat</Etiket>
           <Secim id="sorumluAvukatId" name="sorumluAvukatId" defaultValue={dosya?.sorumluAvukatId ?? ""}>
@@ -224,12 +232,33 @@ export async function DavaDosyasiFormu({
             ))}
           </Secim>
         </Alan>
-
+      ),
+    aciklama: (gizli) =>
+      gizli ? (
+        <input type="hidden" name="aciklama" value={dosya?.aciklama ?? ""} />
+      ) : (
         <Alan>
           <Etiket htmlFor="aciklama">Açıklama</Etiket>
           <MetinAlani id="aciklama" name="aciklama" rows={3} defaultValue={dosya?.aciklama ?? ""} />
         </Alan>
-      </DosyaDetaylar>
+      ),
+  };
+
+  return (
+    <form action={action} className="max-w-xl">
+      <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdler} />
+
+      <KarsiTarafSecici
+        karsiTaraflar={karsiTaraflar}
+        seciliIdler={dosya?.karsiTaraflar.map((kt) => kt.karsiTarafId) ?? []}
+      />
+      <YeniKarsiTarafEkleyici />
+
+      {alanDuzeni.map((oge) => {
+        const gizli = DAVA_DOSYASI_GIZLENEMEZ_ALANLAR.includes(oge.alanAnahtari) ? false : oge.gizliMi;
+        const render = alanRenderHaritasi[oge.alanAnahtari];
+        return render ? <div key={oge.alanAnahtari}>{render(gizli)}</div> : null;
+      })}
 
       <GonderButonu>{gonderButonuMetni}</GonderButonu>
     </form>
