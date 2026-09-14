@@ -405,6 +405,7 @@ const VARSAYILAN_MENU_SIRASI = [
   "musteriler",
   "dava-dosyalari",
   "finans",
+  "muvekkil-finans",
   "oneriler",
   "gelistirme-kutusu",
   "ayarlar",

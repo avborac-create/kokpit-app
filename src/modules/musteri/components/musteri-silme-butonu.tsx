@@ -7,7 +7,7 @@ export function MusteriSilmeButonu({ musteriId }: { musteriId: string }) {
   return (
     <OnayliButon
       eylem={() => musteriSil(musteriId)}
-      mesaj="Bu müvekkili ve tüm para trafiği kayıtlarını silmek istediğinize emin misiniz?"
+      mesaj="Bu müvekkili, tüm para trafiği kayıtlarını ve Müvekkil Finans hareketlerini silmek istediğinize emin misiniz?"
     >
       Sil
     </OnayliButon>

@@ -208,13 +208,21 @@ export async function davaDosyasiSil(id: string) {
           karsiTarafAlacaklari: true,
           paraTrafigiKayitlari: true,
           paraTrafigiDagitimlari: true,
+          finansHareketleri: true,
         },
       },
     },
   });
   if (!dosya) return;
-  const { masraflar, karsiTarafAlacaklari, paraTrafigiKayitlari, paraTrafigiDagitimlari } = dosya._count;
-  if (masraflar > 0 || karsiTarafAlacaklari > 0 || paraTrafigiKayitlari > 0 || paraTrafigiDagitimlari > 0) {
+  const { masraflar, karsiTarafAlacaklari, paraTrafigiKayitlari, paraTrafigiDagitimlari, finansHareketleri } =
+    dosya._count;
+  if (
+    masraflar > 0 ||
+    karsiTarafAlacaklari > 0 ||
+    paraTrafigiKayitlari > 0 ||
+    paraTrafigiDagitimlari > 0 ||
+    finansHareketleri > 0
+  ) {
     throw new Error(
       "Bu dosyada finansal kayıt var, silinemez. Önce durumunu \"Kapalı\" veya \"Arşiv\" yaparak arşivleyin.",
     );

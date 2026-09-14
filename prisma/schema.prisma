@@ -52,9 +52,9 @@ model Kullanici {
   olusturmaTarihi  DateTime      @default(now())
   guncellemeTarihi DateTime      @updatedAt
 
-  sorumluOlduguMusteriler Musteri[]     @relation("MusteriSorumluAvukat")
-  sorumluOlduguDosyalar   DavaDosyasi[] @relation("DavaDosyasiSorumluAvukat")
-  gonderdigiOneriler      Oneri[]
+  sorumluOlduguMusteriler       Musteri[]          @relation("MusteriSorumluAvukat")
+  sorumluOlduguDosyalar         DavaDosyasi[]      @relation("DavaDosyasiSorumluAvukat")
+  gonderdigiOneriler            Oneri[]
   gonderdigiGelistirmeTalepleri GelistirmeTalebi[]
 
   @@map("kullanicilar")
@@ -85,22 +85,22 @@ model SecenekDegeri {
   aktifMi         Boolean        @default(true)
   olusturmaTarihi DateTime       @default(now())
 
-  musterilerTip     Musteri[]            @relation("MusteriTipi")
-  musterilerDurum   Musteri[]            @relation("MusteriDurumu")
-  paraTrafigiTip    MusteriParaTrafigi[] @relation("ParaTrafigiTipi")
-  paraTrafigiDurum  MusteriParaTrafigi[] @relation("ParaTrafigiDurumu")
-  paraTrafigiKaynak MusteriParaTrafigi[] @relation("ParaTrafigiKaynagi")
-  davaDosyalariDurum DavaDosyasi[]       @relation("DavaDosyasiDurumu")
-  davaDosyalariTuru  DavaDosyasi[]       @relation("DavaDosyasiTuru")
-  davaDosyalariHukukiIliskiTuru DavaDosyasi[] @relation("DavaDosyasiHukukiIliskiTuru")
-  paraTrafigiTasnifCariKod ParaTrafigiTasnif[] @relation("ParaTrafigiTasnifCariKod")
-  dosyaMasrafiCariKod DosyaMasrafi[] @relation("DosyaMasrafiCariKod")
-  dosyaMasrafiTuru    DosyaMasrafi[] @relation("DosyaMasrafiTuru")
-  dosyaMasrafiDurum   DosyaMasrafi[] @relation("DosyaMasrafiDurumu")
-  gelistirmeTalepleriDurum GelistirmeTalebi[] @relation("GelistirmeTalebiDurumu")
-  uyusmazlikGrubuDurum UyusmazlikGrubu[] @relation("UyusmazlikGrubuDurumu")
-  paraTrafigiSahiplik MusteriParaTrafigi[] @relation("ParaKaydiSahibi")
-  paraKaydiKullanimAmaci ParaTrafigiDagitimi[] @relation("ParaKaydiKullanimAmaci")
+  musterilerTip                 Musteri[]             @relation("MusteriTipi")
+  musterilerDurum               Musteri[]             @relation("MusteriDurumu")
+  paraTrafigiTip                MusteriParaTrafigi[]  @relation("ParaTrafigiTipi")
+  paraTrafigiDurum              MusteriParaTrafigi[]  @relation("ParaTrafigiDurumu")
+  paraTrafigiKaynak             MusteriParaTrafigi[]  @relation("ParaTrafigiKaynagi")
+  davaDosyalariDurum            DavaDosyasi[]         @relation("DavaDosyasiDurumu")
+  davaDosyalariTuru             DavaDosyasi[]         @relation("DavaDosyasiTuru")
+  davaDosyalariHukukiIliskiTuru DavaDosyasi[]         @relation("DavaDosyasiHukukiIliskiTuru")
+  paraTrafigiTasnifCariKod      ParaTrafigiTasnif[]   @relation("ParaTrafigiTasnifCariKod")
+  dosyaMasrafiCariKod           DosyaMasrafi[]        @relation("DosyaMasrafiCariKod")
+  dosyaMasrafiTuru              DosyaMasrafi[]        @relation("DosyaMasrafiTuru")
+  dosyaMasrafiDurum             DosyaMasrafi[]        @relation("DosyaMasrafiDurumu")
+  gelistirmeTalepleriDurum      GelistirmeTalebi[]    @relation("GelistirmeTalebiDurumu")
+  uyusmazlikGrubuDurum          UyusmazlikGrubu[]     @relation("UyusmazlikGrubuDurumu")
+  paraTrafigiSahiplik           MusteriParaTrafigi[]  @relation("ParaKaydiSahibi")
+  paraKaydiKullanimAmaci        ParaTrafigiDagitimi[] @relation("ParaKaydiKullanimAmaci")
 
   @@unique([listeId, kod])
   @@map("secenek_degerleri")
@@ -132,6 +132,7 @@ model Musteri {
   irtibatKisileri    IrtibatKisisi[]
   karsiTaraflar      KarsiTaraf[]
   uyusmazlikGruplari UyusmazlikGrubu[]
+  finansHareketleri  MusteriFinansHareketi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -368,8 +369,8 @@ model UyusmazlikGrubu {
   // karsi taraf listesi (DosyaKarsiTarafi) bagimsiz kalir ve bundan farkli
   // olabilir (ör. esas icra 3 kisiye, icra ceza sadece 1'ine acik) - bu
   // liste sadece kume seviyesinde bir ozet/on-doldurma amaclidir.
-  karsiTaraflar UyusmazlikGrubuKarsiTarafi[]
-  dagitimlar    ParaTrafigiDagitimi[]
+  karsiTaraflar        UyusmazlikGrubuKarsiTarafi[]
+  dagitimlar           ParaTrafigiDagitimi[]
 
   @@index([musteriId])
   @@index([durumId])
@@ -395,23 +396,23 @@ model UyusmazlikGrubuKarsiTarafi {
 // veraset vb.); bu yuzden Musteri <-> DavaDosyasi iliskisi DosyaMuvekkili
 // ara tablosu uzerinden coka-cok kurulur (bkz. semanin en ustundeki not).
 model DavaDosyasi {
-  id                String           @id @default(cuid())
+  id                 String           @id @default(cuid())
   // Kokpit'in kendi ic kayit numarasi - "Dosya No" (mahkeme/icra
   // dairesinin verdigi esas no) artik opsiyonel oldugu icin, HER dosyanin
   // (turu ne olursa olsun - ihtar/muzakere/icra/dava) sistemde her zaman
   // sahip oldugu, otomatik atanan, sirali bir kimlik numarasi. Kullanicinin
   // girmesi gerekmez, "Kokpit No" olarak gosterilir (ör. "KP-0007").
-  kayitNo           Int              @unique @default(autoincrement())
-  dosyaNo           String?
-  birimAdi          String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
-  konu              String
+  kayitNo            Int              @unique @default(autoincrement())
+  dosyaNo            String?
+  birimAdi           String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
+  konu               String
   // Dosya turu: ihtar/arabuluculuk/muzakere gibi dava/icra oncesi
   // asamalari da, esas icra/talimat/dava/icra ceza gibi resmi dosyalari da
   // kapsayan tek bir secenek listesi (bkz. ARCHITECTURE.md). Nullable:
   // eski kayitlar geriye donuk turlendirilene kadar bos kalabilir, ama
   // yeni dosya formunda zorunlu tutulur.
-  turId             String?
-  tur               SecenekDegeri?   @relation("DavaDosyasiTuru", fields: [turId], references: [id])
+  turId              String?
+  tur                SecenekDegeri?   @relation("DavaDosyasiTuru", fields: [turId], references: [id])
   // Alacagin/uyusmazligin dayandigi temel hukuki iliski: cek, senet, TTOK,
   // is hukuku uyusmazligi vb. Dosya Turu'nden (ihtar/icra/dava - hangi
   // ASAMADAYIZ) farkli bir boyut: bu "hangi hukuki ARACA dayaniyor" sorusuna
@@ -419,8 +420,8 @@ model DavaDosyasi {
   // olmayabilir.
   hukukiIliskiTuruId String?
   hukukiIliskiTuru   SecenekDegeri?   @relation("DavaDosyasiHukukiIliskiTuru", fields: [hukukiIliskiTuruId], references: [id])
-  uyusmazlikGrubuId String?
-  uyusmazlikGrubu   UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])
+  uyusmazlikGrubuId  String?
+  uyusmazlikGrubu    UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])
   // Talimat dosyasi gibi baska bir dosyaya siki sikiya bagli (o dosyanin
   // bir uzantisi olan) dosyalar icin: hangi ESAS dosyaya bagli oldugu.
   // UyusmazlikGrubu'ndan farki: grup gevsek bir gruplamadir (ayni alacagin
@@ -428,24 +429,25 @@ model DavaDosyasi {
   // "bu dosya somut olarak şu belirli dosyanin bir eki/talimatidir" gibi
   // kesin, tekil bir bagi ifade eder.
   bagliOlduguDosyaId String?
-  bagliOlduguDosya   DavaDosyasi?  @relation("DosyaBaglantisi", fields: [bagliOlduguDosyaId], references: [id])
-  baglananDosyalar   DavaDosyasi[] @relation("DosyaBaglantisi")
-  durumId           String
-  durum             SecenekDegeri    @relation("DavaDosyasiDurumu", fields: [durumId], references: [id])
-  sorumluAvukatId   String?
-  sorumluAvukat     Kullanici?       @relation("DavaDosyasiSorumluAvukat", fields: [sorumluAvukatId], references: [id])
-  acilisTarihi      DateTime
-  kapanisTarihi     DateTime?
-  aciklama          String?
-  olusturmaTarihi   DateTime         @default(now())
-  guncellemeTarihi  DateTime         @updatedAt
+  bagliOlduguDosya   DavaDosyasi?     @relation("DosyaBaglantisi", fields: [bagliOlduguDosyaId], references: [id])
+  baglananDosyalar   DavaDosyasi[]    @relation("DosyaBaglantisi")
+  durumId            String
+  durum              SecenekDegeri    @relation("DavaDosyasiDurumu", fields: [durumId], references: [id])
+  sorumluAvukatId    String?
+  sorumluAvukat      Kullanici?       @relation("DavaDosyasiSorumluAvukat", fields: [sorumluAvukatId], references: [id])
+  acilisTarihi       DateTime
+  kapanisTarihi      DateTime?
+  aciklama           String?
+  olusturmaTarihi    DateTime         @default(now())
+  guncellemeTarihi   DateTime         @updatedAt
 
-  muvekkiller          DosyaMuvekkili[]
-  karsiTaraflar        DosyaKarsiTarafi[]
-  paraTrafigiKayitlari ParaTrafigiDosyasi[]
-  masraflar            DosyaMasrafi[]
-  karsiTarafAlacaklari KarsiTarafAlacagi[]
+  muvekkiller            DosyaMuvekkili[]
+  karsiTaraflar          DosyaKarsiTarafi[]
+  paraTrafigiKayitlari   ParaTrafigiDosyasi[]
+  masraflar              DosyaMasrafi[]
+  karsiTarafAlacaklari   KarsiTarafAlacagi[]
   paraTrafigiDagitimlari ParaTrafigiDagitimi[]
+  finansHareketleri      MusteriFinansHareketi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -543,10 +545,10 @@ model Oneri {
   kullaniciId String
   kullanici   Kullanici @relation(fields: [kullaniciId], references: [id], onDelete: Cascade)
 
-  metin     String
-  sayfaYolu String
+  metin      String
+  sayfaYolu  String
   gorselVeri String? // secilen bolgenin ekran goruntusu (data:image/jpeg;base64,...)
-  islendiMi Boolean @default(false)
+  islendiMi  Boolean @default(false)
 
   olusturmaTarihi DateTime @default(now())
 
@@ -633,4 +635,77 @@ model FormAlanDuzeni {
 
   @@unique([formAnahtari, alanAnahtari])
   @@map("form_alan_duzeni")
+}
+
+// ============================================================
+// MODUL: Muvekkil Finans (V1 - bilerek BASIT)
+// ============================================================
+//
+// Amac SADECE 5 soruya cevap vermek (bkz. ARCHITECTURE.md): musteriden ne
+// kadar alindi, ne amacla, hangi dosyada gercek masraf yapildi, ne kadar
+// dis kurumda, ne kadar hala bizim kontrolumuzde. Muhasebe yazilimi
+// DEGIL - ledger/hesap plani/double-entry/mutabakat/banka entegrasyonu
+// yok, tek bir hareket tablosu + hesaplanan bir ozet var.
+//
+// BILEREK MusteriParaTrafigi/ParaTrafigiTasnif/ParaTrafigiDagitimi'ndan
+// TAMAMEN AYRI ve BAGIMSIZ: o mimariye (cari kod tasnifi, dosya kumesi
+// dagitimi) hic dokunmuyor, hicbir FK/senkronizasyon paylasmiyor. Iki
+// sistem paralel var olur; bu modul mevcut Finans/Cari Hesap ekranlarini
+// degistirmez.
+//
+// "Islem turu" ve "para amaci" BILEREK iki ayri enum: islem turu paranin
+// YONUNU/CINSINI (girdi mi, masraf mi, dis kuruma mi gitti...), para
+// amaci NEDEN alindigini/harcandigini (avans mi, teminat mi...) ifade
+// eder - bir PARA_GIRISI de bir MASRAF da ayni amaca (ör. MASRAF_AVANSI)
+// hizmet edebilir, bu yuzden tek bir alanda birlestirilmedi.
+//
+// Sema yorumundaki genel ilkeden (SecenekListesi/SecenekDegeri kullan,
+// enum tanimlama) BILEREK sapiliyor: bu iki liste kullanicinin verdigi
+// kapali/sabit bir kume, admin panelinden genisletilebilir olmasi
+// istenmiyor (KullaniciRolu enum'uyla ayni gerekce).
+enum MusteriFinansIslemTuru {
+  PARA_GIRISI // musteriden buroya/emanete para geldi
+  MASRAF // musteri adina gercek bir harcama yapildi
+  DIS_KURUMA_AKTARIM // para buronun disina (mahkeme veznesi, icra dairesi vb.) gonderildi
+  DIS_KURUMDAN_IADE // dis kurumdaki para geri geldi
+  MUSTERIYE_IADE // para dogrudan musteriye geri odendi
+
+  @@map("musteri_finans_islem_turu")
+}
+
+enum MusteriFinansParaAmaci {
+  MASRAF_AVANSI
+  TEMINAT
+  VEKALET_UCRETI
+  TAHSILAT
+  DIGER
+
+  @@map("musteri_finans_para_amaci")
+}
+
+model MusteriFinansHareketi {
+  id        String  @id @default(cuid())
+  musteriId String
+  musteri   Musteri @relation(fields: [musteriId], references: [id], onDelete: Cascade)
+
+  // Ileride (ör. Excel'deki eski masraf kayitlarinin ice aktarimi) bir
+  // yargisal dosyaya baglanabilsin diye opsiyonel FK olarak kuruldu - V1'de
+  // zorunlu degil, otomatik ice aktarim da YAPILMIYOR (bkz. ARCHITECTURE.md).
+  davaDosyasiId String?
+  davaDosyasi   DavaDosyasi? @relation(fields: [davaDosyasiId], references: [id])
+
+  islemTuru MusteriFinansIslemTuru
+  paraAmaci MusteriFinansParaAmaci
+
+  tutar Decimal  @db.Decimal(14, 2)
+  tarih DateTime
+
+  aciklama String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([musteriId])
+  @@index([davaDosyasiId])
+  @@map("musteri_finans_hareketleri")
 }
