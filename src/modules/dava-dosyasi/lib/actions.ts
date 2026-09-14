@@ -31,10 +31,17 @@ async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: stri
 
   const yeniIdler: string[] = [];
   for (const ad of yeniAdlar) {
-    const yeni = await prisma.karsiTaraf.create({
-      data: { musteriId: musteriIdleri[0], ad },
+    // Ayni musteri altinda ayni isimde (buyuk/kucuk harf ve bosluk
+    // duyarsiz) zaten bir karsi taraf varsa YENI kayit olusturmak yerine
+    // onu kullan - aksi halde ayni "Mata Kauçuk"tan birden fazla, birbirine
+    // bagli olmayan kayit birikir (bkz. GELISTIRME_KUTUSU.md gecmisi).
+    const mevcut = await prisma.karsiTaraf.findFirst({
+      where: { musteriId: musteriIdleri[0], ad: { equals: ad, mode: "insensitive" } },
     });
-    yeniIdler.push(yeni.id);
+    const id = mevcut
+      ? mevcut.id
+      : (await prisma.karsiTaraf.create({ data: { musteriId: musteriIdleri[0], ad } })).id;
+    yeniIdler.push(id);
   }
 
   return [...secilenIdler, ...yeniIdler];
@@ -48,6 +55,12 @@ async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: stri
 async function uyusmazlikGrubuIdCozumle(formData: FormData, musteriIdleri: string[]): Promise<string | null> {
   const yeniAd = metinYaAlNull(formData, "yeniUyusmazlikGrubuAdi");
   if (yeniAd) {
+    // Ayni musteri altinda ayni isimde bir grup zaten varsa onu kullan -
+    // bkz. karsiTarafIdleriniCozumle'deki ayni gerekcedeki duzeltme.
+    const mevcut = await prisma.uyusmazlikGrubu.findFirst({
+      where: { musteriId: musteriIdleri[0], ad: { equals: yeniAd, mode: "insensitive" } },
+    });
+    if (mevcut) return mevcut.id;
     const yeni = await prisma.uyusmazlikGrubu.create({
       data: { musteriId: musteriIdleri[0], ad: yeniAd },
     });

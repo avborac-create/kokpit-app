@@ -256,10 +256,87 @@ async function gelistirmeKutusunuSenkronizeEt() {
   console.log(`✓ Geliştirme Kutusu: ${eklenen} yeni kart eklendi.`);
 }
 
+// GECMIS BIR HATANIN DUZELTMESI: "Yeni Karşı Taraf Ekle" / "Yeni Uyuşmazlık
+// Grubu Ekle" alanlarina yazilan bir isim, ayni isimde bir kayit zaten var
+// olsa bile HER ZAMAN yeni bir kayit olusturuyordu (bkz. actions.ts'teki
+// duzeltme). Bu, mevcut veride yinelenen kayitlar birakti (orn. "Mata
+// Kauçuk" iki ayri satir olarak). Asagidaki iki fonksiyon HER deploy'da
+// calisip bu tur yinelenenleri sessizce birlestirir (en eski kayit kalir,
+// baglantilar ona tasinir, digerleri silinir) - duzeltmeden sonra artik
+// yinelenen kalmayacagi icin bir sonraki calismada hicbir sey yapmazlar,
+// bu yuzden kalici olarak burada birakilmalari zararsizdir.
+async function yinelenenKarsiTaraflariBirlestir() {
+  const tumKarsiTaraflar = await prisma.karsiTaraf.findMany({ orderBy: { olusturmaTarihi: "asc" } });
+  const gruplar = new Map<string, typeof tumKarsiTaraflar>();
+  for (const kt of tumKarsiTaraflar) {
+    const anahtar = `${kt.musteriId}::${kt.ad.trim().toLowerCase()}`;
+    gruplar.set(anahtar, [...(gruplar.get(anahtar) ?? []), kt]);
+  }
+
+  let birlestirilen = 0;
+  for (const liste of gruplar.values()) {
+    if (liste.length < 2) continue;
+    const [kanonik, ...yinelenenler] = liste;
+    for (const yinelenen of yinelenenler) {
+      const baglantilar = await prisma.dosyaKarsiTarafi.findMany({ where: { karsiTarafId: yinelenen.id } });
+      for (const baglanti of baglantilar) {
+        const zatenVar = await prisma.dosyaKarsiTarafi.findFirst({
+          where: { dosyaId: baglanti.dosyaId, karsiTarafId: kanonik.id },
+        });
+        if (zatenVar) {
+          await prisma.dosyaKarsiTarafi.delete({ where: { id: baglanti.id } });
+        } else {
+          await prisma.dosyaKarsiTarafi.update({
+            where: { id: baglanti.id },
+            data: { karsiTarafId: kanonik.id },
+          });
+        }
+      }
+      await prisma.karsiTaraf.delete({ where: { id: yinelenen.id } });
+      birlestirilen += 1;
+    }
+  }
+  if (birlestirilen > 0) {
+    console.log(`✓ ${birlestirilen} yinelenen karşı taraf kaydı birleştirildi.`);
+  }
+}
+
+async function yinelenenUyusmazlikGruplariniBirlestir() {
+  const tumGruplar = await prisma.uyusmazlikGrubu.findMany({ orderBy: { olusturmaTarihi: "asc" } });
+  const gruplar = new Map<string, typeof tumGruplar>();
+  for (const g of tumGruplar) {
+    const anahtar = `${g.musteriId}::${g.ad.trim().toLowerCase()}`;
+    gruplar.set(anahtar, [...(gruplar.get(anahtar) ?? []), g]);
+  }
+
+  let birlestirilen = 0;
+  for (const liste of gruplar.values()) {
+    if (liste.length < 2) continue;
+    const [kanonik, ...yinelenenler] = liste;
+    for (const yinelenen of yinelenenler) {
+      await prisma.davaDosyasi.updateMany({
+        where: { uyusmazlikGrubuId: yinelenen.id },
+        data: { uyusmazlikGrubuId: kanonik.id },
+      });
+      await prisma.musteriParaTrafigi.updateMany({
+        where: { uyusmazlikGrubuId: yinelenen.id },
+        data: { uyusmazlikGrubuId: kanonik.id },
+      });
+      await prisma.uyusmazlikGrubu.delete({ where: { id: yinelenen.id } });
+      birlestirilen += 1;
+    }
+  }
+  if (birlestirilen > 0) {
+    console.log(`✓ ${birlestirilen} yinelenen uyuşmazlık grubu kaydı birleştirildi.`);
+  }
+}
+
 async function main() {
   await secenekListeleriniOlustur();
   await baslangicKullanicisiniOlustur();
   await gelistirmeKutusunuSenkronizeEt();
+  await yinelenenKarsiTaraflariBirlestir();
+  await yinelenenUyusmazlikGruplariniBirlestir();
 }
 
 main()
