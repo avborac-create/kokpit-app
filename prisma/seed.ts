@@ -35,9 +35,16 @@ const SECENEK_LISTELERI: {
       // eder (bkz. ARCHITECTURE.md). Tek bir cari koda gidiyorsa o tip
       // seçilir ve tasnif otomatik/tek kalemli yapılır; birden fazla cari
       // koda bölünüyorsa "Karma" seçilip tasnif alanları elle doldurulur.
-      { kod: "masraf", etiket: "Masraf" },
-      { kod: "bloke_para", etiket: "Bloke Para" },
-      { kod: "akdi_vekalet", etiket: "Akdi Vekalet" },
+      // (Etiketler bir kez, ayrı bir data-migration ile "Masraf Yaptık" vb.
+      // şeklinde güncellendi - bkz. 20260914140000_para_kaydi_turleri
+      // migration'ı; seed burada asla mevcut bir etikete dokunmaz.)
+      { kod: "muvekkilden_para_geldi", etiket: "Müvekkilden Para Geldi" },
+      { kod: "masraf", etiket: "Masraf Yaptık" },
+      { kod: "bloke_para", etiket: "Bloke Para Yatırdık" },
+      { kod: "bloke_para_iade", etiket: "Bloke Para Geri Geldi" },
+      { kod: "akdi_vekalet", etiket: "Vekâlet Ücreti Ekledik" },
+      { kod: "musteriye_odeme", etiket: "Müvekkile Para Gönderdik" },
+      { kod: "avans_talebi", etiket: "Avans İstedik" },
       { kod: "aktarilacak_para", etiket: "Emanet Para" },
       { kod: "karma", etiket: "Karma" },
       // Eski degerler: gecmis kayitlarin bozulmamasi icin silinmiyor,
@@ -45,6 +52,63 @@ const SECENEK_LISTELERI: {
       { kod: "tahsilat", etiket: "Tahsilat (eski)", aktifMi: false },
       { kod: "borc", etiket: "Borç (eski)", aktifMi: false },
       { kod: "masraf_yansitma", etiket: "Masraf Yansıtma (eski)", aktifMi: false },
+    ],
+  },
+  {
+    anahtar: "para_kaydi_sahibi",
+    ad: "Para Kaydı Sahibi",
+    degerler: [
+      { kod: "muvekkil", etiket: "Müvekkil" },
+      { kod: "buro", etiket: "Büro" },
+    ],
+  },
+  {
+    anahtar: "para_kaydi_kullanim_amaci",
+    ad: "Para Kaydı Kullanım Amacı",
+    degerler: [
+      // "Muvekkilden Para Geldi" kaydinin dagitim satirlarinda kullanilir
+      // (bkz. ParaTrafigiDagitimi) - her satir bir cari koda eslenir:
+      // gecmis_masraf/dosya_avansi -> masraf_hesabi, vekalet_ucreti_odeme
+      // -> akdi_vekalet_hesabi (bkz. cariHesapOzetiHesapla).
+      { kod: "gecmis_masraf", etiket: "Geçmiş Masrafları Kapatma" },
+      { kod: "vekalet_ucreti_odeme", etiket: "Vekâlet Ücreti Ödeme" },
+      { kod: "dosya_avansi", etiket: "Dosya Avansı" },
+    ],
+  },
+  {
+    anahtar: "masraf_durumu",
+    ad: "Masraf Durumu",
+    degerler: [
+      { kod: "odendi", etiket: "Ödendi" },
+      { kod: "iptal_edildi", etiket: "İptal Edildi" },
+    ],
+  },
+  {
+    anahtar: "avans_durumu",
+    ad: "Avans Durumu",
+    degerler: [
+      { kod: "istendi", etiket: "İstendi" },
+      { kod: "kismen_geldi", etiket: "Kısmen Geldi" },
+      { kod: "geldi", etiket: "Geldi" },
+    ],
+  },
+  {
+    anahtar: "vekalet_ucreti_durumu",
+    ad: "Vekâlet Ücreti Durumu",
+    degerler: [
+      { kod: "odenmedi", etiket: "Ödenmedi" },
+      { kod: "kismen_odendi", etiket: "Kısmen Ödendi" },
+      { kod: "odendi", etiket: "Ödendi" },
+    ],
+  },
+  {
+    anahtar: "bloke_para_durumu",
+    ad: "Bloke Para Durumu",
+    degerler: [
+      { kod: "blokede", etiket: "Blokede" },
+      { kod: "kismen_iade", etiket: "Kısmen İade" },
+      { kod: "iade_edildi", etiket: "İade Edildi" },
+      { kod: "masrafa_donustu", etiket: "Masrafa Dönüştü" },
     ],
   },
   {
@@ -395,6 +459,85 @@ async function formAlanDuzeniOlustur() {
   }
 }
 
+// "Dosya Kumesi" zorunlu hale getirilmeden once, kumesiz kalmis TUM eski
+// dosyalar icin otomatik birer TEKIL kume olusturur (dosyanin konusuyla
+// adlandirilir, dosyanin ilk muvekkiline baglanir). Hicbir DavaDosyasi
+// satiri silinmez/degistirilmez - sadece bos alan doldurulur. Idempotent:
+// uyusmazlikGrubuId dolu bir dosyaya bir daha asla dokunmaz, ikinci
+// calistirmada hicbir sey yapmaz.
+async function kumesizDosyalariBackfillEt() {
+  const kumesizler = await prisma.davaDosyasi.findMany({
+    where: { uyusmazlikGrubuId: null },
+    include: { muvekkiller: { orderBy: { olusturmaTarihi: "asc" }, take: 1 } },
+  });
+
+  let baglanan = 0;
+  for (const dosya of kumesizler) {
+    const ilkMuvekkilId = dosya.muvekkiller[0]?.musteriId;
+    if (!ilkMuvekkilId) continue; // muvekkilsiz dosya olagan akista olusamaz, savunma amacli atla
+
+    const kume = await prisma.uyusmazlikGrubu.create({
+      data: { musteriId: ilkMuvekkilId, ad: dosya.konu },
+    });
+    await prisma.davaDosyasi.update({
+      where: { id: dosya.id },
+      data: { uyusmazlikGrubuId: kume.id },
+    });
+    baglanan += 1;
+  }
+  if (baglanan > 0) {
+    console.log(`✓ Dosya Kümesi: ${baglanan} kümesiz dosya için otomatik tekil küme oluşturuldu.`);
+  }
+}
+
+// Yukaridaki fonksiyondan SONRA calismali (her dosyanin artik kesin bir
+// kumesi oldugu varsayimina dayanir). Kumesiz bir para kaydi, baglantili
+// bir dosyasi varsa o dosyanin kumesine, hic dosyasi yoksa musteri altinda
+// "Siniflandirilmamis Kayitlar" adinda (idempotent, tekrar aranip
+// bulunan) bir kumeye baglanir.
+async function kumesizParaKayitlariniBackfillEt() {
+  const kumesizler = await prisma.musteriParaTrafigi.findMany({
+    where: { uyusmazlikGrubuId: null },
+    include: { dosyalar: { include: { dosya: true }, take: 1 } },
+  });
+
+  let baglanan = 0;
+  for (const kayit of kumesizler) {
+    let kumeId = kayit.dosyalar[0]?.dosya.uyusmazlikGrubuId ?? null;
+    if (!kumeId) {
+      const mevcutKume = await prisma.uyusmazlikGrubu.findFirst({
+        where: { musteriId: kayit.musteriId, ad: "Sınıflandırılmamış Kayıtlar" },
+      });
+      kumeId = mevcutKume
+        ? mevcutKume.id
+        : (
+            await prisma.uyusmazlikGrubu.create({
+              data: { musteriId: kayit.musteriId, ad: "Sınıflandırılmamış Kayıtlar" },
+            })
+          ).id;
+    }
+    await prisma.musteriParaTrafigi.update({
+      where: { id: kayit.id },
+      data: { uyusmazlikGrubuId: kumeId },
+    });
+    baglanan += 1;
+  }
+  if (baglanan > 0) {
+    console.log(`✓ Dosya Kümesi: ${baglanan} para kaydı için küme bağlantısı tamamlandı.`);
+  }
+}
+
+// aciklama alani NOT NULL'a gecmeden once bos/null kayitlari doldurur.
+async function paraKaydiAciklamasiBackfillEt() {
+  const { count } = await prisma.musteriParaTrafigi.updateMany({
+    where: { OR: [{ aciklama: null }, { aciklama: "" }] },
+    data: { aciklama: "-" },
+  });
+  if (count > 0) {
+    console.log(`✓ Para Kaydı: ${count} boş açıklama "-" ile dolduruldu.`);
+  }
+}
+
 async function main() {
   await secenekListeleriniOlustur();
   await baslangicKullanicisiniOlustur();
@@ -403,6 +546,9 @@ async function main() {
   await yinelenenUyusmazlikGruplariniBirlestir();
   await menuOgeleriniOlustur();
   await formAlanDuzeniOlustur();
+  await kumesizDosyalariBackfillEt();
+  await kumesizParaKayitlariniBackfillEt();
+  await paraKaydiAciklamasiBackfillEt();
 }
 
 main()

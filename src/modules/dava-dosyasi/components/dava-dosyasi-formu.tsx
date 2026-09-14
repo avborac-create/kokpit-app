@@ -143,7 +143,7 @@ export async function DavaDosyasiFormu({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Alan>
               <Etiket htmlFor="uyusmazlikGrubuId">
-                Uyuşmazlık Grubu (müvekkil bakımından ayırt edici unsur)
+                Dosya Kümesi (müvekkil bakımından ayırt edici unsur)
               </Etiket>
               <Secim
                 id="uyusmazlikGrubuId"
@@ -159,7 +159,7 @@ export async function DavaDosyasiFormu({
               </Secim>
             </Alan>
             <Alan>
-              <Etiket htmlFor="yeniUyusmazlikGrubuAdi">veya Yeni Uyuşmazlık Grubu Ekle</Etiket>
+              <Etiket htmlFor="yeniUyusmazlikGrubuAdi">veya Yeni Dosya Kümesi Ekle</Etiket>
               <Girdi
                 id="yeniUyusmazlikGrubuAdi"
                 name="yeniUyusmazlikGrubuAdi"

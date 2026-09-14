@@ -180,6 +180,66 @@ alınır; yeni bir tartışma açmadan önce buraya bakılır.
   kayıtlar geriye dönük `olusturmaTarihi` sırasına göre numaralandırıldı
   (bkz. `20260913240000_dava_dosyasi_kokpit_no` migration'ı — elle yazılmış
   autoincrement backfill'i, standart Prisma paterni).
+- **"Dosya Kümesi" (DB modeli: `UyusmazlikGrubu`, DEĞİŞMEDİ)**: Bir
+  müvekkilin AYNI ticari ilişki/uyuşmazlık için açılan birden fazla
+  yargısal dosyasını (ör. esas icra + icra ceza + ihtiyati haciz + haciz
+  talimatları) tek bir çatı altında toplayan kavram. UI'da her yerde
+  "Dosya Kümesi" olarak geçer; veritabanı model/tablo adı (`UyusmazlikGrubu`
+  / `uyusmazlik_gruplari`) BİLİNÇLİ OLARAK değiştirilmedi (route'lar,
+  ilişkiler ve mevcut veriyi bozmamak için) — sadece etiketler Türkçe UI
+  metninde güncellendi. Yeni bir `DavaDosyasi` oluşturulurken Dosya Kümesi
+  seçimi ZORUNLUDUR (`davaDosyasiOlustur`/`Guncelle` sunucu tarafında
+  doğrulanır, alan `Form Düzeni`nden de gizlenemez —
+  `DAVA_DOSYASI_GIZLENEMEZ_ALANLAR`).
+- **Müvekkilden gelen paranın çoklu Dosya Kümesine/kaleme dağıtımı
+  (`ParaTrafigiDagitimi`)**: Bir müşteriden TEK seferde gelen bir para
+  (ör. bir çek tahsilatı) genelde birden fazla Dosya Kümesine ve/veya
+  kullanım amacına (geçmiş masrafları kapatma / vekâlet ücreti ödeme /
+  dosya avansı) bölünerek ayrılır. Bunun için `MusteriParaTrafigi` tipi
+  "Müvekkilden Para Geldi" (`muvekkilden_para_geldi`) olan bir kayıt,
+  sıfır veya daha fazla `ParaTrafigiDagitimi` satırına sahip olabilir; her
+  satır bir Dosya Kümesi (zorunlu), opsiyonel bir yargısal dosya, bir
+  kullanım amacı ve bir tutar taşır. Dağıtım satırlarının toplamı header
+  tutarını AŞAMAZ (sunucu tarafında doğrulanır); aşan/eksik kalan kısım
+  "Dağıtım Bekleyen Paralar" olarak (bkz. `dagitilmamisParaToplami`)
+  müşteri Cari Hesap sayfasında ayrıca gösterilir — dağıtım satırı hiç
+  eklenmeden de kayıt oluşturulabilir (kümesiz genel tahsilat), sonradan
+  düzenleme ekranından dağıtım eklenir.
+  - **Geriye dönük uyumluluk / çifte sayım önleme**: Bir `MusteriParaTrafigi`
+    kaydının EN AZ 1 dağıtım satırı varsa, o kaydın eski `ParaTrafigiTasnif`
+    satırları Cari Hesap hesaplamasına KATILMAZ — sadece dağıtım satırları
+    (kullanım amacı → cari kod eşlemesiyle) sayılır. Dağıtımı OLMAYAN
+    kayıtlarda (eski kayıtlar + hâlâ tekil-küme seçimiyle girilen
+    `masraf`/`bloke_para`/`akdi_vekalet`/`avans_talebi` tipleri) eskisi
+    gibi tasnif okunur. Bu mantık `cariHesapOzetiHesapla` (paylaşılan
+    çekirdek, `src/modules/dava-dosyasi/lib/queries.ts`) içinde tek yerde
+    uygulanır; aynı kalem asla iki kere sayılmaz.
+  - **Kullanım amacı → cari kod eşlemesi**
+    (`KULLANIM_AMACI_KOD_ILE_ESLESEN_CARI_KOD_KODU`): `gecmis_masraf` ve
+    `dosya_avansi` ikisi de "Masraf Hesabı"nda toplanır (aradaki fark artık
+    cari kodda değil, dökümdeki kullanım amacı etiketinde görünür);
+    `vekalet_ucreti_odeme` → "Akdi Vekalet Hesabı". "Müvekkile İade" ayrı
+    bir dağıtım amacı DEĞİL — kendi başına bir `MusteriParaTrafigi` tipi
+    (`musteriye_odeme`, "Müvekkile Para Gönderdik").
+- **Üç paylaşılan Cari Hesap/Döküm görünümü**: aynı finansal veriye üç
+  farklı ölçekten bakan, hesaplanan (saklanmayan) görünümler:
+  1. **Cari Hesap Özeti** (`CariHesapOzeti` bileşeni) — dosya, küme ve
+     müşteri seviyesinde (`dosyaCariHesapOzeti`/`uyusmazlikGrubuCariHesapOzeti`/
+     `musteriCariHesapOzeti`) cari-kod bazında Tasnif/Masraf/Bakiye. Sadece
+     müşteri seviyesinde ayrıca "Dağıtım Bekleyen Paralar" kutusu gösterir
+     (`dagitimBekleyen` prop'u) — bu kalem hiçbir kümeye ait olmadığından
+     dosya/küme seviyesinde anlamsızdır, gösterilmez.
+  2. **Tüm Dosyaların Dökümü** (`kumeDokumSatirlari`, küme sayfası) — bir
+     Dosya Kümesindeki TÜM dosyaların `DosyaMasrafi` ve o kümeye ait
+     `ParaTrafigiDagitimi` satırlarını (dosyalı veya dosyasız) tek bir
+     kronolojik listede, `kaynak: "Masraf" | "Dağıtım"` rozetiyle ayırt
+     ederek gösterir.
+  3. **Dosya Bazında Döküm** (dosya detay sayfası) — aynı birleştirme,
+     TEK bir dosyaya (kendi masrafları + o dosyaya bağlı dağıtım satırları)
+     daraltılmış hâli.
+  Her üçü de `DokumTablosu` bileşenini paylaşır (`src/modules/dava-dosyasi/
+  components/dokum-tablosu.tsx`), salt-okunurdur — ekleme/silme için ilgili
+  Masraflar/Para Trafiği ekranları kullanılır.
 
 ## Geliştirme Kutusu (Developer Inbox) — Kanban Panosu
 

@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import {
   uyusmazlikGrubuGetir,
   uyusmazlikGrubuCariHesapOzeti,
+  kumeDokumSatirlari,
 } from "@/modules/dava-dosyasi/lib/queries";
 import { CariHesapOzeti } from "@/modules/dava-dosyasi/components/cari-hesap-ozeti";
+import { DokumTablosu } from "@/modules/dava-dosyasi/components/dokum-tablosu";
 
 export default async function UyusmazlikGrubuSayfasi({
   params,
@@ -12,9 +14,10 @@ export default async function UyusmazlikGrubuSayfasi({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [grup, ozet] = await Promise.all([
+  const [grup, ozet, dokum] = await Promise.all([
     uyusmazlikGrubuGetir(id),
     uyusmazlikGrubuCariHesapOzeti(id),
+    kumeDokumSatirlari(id),
   ]);
   if (!grup) notFound();
 
@@ -30,10 +33,10 @@ export default async function UyusmazlikGrubuSayfasi({
       {grup.notlar && <p className="mb-6 max-w-2xl text-sm text-white/50">{grup.notlar}</p>}
 
       <h2 className="mb-3 mt-6 text-lg font-semibold tracking-tight text-white">
-        Cari Hesap Özeti (Grup Toplamı)
+        Cari Hesap Özeti (Küme Toplamı)
       </h2>
       <p className="mb-3 text-sm text-white/45">
-        Müvekkilden bu ticari ilişki/uyuşmazlık için gelen paranın ve gruptaki tüm dosyalara
+        Müvekkilden bu ticari ilişki/uyuşmazlık için gelen paranın ve kümedeki tüm dosyalara
         işlenen masrafların toplamı — müvekkilin bize gönderdiği bir avans hangi dosyaya
         harcanırsa harcansın burada tek bir cari hesap olarak izlenir.
       </p>
@@ -42,10 +45,21 @@ export default async function UyusmazlikGrubuSayfasi({
       </div>
 
       <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">
+        Tüm Dosyaların Dökümü
+      </h2>
+      <p className="mb-3 text-sm text-white/45">
+        Kümedeki tüm dosyalara işlenen masraflar ve müvekkilden gelen paranın dağıtım kalemleri,
+        tek bir kronolojik listede.
+      </p>
+      <div className="mb-8">
+        <DokumTablosu satirlar={dokum} />
+      </div>
+
+      <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">
         Dosyalar ({grup.dosyalar.length})
       </h2>
       {grup.dosyalar.length === 0 ? (
-        <p className="text-sm text-white/40">Bu gruba henüz dosya bağlanmadı.</p>
+        <p className="text-sm text-white/40">Bu kümeye henüz dosya bağlanmadı.</p>
       ) : (
         <div className="glass overflow-x-auto rounded-2xl">
           <table className="w-full text-left text-sm">

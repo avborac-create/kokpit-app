@@ -23,6 +23,12 @@ export default async function ParaTrafigiKaydiDuzenlemeSayfasi({
     seciliDosyaIdler: kayit.dosyalar.map((d) => d.dosyaId),
     tasnifVarsayilan: Object.fromEntries(kayit.tasnif.map((t) => [t.cariKodId, Number(t.tutar)])),
     uyusmazlikGrubuId: kayit.uyusmazlikGrubuId,
+    dagitimSatirlari: kayit.dagitimlar.map((d) => ({
+      kumeId: d.uyusmazlikGrubuId,
+      dosyaId: d.dosyaId,
+      amaciId: d.kullanimAmaciId,
+      tutar: Number(d.tutar),
+    })),
   };
 
   return (

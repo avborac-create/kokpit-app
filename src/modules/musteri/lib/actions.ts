@@ -87,6 +87,30 @@ const TIP_KOD_ILE_ESLESEN_CARI_KOD_KODU: Record<string, string> = {
   aktarilacak_para: "emanet_hesabi",
 };
 
+// Bu tiplerde Dosya Kumesi secimi ZORUNLU - dosya masrafi/bloke para/
+// vekalet ucreti/avans talebi her zaman somut bir kumeye ait olmalidir.
+// "muvekkilden_para_geldi" bilerek DISINDA: genel bir tahsilat once
+// kumesiz girilip sonradan dagitim satirlariyla boluşturulebilir.
+const KUME_ZORUNLU_TIP_KODLARI = ["masraf", "bloke_para", "akdi_vekalet", "avans_talebi"];
+
+type DagitimSatiri = { uyusmazlikGrubuId: string; dosyaId: string | null; kullanimAmaciId: string; tutar: string };
+
+function dagitimSatirlariniAl(formData: FormData): DagitimSatiri[] {
+  const kumeIdleri = formData.getAll("dagitimKumeId").map(String);
+  const dosyaIdleri = formData.getAll("dagitimDosyaId").map(String);
+  const amaciIdleri = formData.getAll("dagitimAmaciId").map(String);
+  const tutarlar = formData.getAll("dagitimTutar").map(String);
+
+  return kumeIdleri
+    .map((uyusmazlikGrubuId, i) => ({
+      uyusmazlikGrubuId,
+      dosyaId: dosyaIdleri[i]?.trim() || null,
+      kullanimAmaciId: amaciIdleri[i] ?? "",
+      tutar: tutarlar[i] ?? "",
+    }))
+    .filter((satir) => satir.uyusmazlikGrubuId && satir.kullanimAmaciId && Number(satir.tutar) > 0);
+}
+
 export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData) {
   const tarih = String(formData.get("tarih") ?? "");
   const tipId = String(formData.get("tipId") ?? "");
@@ -101,17 +125,29 @@ export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData
   }
 
   const tip = await prisma.secenekDegeri.findUnique({ where: { id: tipId } });
+  if (tip && KUME_ZORUNLU_TIP_KODLARI.includes(tip.kod) && !uyusmazlikGrubuId) {
+    throw new Error("Bu tür için Dosya Kümesi seçimi zorunludur.");
+  }
+
+  const dagitimSatirlari = tip?.kod === "muvekkilden_para_geldi" ? dagitimSatirlariniAl(formData) : [];
+  const dagitimToplami = dagitimSatirlari.reduce((t, s) => t + Number(s.tutar), 0);
+  if (dagitimToplami > Number(tutar) + 0.01) {
+    throw new Error(
+      `Dağıtım toplamı (${dagitimToplami.toFixed(2)} TL), gelen tutarı (${Number(tutar).toFixed(2)} TL) aşıyor.`,
+    );
+  }
+
   const eslesenCariKodKodu = tip ? TIP_KOD_ILE_ESLESEN_CARI_KOD_KODU[tip.kod] : undefined;
 
   let tasnifSatirlari: { cariKodId: string; tutar: string }[] = [];
-  if (eslesenCariKodKodu) {
+  if (dagitimSatirlari.length === 0 && eslesenCariKodKodu) {
     const cariKod = await prisma.secenekDegeri.findFirst({
       where: { kod: eslesenCariKodKodu, liste: { anahtar: "cari_kod" } },
     });
     if (cariKod) {
       tasnifSatirlari = [{ cariKodId: cariKod.id, tutar }];
     }
-  } else {
+  } else if (dagitimSatirlari.length === 0) {
     for (const [anahtar, deger] of formData.entries()) {
       if (anahtar.startsWith("tasnif_") && String(deger).trim() !== "") {
         tasnifSatirlari.push({ cariKodId: anahtar.slice("tasnif_".length), tutar: String(deger) });
@@ -135,6 +171,14 @@ export async function paraTrafigiKaydiEkle(musteriId: string, formData: FormData
       tasnif: {
         create: tasnifSatirlari.map(({ cariKodId, tutar }) => ({ cariKodId, tutar })),
       },
+      dagitimlar: {
+        create: dagitimSatirlari.map((s) => ({
+          uyusmazlikGrubuId: s.uyusmazlikGrubuId,
+          dosyaId: s.dosyaId,
+          kullanimAmaciId: s.kullanimAmaciId,
+          tutar: s.tutar,
+        })),
+      },
     },
   });
 
@@ -155,17 +199,29 @@ export async function paraTrafigiKaydiGuncelle(musteriId: string, kayitId: strin
   }
 
   const tip = await prisma.secenekDegeri.findUnique({ where: { id: tipId } });
+  if (tip && KUME_ZORUNLU_TIP_KODLARI.includes(tip.kod) && !uyusmazlikGrubuId) {
+    throw new Error("Bu tür için Dosya Kümesi seçimi zorunludur.");
+  }
+
+  const dagitimSatirlari = tip?.kod === "muvekkilden_para_geldi" ? dagitimSatirlariniAl(formData) : [];
+  const dagitimToplami = dagitimSatirlari.reduce((t, s) => t + Number(s.tutar), 0);
+  if (dagitimToplami > Number(tutar) + 0.01) {
+    throw new Error(
+      `Dağıtım toplamı (${dagitimToplami.toFixed(2)} TL), gelen tutarı (${Number(tutar).toFixed(2)} TL) aşıyor.`,
+    );
+  }
+
   const eslesenCariKodKodu = tip ? TIP_KOD_ILE_ESLESEN_CARI_KOD_KODU[tip.kod] : undefined;
 
   let tasnifSatirlari: { cariKodId: string; tutar: string }[] = [];
-  if (eslesenCariKodKodu) {
+  if (dagitimSatirlari.length === 0 && eslesenCariKodKodu) {
     const cariKod = await prisma.secenekDegeri.findFirst({
       where: { kod: eslesenCariKodKodu, liste: { anahtar: "cari_kod" } },
     });
     if (cariKod) {
       tasnifSatirlari = [{ cariKodId: cariKod.id, tutar }];
     }
-  } else {
+  } else if (dagitimSatirlari.length === 0) {
     for (const [anahtar, deger] of formData.entries()) {
       if (anahtar.startsWith("tasnif_") && String(deger).trim() !== "") {
         tasnifSatirlari.push({ cariKodId: anahtar.slice("tasnif_".length), tutar: String(deger) });
@@ -176,6 +232,7 @@ export async function paraTrafigiKaydiGuncelle(musteriId: string, kayitId: strin
   await prisma.$transaction(async (tx) => {
     await tx.paraTrafigiTasnif.deleteMany({ where: { paraTrafigiId: kayitId } });
     await tx.paraTrafigiDosyasi.deleteMany({ where: { paraTrafigiId: kayitId } });
+    await tx.paraTrafigiDagitimi.deleteMany({ where: { paraTrafigiId: kayitId } });
 
     await tx.musteriParaTrafigi.update({
       where: { id: kayitId },
@@ -192,6 +249,14 @@ export async function paraTrafigiKaydiGuncelle(musteriId: string, kayitId: strin
         },
         tasnif: {
           create: tasnifSatirlari.map(({ cariKodId, tutar }) => ({ cariKodId, tutar })),
+        },
+        dagitimlar: {
+          create: dagitimSatirlari.map((s) => ({
+            uyusmazlikGrubuId: s.uyusmazlikGrubuId,
+            dosyaId: s.dosyaId,
+            kullanimAmaciId: s.kullanimAmaciId,
+            tutar: s.tutar,
+          })),
         },
       },
     });

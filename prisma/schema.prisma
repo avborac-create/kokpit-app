@@ -96,7 +96,11 @@ model SecenekDegeri {
   paraTrafigiTasnifCariKod ParaTrafigiTasnif[] @relation("ParaTrafigiTasnifCariKod")
   dosyaMasrafiCariKod DosyaMasrafi[] @relation("DosyaMasrafiCariKod")
   dosyaMasrafiTuru    DosyaMasrafi[] @relation("DosyaMasrafiTuru")
+  dosyaMasrafiDurum   DosyaMasrafi[] @relation("DosyaMasrafiDurumu")
   gelistirmeTalepleriDurum GelistirmeTalebi[] @relation("GelistirmeTalebiDurumu")
+  uyusmazlikGrubuDurum UyusmazlikGrubu[] @relation("UyusmazlikGrubuDurumu")
+  paraTrafigiSahiplik MusteriParaTrafigi[] @relation("ParaKaydiSahibi")
+  paraKaydiKullanimAmaci ParaTrafigiDagitimi[] @relation("ParaKaydiKullanimAmaci")
 
   @@unique([listeId, kod])
   @@map("secenek_degerleri")
@@ -194,12 +198,63 @@ model MusteriParaTrafigi {
   // Hesabi / Ticari Hesap vb.) nasil dagitildigi - bkz. ParaTrafigiTasnif.
   tasnif ParaTrafigiTasnif[]
 
+  // Paranin sahibi: Muvekkil mi, Buro mu (ör. Vekalet Ucreti kaydi burada
+  // esasen buronun kendi geliridir). Nullable: gecmis kayitlar hep
+  // muvekkile ait sayiliyordu, yeni kayitlarda formda varsayilan "Muvekkil".
+  sahiplikId String?
+  sahiplik   SecenekDegeri? @relation("ParaKaydiSahibi", fields: [sahiplikId], references: [id])
+
+  // Dekont/belge baglantisi - V1: gercek dosya yukleme degil, serbest
+  // metin/URL referansi (bkz. ARCHITECTURE.md "Masraf Belgesi Ekleri" -
+  // gercek dosya depolama bilincli olarak ERTELENDI).
+  belgeReferansi String?
+
+  // "Muvekkilden Para Geldi" kaydinin (header) birden fazla Dosya
+  // Kumesine/kaleme boluşturulmesi - bkz. ParaTrafigiDagitimi. Bos
+  // olabilir (kume secilmeden genel tahsilat girilebilir, sonradan
+  // dagitilir).
+  dagitimlar ParaTrafigiDagitimi[]
+
   olusturmaTarihi DateTime @default(now())
 
   @@index([musteriId])
   @@index([durumId])
   @@index([uyusmazlikGrubuId])
+  @@index([sahiplikId])
   @@map("musteri_para_trafigi")
+}
+
+// Tek bir "Muvekkilden Para Geldi" kaydinin (header, MusteriParaTrafigi)
+// birden fazla Dosya Kumesine ve farkli kullanim amaclarina bolunmesi
+// (ör. 172.984,89 TL tahsilat -> 43.984,89 TL gecmis masraf + 114.000 TL
+// vekalet ucreti + 15.000 TL dosya avansi, farkli kumelere). Sadece bu
+// akista kullanilir - diger tipler (Bloke Para Yatirdik, Vekalet Ucreti
+// Ekledik vb.) tekil uyusmazlikGrubuId alanini kullanmaya devam eder.
+model ParaTrafigiDagitimi {
+  id            String             @id @default(cuid())
+  paraTrafigiId String
+  paraTrafigi   MusteriParaTrafigi @relation(fields: [paraTrafigiId], references: [id], onDelete: Cascade)
+
+  uyusmazlikGrubuId String
+  uyusmazlikGrubu   UyusmazlikGrubu @relation(fields: [uyusmazlikGrubuId], references: [id])
+
+  // Kumenin geneline ait olabilir (dosya secilmez) - ör. henuz hangi
+  // dosyaya harcanacagi belli olmayan bir vekalet ucreti tahsilati.
+  dosyaId String?
+  dosya   DavaDosyasi? @relation(fields: [dosyaId], references: [id])
+
+  kullanimAmaciId String
+  kullanimAmaci   SecenekDegeri @relation("ParaKaydiKullanimAmaci", fields: [kullanimAmaciId], references: [id])
+
+  tutar Decimal @db.Decimal(14, 2)
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([paraTrafigiId])
+  @@index([uyusmazlikGrubuId])
+  @@index([dosyaId])
+  @@index([kullanimAmaciId])
+  @@map("para_trafigi_dagitimi")
 }
 
 // Bir para trafigi kaydinin (ozellikle bir tahsilatin) cari kodlara gore
@@ -258,6 +313,7 @@ model KarsiTaraf {
   olusturmaTarihi DateTime @default(now())
 
   dosyalar DosyaKarsiTarafi[]
+  kumeler  UyusmazlikGrubuKarsiTarafi[]
 
   @@index([musteriId])
   @@map("karsi_taraflar")
@@ -296,13 +352,43 @@ model UyusmazlikGrubu {
   ad     String // "Asya Park Ticareti", "Hicret Kırtay İş Sözleşmesi" vb.
   notlar String?
 
+  // UI'da "Dosya Kümesi" olarak gösterilir (model/tablo adi degismedi -
+  // zaten var olan bir kavramin tamamlanmasi, bkz. ARCHITECTURE.md).
+  // dava_dosyasi_durumu listesi YENIDEN KULLANILIR (Acik/Kapali/Arsiv) -
+  // semantik birebir ayni, ayri bir liste acmaya gerek yok. Nullable:
+  // eski kayitlar NULL kalir, UI bunu "Acik" gibi gosterir.
+  durumId String?
+  durum   SecenekDegeri? @relation("UyusmazlikGrubuDurumu", fields: [durumId], references: [id])
+
   olusturmaTarihi DateTime @default(now())
 
   dosyalar             DavaDosyasi[]
   paraTrafigiKayitlari MusteriParaTrafigi[]
+  // Kumenin "genel/bilinen" karsi taraflari - her yargisal dosyanin KENDI
+  // karsi taraf listesi (DosyaKarsiTarafi) bagimsiz kalir ve bundan farkli
+  // olabilir (ör. esas icra 3 kisiye, icra ceza sadece 1'ine acik) - bu
+  // liste sadece kume seviyesinde bir ozet/on-doldurma amaclidir.
+  karsiTaraflar UyusmazlikGrubuKarsiTarafi[]
+  dagitimlar    ParaTrafigiDagitimi[]
 
   @@index([musteriId])
+  @@index([durumId])
   @@map("uyusmazlik_gruplari")
+}
+
+// UyusmazlikGrubu <-> KarsiTaraf coka-cok - DosyaKarsiTarafi ile ayni sekil.
+model UyusmazlikGrubuKarsiTarafi {
+  id                String          @id @default(cuid())
+  uyusmazlikGrubuId String
+  uyusmazlikGrubu   UyusmazlikGrubu @relation(fields: [uyusmazlikGrubuId], references: [id], onDelete: Cascade)
+  karsiTarafId      String
+  karsiTaraf        KarsiTaraf      @relation(fields: [karsiTarafId], references: [id], onDelete: Cascade)
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@unique([uyusmazlikGrubuId, karsiTarafId])
+  @@index([karsiTarafId])
+  @@map("uyusmazlik_grubu_karsi_taraflari")
 }
 
 // Bir dava dosyasina birden fazla musteri baglanabilir (ortak davacilar,
@@ -359,6 +445,7 @@ model DavaDosyasi {
   paraTrafigiKayitlari ParaTrafigiDosyasi[]
   masraflar            DosyaMasrafi[]
   karsiTarafAlacaklari KarsiTarafAlacagi[]
+  paraTrafigiDagitimlari ParaTrafigiDagitimi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -412,11 +499,19 @@ model DosyaMasrafi {
   aciklama String
   tutar    Decimal  @db.Decimal(14, 2)
 
+  // Yanlis girilen bir masraf artik SILINMEK yerine IPTAL EDILEBILIR (bkz.
+  // ARCHITECTURE.md) - satir kalici olarak durur, sadece Cari Hesap'a
+  // dahil edilmez. Nullable: eski kayitlar NULL kalir, hesaplamada NULL
+  // "Odendi" (aktif) sayilir.
+  durumId String?
+  durum   SecenekDegeri? @relation("DosyaMasrafiDurumu", fields: [durumId], references: [id])
+
   olusturmaTarihi DateTime @default(now())
 
   @@index([dosyaId])
   @@index([cariKodId])
   @@index([turId])
+  @@index([durumId])
   @@map("dosya_masraflari")
 }
 

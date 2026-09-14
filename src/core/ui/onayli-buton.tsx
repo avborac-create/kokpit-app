@@ -39,8 +39,16 @@ export function OnayliButon({
       onClick={() => {
         if (!confirm(mesaj)) return;
         baslatTransition(async () => {
-          await eylem();
-          router.refresh();
+          try {
+            await eylem();
+            router.refresh();
+          } catch (hata) {
+            // Server action'in atttigi (ör. "bu kayitta finansal veri var,
+            // silinemez" gibi) anlamli hatayi kullaniciya goster - aksi
+            // halde islem sessizce basarisiz olur/genel bir hata ekranina
+            // duserdi.
+            alert(hata instanceof Error ? hata.message : "İşlem başarısız oldu.");
+          }
         });
       }}
     >

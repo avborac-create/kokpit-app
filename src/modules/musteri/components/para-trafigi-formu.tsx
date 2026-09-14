@@ -5,7 +5,6 @@ import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterininDosyalari, uyusmazlikGruplariniListele } from "@/modules/dava-dosyasi/lib/queries";
 import { DosyaSecici } from "@/modules/musteri/components/dosya-secici";
 import { TipSeciciVeTasnif } from "@/modules/musteri/components/tip-secici-ve-tasnif";
-import { UyusmazlikGrubuSecici } from "@/modules/musteri/components/uyusmazlik-grubu-secici";
 import { ParaTrafigiDetaylar } from "@/modules/musteri/components/para-trafigi-detaylar";
 
 export type ParaTrafigiDuzenlemeVerisi = {
@@ -18,6 +17,7 @@ export type ParaTrafigiDuzenlemeVerisi = {
   seciliDosyaIdler: string[];
   tasnifVarsayilan: Record<string, number>;
   uyusmazlikGrubuId: string | null;
+  dagitimSatirlari: { kumeId: string; dosyaId: string | null; amaciId: string; tutar: number }[];
 };
 
 export async function ParaTrafigiFormu({
@@ -29,13 +29,14 @@ export async function ParaTrafigiFormu({
   musteriId: string;
   duzenlemeVerisi?: ParaTrafigiDuzenlemeVerisi;
 }) {
-  const [tipler, durumlar, kaynaklar, dosyalar, cariKodlar, gruplar] = await Promise.all([
+  const [tipler, durumlar, kaynaklar, dosyalar, cariKodlar, kumeler, kullanimAmaclari] = await Promise.all([
     secenekleriGetir("para_trafigi_tipi"),
     secenekleriGetir("para_trafigi_durumu"),
     secenekleriGetir("kaynak"),
     musterininDosyalari(musteriId),
     secenekleriGetir("cari_kod"),
     uyusmazlikGruplariniListele([musteriId]),
+    secenekleriGetir("para_kaydi_kullanim_amaci"),
   ]);
 
   const bugun = new Date().toISOString().slice(0, 10);
@@ -49,8 +50,13 @@ export async function ParaTrafigiFormu({
       <TipSeciciVeTasnif
         tipler={tipler}
         cariKodlar={cariKodlar}
+        kumeler={kumeler}
+        dosyalar={dosyalar}
+        kullanimAmaclari={kullanimAmaclari}
         varsayilanTipId={duzenlemeVerisi?.tipId}
         varsayilanTasnif={duzenlemeVerisi?.tasnifVarsayilan}
+        varsayilanKumeId={duzenlemeVerisi?.uyusmazlikGrubuId ?? ""}
+        varsayilanDagitimSatirlari={duzenlemeVerisi?.dagitimSatirlari}
       />
       <Alan>
         <Etiket htmlFor="tutar">Tutar</Etiket>
@@ -70,10 +76,7 @@ export async function ParaTrafigiFormu({
         </Secim>
       </Alan>
       <ParaTrafigiDetaylar
-        varsayilanAcikMi={Boolean(
-          duzenlemeVerisi &&
-            (duzenlemeVerisi.seciliDosyaIdler.length > 0 || duzenlemeVerisi.uyusmazlikGrubuId),
-        )}
+        varsayilanAcikMi={Boolean(duzenlemeVerisi && duzenlemeVerisi.seciliDosyaIdler.length > 0)}
       >
         <Alan>
           <Etiket htmlFor="kaynakId">Kaynak</Etiket>
@@ -96,7 +99,6 @@ export async function ParaTrafigiFormu({
           </Secim>
         </Alan>
         <DosyaSecici dosyalar={dosyalar} seciliDosyaIdler={duzenlemeVerisi?.seciliDosyaIdler} />
-        <UyusmazlikGrubuSecici gruplar={gruplar} varsayilanGrubuId={duzenlemeVerisi?.uyusmazlikGrubuId ?? ""} />
       </ParaTrafigiDetaylar>
       <div className="col-span-2 md:col-span-4">
         <Alan>

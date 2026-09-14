@@ -9,7 +9,7 @@ export const DAVA_DOSYASI_ALAN_ETIKETLERI: Record<string, string> = {
   konu: "Konu",
   durumId: "Durum",
   birimAdi: "Birim Adı (Mahkeme/İcra Dairesi)",
-  uyusmazlikGrubuId: "Uyuşmazlık Grubu",
+  uyusmazlikGrubuId: "Dosya Kümesi",
   bagliOlduguDosyaId: "Bağlı Olduğu Esas Dosya",
   acilisTarihi: "Açılış Tarihi",
   kapanisTarihi: "Kapanış Tarihi",
@@ -19,5 +19,8 @@ export const DAVA_DOSYASI_ALAN_ETIKETLERI: Record<string, string> = {
 
 // Bunlar DB'de zorunlu VE davaDosyasiOlustur/Guncelle server action'i
 // tarafindan ek olarak dogrulanan alanlar - admin panelinde asla
-// "Gizli" yapilamaz, sadece sirasi degisebilir.
-export const DAVA_DOSYASI_GIZLENEMEZ_ALANLAR = ["turId", "konu", "durumId", "acilisTarihi"];
+// "Gizli" yapilamaz, sadece sirasi degisebilir. uyusmazlikGrubuId
+// (Dosya Kumesi) buraya sonradan eklendi: her yargisal dosya artik bir
+// kumeye bagli olmak ZORUNDA (bkz. davaDosyasiOlustur/Guncelle), bu
+// alanin gizlenebilir kalmasi formu sessizce kirardi.
+export const DAVA_DOSYASI_GIZLENEMEZ_ALANLAR = ["turId", "konu", "durumId", "acilisTarihi", "uyusmazlikGrubuId"];

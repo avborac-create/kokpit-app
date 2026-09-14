@@ -11,8 +11,18 @@ const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", cur
 // gerektiginde iade edilebilir/kullanilabilir tutarlardir.
 const NET_HESABA_DAHIL_OLMAYAN_KODLAR = ["akdi_vekalet_hesabi"];
 
-export function CariHesapOzeti({ ozet }: { ozet: Ozet }) {
-  if (ozet.length === 0) {
+export function CariHesapOzeti({
+  ozet,
+  dagitimBekleyen,
+}: {
+  ozet: Ozet;
+  // Sadece musteri seviyesindeki Cari Hesap sayfasinda anlamli (bkz.
+  // dagitilmamisParaToplami) - henuz hicbir Dosya Kumesine tahsis
+  // edilmemis "Muvekkilden Para Geldi" tutarlarinin toplami. Dosya/kume
+  // seviyesinde gosterilmez (o kalem hicbir kumeye ait degildir).
+  dagitimBekleyen?: number;
+}) {
+  if (ozet.length === 0 && !dagitimBekleyen) {
     return <p className="text-sm text-white/40">Henüz tasnif veya masraf kaydı yok.</p>;
   }
 
@@ -27,7 +37,7 @@ export function CariHesapOzeti({ ozet }: { ozet: Ozet }) {
       {/* Basit ozet: sadece 3 soruya cevap - musteriden ne kadar para
           alindi, onun adina ne kadar harcandi, ve net olarak kim kime
           ne kadar borclu. Detayli cari-kod kirilimi asagida ayrica durur. */}
-      <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className={`mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3 ${dagitimBekleyen !== undefined ? "md:grid-cols-4" : ""}`}>
         <div className="glass rounded-2xl p-4">
           <p className="text-xs text-white/45">Müvekkilden Alınan Paralar</p>
           <p className="mt-1 text-lg font-semibold text-white">{paraFormatlayici.format(toplamAlinan)}</p>
@@ -48,6 +58,23 @@ export function CariHesapOzeti({ ozet }: { ozet: Ozet }) {
             {paraFormatlayici.format(Math.abs(netBakiye))}
           </p>
         </div>
+        {dagitimBekleyen !== undefined && (
+          <div className="glass rounded-2xl p-4">
+            <p className="text-xs text-white/45">Dağıtım Bekleyen Paralar</p>
+            <p
+              className={`mt-1 text-lg font-semibold ${
+                dagitimBekleyen > 0 ? "text-[#f5c451]" : "text-white/60"
+              }`}
+            >
+              {paraFormatlayici.format(dagitimBekleyen)}
+            </p>
+            {dagitimBekleyen > 0 && (
+              <p className="mt-1 text-xs text-white/35">
+                Henüz bir Dosya Kümesine/kaleme tahsis edilmemiş, müvekkilden gelen para.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="glass mb-3 overflow-x-auto rounded-2xl">

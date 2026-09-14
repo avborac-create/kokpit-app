@@ -17,6 +17,7 @@ export function ParaGirdisi({
   required,
   className,
   placeholder = "0",
+  onDegerDegisti,
 }: {
   name: string;
   id?: string;
@@ -24,6 +25,11 @@ export function ParaGirdisi({
   required?: boolean;
   className?: string;
   placeholder?: string;
+  // Bilesen kendi ic durumunu tuttugundan (odaklanma/bicimlendirme), dis
+  // bir formun (ör. dagitim satirlarinin canli toplami) bu degeri takip
+  // edebilmesi icin opsiyonel bir callback - sadece gecerli sayisal ham
+  // metinle cagrilir, bicimlendirilmis gorunen degerle degil.
+  onDegerDegisti?: (deger: string) => void;
 }) {
   const [odaklandi, setOdaklandi] = useState(false);
   const [metin, setMetin] = useState(
@@ -46,7 +52,11 @@ export function ParaGirdisi({
         value={gosterilenDeger}
         onFocus={() => setOdaklandi(true)}
         onBlur={() => setOdaklandi(false)}
-        onChange={(e) => setMetin(e.target.value.replace(/[^0-9.]/g, ""))}
+        onChange={(e) => {
+          const temiz = e.target.value.replace(/[^0-9.]/g, "");
+          setMetin(temiz);
+          onDegerDegisti?.(temiz);
+        }}
         placeholder={placeholder}
         required={required}
         className={

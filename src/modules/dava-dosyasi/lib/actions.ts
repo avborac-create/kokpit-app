@@ -88,6 +88,9 @@ export async function davaDosyasiOlustur(formData: FormData) {
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
+  if (!uyusmazlikGrubuId) {
+    throw new Error("Dosya Kümesi seçilmelidir.");
+  }
   const bagliOlduguDosyaId = metinYaAlNull(formData, "bagliOlduguDosyaId");
   const hukukiIliskiTuruId = metinYaAlNull(formData, "hukukiIliskiTuruId");
 
@@ -134,6 +137,9 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
+  if (!uyusmazlikGrubuId) {
+    throw new Error("Dosya Kümesi seçilmelidir.");
+  }
   const bagliOlduguDosyaIdHam = metinYaAlNull(formData, "bagliOlduguDosyaId");
   const bagliOlduguDosyaId = bagliOlduguDosyaIdHam === id ? null : bagliOlduguDosyaIdHam;
   const hukukiIliskiTuruId = metinYaAlNull(formData, "hukukiIliskiTuruId");
@@ -187,6 +193,31 @@ export async function davaDosyasiSil(id: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
+  }
+
+  // Finansal kaydi olan bir dosya artik dogrudan silinemez - yanlislikla
+  // gercek para hareketi/masraf/alacak kaydini yok etmemek icin. Bunun
+  // yerine dosya "Kapalı"/"Arşiv" durumuna alinarak (mevcut durum alani
+  // uzerinden) arsivlenir; finansal kayitlar hep gecmiste durur.
+  const dosya = await prisma.davaDosyasi.findUnique({
+    where: { id },
+    select: {
+      _count: {
+        select: {
+          masraflar: true,
+          karsiTarafAlacaklari: true,
+          paraTrafigiKayitlari: true,
+          paraTrafigiDagitimlari: true,
+        },
+      },
+    },
+  });
+  if (!dosya) return;
+  const { masraflar, karsiTarafAlacaklari, paraTrafigiKayitlari, paraTrafigiDagitimlari } = dosya._count;
+  if (masraflar > 0 || karsiTarafAlacaklari > 0 || paraTrafigiKayitlari > 0 || paraTrafigiDagitimlari > 0) {
+    throw new Error(
+      "Bu dosyada finansal kayıt var, silinemez. Önce durumunu \"Kapalı\" veya \"Arşiv\" yaparak arşivleyin.",
+    );
   }
 
   await prisma.davaDosyasi.delete({ where: { id } });
@@ -298,4 +329,111 @@ export async function karsiTarafAlacagiSil(id: string, dosyaId: string) {
 
   await prisma.karsiTarafAlacagi.delete({ where: { id } });
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+// Yanlis girilen bir masraf artik SILINMEK yerine IPTAL EDILEBILIR (bkz.
+// ARCHITECTURE.md) - satir kalici olarak durur, sadece Cari Hesap'a
+// dahil edilmez (cariHesapOzetiHesapla'nin masrafWhere'i durumu
+// "iptal_edildi" olanlari disliyor).
+export async function dosyaMasrafiDurumDegistir(id: string, dosyaId: string, durumKodu: "odendi" | "iptal_edildi") {
+  const durum = await prisma.secenekDegeri.findFirst({
+    where: { kod: durumKodu, liste: { anahtar: "masraf_durumu" } },
+  });
+  if (!durum) throw new Error("Masraf durum listesi bulunamadı.");
+
+  await prisma.dosyaMasrafi.update({ where: { id }, data: { durumId: durum.id } });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+// ============================================================
+// Dosya Kümesi (UyusmazlikGrubu) - bkz. ARCHITECTURE.md
+// ============================================================
+
+export async function uyusmazlikGrubuOlustur(formData: FormData) {
+  const musteriId = String(formData.get("musteriId") ?? "").trim();
+  const ad = String(formData.get("ad") ?? "").trim();
+  const notlar = metinYaAlNull(formData, "notlar");
+  const durumId = metinYaAlNull(formData, "durumId");
+
+  if (!musteriId || !ad) {
+    throw new Error("Müvekkil ve küme adı zorunludur.");
+  }
+
+  const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, [musteriId]);
+
+  const grup = await prisma.uyusmazlikGrubu.create({
+    data: {
+      musteriId,
+      ad,
+      notlar,
+      durumId,
+      karsiTaraflar: {
+        create: karsiTarafIdleri.map((karsiTarafId) => ({ karsiTarafId })),
+      },
+    },
+  });
+
+  revalidatePath("/kokpit/dava-dosyalari");
+  redirect(`/kokpit/dava-dosyalari/gruplar/${grup.id}`);
+}
+
+export async function uyusmazlikGrubuGuncelle(id: string, formData: FormData) {
+  const musteriId = String(formData.get("musteriId") ?? "").trim();
+  const ad = String(formData.get("ad") ?? "").trim();
+  const notlar = metinYaAlNull(formData, "notlar");
+  const durumId = metinYaAlNull(formData, "durumId");
+
+  if (!musteriId || !ad) {
+    throw new Error("Müvekkil ve küme adı zorunludur.");
+  }
+
+  const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, [musteriId]);
+
+  await prisma.$transaction([
+    prisma.uyusmazlikGrubu.update({
+      where: { id },
+      data: { musteriId, ad, notlar, durumId },
+    }),
+    prisma.uyusmazlikGrubuKarsiTarafi.deleteMany({
+      where: { uyusmazlikGrubuId: id, karsiTarafId: { notIn: karsiTarafIdleri } },
+    }),
+    ...karsiTarafIdleri.map((karsiTarafId) =>
+      prisma.uyusmazlikGrubuKarsiTarafi.upsert({
+        where: { uyusmazlikGrubuId_karsiTarafId: { uyusmazlikGrubuId: id, karsiTarafId } },
+        update: {},
+        create: { uyusmazlikGrubuId: id, karsiTarafId },
+      }),
+    ),
+  ]);
+
+  revalidatePath("/kokpit/dava-dosyalari");
+  revalidatePath(`/kokpit/dava-dosyalari/gruplar/${id}`);
+  redirect(`/kokpit/dava-dosyalari/gruplar/${id}`);
+}
+
+export async function uyusmazlikGrubuSil(id: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici || !silebilirMi(kullanici.rol)) {
+    throw new Error("Bu işlem için yetkiniz yok.");
+  }
+
+  const grup = await prisma.uyusmazlikGrubu.findUnique({
+    where: { id },
+    select: {
+      _count: { select: { dosyalar: true, paraTrafigiKayitlari: true, dagitimlar: true } },
+    },
+  });
+  if (!grup) return;
+
+  if (grup._count.dosyalar > 0) {
+    throw new Error("Bu kümeye bağlı yargısal dosya(lar) var, silinemez. Önce dosyaları başka bir kümeye taşıyın.");
+  }
+  if (grup._count.paraTrafigiKayitlari > 0 || grup._count.dagitimlar > 0) {
+    throw new Error(
+      "Bu kümede doğrudan bağlı finansal kayıt var, silinemez. Önce durumunu \"Arşiv\" yaparak arşivleyin.",
+    );
+  }
+
+  await prisma.uyusmazlikGrubu.delete({ where: { id } });
+  revalidatePath("/kokpit/dava-dosyalari");
 }

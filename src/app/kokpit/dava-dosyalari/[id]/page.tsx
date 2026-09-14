@@ -7,6 +7,8 @@ import { DosyaParaTrafigiListesi } from "@/modules/dava-dosyasi/components/dosya
 import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
 import { MasrafListesi } from "@/modules/dava-dosyasi/components/masraf-listesi";
 import { CariHesapOzeti } from "@/modules/dava-dosyasi/components/cari-hesap-ozeti";
+import { DokumTablosu } from "@/modules/dava-dosyasi/components/dokum-tablosu";
+import type { DokumSatiri } from "@/modules/dava-dosyasi/lib/queries";
 import { KarsiTarafAlacagiFormu } from "@/modules/dava-dosyasi/components/karsi-taraf-alacagi-formu";
 import { KarsiTarafAlacagiListesi } from "@/modules/dava-dosyasi/components/karsi-taraf-alacagi-listesi";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
@@ -29,6 +31,27 @@ export default async function DavaDosyasiDetaySayfasi({
   if (!dosya) notFound();
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
+
+  const dosyaDokumu: DokumSatiri[] = [
+    ...dosya.masraflar.map((m) => ({
+      id: `masraf-${m.id}`,
+      tarih: m.tarih,
+      kaynak: "masraf" as const,
+      tutar: Number(m.tutar),
+      dosyaId: id,
+      dosyaKonu: dosya.konu,
+      aciklama: `${m.tur.etiket} — ${m.aciklama}`,
+    })),
+    ...dosya.paraTrafigiDagitimlari.map((d) => ({
+      id: `dagitim-${d.id}`,
+      tarih: d.olusturmaTarihi,
+      kaynak: "dagitim" as const,
+      tutar: Number(d.tutar),
+      dosyaId: id,
+      dosyaKonu: dosya.konu,
+      aciklama: d.kullanimAmaci.etiket,
+    })),
+  ].sort((a, b) => b.tarih.getTime() - a.tarih.getTime());
 
   return (
     <div className="pt-3">
@@ -80,7 +103,7 @@ export default async function DavaDosyasiDetaySayfasi({
           </p>
         </div>
         <div>
-          <p className="text-white/45">Uyuşmazlık Grubu</p>
+          <p className="text-white/45">Dosya Kümesi</p>
           <p className="text-white">
             {dosya.uyusmazlikGrubu ? (
               <Link
@@ -182,6 +205,15 @@ export default async function DavaDosyasiDetaySayfasi({
       )}
       <div className="mb-8">
         <CariHesapOzeti ozet={cariHesapOzeti} />
+      </div>
+
+      <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Dosya Bazında Döküm</h2>
+      <p className="mb-3 text-sm text-white/45">
+        Bu dosyaya işlenen masraflar ve müvekkilden gelen paranın bu dosyaya ayrılan dağıtım
+        kalemleri, tek bir kronolojik listede.
+      </p>
+      <div className="mb-8">
+        <DokumTablosu satirlar={dosyaDokumu} dosyaSutunuGoster={false} />
       </div>
 
       <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Para Trafiği</h2>

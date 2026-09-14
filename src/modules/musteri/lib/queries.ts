@@ -56,6 +56,7 @@ export async function paraTrafigiKaydiGetir(kayitId: string) {
     include: {
       dosyalar: true,
       tasnif: true,
+      dagitimlar: true,
     },
   });
 }
