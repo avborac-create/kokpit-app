@@ -331,12 +331,41 @@ async function yinelenenUyusmazlikGruplariniBirlestir() {
   }
 }
 
+// Sol menudeki modullerin varsayilan sirasi (bkz.
+// src/core/modul-kayit-defteri.ts - anahtarlar oradakiyle birebir
+// eslesmeli). Sadece ILK kez eksik olan bir modul icin baslangic siraNo'su
+// belirlemek icin kullanilir; admin panodan (Ayarlar > Menü Düzeni)
+// yaptigi surukle-birak/gizleme degisikligine bu liste bir daha asla
+// dokunmaz.
+const VARSAYILAN_MENU_SIRASI = [
+  "musteriler",
+  "dava-dosyalari",
+  "finans",
+  "oneriler",
+  "gelistirme-kutusu",
+  "ayarlar",
+];
+
+async function menuOgeleriniOlustur() {
+  let eklenen = 0;
+  for (const [index, anahtar] of VARSAYILAN_MENU_SIRASI.entries()) {
+    const mevcut = await prisma.menuOgesi.findUnique({ where: { anahtar } });
+    if (mevcut) continue;
+    await prisma.menuOgesi.create({ data: { anahtar, siraNo: index } });
+    eklenen += 1;
+  }
+  if (eklenen > 0) {
+    console.log(`✓ Menü Düzeni: ${eklenen} yeni modül eklendi.`);
+  }
+}
+
 async function main() {
   await secenekListeleriniOlustur();
   await baslangicKullanicisiniOlustur();
   await gelistirmeKutusunuSenkronizeEt();
   await yinelenenKarsiTaraflariBirlestir();
   await yinelenenUyusmazlikGruplariniBirlestir();
+  await menuOgeleriniOlustur();
 }
 
 main()

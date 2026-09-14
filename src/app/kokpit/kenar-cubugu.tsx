@@ -5,11 +5,32 @@ import { usePathname } from "next/navigation";
 import type { KullaniciRolu } from "@prisma/client";
 import { MODUL_KAYIT_DEFTERI } from "@/core/modul-kayit-defteri";
 
-export function KenarCubugu({ kullaniciRol }: { kullaniciRol?: KullaniciRolu }) {
+export function KenarCubugu({
+  kullaniciRol,
+  menuDuzeni,
+}: {
+  kullaniciRol?: KullaniciRolu;
+  menuDuzeni: { anahtar: string; gizliMi: boolean }[];
+}) {
   const yol = usePathname();
+
+  // Modulun HANGI SAYFAYA gittigi/adi kod tarafinda (MODUL_KAYIT_DEFTERI)
+  // kalir; SIRASI ve GORUNURLUGU artik veritabanindan (menuDuzeni, admin'in
+  // Ayarlar > Menü Düzeni'nden surukle-birakla degistirdigi) geliyor.
+  // menuDuzeni'nde henuz karsiligi olmayan (ör. seed henuz calismadiysa)
+  // bir modul listenin sonuna, gorunur olarak eklenir.
+  const siraHaritasi = new Map(menuDuzeni.map((oge, index) => [oge.anahtar, index]));
+  const gizliSeti = new Set(menuDuzeni.filter((oge) => oge.gizliMi).map((oge) => oge.anahtar));
+
   const gorunurModuller = MODUL_KAYIT_DEFTERI.filter(
-    (modul) => !modul.rolGorebilir || (kullaniciRol && modul.rolGorebilir.includes(kullaniciRol)),
-  );
+    (modul) =>
+      (!modul.rolGorebilir || (kullaniciRol && modul.rolGorebilir.includes(kullaniciRol))) &&
+      !gizliSeti.has(modul.anahtar),
+  ).sort((a, b) => {
+    const siraA = siraHaritasi.get(a.anahtar) ?? Number.MAX_SAFE_INTEGER;
+    const siraB = siraHaritasi.get(b.anahtar) ?? Number.MAX_SAFE_INTEGER;
+    return siraA - siraB;
+  });
 
   return (
     <nav className="flex flex-col gap-1 p-3">

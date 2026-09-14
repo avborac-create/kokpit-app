@@ -17,10 +17,12 @@ export function KokpitKabuk({
   children,
   kullaniciAdSoyad,
   kullaniciRol,
+  menuDuzeni,
 }: {
   children: React.ReactNode;
   kullaniciAdSoyad?: string;
   kullaniciRol?: KullaniciRolu;
+  menuDuzeni: { anahtar: string; gizliMi: boolean }[];
 }) {
   const pathname = usePathname();
   const modulSeciliMi = pathname !== "/kokpit";
@@ -36,7 +38,7 @@ export function KokpitKabuk({
           <p className="text-base font-semibold tracking-tight text-white">KOKPİT</p>
           <p className="text-sm text-white/45">Eces Hukuk Bürosu</p>
         </div>
-        <KenarCubugu kullaniciRol={kullaniciRol} />
+        <KenarCubugu kullaniciRol={kullaniciRol} menuDuzeni={menuDuzeni} />
       </aside>
       <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
         <header className="glass m-3 flex items-center justify-between rounded-2xl px-4 py-3 md:px-6">

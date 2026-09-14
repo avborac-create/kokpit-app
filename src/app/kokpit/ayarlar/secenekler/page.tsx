@@ -13,7 +13,7 @@ export default async function SecenekListeleriSayfasi() {
   const listeler = await tumSecenekListeleriniListele();
 
   return (
-    <div className="pt-3">
+    <div>
       <h1 className="mb-1 text-2xl font-semibold tracking-tight text-white">Seçenek Listeleri</h1>
       <p className="mb-6 max-w-2xl text-sm text-white/50">
         Uygulama genelindeki açılır listeler (cari kod, masraf türü, tip, durum vb.) burada

@@ -408,6 +408,23 @@ görüntüsü yok.
   — önceden çok satırlı bir açıklama satırın tamamen boyunu şişirip
   tabloyu "karmaşık" gösteriyordu.
 
+## Menü Düzeni (admin sürükle-bırak)
+
+`/kokpit/ayarlar/menu`, `MenuOgesi` modeli. Kullanıcının "sol menüyü
+doğrudan kendim kurayım" talebine cevap — ama sınırı net: bir modülün
+HANGİ SAYFAYA gittiği, adı, "henüz geliştirilmedi" durumu hâlâ
+`modul-kayit-defteri.ts`'de (kod) kalır, çünkü bunlar gerçek bir route'a
+bağlıdır ve sadece kod değişikliğiyle eklenebilir. Admin'in değiştirdiği
+SADECE iki şey: modüllerin SIRASI (sürükle-bırak, `menuYenidenSirala`) ve
+GÖRÜNÜR/GİZLİ olması (`menuGorunurlukDegistir`) — tıpkı Seçenek Listeleri
+paterni gibi ("içerik" admin'e açık, "yapı" kod tarafında kalır).
+`Ayarlar` kendisi gizlenemez (sunucu tarafında da engellenir) — aksi
+halde kullanıcı bu ayarı bir daha değiştirebileceği ekrana kolayca
+ulaşamazdı. `seed.ts`'teki `menuOgeleriniOlustur`, `GelistirmeTalebi` ile
+aynı ilkeyle çalışır: sadece kod tarafında yeni eklenmiş ama henüz
+veritabanında karşılığı olmayan modülleri varsayılan sırada ekler, admin'in
+yaptığı sıralama/gizleme değişikliğine bir daha asla dokunmaz.
+
 ## PWA
 
 - `public/manifest.json` + `public/sw.js`: kullanıcılar Chrome/Safari'nin

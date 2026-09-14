@@ -490,3 +490,28 @@ model GelistirmeTalebi {
   @@index([durumId])
   @@map("gelistirme_talepleri")
 }
+
+// ============================================================
+// CEKIRDEK: Sol Menu Duzeni (admin tarafindan surukle-birak ile
+// yeniden siralanabilir/gizlenebilir)
+// ============================================================
+
+// Bir modulun HANGI SAYFAYA gittigi, adi, "aktif mi" (henuz gelistirilmedi
+// mi) hala kod tarafinda kalir (bkz. modul-kayit-defteri.ts) - bunlar bir
+// gercek sayfa/route'a bagli oldugundan sadece kod degisikligiyle
+// eklenebilir. Ama bir modulun HANGI SIRADA gorunecegi ve GORUNUR/GIZLI
+// olup olmadigi artik admin'in kendisinin surukle-birak ile
+// degistirebildigi, veritabaninda tutulan bir ayar. anahtar,
+// ModulTanimi.anahtar ile eslesir; seed.ts HER deploy'da sadece eksik olan
+// modulleri (kod tarafinda yeni eklenmis olabilir) varsayilan sirada ve
+// gorunur olarak ekler - admin'in yaptigi siralama/gizleme degisikligine
+// bir daha asla dokunmaz (bkz. GelistirmeTalebi/SecenekDegeri'ndeki ayni
+// "sadece eksik olani ekle" ilkesi).
+model MenuOgesi {
+  id      String  @id @default(cuid())
+  anahtar String  @unique
+  siraNo  Int     @default(0)
+  gizliMi Boolean @default(false)
+
+  @@map("menu_ogeleri")
+}
