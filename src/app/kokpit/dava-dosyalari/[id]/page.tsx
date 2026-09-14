@@ -60,7 +60,9 @@ export default async function DavaDosyasiDetaySayfasi({
           <Link href={`/kokpit/dava-dosyalari/${id}/duzenle`}>
             <Dugme varyant="ikincil">Düzenle</Dugme>
           </Link>
-          {silmeYetkisiVar && <DavaDosyasiSilmeButonu dosyaId={id} />}
+          {silmeYetkisiVar && (
+            <DavaDosyasiSilmeButonu dosyaId={id} sonrasindaYonlendir="/kokpit/dava-dosyalari" />
+          )}
         </div>
       </div>
 

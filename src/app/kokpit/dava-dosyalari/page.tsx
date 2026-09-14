@@ -3,6 +3,9 @@ import { davaDosyalariniListele } from "@/modules/dava-dosyasi/lib/queries";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { Dugme } from "@/core/ui/button";
 import { Girdi, Secim } from "@/core/ui/form";
+import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
+import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
+import { silebilirMi } from "@/core/auth/yetki";
 
 export default async function DavaDosyalariSayfasi({
   searchParams,
@@ -10,10 +13,12 @@ export default async function DavaDosyalariSayfasi({
   searchParams: Promise<{ arama?: string; durum?: string }>;
 }) {
   const params = await searchParams;
-  const [dosyalar, durumlar] = await Promise.all([
+  const [dosyalar, durumlar, kullanici] = await Promise.all([
     davaDosyalariniListele({ arama: params.arama, durumKod: params.durum }),
     secenekleriGetir("dava_dosyasi_durumu"),
+    mevcutKullanici(),
   ]);
+  const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
 
   return (
     <div className="pt-3">
@@ -58,6 +63,7 @@ export default async function DavaDosyalariSayfasi({
               <th className="px-4 py-3 font-medium">Müvekkil(ler)</th>
               <th className="px-4 py-3 font-medium">Durum</th>
               <th className="px-4 py-3 font-medium">Sorumlu Avukat</th>
+              <th className="px-4 py-3 font-medium">İşlemler</th>
             </tr>
           </thead>
           <tbody>
@@ -89,11 +95,21 @@ export default async function DavaDosyalariSayfasi({
                   </span>
                 </td>
                 <td className="px-4 py-3 text-white/60">{dosya.sorumluAvukat?.adSoyad ?? "—"}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Link href={`/kokpit/dava-dosyalari/${dosya.id}/duzenle`}>
+                      <Dugme type="button" varyant="ikincil">
+                        Düzenle
+                      </Dugme>
+                    </Link>
+                    {silmeYetkisiVar && <DavaDosyasiSilmeButonu dosyaId={dosya.id} />}
+                  </div>
+                </td>
               </tr>
             ))}
             {dosyalar.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={10} className="px-4 py-8 text-center text-white/40">
                   Kayıt bulunamadı.
                 </td>
               </tr>

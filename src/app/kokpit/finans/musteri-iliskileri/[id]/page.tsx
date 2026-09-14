@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { musteriGetir } from "@/modules/musteri/lib/queries";
 import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
 import { Dugme } from "@/core/ui/button";
+import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
+import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
+import { silebilirMi } from "@/core/auth/yetki";
 
 export default async function MusteriFinansAksiyonSayfasi({
   params,
@@ -10,8 +13,13 @@ export default async function MusteriFinansAksiyonSayfasi({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [musteri, dosyalar] = await Promise.all([musteriGetir(id), musterininDosyalari(id)]);
+  const [musteri, dosyalar, kullanici] = await Promise.all([
+    musteriGetir(id),
+    musterininDosyalari(id),
+    mevcutKullanici(),
+  ]);
   if (!musteri) notFound();
+  const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
 
   return (
     <div className="pt-3">
@@ -46,6 +54,7 @@ export default async function MusteriFinansAksiyonSayfasi({
                   <th className="px-4 py-3 font-medium">Konu</th>
                   <th className="px-4 py-3 font-medium">Karşı Taraf(lar)</th>
                   <th className="px-4 py-3 font-medium">Durum</th>
+                  <th className="px-4 py-3 font-medium">İşlemler</th>
                 </tr>
               </thead>
               <tbody>
@@ -71,6 +80,16 @@ export default async function MusteriFinansAksiyonSayfasi({
                       <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
                         {dosya.durum.etiket}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Link href={`/kokpit/dava-dosyalari/${dosya.id}/duzenle`}>
+                          <Dugme type="button" varyant="ikincil">
+                            Düzenle
+                          </Dugme>
+                        </Link>
+                        {silmeYetkisiVar && <DavaDosyasiSilmeButonu dosyaId={dosya.id} />}
+                      </div>
                     </td>
                   </tr>
                 ))}

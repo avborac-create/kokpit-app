@@ -175,7 +175,7 @@ export async function davaDosyasiSil(id: string) {
 
   await prisma.davaDosyasi.delete({ where: { id } });
   revalidatePath("/kokpit/dava-dosyalari");
-  redirect("/kokpit/dava-dosyalari");
+  revalidatePath("/kokpit/finans/musteri-iliskileri");
 }
 
 export async function dosyaMasrafiEkle(dosyaId: string, formData: FormData) {
