@@ -11,9 +11,6 @@ işlenir).
 
 - Dosyalar tablosundaki sütunların admin tarafından manuel olarak yeniden
   sıralanabilmesi (dinamik sütun sırası).
-- Dosyalar listesinden/detayından kayıtları manuel düzenleme ve silme imkanı
-  (not: Düzenle/Sil dosyanın kendi detay sayfasında zaten var, listeden
-  erişim netleştirilmeli).
 
 ## Yapılıyor
 
@@ -21,4 +18,8 @@ _(şu an yok)_
 
 ## Tamamlandı
 
-_(şu an yok)_
+- Dosyalar listesinden/detayından kayıtları manuel düzenleme ve silme imkanı
+  — ana Dosyalar listesine ve Finans > müvekkil sayfasındaki Dosyalar
+  tablosuna "İşlemler" sütunu (Düzenle/Sil) eklendi. (Panodaki karşılık
+  kart hâlâ "Beklemede"de duruyor — DB'ye yazamadığım için elle
+  "Tamamlandı"ya sürüklemeniz gerekiyor.)
