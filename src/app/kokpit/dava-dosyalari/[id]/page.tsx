@@ -14,6 +14,7 @@ import { KarsiTarafAlacagiListesi } from "@/modules/dava-dosyasi/components/kars
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { Dugme } from "@/core/ui/button";
+import { SekmeBasligi } from "@/core/sekmeler/sekme-basligi";
 
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
 
@@ -55,6 +56,7 @@ export default async function DavaDosyasiDetaySayfasi({
 
   return (
     <div className="pt-3">
+      <SekmeBasligi baslik={dosya.konu} />
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">

@@ -104,3 +104,20 @@ export function OkKirilimIkonu(props: SVGProps<SVGSVGElement>) {
     </Taban>
   );
 }
+
+// Sekme cubugundaki kapat (x) ve yeni sekme ac (+) dugmeleri icin.
+export function KapatIkonu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Taban {...props} strokeWidth={2}>
+      <path d="M5.5 5.5 14.5 14.5M14.5 5.5 5.5 14.5" />
+    </Taban>
+  );
+}
+
+export function EkleIkonu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Taban {...props} strokeWidth={2}>
+      <path d="M10 4v12M4 10h12" />
+    </Taban>
+  );
+}

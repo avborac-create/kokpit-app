@@ -9,6 +9,7 @@ import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { Dugme } from "@/core/ui/button";
+import { SekmeBasligi } from "@/core/sekmeler/sekme-basligi";
 
 export default async function MusteriDetaySayfasi({
   params,
@@ -27,6 +28,7 @@ export default async function MusteriDetaySayfasi({
 
   return (
     <div className="pt-3">
+      <SekmeBasligi baslik={musteri.adSoyadUnvan} />
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">{musteri.adSoyadUnvan}</h1>

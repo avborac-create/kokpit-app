@@ -7,6 +7,7 @@ import {
 } from "@/modules/dava-dosyasi/lib/queries";
 import { CariHesapOzeti } from "@/modules/dava-dosyasi/components/cari-hesap-ozeti";
 import { DokumTablosu } from "@/modules/dava-dosyasi/components/dokum-tablosu";
+import { SekmeBasligi } from "@/core/sekmeler/sekme-basligi";
 
 export default async function UyusmazlikGrubuSayfasi({
   params,
@@ -23,6 +24,7 @@ export default async function UyusmazlikGrubuSayfasi({
 
   return (
     <div className="pt-3">
+      <SekmeBasligi baslik={grup.ad} />
       <Link
         href={`/kokpit/musteriler/${grup.musteriId}`}
         className="mb-2 inline-block text-sm text-[#6db8ff] hover:underline"
