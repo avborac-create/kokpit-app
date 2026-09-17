@@ -17,6 +17,7 @@ export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
   { anahtar: "dava-dosyalari", ad: "Dosyalar", yol: "/kokpit/dava-dosyalari", aktif: true },
   { anahtar: "finans", ad: "Finans / Muhasebe", yol: "/kokpit/finans", aktif: true },
   { anahtar: "muvekkil-finans", ad: "Müvekkil Finans", yol: "/kokpit/muvekkil-finans", aktif: true },
+  { anahtar: "cmk-dosyalari", ad: "CMK Dosyaları", yol: "/kokpit/cmk-dosyalari", aktif: true },
   {
     anahtar: "oneriler",
     ad: "Öneriler",

@@ -133,6 +133,7 @@ model Musteri {
   karsiTaraflar      KarsiTaraf[]
   uyusmazlikGruplari UyusmazlikGrubu[]
   finansHareketleri  MusteriFinansHareketi[]
+  cmkDosyalari       CMKDosyasi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -708,4 +709,82 @@ model MusteriFinansHareketi {
   @@index([musteriId])
   @@index([davaDosyasiId])
   @@map("musteri_finans_hareketleri")
+}
+
+// ============================================================
+// MODUL: CMK Dosyalari (bilerek BASIT, gunluk kullanim odakli)
+// ============================================================
+//
+// CMK gorevlendirmelerinden dogan ceza dosyalarini takip eder. BILEREK
+// genel DavaDosyasi/UyusmazlikGrubu/finans mimarisinden TAMAMEN AYRI: bu
+// dosyalar cogunlukla henuz musteri fihristinde bile kaydi olmayan,
+// mahkemenin resen atadigi supheli/saniklardir (musteriId bu yuzden
+// opsiyonel) - genel dosya ekranina hic dokunulmadi, mevcut hicbir
+// modelle/ekranla karistirilmiyor.
+//
+// "Dosya Durumu" kullanicinin verdigi kapali/sabit bir kume (8 deger) -
+// MusteriFinansHareketi'ndeki islemTuru/paraAmaci ile ayni gerekceyle
+// (KullaniciRolu enum'uyla ayni mantik) BILEREK native enum, SecenekDegeri
+// DEGIL: admin panelinden genisletilebilir olmasi istenmiyor.
+enum CMKDosyaDurumu {
+  AKTIF
+  DURUSMASI_BEKLENIYOR
+  ISTINAF_BASVURUSU
+  TEMYIZ
+  DERDEST
+  KARAR_VERILDI
+  KESINLESTI
+  KAPANDI
+
+  @@map("cmk_dosya_durumu")
+}
+
+model CMKDosyasi {
+  id String @id @default(cuid())
+
+  // Musteri fihristinde kaydi VARSA baglanir (opsiyonel) - YOKSA (CMK
+  // gorevlendirmelerinin cogunda oldugu gibi) adSoyad/telefon serbest
+  // metin olarak buraya direkt girilir. Musteri silinirse bu kayit
+  // SILINMEZ, sadece baglantisi kopar (onDelete: SetNull) - CMK dosyasi
+  // kendi basina anlamli bir kayittir, musteri fihristine bagimli degildir.
+  musteriId String?
+  musteri   Musteri? @relation(fields: [musteriId], references: [id], onDelete: SetNull)
+
+  // Her zaman dolu: musteri secilince sunucu tarafinda o musterinin
+  // adiyla otomatik doldurulur (bkz. actions.ts), secilmezse kullanici
+  // dogrudan yazar - liste/arama hep bu alandan hizlica calisir, join
+  // gerekmez.
+  adSoyad String
+  telefon String?
+
+  smsGonderilebilirMi   Boolean @default(false)
+  cmkGorevlendirmeVarMi Boolean @default(true)
+
+  suc     String
+  birim   String
+  dosyaNo String
+
+  durusmaTarihi DateTime?
+
+  dosyaDurumu CMKDosyaDurumu
+
+  hukum       String?
+  cezaMiktari String?
+
+  sonrakiKontrolTarihi DateTime?
+
+  notlar String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // "Ayni birim + dosyaNo yanlislikla iki kez kaydedilmesin" kurali -
+  // DB seviyesinde garanti, actions.ts de bunu once dostca bir mesajla
+  // (P2002 yakalanarak) kullaniciya gosterir.
+  @@unique([birim, dosyaNo])
+  @@index([musteriId])
+  @@index([dosyaDurumu])
+  @@index([durusmaTarihi])
+  @@index([sonrakiKontrolTarihi])
+  @@map("cmk_dosyalari")
 }
