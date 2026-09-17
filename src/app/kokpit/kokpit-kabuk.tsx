@@ -18,11 +18,13 @@ export function KokpitKabuk({
   kullaniciAdSoyad,
   kullaniciRol,
   menuDuzeni,
+  cmkDikkatSayisi,
 }: {
   children: React.ReactNode;
   kullaniciAdSoyad?: string;
   kullaniciRol?: KullaniciRolu;
   menuDuzeni: { anahtar: string; gizliMi: boolean }[];
+  cmkDikkatSayisi?: number;
 }) {
   const pathname = usePathname();
   const modulSeciliMi = pathname !== "/kokpit";
@@ -30,15 +32,15 @@ export function KokpitKabuk({
   return (
     <div className="flex min-h-0 flex-1">
       <aside
-        className={`glass m-3 grow min-h-0 shrink-0 flex-col overflow-y-auto rounded-3xl md:mr-0 md:flex md:w-60 md:grow-0 ${
+        className={`glass m-3 grow min-h-0 shrink-0 flex-col rounded-3xl md:mr-0 md:flex md:w-60 md:grow-0 ${
           modulSeciliMi ? "hidden" : "flex"
         }`}
       >
-        <div className="border-b border-white/10 px-5 py-5">
+        <div className="shrink-0 border-b border-white/10 px-5 py-5">
           <p className="text-base font-semibold tracking-tight text-white">KOKPİT</p>
           <p className="text-sm text-white/45">Eces Hukuk Bürosu</p>
         </div>
-        <KenarCubugu kullaniciRol={kullaniciRol} menuDuzeni={menuDuzeni} />
+        <KenarCubugu kullaniciRol={kullaniciRol} menuDuzeni={menuDuzeni} cmkDikkatSayisi={cmkDikkatSayisi} />
       </aside>
       <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
         <header className="glass m-3 flex items-center justify-between rounded-2xl px-4 py-3 md:px-6">
@@ -47,7 +49,7 @@ export function KokpitKabuk({
               href="/kokpit"
               className="-ml-1 rounded-full px-2 py-1 text-sm font-medium text-[#6db8ff] hover:bg-white/10 md:hidden"
             >
-              ‹ Modüller
+              ‹ Ana Sayfa
             </Link>
             <div className="hidden text-sm text-white/75 md:block">
               {kullaniciAdSoyad}

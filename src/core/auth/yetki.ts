@@ -9,3 +9,9 @@ const SILME_YETKISI_OLAN_ROLLER: KullaniciRolu[] = ["YONETICI", "ORTAK"];
 export function silebilirMi(rol: KullaniciRolu): boolean {
   return SILME_YETKISI_OLAN_ROLLER.includes(rol);
 }
+
+// Geliştirme Kutusu gibi sadece sistem yöneticisine ait alanlar icin -
+// silebilirMi'den (YONETICI+ORTAK) daha dar, yalnizca YONETICI.
+export function sistemYoneticisiMi(rol: KullaniciRolu): boolean {
+  return rol === "YONETICI";
+}

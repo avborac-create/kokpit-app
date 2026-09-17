@@ -22,7 +22,7 @@ export default async function MenuDuzeniSayfasi() {
         anahtar: oge.anahtar,
         ad: modul.ad,
         gizliMi: oge.gizliMi,
-        sabitMi: oge.anahtar === "ayarlar",
+        sabitMi: oge.anahtar === "ayarlar" || oge.anahtar === "ana-sayfa",
       };
     })
     .filter((oge): oge is MenuOgesiSatiri => oge !== null);
@@ -31,9 +31,10 @@ export default async function MenuDuzeniSayfasi() {
     <div>
       <h1 className="mb-1 text-2xl font-semibold tracking-tight text-white">Menü Düzeni</h1>
       <p className="mb-6 max-w-2xl text-sm text-white/50">
-        Sol menüdeki modüllerin sırasını sürükleyerek değiştirin, ihtiyacınız olmayanları
-        &quot;Gizli&quot; yaparak menüden kaldırın. Bir modülün adı/gittiği sayfa burada
-        değişmez — o kod tarafında kalır, burada sadece sıra ve görünürlük ayarlanır.
+        Sol menünün bölüm/hiyerarşi yerleşimi (Ana Sayfa, Çalışma, Finans, Yönetim, Ayarlar)
+        artık sabittir. Burada yalnızca ihtiyacınız olmayan bir öğeyi &quot;Gizli&quot; yaparak sol
+        menüden kaldırabilirsiniz — bir öğenin adı/gittiği sayfa burada değişmez, o kod
+        tarafında kalır.
       </p>
 
       <MenuDuzeniListesi ogeler={ogeler} />

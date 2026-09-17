@@ -402,13 +402,12 @@ async function yinelenenUyusmazlikGruplariniBirlestir() {
 // yaptigi surukle-birak/gizleme degisikligine bu liste bir daha asla
 // dokunmaz.
 const VARSAYILAN_MENU_SIRASI = [
+  "ana-sayfa",
   "musteriler",
   "dava-dosyalari",
-  "finans",
   "muvekkil-finans",
   "cmk-dosyalari",
   "oneriler",
-  "gelistirme-kutusu",
   "ayarlar",
 ];
 

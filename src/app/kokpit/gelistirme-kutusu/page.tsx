@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
-import { silebilirMi } from "@/core/auth/yetki";
+import { sistemYoneticisiMi } from "@/core/auth/yetki";
 import { gelistirmeTalepleriniListele } from "@/core/gelistirme-kutusu/queries";
 import { gelistirmeTalebiGonder } from "@/core/gelistirme-kutusu/actions";
 import { GelistirmeKutusuPanosu, type PanoKarti } from "@/core/gelistirme-kutusu/gelistirme-kutusu-panosu";
@@ -10,7 +10,7 @@ import { GonderButonu } from "@/core/ui/gonder-butonu";
 
 export default async function GelistirmeKutusuSayfasi() {
   const kullanici = await mevcutKullanici();
-  if (!kullanici || !silebilirMi(kullanici.rol)) {
+  if (!kullanici || !sistemYoneticisiMi(kullanici.rol)) {
     redirect("/kokpit");
   }
 
