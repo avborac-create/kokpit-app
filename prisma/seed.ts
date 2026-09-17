@@ -207,6 +207,37 @@ const SECENEK_LISTELERI: {
       { kod: "tamamlandi", etiket: "Tamamlandı" },
     ],
   },
+  // Avukat Sapkasi (HukukiMudahale) - siniflandirma icin opsiyonel tur
+  // listesi, kullanicinin kendi verdigi ornek liste birebir.
+  {
+    anahtar: "hukuki_mudahale_turu",
+    ad: "Hukuki Müdahale Türü",
+    degerler: [
+      { kod: "dava_acilmasi", etiket: "Dava Açılması" },
+      { kod: "cevap_dilekcesi", etiket: "Cevap Dilekçesi Hazırlanması" },
+      { kod: "cevaba_cevap", etiket: "Cevaba Cevap Hazırlanması" },
+      { kod: "bilirkisi_itirazi", etiket: "Bilirkişi Raporuna İtiraz" },
+      { kod: "beyan_dilekcesi", etiket: "Beyan Dilekçesi Hazırlanması" },
+      { kod: "delil_sunulmasi", etiket: "Delil Sunulması" },
+      { kod: "durusmaya_hazirlik", etiket: "Duruşmaya Hazırlık" },
+      { kod: "ara_karar_islemi", etiket: "Ara Karara Karşı İşlem Yapılması" },
+      { kod: "istinaf_dilekcesi", etiket: "İstinaf Dilekçesi Hazırlanması" },
+      { kod: "temyiz_dilekcesi", etiket: "Temyiz Dilekçesi Hazırlanması" },
+      { kod: "hukuki_degerlendirme", etiket: "Hukuki Değerlendirme" },
+      { kod: "kanun_yolu_stratejisi", etiket: "Kanun Yolu Stratejisinin Belirlenmesi" },
+      { kod: "diger", etiket: "Diğer" },
+    ],
+  },
+  {
+    anahtar: "hukuki_mudahale_onceligi",
+    ad: "Hukuki Müdahale Önceliği",
+    degerler: [
+      { kod: "dusuk", etiket: "Düşük" },
+      { kod: "normal", etiket: "Normal" },
+      { kod: "yuksek", etiket: "Yüksek" },
+      { kod: "acil", etiket: "Acil" },
+    ],
+  },
 ];
 
 async function secenekListeleriniOlustur() {
@@ -405,6 +436,8 @@ const VARSAYILAN_MENU_SIRASI = [
   "ana-sayfa",
   "musteriler",
   "dava-dosyalari",
+  "avukat-sapkasi",
+  "karar-sonrasi-takip",
   "muvekkil-finans",
   "cmk-dosyalari",
   "oneriler",

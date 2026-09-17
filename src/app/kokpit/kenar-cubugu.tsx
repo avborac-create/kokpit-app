@@ -10,6 +10,8 @@ import {
   MuvekkillerIkonu,
   DosyalarIkonu,
   HukukDosyalariIkonu,
+  AvukatSapkasiIkonu,
+  KararSonrasiTakipIkonu,
   CezaDosyalariIkonu,
   MuvekkilFinansIkonu,
   OnerilerIkonu,
@@ -85,6 +87,10 @@ export function KenarCubugu({
     return true;
   }
 
+  const avukatSapkasiAktifMi = yol.startsWith("/kokpit/dava-dosyalari/avukat-sapkasi");
+  const kararSonrasiTakipAktifMi = yol.startsWith("/kokpit/dava-dosyalari/karar-sonrasi-takip");
+  const hukukDosyalariAktifMi =
+    yol.startsWith("/kokpit/dava-dosyalari") && !avukatSapkasiAktifMi && !kararSonrasiTakipAktifMi;
   const dosyalarCocukAktifMi = yol.startsWith("/kokpit/dava-dosyalari") || yol.startsWith("/kokpit/cmk-dosyalari");
   const kayitliAcikMi = useSyncExternalStore(dosyalarAbone, dosyalarDegeriOku, () => null);
   const dosyalarAcikMi = kayitliAcikMi ?? dosyalarCocukAktifMi;
@@ -107,7 +113,10 @@ export function KenarCubugu({
         {gorunurMu("musteriler") && (
           <MenuBagi modul={modulHaritasi.get("musteriler")!} ikon={MuvekkillerIkonu} seciliMi={yol.startsWith("/kokpit/musteriler")} />
         )}
-        {(gorunurMu("dava-dosyalari") || gorunurMu("cmk-dosyalari")) && (
+        {(gorunurMu("dava-dosyalari") ||
+          gorunurMu("avukat-sapkasi") ||
+          gorunurMu("karar-sonrasi-takip") ||
+          gorunurMu("cmk-dosyalari")) && (
           <>
             <button
               type="button"
@@ -128,7 +137,21 @@ export function KenarCubugu({
                   <MenuBagi
                     modul={modulHaritasi.get("dava-dosyalari")!}
                     ikon={HukukDosyalariIkonu}
-                    seciliMi={yol.startsWith("/kokpit/dava-dosyalari")}
+                    seciliMi={hukukDosyalariAktifMi}
+                  />
+                )}
+                {gorunurMu("avukat-sapkasi") && (
+                  <MenuBagi
+                    modul={modulHaritasi.get("avukat-sapkasi")!}
+                    ikon={AvukatSapkasiIkonu}
+                    seciliMi={avukatSapkasiAktifMi}
+                  />
+                )}
+                {gorunurMu("karar-sonrasi-takip") && (
+                  <MenuBagi
+                    modul={modulHaritasi.get("karar-sonrasi-takip")!}
+                    ikon={KararSonrasiTakipIkonu}
+                    seciliMi={kararSonrasiTakipAktifMi}
                   />
                 )}
                 {gorunurMu("cmk-dosyalari") && (

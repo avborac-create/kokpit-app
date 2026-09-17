@@ -68,6 +68,29 @@ export function CezaDosyalariIkonu(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+// Avukat sapkasi - hukuki muzakere/toga cizgisi, eyleme donuk isleri
+// (dilekce/degerlendirme) temsil eder.
+export function AvukatSapkasiIkonu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Taban {...props}>
+      <path d="M10 3 17 6.5 10 10 3 6.5Z" />
+      <path d="M6 8.2V12c0 1.4 1.8 2.5 4 2.5s4-1.1 4-2.5V8.2" />
+      <path d="M3 6.5V11" />
+    </Taban>
+  );
+}
+
+// Karar sonrasi takip - gozlem/bekleme noktasini temsil eden bir saat.
+export function KararSonrasiTakipIkonu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Taban {...props}>
+      <circle cx="10" cy="10.5" r="6.5" />
+      <path d="M10 7v3.5l2.5 1.5" />
+      <path d="M7.5 2.75h5" />
+    </Taban>
+  );
+}
+
 export function MuvekkilFinansIkonu(props: SVGProps<SVGSVGElement>) {
   return (
     <Taban {...props}>

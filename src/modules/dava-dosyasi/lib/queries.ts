@@ -65,6 +65,13 @@ export async function davaDosyasiGetir(id: string) {
         include: { kullanimAmaci: true, paraTrafigi: true },
         orderBy: { olusturmaTarihi: "desc" },
       },
+      hukukiMudahaleler: {
+        include: { mudahaleTuru: true, oncelik: true, sorumluAvukat: true },
+        orderBy: [{ durum: "asc" }, { sonTarih: "asc" }, { olusturmaTarihi: "desc" }],
+      },
+      finansHareketleri: {
+        orderBy: { tarih: "desc" },
+      },
     },
   });
 }
@@ -338,5 +345,90 @@ export async function uyusmazlikGruplariniTumListele(filtre: { arama?: string } 
       _count: { select: { dosyalar: true } },
     },
     orderBy: { olusturmaTarihi: "desc" },
+  });
+}
+
+// ============================================================
+// Dava Dosyasi Yasam Dongusu: Avukat Sapkasi + Karar Sonrasi Takip
+// (bkz. ARCHITECTURE.md) - ikisi de AYNI DavaDosyasi kayitlarini farkli
+// where kosullariyla okur, ayri bir model/tablo YOK.
+// ============================================================
+
+export type AvukatSapkasiFiltre = {
+  arama?: string;
+  sorumluAvukatId?: string;
+  oncelikKod?: string;
+  // varsayilan: sadece acik (Beklemede/Devam Ediyor) isler - "Tamamlandi"/
+  // "Iptal Edildi" gecmis kayitlar olarak listede kalabalik yaratmasin.
+  tumDurumlar?: boolean;
+};
+
+// Avukat Sapkasi ekrani: TUM dosyalardaki HukukiMudahale kayitlarinin
+// genel calisma listesi - "Bu dosyada ne yapmaliyim?" sorusuna firma
+// genelinde cevap verir.
+export async function acikHukukiMudahaleleriListele(filtre: AvukatSapkasiFiltre = {}) {
+  return prisma.hukukiMudahale.findMany({
+    where: {
+      ...(filtre.tumDurumlar ? {} : { durum: { in: ["BEKLEMEDE", "DEVAM_EDIYOR"] } }),
+      ...(filtre.sorumluAvukatId ? { sorumluAvukatId: filtre.sorumluAvukatId } : {}),
+      ...(filtre.oncelikKod ? { oncelik: { kod: filtre.oncelikKod } } : {}),
+      ...(filtre.arama
+        ? {
+            OR: [
+              { baslik: { contains: filtre.arama, mode: "insensitive" } },
+              { davaDosyasi: { konu: { contains: filtre.arama, mode: "insensitive" } } },
+              { davaDosyasi: { dosyaNo: { contains: filtre.arama, mode: "insensitive" } } },
+              {
+                davaDosyasi: {
+                  muvekkiller: { some: { musteri: { adSoyadUnvan: { contains: filtre.arama, mode: "insensitive" } } } },
+                },
+              },
+            ],
+          }
+        : {}),
+    },
+    include: {
+      davaDosyasi: { include: { muvekkiller: { include: { musteri: true } } } },
+      mudahaleTuru: true,
+      oncelik: true,
+      sorumluAvukat: true,
+    },
+    orderBy: [{ sonTarih: { sort: "asc", nulls: "last" } }, { olusturmaTarihi: "desc" }],
+  });
+}
+
+export type KararSonrasiTakipFiltre = {
+  arama?: string;
+  sorumluAvukatId?: string;
+  // varsayilan: KESINLESTI olanlar aktif takip listesinde kalabalik
+  // yaratmasin diye disarida - "Kesinlesmisler dahil" ile acilabilir.
+  tumEvreler?: boolean;
+};
+
+// Karar Sonrasi Takip ekrani: dosyaEvresi ATANMIS (bos olmayan) tum
+// dosyalarin listesi - "Bu dosya nerede, ne bekleniyor?" sorusuna cevap
+// verir. Evre ataması yapılmamış dosyalar burada BILEREK gorunmez (bkz.
+// ARCHITECTURE.md "Mevcut Veriyle Uyum").
+export async function kararSonrasiTakipListele(filtre: KararSonrasiTakipFiltre = {}) {
+  return prisma.davaDosyasi.findMany({
+    where: {
+      dosyaEvresi: { not: null },
+      ...(filtre.tumEvreler ? {} : { NOT: { dosyaEvresi: "KESINLESTI" } }),
+      ...(filtre.sorumluAvukatId ? { sorumluAvukatId: filtre.sorumluAvukatId } : {}),
+      ...(filtre.arama
+        ? {
+            OR: [
+              { konu: { contains: filtre.arama, mode: "insensitive" } },
+              { dosyaNo: { contains: filtre.arama, mode: "insensitive" } },
+              { muvekkiller: { some: { musteri: { adSoyadUnvan: { contains: filtre.arama, mode: "insensitive" } } } } },
+            ],
+          }
+        : {}),
+    },
+    include: {
+      muvekkiller: { include: { musteri: true } },
+      sorumluAvukat: true,
+    },
+    orderBy: [{ sonrakiKontrolTarihi: { sort: "asc", nulls: "last" } }],
   });
 }
