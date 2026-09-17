@@ -29,8 +29,8 @@ export type ModulTanimi = {
 export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
   { anahtar: "ana-sayfa", ad: "Ana Sayfa", yol: "/kokpit", aktif: true },
   { anahtar: "musteriler", ad: "Müvekkiller", yol: "/kokpit/musteriler", aktif: true },
-  { anahtar: "dava-dosyalari", ad: "Hukuk Dosyaları", yol: "/kokpit/dava-dosyalari", aktif: true },
-  { anahtar: "cmk-dosyalari", ad: "Ceza / CMK Dosyaları", yol: "/kokpit/cmk-dosyalari", aktif: true },
+  { anahtar: "dava-dosyalari", ad: "Yargı Dosyaları", yol: "/kokpit/dava-dosyalari", aktif: true },
+  { anahtar: "cmk-dosyalari", ad: "CMK Dosyaları", yol: "/kokpit/cmk-dosyalari", aktif: true },
   { anahtar: "muvekkil-finans", ad: "Müvekkil Finans", yol: "/kokpit/muvekkil-finans", aktif: true },
   {
     anahtar: "oneriler",
