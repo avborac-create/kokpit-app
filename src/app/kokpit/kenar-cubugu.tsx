@@ -114,7 +114,7 @@ export function KenarCubugu({
               onClick={dosyalarAcKapa}
               aria-expanded={dosyalarAcikMi}
               aria-controls="dosyalar-alt-menu"
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] text-white/65 outline-none transition-colors hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0d12]"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] text-white/65 outline-none transition-colors hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#12151d]"
             >
               <DosyalarIkonu className="h-[18px] w-[18px] shrink-0" />
               <span className="flex-1 truncate">Dosyalar</span>
@@ -218,7 +218,7 @@ function MenuBagi({
     <Link
       href={modul.yol}
       aria-current={seciliMi ? "page" : undefined}
-      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0d12] ${
+      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#12151d] ${
         seciliMi ? "bg-[var(--accent-soft)] text-white" : "text-white/65 hover:bg-white/[0.06]"
       }`}
     >
