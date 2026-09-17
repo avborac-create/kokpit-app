@@ -198,6 +198,29 @@ const SECENEK_LISTELERI: {
       { kod: "diger", etiket: "Diğer" },
     ],
   },
+  // Dosya Cari Hesabi (DosyaFatura) - bkz. schema.prisma. Muvekkile
+  // kesilen fatura/hakedis kaleminin turu; masraf_turu'nden ayri (o,
+  // burodan cikan harcamalarin turu).
+  {
+    anahtar: "fatura_turu",
+    ad: "Fatura Türü",
+    degerler: [
+      { kod: "akdi_vekalet_ucreti", etiket: "Akdi Vekalet Ücreti" },
+      { kod: "masraf_yansitma", etiket: "Masraf Yansıtma" },
+      { kod: "danismanlik_ucreti", etiket: "Danışmanlık Ücreti" },
+      { kod: "diger", etiket: "Diğer" },
+    ],
+  },
+  // DosyaMasrafi'ndaki masraf_durumu ile ayni desen: yanlis girilen bir
+  // fatura silinmez, iptal edilir (bkz. DosyaFatura yorumu).
+  {
+    anahtar: "fatura_durumu",
+    ad: "Fatura Durumu",
+    degerler: [
+      { kod: "gecerli", etiket: "Geçerli" },
+      { kod: "iptal_edildi", etiket: "İptal Edildi" },
+    ],
+  },
   {
     anahtar: "gelistirme_talebi_durumu",
     ad: "Geliştirme Talebi Durumu",

@@ -7,6 +7,8 @@ import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-d
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 
+const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
+
 export default async function DavaDosyalariSayfasi({
   searchParams,
 }: {
@@ -50,19 +52,22 @@ export default async function DavaDosyalariSayfasi({
         </Dugme>
       </form>
 
+      {/* Dosya No/Tür/Birim ayrı sütun olmak yerine Konu'nun altında ikinci
+          satır olarak gösterilir (üçü de opsiyonel alanlar, her dosyada
+          dolu olmayabilir) - Sorumlu Avukat sütunu kaldırıldı (dosya
+          kartında zaten görünüyor, listede az kullanılan bir kırılım),
+          yerine dosyanın basit Cari Hesap bakiyesi eklendi - bkz.
+          dosyaCariHesapDefteri. */}
       <div className="glass overflow-x-auto rounded-2xl">
         <table className="w-full text-left text-sm">
           <thead className="text-white/50">
             <tr>
               <th className="px-4 py-3 font-medium">Kokpit No</th>
-              <th className="px-4 py-3 font-medium">Dosya No</th>
-              <th className="px-4 py-3 font-medium">Tür</th>
-              <th className="px-4 py-3 font-medium">Birim</th>
               <th className="px-4 py-3 font-medium">Konu</th>
               <th className="px-4 py-3 font-medium">Karşı Taraf</th>
               <th className="px-4 py-3 font-medium">Müvekkil(ler)</th>
               <th className="px-4 py-3 font-medium">Durum</th>
-              <th className="px-4 py-3 font-medium">Sorumlu Avukat</th>
+              <th className="px-4 py-3 font-medium">Bakiye</th>
               <th className="px-4 py-3 font-medium">İşlemler</th>
             </tr>
           </thead>
@@ -77,10 +82,14 @@ export default async function DavaDosyalariSayfasi({
                     KP-{String(dosya.kayitNo).padStart(4, "0")}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-white/60">{dosya.dosyaNo ?? "—"}</td>
-                <td className="px-4 py-3 text-white/60">{dosya.tur?.etiket ?? "—"}</td>
-                <td className="px-4 py-3 text-white/60">{dosya.birimAdi ?? "—"}</td>
-                <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
+                <td className="px-4 py-3">
+                  <p className="text-white/85">{dosya.konu}</p>
+                  {(dosya.dosyaNo || dosya.tur || dosya.birimAdi) && (
+                    <p className="mt-0.5 text-xs text-white/40">
+                      {[dosya.dosyaNo, dosya.tur?.etiket, dosya.birimAdi].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-white/60">
                   {dosya.karsiTaraflar.length > 0
                     ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ")
@@ -94,7 +103,19 @@ export default async function DavaDosyalariSayfasi({
                     {dosya.durum.etiket}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-white/60">{dosya.sorumluAvukat?.adSoyad ?? "—"}</td>
+                <td className="px-4 py-3">
+                  {dosya.cariHesapBakiyesi !== 0 ? (
+                    <span
+                      className={
+                        dosya.cariHesapBakiyesi > 0 ? "text-[#ff7a70]" : "text-[#32d74b]"
+                      }
+                    >
+                      {paraFormatlayici.format(Math.abs(dosya.cariHesapBakiyesi))}
+                    </span>
+                  ) : (
+                    <span className="text-white/35">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Link href={`/kokpit/dava-dosyalari/${dosya.id}/duzenle`}>
@@ -109,7 +130,7 @@ export default async function DavaDosyalariSayfasi({
             ))}
             {dosyalar.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={7} className="px-4 py-8 text-center text-white/40">
                   Kayıt bulunamadı.
                 </td>
               </tr>

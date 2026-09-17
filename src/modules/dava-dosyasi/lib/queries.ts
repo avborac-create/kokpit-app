@@ -7,7 +7,7 @@ export type DavaDosyasiFiltre = {
 };
 
 export async function davaDosyalariniListele(filtre: DavaDosyasiFiltre = {}) {
-  return prisma.davaDosyasi.findMany({
+  const dosyalar = await prisma.davaDosyasi.findMany({
     where: {
       ...(filtre.arama
         ? {
@@ -28,8 +28,22 @@ export async function davaDosyalariniListele(filtre: DavaDosyasiFiltre = {}) {
       karsiTaraflar: { include: { karsiTaraf: true } },
       uyusmazlikGrubu: true,
       muvekkiller: { include: { musteri: true } },
+      faturalar: { where: { NOT: { durum: { kod: "iptal_edildi" } } }, select: { tutar: true } },
+      paraTrafigiKayitlari: {
+        where: { paraTrafigi: { durum: { kod: "tahsil_edildi" } } },
+        select: { paraTrafigi: { select: { tutar: true } } },
+      },
     },
     orderBy: { olusturmaTarihi: "desc" },
+  });
+
+  // Liste ekraninda dosya bazinda basit bakiye (bkz. dosyaCariHesapDefteri
+  // ile ayni formul) - burada ayri bir sorgu yerine tek seferde hesaplanir,
+  // cunku sadece toplam gerekiyor, satir satir dokum degil.
+  return dosyalar.map((dosya) => {
+    const toplamFatura = dosya.faturalar.reduce((t, f) => t + Number(f.tutar), 0);
+    const toplamTahsilat = dosya.paraTrafigiKayitlari.reduce((t, k) => t + Number(k.paraTrafigi.tutar), 0);
+    return { ...dosya, cariHesapBakiyesi: toplamFatura - toplamTahsilat };
   });
 }
 
@@ -56,6 +70,10 @@ export async function davaDosyasiGetir(id: string) {
       },
       masraflar: {
         include: { cariKod: true, tur: true },
+        orderBy: { tarih: "desc" },
+      },
+      faturalar: {
+        include: { tur: true, durum: true },
         orderBy: { tarih: "desc" },
       },
       karsiTarafAlacaklari: {
@@ -219,6 +237,81 @@ export async function uyusmazlikGrubuCariHesapOzeti(uyusmazlikGrubuId: string) {
 
 export async function dosyaMasrafiGetir(masrafId: string) {
   return prisma.dosyaMasrafi.findUnique({ where: { id: masrafId } });
+}
+
+export async function dosyaFaturasiGetir(faturaId: string) {
+  return prisma.dosyaFatura.findUnique({ where: { id: faturaId } });
+}
+
+export type DosyaCariHesapSatiri = {
+  id: string;
+  tarih: Date;
+  aciklama: string;
+  borc: number;
+  alacak: number;
+  bakiye: number;
+};
+
+// Dosya Cari Hesabi (basitlestirilmis) - bkz. schema.prisma DosyaFatura
+// yorumu. Cari hesaba SADECE iki sey islenir: (1) o dosyaya kesilen
+// faturalar (borc) ve (2) o dosyaya istinaden musteriden gelen paralar
+// (alacak - ParaTrafigiDosyasi uzerinden baglanmis, "tahsil_edildi"
+// durumundaki MusteriParaTrafigi kayitlari). Tek kronolojik dokumde,
+// kosan bir bakiye ile birlestirilir. DosyaMasrafi/ParaTrafigiTasnif
+// (eski, cari-kod bazli sistem) BILEREK bu hesaba DAHIL EDILMEZ -
+// musterinin cari hesabindan degil, buronun kendi faturalandirmasindan
+// bahsediyoruz (bkz. ARCHITECTURE.md).
+export async function dosyaCariHesapDefteri(dosyaId: string) {
+  const [faturalar, tahsilatlar] = await Promise.all([
+    prisma.dosyaFatura.findMany({
+      // durumId nullable (NULL = "Geçerli", bkz. DosyaFatura yorumu) -
+      // `durum: {kod: {not:...}}` nullable iliskide NULL satirlari YANLIŞLIKLA
+      // disarida birakir; bu yuzden ustte NOT ile negatif filtre kuruluyor.
+      where: { dosyaId, NOT: { durum: { kod: "iptal_edildi" } } },
+      include: { tur: true },
+      orderBy: { tarih: "asc" },
+    }),
+    prisma.paraTrafigiDosyasi.findMany({
+      where: { dosyaId, paraTrafigi: { durum: { kod: "tahsil_edildi" } } },
+      include: { paraTrafigi: true },
+      orderBy: { paraTrafigi: { tarih: "asc" } },
+    }),
+  ]);
+
+  type HamSatir = { id: string; tarih: Date; aciklama: string; borc: number; alacak: number };
+
+  const hamSatirlar: HamSatir[] = [
+    ...faturalar.map((f) => ({
+      id: `fatura-${f.id}`,
+      tarih: f.tarih,
+      aciklama: `${f.tur.etiket} — ${f.aciklama}`,
+      borc: Number(f.tutar),
+      alacak: 0,
+    })),
+    ...tahsilatlar.map((t) => ({
+      id: `tahsilat-${t.id}`,
+      tarih: t.paraTrafigi.tarih,
+      aciklama: t.paraTrafigi.aciklama ?? "Müvekkilden gelen para",
+      borc: 0,
+      alacak: Number(t.paraTrafigi.tutar),
+    })),
+  ].sort((a, b) => a.tarih.getTime() - b.tarih.getTime());
+
+  let kosanBakiye = 0;
+  const satirlar: DosyaCariHesapSatiri[] = hamSatirlar.map((satir) => {
+    kosanBakiye += satir.borc - satir.alacak;
+    return { ...satir, bakiye: kosanBakiye };
+  });
+
+  const toplamFatura = faturalar.reduce((toplam, f) => toplam + Number(f.tutar), 0);
+  const toplamTahsilat = tahsilatlar.reduce((toplam, t) => toplam + Number(t.paraTrafigi.tutar), 0);
+
+  return {
+    satirlar: satirlar.reverse(), // ekranda en yeni en ustte
+    toplamFatura,
+    toplamTahsilat,
+    bakiye: toplamFatura - toplamTahsilat,
+  };
 }
 
 // Musteri seviyesinde ozet: musterinin TUM gruplarina/dosyalarina (ve

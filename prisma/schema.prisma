@@ -98,6 +98,8 @@ model SecenekDegeri {
   dosyaMasrafiCariKod           DosyaMasrafi[]        @relation("DosyaMasrafiCariKod")
   dosyaMasrafiTuru              DosyaMasrafi[]        @relation("DosyaMasrafiTuru")
   dosyaMasrafiDurum             DosyaMasrafi[]        @relation("DosyaMasrafiDurumu")
+  dosyaFaturaTuru               DosyaFatura[]         @relation("DosyaFaturaTuru")
+  dosyaFaturaDurum              DosyaFatura[]         @relation("DosyaFaturaDurumu")
   gelistirmeTalepleriDurum      GelistirmeTalebi[]    @relation("GelistirmeTalebiDurumu")
   uyusmazlikGrubuDurum          UyusmazlikGrubu[]     @relation("UyusmazlikGrubuDurumu")
   paraTrafigiSahiplik           MusteriParaTrafigi[]  @relation("ParaKaydiSahibi")
@@ -464,6 +466,7 @@ model DavaDosyasi {
   karsiTaraflar          DosyaKarsiTarafi[]
   paraTrafigiKayitlari   ParaTrafigiDosyasi[]
   masraflar              DosyaMasrafi[]
+  faturalar              DosyaFatura[]
   karsiTarafAlacaklari   KarsiTarafAlacagi[]
   paraTrafigiDagitimlari ParaTrafigiDagitimi[]
   finansHareketleri      MusteriFinansHareketi[]
@@ -536,6 +539,40 @@ model DosyaMasrafi {
   @@index([turId])
   @@index([durumId])
   @@map("dosya_masraflari")
+}
+
+// Dosyanin CARI HESABI - basitlestirilmis model (bkz. ARCHITECTURE.md
+// "Dosya Cari Hesabi"). DosyaMasrafi/ParaTrafigiTasnif'ten (cari-kod
+// bazli, "hangi kalemden dusulecek" mantigi) BILEREK AYRI: bu, doğrudan
+// müvekkile kesilen bir FATURA/hakedis kalemidir - "buro muvekkile ne
+// kadar fatura etti" sorusuna cevap verir, "muvekkilin parasi hangi
+// havuzdan harcandi" sorusuna degil. Dosyanin cari hesap bakiyesi = bu
+// tablonun toplami - o dosyaya istinaden gelen paralarin (bkz.
+// ParaTrafigiDosyasi) toplami; bkz. dosyaCariHesapDefteri.
+model DosyaFatura {
+  id      String      @id @default(cuid())
+  dosyaId String
+  dosya   DavaDosyasi @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+
+  tarih    DateTime
+  turId    String
+  tur      SecenekDegeri @relation("DosyaFaturaTuru", fields: [turId], references: [id])
+  aciklama String
+  tutar    Decimal       @db.Decimal(14, 2)
+
+  // DosyaMasrafi'ndaki "iptal edilebilir, silinmez" deseniyle ayni
+  // gerekce (bkz. o modelin yorumu) - yanlis girilen bir fatura satir
+  // olarak durur, sadece cari hesaba dahil edilmez. Nullable: NULL
+  // "Geçerli" (aktif) sayilir.
+  durumId String?
+  durum   SecenekDegeri? @relation("DosyaFaturaDurumu", fields: [durumId], references: [id])
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([dosyaId])
+  @@index([turId])
+  @@index([durumId])
+  @@map("dosya_faturalari")
 }
 
 // Musteri <-> DavaDosyasi coka-cok iliski (ara) tablosu.

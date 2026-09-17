@@ -206,6 +206,7 @@ export async function davaDosyasiSil(id: string) {
       _count: {
         select: {
           masraflar: true,
+          faturalar: true,
           karsiTarafAlacaklari: true,
           paraTrafigiKayitlari: true,
           paraTrafigiDagitimlari: true,
@@ -215,10 +216,17 @@ export async function davaDosyasiSil(id: string) {
     },
   });
   if (!dosya) return;
-  const { masraflar, karsiTarafAlacaklari, paraTrafigiKayitlari, paraTrafigiDagitimlari, finansHareketleri } =
-    dosya._count;
+  const {
+    masraflar,
+    faturalar,
+    karsiTarafAlacaklari,
+    paraTrafigiKayitlari,
+    paraTrafigiDagitimlari,
+    finansHareketleri,
+  } = dosya._count;
   if (
     masraflar > 0 ||
+    faturalar > 0 ||
     karsiTarafAlacaklari > 0 ||
     paraTrafigiKayitlari > 0 ||
     paraTrafigiDagitimlari > 0 ||
@@ -351,6 +359,71 @@ export async function dosyaMasrafiDurumDegistir(id: string, dosyaId: string, dur
   if (!durum) throw new Error("Masraf durum listesi bulunamadı.");
 
   await prisma.dosyaMasrafi.update({ where: { id }, data: { durumId: durum.id } });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+// ============================================================
+// Dosya Cari Hesabi (DosyaFatura) - bkz. schema.prisma DosyaFatura
+// yorumu ve ARCHITECTURE.md. dosyaMasrafiEkle/Guncelle/Sil'in aynen
+// desenini izler.
+// ============================================================
+
+export async function dosyaFaturasiEkle(dosyaId: string, formData: FormData) {
+  const tarih = String(formData.get("tarih") ?? "");
+  const turId = String(formData.get("turId") ?? "");
+  const aciklama = String(formData.get("aciklama") ?? "").trim();
+  const tutar = String(formData.get("tutar") ?? "");
+
+  if (!tarih || !turId || !aciklama || !tutar) {
+    throw new Error("Tarih, tür, açıklama ve tutar alanları zorunludur.");
+  }
+
+  await prisma.dosyaFatura.create({
+    data: { dosyaId, turId, tarih: new Date(tarih), aciklama, tutar },
+  });
+
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+export async function dosyaFaturasiGuncelle(dosyaId: string, faturaId: string, formData: FormData) {
+  const tarih = String(formData.get("tarih") ?? "");
+  const turId = String(formData.get("turId") ?? "");
+  const aciklama = String(formData.get("aciklama") ?? "").trim();
+  const tutar = String(formData.get("tutar") ?? "");
+
+  if (!tarih || !turId || !aciklama || !tutar) {
+    throw new Error("Tarih, tür, açıklama ve tutar alanları zorunludur.");
+  }
+
+  await prisma.dosyaFatura.update({
+    where: { id: faturaId },
+    data: { turId, tarih: new Date(tarih), aciklama, tutar },
+  });
+
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+  redirect(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+export async function dosyaFaturasiSil(id: string, dosyaId: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici || !silebilirMi(kullanici.rol)) {
+    throw new Error("Bu işlem için yetkiniz yok.");
+  }
+
+  await prisma.dosyaFatura.delete({ where: { id } });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+// Yanlis girilen bir fatura da (DosyaMasrafi gibi) SILINMEK yerine
+// IPTAL EDILEBILIR - satir kalici olarak durur, sadece cari hesaba dahil
+// edilmez (bkz. dosyaCariHesapDefteri).
+export async function dosyaFaturasiDurumDegistir(id: string, dosyaId: string, durumKodu: "gecerli" | "iptal_edildi") {
+  const durum = await prisma.secenekDegeri.findFirst({
+    where: { kod: durumKodu, liste: { anahtar: "fatura_durumu" } },
+  });
+  if (!durum) throw new Error("Fatura durum listesi bulunamadı.");
+
+  await prisma.dosyaFatura.update({ where: { id }, data: { durumId: durum.id } });
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
 
