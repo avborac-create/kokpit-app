@@ -71,7 +71,7 @@ export function OneriButonu() {
       // foreignObject icinde tarayiciya cizdirdigi icin bu sinirlamayi tasimaz.
       const { toCanvas } = await import("html-to-image");
       const tamSayfa = await toCanvas(document.body, {
-        backgroundColor: "#0b0d12",
+        backgroundColor: "#12151d",
         pixelRatio: 1,
       });
       const kirpilmis = document.createElement("canvas");

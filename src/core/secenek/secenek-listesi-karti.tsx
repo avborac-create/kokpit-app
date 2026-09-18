@@ -1,6 +1,6 @@
 import { secenekDegeriEkle } from "@/core/secenek/admin-actions";
 import { SecenekDegeriSatiri } from "@/core/secenek/secenek-degeri-satiri";
-import { Dugme } from "@/core/ui/button";
+import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { Girdi } from "@/core/ui/form";
 
 type Liste = {
@@ -50,9 +50,9 @@ export function SecenekListesiKarti({ liste }: { liste: Liste }) {
         className="flex items-center gap-2"
       >
         <Girdi name="etiket" placeholder="Yeni değer (ör. Bilirkişi Ücreti)" required className="max-w-xs" />
-        <Dugme type="submit" varyant="ikincil">
+        <GonderButonu varyant="ikincil" bekleyenMetin="Ekleniyor…">
           + Ekle
-        </Dugme>
+        </GonderButonu>
       </form>
     </div>
   );

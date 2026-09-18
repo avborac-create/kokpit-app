@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import type { HukukiMudahaleDurumu, DosyaEvresi } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
@@ -452,4 +453,148 @@ export async function uyusmazlikGrubuSil(id: string) {
 
   await prisma.uyusmazlikGrubu.delete({ where: { id } });
   revalidatePath("/kokpit/dava-dosyalari");
+}
+
+// ============================================================
+// Avukat Sapkasi (HukukiMudahale) + Karar Sonrasi Takip (dosyaEvresi)
+// bkz. ARCHITECTURE.md "Dava Dosyasi Yasam Dongusu"
+// ============================================================
+
+const GECERLI_HUKUKI_MUDAHALE_DURUMLARI: HukukiMudahaleDurumu[] = [
+  "BEKLEMEDE",
+  "DEVAM_EDIYOR",
+  "TAMAMLANDI",
+  "IPTAL_EDILDI",
+];
+
+const GECERLI_DOSYA_EVRELERI: DosyaEvresi[] = [
+  "ACILIS",
+  "DERDEST",
+  "KARAR_VERILDI",
+  "GEREKCELI_KARAR_BEKLENIYOR",
+  "GEREKCELI_KARAR_HAZIR",
+  "TEBLIG_BEKLENIYOR",
+  "KANUN_YOLU_DEGERLENDIRME",
+  "ISTINAFTA",
+  "BAM_KARARI_GELDI",
+  "TEMYIZ_DEGERLENDIRME",
+  "TEMYIZDE",
+  "KESINLESME_BEKLENIYOR",
+  "KESINLESTI",
+];
+
+export async function hukukiMudahaleEkle(davaDosyasiId: string, formData: FormData) {
+  const baslik = String(formData.get("baslik") ?? "").trim();
+  if (!baslik) {
+    throw new Error("Müdahale başlığı zorunludur.");
+  }
+
+  await prisma.hukukiMudahale.create({
+    data: {
+      davaDosyasiId,
+      baslik,
+      aciklama: metinYaAlNull(formData, "aciklama"),
+      mudahaleTuruId: metinYaAlNull(formData, "mudahaleTuruId"),
+      oncelikId: metinYaAlNull(formData, "oncelikId"),
+      sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
+      sonTarih: (() => {
+        const deger = metinYaAlNull(formData, "sonTarih");
+        return deger ? new Date(deger) : null;
+      })(),
+    },
+  });
+
+  revalidatePath(`/kokpit/dava-dosyalari/${davaDosyasiId}`);
+  revalidatePath("/kokpit/dava-dosyalari/avukat-sapkasi");
+}
+
+export async function hukukiMudahaleGuncelle(id: string, davaDosyasiId: string, formData: FormData) {
+  const baslik = String(formData.get("baslik") ?? "").trim();
+  if (!baslik) {
+    throw new Error("Müdahale başlığı zorunludur.");
+  }
+  const durum = String(formData.get("durum") ?? "") as HukukiMudahaleDurumu;
+  if (!GECERLI_HUKUKI_MUDAHALE_DURUMLARI.includes(durum)) {
+    throw new Error("Geçerli bir durum seçin.");
+  }
+  const sonTarihHam = metinYaAlNull(formData, "sonTarih");
+
+  await prisma.hukukiMudahale.update({
+    where: { id },
+    data: {
+      baslik,
+      aciklama: metinYaAlNull(formData, "aciklama"),
+      mudahaleTuruId: metinYaAlNull(formData, "mudahaleTuruId"),
+      oncelikId: metinYaAlNull(formData, "oncelikId"),
+      sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
+      sonTarih: sonTarihHam ? new Date(sonTarihHam) : null,
+      durum,
+      tamamlanmaTarihi: durum === "TAMAMLANDI" ? new Date() : null,
+    },
+  });
+
+  revalidatePath(`/kokpit/dava-dosyalari/${davaDosyasiId}`);
+  revalidatePath("/kokpit/dava-dosyalari/avukat-sapkasi");
+}
+
+// Listeden hizli durum degistirme (ör. "Tamamlandi" isaretleme) - tam
+// duzenleme formuna girmeden.
+export async function hukukiMudahaleDurumDegistir(id: string, davaDosyasiId: string, durum: HukukiMudahaleDurumu) {
+  if (!GECERLI_HUKUKI_MUDAHALE_DURUMLARI.includes(durum)) {
+    throw new Error("Geçerli bir durum seçin.");
+  }
+
+  await prisma.hukukiMudahale.update({
+    where: { id },
+    data: { durum, tamamlanmaTarihi: durum === "TAMAMLANDI" ? new Date() : null },
+  });
+
+  revalidatePath(`/kokpit/dava-dosyalari/${davaDosyasiId}`);
+  revalidatePath("/kokpit/dava-dosyalari/avukat-sapkasi");
+}
+
+export async function hukukiMudahaleSil(id: string, davaDosyasiId: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici || !silebilirMi(kullanici.rol)) {
+    throw new Error("Bu işlem için yetkiniz yok.");
+  }
+
+  await prisma.hukukiMudahale.delete({ where: { id } });
+  revalidatePath(`/kokpit/dava-dosyalari/${davaDosyasiId}`);
+  revalidatePath("/kokpit/dava-dosyalari/avukat-sapkasi");
+}
+
+// Karar Sonrasi Takip: dosyaEvresi + kontrol alanlari TEK yerde
+// (DavaDosyasi'nin kendi kaydi) guncellenir - ayri bir tablo/model yok.
+// evreDegisiklikTarihi SADECE evre gercekten degistiginde guncellenir.
+export async function dosyaEvresiGuncelle(davaDosyasiId: string, formData: FormData) {
+  const dosyaEvresiHam = metinYaAlNull(formData, "dosyaEvresi");
+  if (dosyaEvresiHam && !GECERLI_DOSYA_EVRELERI.includes(dosyaEvresiHam as DosyaEvresi)) {
+    throw new Error("Geçerli bir dosya evresi seçin.");
+  }
+  const dosyaEvresi = (dosyaEvresiHam as DosyaEvresi | null) ?? null;
+
+  const sonrakiKontrolTarihiHam = metinYaAlNull(formData, "sonrakiKontrolTarihi");
+  const sonKontrolTarihiHam = metinYaAlNull(formData, "sonKontrolTarihi");
+
+  const mevcut = await prisma.davaDosyasi.findUnique({
+    where: { id: davaDosyasiId },
+    select: { dosyaEvresi: true },
+  });
+  if (!mevcut) return;
+
+  await prisma.davaDosyasi.update({
+    where: { id: davaDosyasiId },
+    data: {
+      dosyaEvresi,
+      evreDegisiklikTarihi: dosyaEvresi !== mevcut.dosyaEvresi ? new Date() : undefined,
+      sonrakiKontrolTarihi: sonrakiKontrolTarihiHam ? new Date(sonrakiKontrolTarihiHam) : null,
+      sonrakiKontrolSorusu: metinYaAlNull(formData, "sonrakiKontrolSorusu"),
+      sonKontrolTarihi: sonKontrolTarihiHam ? new Date(sonKontrolTarihiHam) : null,
+      sonKontrolSonucu: metinYaAlNull(formData, "sonKontrolSonucu"),
+    },
+  });
+
+  revalidatePath(`/kokpit/dava-dosyalari/${davaDosyasiId}`);
+  revalidatePath("/kokpit/dava-dosyalari/karar-sonrasi-takip");
 }

@@ -52,10 +52,11 @@ model Kullanici {
   olusturmaTarihi  DateTime      @default(now())
   guncellemeTarihi DateTime      @updatedAt
 
-  sorumluOlduguMusteriler       Musteri[]          @relation("MusteriSorumluAvukat")
-  sorumluOlduguDosyalar         DavaDosyasi[]      @relation("DavaDosyasiSorumluAvukat")
-  gonderdigiOneriler            Oneri[]
-  gonderdigiGelistirmeTalepleri GelistirmeTalebi[]
+  sorumluOlduguMusteriler        Musteri[]          @relation("MusteriSorumluAvukat")
+  sorumluOlduguDosyalar          DavaDosyasi[]      @relation("DavaDosyasiSorumluAvukat")
+  gonderdigiOneriler             Oneri[]
+  gonderdigiGelistirmeTalepleri  GelistirmeTalebi[]
+  sorumluOlduguHukukiMudahaleler HukukiMudahale[]   @relation("HukukiMudahaleSorumluAvukat")
 
   @@map("kullanicilar")
 }
@@ -103,6 +104,8 @@ model SecenekDegeri {
   uyusmazlikGrubuDurum          UyusmazlikGrubu[]     @relation("UyusmazlikGrubuDurumu")
   paraTrafigiSahiplik           MusteriParaTrafigi[]  @relation("ParaKaydiSahibi")
   paraKaydiKullanimAmaci        ParaTrafigiDagitimi[] @relation("ParaKaydiKullanimAmaci")
+  hukukiMudahaleTuru            HukukiMudahale[]      @relation("HukukiMudahaleTuru")
+  hukukiMudahaleOnceligi        HukukiMudahale[]      @relation("HukukiMudahaleOnceligi")
 
   @@unique([listeId, kod])
   @@map("secenek_degerleri")
@@ -454,6 +457,21 @@ model DavaDosyasi {
   olusturmaTarihi    DateTime         @default(now())
   guncellemeTarihi   DateTime         @updatedAt
 
+  // ============================================================
+  // Karar Sonrasi Takip (bkz. ARCHITECTURE.md "Dava Dosyasi Yasam
+  // Dongusu") - hepsi opsiyonel, mevcut kayitlari bozmaz, tahmin/backfill
+  // YAPILMAZ. `durumId` (acik/kapali/arsiv - yukarida) BUNDAN BAGIMSIZ:
+  // o dosyanin GENEL yonetimsel durumu, `dosyaEvresi` ise hukuki surecin
+  // neresinde oldugu. KESINLESTI, durumId'yi otomatik "kapali" yapmaz -
+  // kesinlesmis bir dosyada tahsilat/iade gibi artci isler surebilir.
+  dosyaEvresi          DosyaEvresi?
+  // dosyaEvresi her degistiginde otomatik guncellenir (bkz. actions.ts).
+  evreDegisiklikTarihi DateTime?
+  sonrakiKontrolTarihi DateTime?
+  sonrakiKontrolSorusu String?
+  sonKontrolTarihi     DateTime?
+  sonKontrolSonucu     String?
+
   muvekkiller            DosyaMuvekkili[]
   karsiTaraflar          DosyaKarsiTarafi[]
   paraTrafigiKayitlari   ParaTrafigiDosyasi[]
@@ -461,6 +479,7 @@ model DavaDosyasi {
   karsiTarafAlacaklari   KarsiTarafAlacagi[]
   paraTrafigiDagitimlari ParaTrafigiDagitimi[]
   finansHareketleri      MusteriFinansHareketi[]
+  hukukiMudahaleler      HukukiMudahale[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -470,6 +489,7 @@ model DavaDosyasi {
   @@index([icraAltTuruId])
   @@index([yargiKoluId])
   @@index([hukukiIliskiTuruId])
+  @@index([dosyaEvresi])
   @@map("dava_dosyalari")
 }
 
@@ -801,4 +821,87 @@ model CMKDosyasi {
   @@index([durusmaTarihi])
   @@index([sonrakiKontrolTarihi])
   @@map("cmk_dosyalari")
+}
+
+// ============================================================
+// MODUL GENISLETMESI: Dava Dosyasi Yasam Dongusu
+// (Avukat Sapkasi + Karar Sonrasi Takip - bkz. ARCHITECTURE.md)
+// ============================================================
+//
+// Iki ayri takip bicimi TEK bir DavaDosyasi kaydi uzerinde calisir, dosya
+// hicbir sekilde kopyalanmaz/tasinmaz:
+//  - "Avukat Sapkasi" (Bu dosyada avukat olarak ne yapmaliyim?) -> asagidaki
+//    HukukiMudahale tablosu, EYLEM listesi.
+//  - "Karar Sonrasi Takip" (Dosya nerede, ne bekleniyor?) -> DavaDosyasi'nin
+//    kendi dosyaEvresi + kontrol alanlari (yukarida), GOZLEM/durum - ayri
+//    bir tablo/model DEGIL, ayni kaydin bir calisma gorunumu.
+//
+// dosyaEvresi kapali/sabit bir is akisi (state machine) oldugu ve otomasyon
+// mantigi (bkz. evre-onerileri.ts, kodlama asamasinda) bu degerler uzerinde
+// dallanacagi icin BILINCLI olarak native enum - CMKDosyaDurumu/
+// MusteriFinansIslemTuru ile ayni gerekce (SecenekDegeri DEGIL).
+enum DosyaEvresi {
+  ACILIS
+  DERDEST
+  KARAR_VERILDI
+  GEREKCELI_KARAR_BEKLENIYOR
+  GEREKCELI_KARAR_HAZIR
+  TEBLIG_BEKLENIYOR
+  KANUN_YOLU_DEGERLENDIRME
+  ISTINAFTA
+  BAM_KARARI_GELDI
+  TEMYIZ_DEGERLENDIRME
+  TEMYIZDE
+  KESINLESME_BEKLENIYOR
+  KESINLESTI
+
+  @@map("dosya_evresi")
+}
+
+enum HukukiMudahaleDurumu {
+  BEKLEMEDE
+  DEVAM_EDIYOR
+  TAMAMLANDI
+  IPTAL_EDILDI
+
+  @@map("hukuki_mudahale_durumu")
+}
+
+// Bir dava dosyasinda avukatin AKTIF, eyleme donuk hukuki isi (dilekce
+// yazmak, degerlendirme yapmak vb.) - "Karar Sonrasi Takip" (yukaridaki
+// dosyaEvresi) ile KARISTIRILMAZ: o gozlem/durum, bu eylem/gorev. Bir
+// dosyanin 0-N acik mudahalesi olabilir, her biri farkli bir sorumlu
+// avukata atanabilir.
+model HukukiMudahale {
+  id            String      @id @default(cuid())
+  davaDosyasiId String
+  davaDosyasi   DavaDosyasi @relation(fields: [davaDosyasiId], references: [id], onDelete: Cascade)
+
+  baslik   String
+  aciklama String?
+
+  // Siniflandirma icin opsiyonel - her is temiz bir kategoriye girmeyebilir,
+  // baslik tek basina yeterli olabilir. SecenekDegeri: buronun ihtiyaci
+  // degistikce yeni tur eklenebilir (bkz. sema basindaki genel ilke).
+  mudahaleTuruId String?
+  mudahaleTuru   SecenekDegeri? @relation("HukukiMudahaleTuru", fields: [mudahaleTuruId], references: [id])
+
+  durum HukukiMudahaleDurumu @default(BEKLEMEDE)
+
+  oncelikId String?
+  oncelik   SecenekDegeri? @relation("HukukiMudahaleOnceligi", fields: [oncelikId], references: [id])
+
+  sorumluAvukatId String?
+  sorumluAvukat   Kullanici? @relation("HukukiMudahaleSorumluAvukat", fields: [sorumluAvukatId], references: [id])
+
+  sonTarih DateTime?
+
+  olusturmaTarihi  DateTime  @default(now())
+  tamamlanmaTarihi DateTime?
+
+  @@index([davaDosyasiId])
+  @@index([durum])
+  @@index([sorumluAvukatId])
+  @@index([sonTarih])
+  @@map("hukuki_mudahaleler")
 }

@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0b0d12;
-  --background-2: #14161d;
+  --background: #12151d;
+  --background-2: #1b1e28;
   --foreground: rgba(255, 255, 255, 0.92);
-  --foreground-muted: rgba(255, 255, 255, 0.56);
-  --glass-bg: rgba(255, 255, 255, 0.06);
-  --glass-bg-strong: rgba(255, 255, 255, 0.1);
-  --glass-border: rgba(255, 255, 255, 0.12);
+  --foreground-muted: rgba(255, 255, 255, 0.58);
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-bg-strong: rgba(255, 255, 255, 0.13);
+  --glass-border: rgba(255, 255, 255, 0.16);
   --accent: #0a84ff;
-  --accent-soft: rgba(10, 132, 255, 0.16);
+  --accent-soft: rgba(10, 132, 255, 0.2);
   --danger: #ff453a;
-  --danger-soft: rgba(255, 69, 58, 0.16);
+  --danger-soft: rgba(255, 69, 58, 0.2);
   --success: #30d158;
-  --success-soft: rgba(48, 209, 88, 0.16);
+  --success-soft: rgba(48, 209, 88, 0.2);
 }
 
 @theme inline {
@@ -65,9 +65,9 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   background-color: var(--background);
   background-image:
-    radial-gradient(1100px 600px at 12% -10%, rgba(10, 132, 255, 0.22), transparent 60%),
-    radial-gradient(900px 500px at 110% 10%, rgba(94, 92, 230, 0.14), transparent 55%),
-    linear-gradient(180deg, #0b0d12 0%, #101319 55%, #0b0d12 100%);
+    radial-gradient(1100px 600px at 12% -10%, rgba(10, 132, 255, 0.28), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(94, 92, 230, 0.2), transparent 55%),
+    linear-gradient(180deg, #12151d 0%, #181c26 55%, #12151d 100%);
   background-attachment: fixed;
 }
 
