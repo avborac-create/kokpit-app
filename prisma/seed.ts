@@ -136,6 +136,13 @@ const SECENEK_LISTELERI: {
       { kod: "acik", etiket: "Açık" },
       { kod: "kapali", etiket: "Kapalı" },
       { kod: "arsiv", etiket: "Arşiv" },
+      // Hukuk Dosyasi sadelestirmesi (bkz. GELISTIRME_KUTUSU.md gecmisi):
+      // yeni sade formun kullandigi 3 degerden ikisi ("acilacak"/"derdest")
+      // burada eksik oldugundan eklendi - "kapali" zaten vardi, yeniden
+      // kullaniliyor. Eski "acik"/"arsiv" degerleri (eski zengin form/
+      // ekranlarin kullandigi) silinmedi, sadece yeni formda secilemezler.
+      { kod: "acilacak", etiket: "Açılacak" },
+      { kod: "derdest", etiket: "Derdest" },
     ],
   },
   {

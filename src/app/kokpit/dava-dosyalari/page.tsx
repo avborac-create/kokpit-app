@@ -23,7 +23,7 @@ export default async function DavaDosyalariSayfasi({
   return (
     <div className="pt-3">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">Dosyalar</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">Hukuk Dosyaları</h1>
         <Link href="/kokpit/dava-dosyalari/yeni">
           <Dugme>+ Yeni Dosya</Dugme>
         </Link>
@@ -33,17 +33,19 @@ export default async function DavaDosyalariSayfasi({
         <Girdi
           type="search"
           name="arama"
-          placeholder="Dosya no, konu ara…"
+          placeholder="Müvekkil, karşı taraf, konu, birim, dosya no ara…"
           defaultValue={params.arama}
           className="max-w-xs"
         />
         <Secim name="durum" defaultValue={params.durum ?? ""} className="max-w-[10rem]">
           <option value="">Tüm durumlar</option>
-          {durumlar.map((durum) => (
-            <option key={durum.id} value={durum.kod}>
-              {durum.etiket}
-            </option>
-          ))}
+          {durumlar
+            .filter((durum) => ["acilacak", "derdest", "kapali"].includes(durum.kod))
+            .map((durum) => (
+              <option key={durum.id} value={durum.kod}>
+                {durum.etiket}
+              </option>
+            ))}
         </Secim>
         <Dugme type="submit" varyant="ikincil">
           Filtrele
@@ -54,15 +56,12 @@ export default async function DavaDosyalariSayfasi({
         <table className="w-full text-left text-sm">
           <thead className="text-white/50">
             <tr>
-              <th className="px-4 py-3 font-medium">Kokpit No</th>
-              <th className="px-4 py-3 font-medium">Dosya No</th>
-              <th className="px-4 py-3 font-medium">Tür</th>
-              <th className="px-4 py-3 font-medium">Birim</th>
-              <th className="px-4 py-3 font-medium">Konu</th>
+              <th className="px-4 py-3 font-medium">Müvekkil</th>
               <th className="px-4 py-3 font-medium">Karşı Taraf</th>
-              <th className="px-4 py-3 font-medium">Müvekkil(ler)</th>
-              <th className="px-4 py-3 font-medium">Durum</th>
-              <th className="px-4 py-3 font-medium">Sorumlu Avukat</th>
+              <th className="px-4 py-3 font-medium">Konu</th>
+              <th className="px-4 py-3 font-medium">Birim Adı</th>
+              <th className="px-4 py-3 font-medium">Dosya Numarası</th>
+              <th className="px-4 py-3 font-medium">Dosya Durumu</th>
               <th className="px-4 py-3 font-medium">İşlemler</th>
             </tr>
           </thead>
@@ -74,27 +73,22 @@ export default async function DavaDosyalariSayfasi({
                     href={`/kokpit/dava-dosyalari/${dosya.id}`}
                     className="font-medium text-white hover:text-[#6db8ff] hover:underline"
                   >
-                    KP-{String(dosya.kayitNo).padStart(4, "0")}
+                    {dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-white/60">{dosya.dosyaNo ?? "—"}</td>
-                <td className="px-4 py-3 text-white/60">{dosya.tur?.etiket ?? "—"}</td>
-                <td className="px-4 py-3 text-white/60">{dosya.birimAdi ?? "—"}</td>
-                <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
                 <td className="px-4 py-3 text-white/60">
                   {dosya.karsiTaraflar.length > 0
                     ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ")
                     : "—"}
                 </td>
-                <td className="px-4 py-3 text-white/60">
-                  {dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
-                </td>
+                <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
+                <td className="px-4 py-3 text-white/60">{dosya.birimAdi ?? "—"}</td>
+                <td className="px-4 py-3 text-white/60">{dosya.dosyaNo ?? "—"}</td>
                 <td className="px-4 py-3">
                   <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
                     {dosya.durum.etiket}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-white/60">{dosya.sorumluAvukat?.adSoyad ?? "—"}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Link href={`/kokpit/dava-dosyalari/${dosya.id}/duzenle`}>
@@ -109,7 +103,7 @@ export default async function DavaDosyalariSayfasi({
             ))}
             {dosyalar.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={7} className="px-4 py-8 text-center text-white/40">
                   Kayıt bulunamadı.
                 </td>
               </tr>

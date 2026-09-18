@@ -1,5 +1,5 @@
-import { davaDosyasiOlustur } from "@/modules/dava-dosyasi/lib/actions";
-import { DavaDosyasiFormu } from "@/modules/dava-dosyasi/components/dava-dosyasi-formu";
+import { hukukDosyasiOlustur } from "@/modules/dava-dosyasi/lib/actions";
+import { HukukDosyasiFormu } from "@/modules/dava-dosyasi/components/hukuk-dosyasi-formu";
 
 export default async function YeniDavaDosyasiSayfasi({
   searchParams,
@@ -10,9 +10,9 @@ export default async function YeniDavaDosyasiSayfasi({
 
   return (
     <div className="pt-3">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-white">Yeni Dosya</h1>
-      <DavaDosyasiFormu
-        action={davaDosyasiOlustur}
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-white">Yeni Hukuk Dosyası</h1>
+      <HukukDosyasiFormu
+        action={hukukDosyasiOlustur}
         gonderButonuMetni="Oluştur"
         onSecilenMusteriId={musteriId}
       />

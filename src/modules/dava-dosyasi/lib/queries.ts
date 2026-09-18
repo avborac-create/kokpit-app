@@ -11,9 +11,22 @@ export async function davaDosyalariniListele(filtre: DavaDosyasiFiltre = {}) {
     where: {
       ...(filtre.arama
         ? {
+            // Hukuk Dosyalari listesindeki arama alanlari: Müvekkil Ünvanı,
+            // Karşı Taraf, Konu, Birim Adı, Dosya Numarası (bkz. plan).
             OR: [
               { konu: { contains: filtre.arama, mode: "insensitive" } },
               { dosyaNo: { contains: filtre.arama, mode: "insensitive" } },
+              { birimAdi: { contains: filtre.arama, mode: "insensitive" } },
+              {
+                muvekkiller: {
+                  some: { musteri: { adSoyadUnvan: { contains: filtre.arama, mode: "insensitive" } } },
+                },
+              },
+              {
+                karsiTaraflar: {
+                  some: { karsiTaraf: { ad: { contains: filtre.arama, mode: "insensitive" } } },
+                },
+              },
             ],
           }
         : {}),

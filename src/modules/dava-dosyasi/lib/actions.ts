@@ -190,6 +190,121 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
   redirect(`/kokpit/dava-dosyalari/${id}`);
 }
 
+// ============================================================
+// Hukuk Dosyasi (sadelestirilmis kayit ekrani) - CMK disi tum yargi
+// dosyalari icin TEK ve sade form. Ayni DavaDosyasi tablosunu kullanir,
+// yeni bir model/tablo ACILMAZ - sadece hangi alanlarin ZORUNLU oldugu
+// farklidir (turId/uyusmazlikGrubuId/acilisTarihi burada zorunlu DEGIL).
+// Zengin alanlar (Dosya Turu, Dosya Kumesi, Bagli Oldugu Dosya, Sorumlu
+// Avukat, Acilis/Kapanis Tarihi, Aciklama vb.) formda "Diger Bilgiler"
+// altinda kapali/opsiyonel kalir - mevcut zengin kayitlar duzenlenirken
+// doldurulmus degerleri tasir, bos birakilirsa hicbir mevcut deger
+// silinmez (bkz. hukukDosyasiGuncelle - sadece formda gelen alan kadar
+// update eder).
+export async function hukukDosyasiOlustur(formData: FormData) {
+  const musteriId = String(formData.get("musteriId") ?? "").trim();
+  const konu = String(formData.get("konu") ?? "").trim();
+  const durumId = String(formData.get("durumId") ?? "");
+
+  if (!musteriId) throw new Error("Müvekkil seçilmelidir.");
+  if (!konu) throw new Error("Konu zorunludur.");
+  if (!durumId) throw new Error("Dosya durumu zorunludur.");
+
+  const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, [musteriId]);
+  const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, [musteriId]);
+  const acilisTarihiHam = metinYaAlNull(formData, "acilisTarihi");
+
+  const dosya = await prisma.davaDosyasi.create({
+    data: {
+      dosyaNo: metinYaAlNull(formData, "dosyaNo"),
+      objektBuroNo: metinYaAlNull(formData, "objektBuroNo"),
+      birimAdi: metinYaAlNull(formData, "birimAdi"),
+      konu,
+      durumId,
+      turId: metinYaAlNull(formData, "turId"),
+      hukukiIliskiTuruId: metinYaAlNull(formData, "hukukiIliskiTuruId"),
+      uyusmazlikGrubuId,
+      bagliOlduguDosyaId: metinYaAlNull(formData, "bagliOlduguDosyaId"),
+      sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
+      acilisTarihi: acilisTarihiHam ? new Date(acilisTarihiHam) : new Date(),
+      aciklama: metinYaAlNull(formData, "aciklama"),
+      muvekkiller: {
+        create: { musteriId },
+      },
+      karsiTaraflar: {
+        create: karsiTarafIdleri.map((karsiTarafId) => ({ karsiTarafId })),
+      },
+    },
+  });
+
+  revalidatePath("/kokpit/dava-dosyalari");
+  redirect(`/kokpit/dava-dosyalari/${dosya.id}`);
+}
+
+export async function hukukDosyasiGuncelle(id: string, formData: FormData) {
+  const musteriId = String(formData.get("musteriId") ?? "").trim();
+  const konu = String(formData.get("konu") ?? "").trim();
+  const durumId = String(formData.get("durumId") ?? "");
+
+  if (!musteriId) throw new Error("Müvekkil seçilmelidir.");
+  if (!konu) throw new Error("Konu zorunludur.");
+  if (!durumId) throw new Error("Dosya durumu zorunludur.");
+
+  const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, [musteriId]);
+  const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, [musteriId]);
+  const acilisTarihiHam = metinYaAlNull(formData, "acilisTarihi");
+  const kapanisTarihiHam = metinYaAlNull(formData, "kapanisTarihi");
+  const bagliOlduguDosyaIdHam = metinYaAlNull(formData, "bagliOlduguDosyaId");
+  const bagliOlduguDosyaId = bagliOlduguDosyaIdHam === id ? null : bagliOlduguDosyaIdHam;
+
+  await prisma.$transaction([
+    prisma.davaDosyasi.update({
+      where: { id },
+      data: {
+        dosyaNo: metinYaAlNull(formData, "dosyaNo"),
+        objektBuroNo: metinYaAlNull(formData, "objektBuroNo"),
+        birimAdi: metinYaAlNull(formData, "birimAdi"),
+        konu,
+        durumId,
+        turId: metinYaAlNull(formData, "turId"),
+        hukukiIliskiTuruId: metinYaAlNull(formData, "hukukiIliskiTuruId"),
+        uyusmazlikGrubuId,
+        bagliOlduguDosyaId,
+        sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
+        acilisTarihi: acilisTarihiHam ? new Date(acilisTarihiHam) : new Date(),
+        kapanisTarihi: kapanisTarihiHam ? new Date(kapanisTarihiHam) : null,
+        aciklama: metinYaAlNull(formData, "aciklama"),
+      },
+    }),
+    // DIKKAT: burada eski davaDosyasiGuncelle'nin aksine musteriId'yi
+    // "not: musteriId" olanlari SILEN bir deleteMany YOK - bu sade form
+    // TEK bir muvekkil secer, ama zengin/eski bir dosyanin birden fazla
+    // muvekkili (ör. ortak davacilar, veraset) varsa bu formdan
+    // kaydedince o ek muvekkiller SESSIZCE silinmemeli (bkz. plan "veri
+    // kaybi riski"). Sadece secilen muvekkil eklenir/dokunulmaz birakilir;
+    // fazla muvekkil cikarmak gerekiyorsa zengin ekran/DB uzerinden yapilir.
+    prisma.dosyaMuvekkili.upsert({
+      where: { dosyaId_musteriId: { dosyaId: id, musteriId } },
+      update: {},
+      create: { dosyaId: id, musteriId },
+    }),
+    prisma.dosyaKarsiTarafi.deleteMany({
+      where: { dosyaId: id, karsiTarafId: { notIn: karsiTarafIdleri } },
+    }),
+    ...karsiTarafIdleri.map((karsiTarafId) =>
+      prisma.dosyaKarsiTarafi.upsert({
+        where: { dosyaId_karsiTarafId: { dosyaId: id, karsiTarafId } },
+        update: {},
+        create: { dosyaId: id, karsiTarafId },
+      }),
+    ),
+  ]);
+
+  revalidatePath("/kokpit/dava-dosyalari");
+  revalidatePath(`/kokpit/dava-dosyalari/${id}`);
+  redirect(`/kokpit/dava-dosyalari/${id}`);
+}
+
 export async function davaDosyasiSil(id: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {

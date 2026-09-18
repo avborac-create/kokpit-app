@@ -408,6 +408,11 @@ model DavaDosyasi {
   // girmesi gerekmez, "Kokpit No" olarak gosterilir (ör. "KP-0007").
   kayitNo            Int              @unique @default(autoincrement())
   dosyaNo            String?
+  // Buronun eski "Objekt" yazilimindaki dosya/buro numarasi - gecmis
+  // kayitlarla eslesme/arama icin referans amacli, tamamen opsiyonel
+  // (bkz. GELISTIRME_KUTUSU.md gecmisi). Otomatik toplu ice aktarim YOK,
+  // sadece Hukuk Dosyasi formunda elle girilebilen serbest metin.
+  objektBuroNo       String?
   birimAdi           String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
   konu               String
   // Dosya turu: ihtar/arabuluculuk/muzakere gibi dava/icra oncesi
