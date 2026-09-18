@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { musterileriListele, avukatlariListele } from "@/modules/musteri/lib/queries";
+import {
+  musterileriListele,
+  avukatlariListele,
+  muvekkilKumeleriListele,
+} from "@/modules/musteri/lib/queries";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { Dugme } from "@/core/ui/button";
 import { Girdi, Secim } from "@/core/ui/form";
@@ -7,17 +11,19 @@ import { Girdi, Secim } from "@/core/ui/form";
 export default async function MusterilerSayfasi({
   searchParams,
 }: {
-  searchParams: Promise<{ arama?: string; durum?: string; avukat?: string }>;
+  searchParams: Promise<{ arama?: string; durum?: string; avukat?: string; kume?: string }>;
 }) {
   const params = await searchParams;
-  const [musteriler, durumlar, avukatlar] = await Promise.all([
+  const [musteriler, durumlar, avukatlar, kumeler] = await Promise.all([
     musterileriListele({
       arama: params.arama,
       durumKod: params.durum,
       sorumluAvukatId: params.avukat,
+      kumeId: params.kume,
     }),
     secenekleriGetir("musteri_durumu"),
     avukatlariListele(),
+    muvekkilKumeleriListele(),
   ]);
 
   return (
@@ -53,6 +59,14 @@ export default async function MusterilerSayfasi({
             </option>
           ))}
         </Secim>
+        <Secim name="kume" defaultValue={params.kume ?? ""} className="max-w-[12rem]">
+          <option value="">Tüm müvekkil kümeleri</option>
+          {kumeler.map((kume) => (
+            <option key={kume.id} value={kume.id}>
+              {kume.ad}
+            </option>
+          ))}
+        </Secim>
         <Dugme type="submit" varyant="ikincil">
           Filtrele
         </Dugme>
@@ -63,6 +77,7 @@ export default async function MusterilerSayfasi({
           <thead className="text-white/50">
             <tr>
               <th className="px-4 py-3 font-medium">Ad Soyad / Unvan</th>
+              <th className="px-4 py-3 font-medium">Müvekkil Kümesi</th>
               <th className="px-4 py-3 font-medium">Tip</th>
               <th className="px-4 py-3 font-medium">Durum</th>
               <th className="px-4 py-3 font-medium">Sorumlu Avukat</th>
@@ -80,6 +95,7 @@ export default async function MusterilerSayfasi({
                     {musteri.adSoyadUnvan}
                   </Link>
                 </td>
+                <td className="px-4 py-3 text-white/60">{musteri.kume?.ad ?? "—"}</td>
                 <td className="px-4 py-3 text-white/60">{musteri.tip.etiket}</td>
                 <td className="px-4 py-3">
                   <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
@@ -92,7 +108,7 @@ export default async function MusterilerSayfasi({
             ))}
             {musteriler.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={6} className="px-4 py-8 text-center text-white/40">
                   Kayıt bulunamadı.
                 </td>
               </tr>

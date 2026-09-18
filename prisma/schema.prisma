@@ -130,6 +130,14 @@ model Musteri {
   olusturmaTarihi  DateTime      @default(now())
   guncellemeTarihi DateTime      @updatedAt
 
+  // Muvekkil Kumesi: birden fazla ayri tuzel/gercek kisi musterinin ayni
+  // ust yapiya (ör. bir holding/aile sirketler grubu) ait oldugunu belirtmek
+  // icin - "KUCUKDEMIRLER" kumesi altinda "SALT KIMYASAL", "TEKIMSAN
+  // PAZARLAMA" gibi ayri Musteri kayitlari gibi. Nullable: cogu musterinin
+  // bir kumesi olmaz.
+  kumeId String?
+  kume   MuvekkilKumesi? @relation(fields: [kumeId], references: [id])
+
   paraTrafigi        MusteriParaTrafigi[]
   dosyalar           DosyaMuvekkili[]
   irtibatKisileri    IrtibatKisisi[]
@@ -140,7 +148,25 @@ model Musteri {
 
   @@index([durumId])
   @@index([sorumluAvukatId])
+  @@index([kumeId])
   @@map("musteriler")
+}
+
+// Muvekkil Kumesi: ayri Musteri kayitlarini (ör. ayni aile/holdinge bagli
+// birden fazla sirket) ust bir grup altinda toplar. UyusmazlikGrubu'ndan
+// FARKLI bir kavramdir: UyusmazlikGrubu tek bir musterinin dava dosyalarini
+// gruplar, MuvekkilKumesi ise birden fazla musteriyi (ayri tuzel/gercek
+// kisileri) kendisini gruplar.
+model MuvekkilKumesi {
+  id               String   @id @default(cuid())
+  ad               String
+  notlar           String?
+  olusturmaTarihi  DateTime @default(now())
+  guncellemeTarihi DateTime @updatedAt
+
+  musteriler Musteri[]
+
+  @@map("muvekkil_kumeleri")
 }
 
 // Musterinin (ozellikle tuzel kisilerin) irtibat kisileri/temsilcileri.

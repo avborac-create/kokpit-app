@@ -11,6 +11,24 @@ function metinYaAlNull(formData: FormData, alan: string): string | null {
   return deger === "" ? null : deger;
 }
 
+// Muvekkil Kumesi secimini cozumler: "yeniMuvekkilKumesiAdi" doluysa (ayni
+// isimde bir kume yoksa) yeni bir MuvekkilKumesi olusturup id'sini dondurur,
+// degilse secilen "kumeId"yi (varsa) kullanir. UyusmazlikGrubu icin ayni
+// desenin (bkz. dava-dosyasi/lib/actions.ts) burasi icin karsiligidir - fark:
+// MuvekkilKumesi tek bir musteriye degil, TUM burosuna ait bir listedir.
+async function muvekkilKumesiIdCozumle(formData: FormData): Promise<string | null> {
+  const yeniAd = metinYaAlNull(formData, "yeniMuvekkilKumesiAdi");
+  if (yeniAd) {
+    const mevcut = await prisma.muvekkilKumesi.findFirst({
+      where: { ad: { equals: yeniAd, mode: "insensitive" } },
+    });
+    if (mevcut) return mevcut.id;
+    const yeni = await prisma.muvekkilKumesi.create({ data: { ad: yeniAd } });
+    return yeni.id;
+  }
+  return metinYaAlNull(formData, "kumeId");
+}
+
 export async function musteriOlustur(formData: FormData) {
   const adSoyadUnvan = String(formData.get("adSoyadUnvan") ?? "").trim();
   const tipId = String(formData.get("tipId") ?? "");
@@ -19,6 +37,8 @@ export async function musteriOlustur(formData: FormData) {
   if (!adSoyadUnvan || !tipId || !durumId) {
     throw new Error("Ad/Soyad/Unvan, tip ve durum alanları zorunludur.");
   }
+
+  const kumeId = await muvekkilKumesiIdCozumle(formData);
 
   const musteri = await prisma.musteri.create({
     data: {
@@ -30,6 +50,7 @@ export async function musteriOlustur(formData: FormData) {
       adres: metinYaAlNull(formData, "adres"),
       sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
       notlar: metinYaAlNull(formData, "notlar"),
+      kumeId,
     },
   });
 
@@ -46,6 +67,8 @@ export async function musteriGuncelle(id: string, formData: FormData) {
     throw new Error("Ad/Soyad/Unvan, tip ve durum alanları zorunludur.");
   }
 
+  const kumeId = await muvekkilKumesiIdCozumle(formData);
+
   await prisma.musteri.update({
     where: { id },
     data: {
@@ -57,6 +80,7 @@ export async function musteriGuncelle(id: string, formData: FormData) {
       adres: metinYaAlNull(formData, "adres"),
       sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
       notlar: metinYaAlNull(formData, "notlar"),
+      kumeId,
     },
   });
 

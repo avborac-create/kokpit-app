@@ -4,6 +4,7 @@ export type MusteriFiltre = {
   arama?: string;
   durumKod?: string;
   sorumluAvukatId?: string;
+  kumeId?: string;
 };
 
 export async function musterileriListele(filtre: MusteriFiltre = {}) {
@@ -14,14 +15,22 @@ export async function musterileriListele(filtre: MusteriFiltre = {}) {
         : {}),
       ...(filtre.durumKod ? { durum: { kod: filtre.durumKod } } : {}),
       ...(filtre.sorumluAvukatId ? { sorumluAvukatId: filtre.sorumluAvukatId } : {}),
+      ...(filtre.kumeId ? { kumeId: filtre.kumeId } : {}),
     },
     include: {
       tip: true,
       durum: true,
       sorumluAvukat: true,
+      kume: true,
       _count: { select: { paraTrafigi: true } },
     },
     orderBy: { olusturmaTarihi: "desc" },
+  });
+}
+
+export async function muvekkilKumeleriListele() {
+  return prisma.muvekkilKumesi.findMany({
+    orderBy: { ad: "asc" },
   });
 }
 
@@ -32,6 +41,7 @@ export async function musteriGetir(id: string) {
       tip: true,
       durum: true,
       sorumluAvukat: true,
+      kume: { include: { musteriler: { orderBy: { adSoyadUnvan: "asc" } } } },
       paraTrafigi: {
         include: {
           tip: true,

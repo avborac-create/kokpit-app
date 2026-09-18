@@ -35,6 +35,15 @@ export default async function MusteriDetaySayfasi({
             <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
               {musteri.durum.etiket}
             </span>
+            {musteri.kume && (
+              <>
+                {" "}
+                ·{" "}
+                <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs text-white/70">
+                  Müvekkil Kümesi: {musteri.kume.ad}
+                </span>
+              </>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -69,6 +78,27 @@ export default async function MusteriDetaySayfasi({
           </div>
         )}
       </div>
+
+      {musteri.kume && musteri.kume.musteriler.length > 1 && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">
+            Aynı Kümedeki Diğer Müvekkiller ({musteri.kume.ad})
+          </h2>
+          <div className="glass flex flex-wrap gap-2 rounded-2xl p-4">
+            {musteri.kume.musteriler
+              .filter((m) => m.id !== musteri.id)
+              .map((m) => (
+                <Link
+                  key={m.id}
+                  href={`/kokpit/musteriler/${m.id}`}
+                  className="rounded-full bg-white/[0.06] px-3 py-1 text-sm text-white/80 hover:bg-white/[0.1] hover:text-white"
+                >
+                  {m.adSoyadUnvan}
+                </Link>
+              ))}
+          </div>
+        </div>
+      )}
 
       <div className="mb-8">
         <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">İrtibat Kişileri</h2>

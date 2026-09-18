@@ -1,7 +1,7 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
-import { avukatlariListele } from "@/modules/musteri/lib/queries";
+import { avukatlariListele, muvekkilKumeleriListele } from "@/modules/musteri/lib/queries";
 import type { Kullanici, Musteri } from "@prisma/client";
 
 type Props = {
@@ -11,10 +11,11 @@ type Props = {
 };
 
 export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props) {
-  const [tipler, durumlar, avukatlar] = await Promise.all([
+  const [tipler, durumlar, avukatlar, kumeler] = await Promise.all([
     secenekleriGetir("musteri_tipi"),
     secenekleriGetir("musteri_durumu"),
     avukatlariListele() as Promise<Kullanici[]>,
+    muvekkilKumeleriListele(),
   ]);
 
   return (
@@ -74,6 +75,33 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
         <Etiket htmlFor="adres">Adres</Etiket>
         <MetinAlani id="adres" name="adres" rows={2} defaultValue={musteri?.adres ?? ""} />
       </Alan>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Alan>
+          <Etiket htmlFor="kumeId">Müvekkil Kümesi (opsiyonel)</Etiket>
+          <Secim id="kumeId" name="kumeId" defaultValue={musteri?.kumeId ?? ""}>
+            <option value="">— (tekil müvekkil) —</option>
+            {kumeler.map((kume) => (
+              <option key={kume.id} value={kume.id}>
+                {kume.ad}
+              </option>
+            ))}
+          </Secim>
+        </Alan>
+        <Alan>
+          <Etiket htmlFor="yeniMuvekkilKumesiAdi">veya Yeni Müvekkil Kümesi Ekle</Etiket>
+          <Girdi
+            id="yeniMuvekkilKumesiAdi"
+            name="yeniMuvekkilKumesiAdi"
+            placeholder="KÜÇÜKDEMİRLER vb."
+          />
+        </Alan>
+      </div>
+      <p className="mb-4 -mt-3 text-xs text-white/35">
+        Aynı aile/holding şirketler grubuna bağlı birden fazla ayrı müvekkil (tüzel kişi) varsa,
+        bunları tek bir kümede toplayın (ör. &ldquo;KÜÇÜKDEMİRLER&rdquo; kümesi altında &ldquo;SALT
+        KİMYASAL&rdquo;, &ldquo;TEKİMSAN PAZARLAMA&rdquo;, &ldquo;HATEM KİMYA&rdquo;).
+      </p>
 
       <Alan>
         <Etiket htmlFor="sorumluAvukatId">Sorumlu Avukat</Etiket>
