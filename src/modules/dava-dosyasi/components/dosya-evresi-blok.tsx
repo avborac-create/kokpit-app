@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { DosyaEvresi } from "@prisma/client";
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
+import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { dosyaEvresiGuncelle } from "@/modules/dava-dosyasi/lib/actions";
 import { DOSYA_EVRELERI, DOSYA_EVRESI_ETIKETLERI, DOSYA_EVRESI_ACIKLAMALARI } from "@/modules/dava-dosyasi/lib/sabitler";
 
@@ -87,7 +88,7 @@ export function DosyaEvresiBlok({
             </Alan>
           </div>
           <div className="flex gap-2 sm:col-span-2">
-            <Dugme type="submit">Kaydet</Dugme>
+            <GonderButonu>Kaydet</GonderButonu>
             <Dugme type="button" varyant="ikincil" onClick={() => setDuzenlemeAcikMi(false)}>
               İptal
             </Dugme>
