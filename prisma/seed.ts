@@ -299,38 +299,6 @@ async function baslangicKullanicisiniOlustur() {
   console.log("  ÖNEMLİ: İlk girişten sonra bu şifreyi değiştirin.");
 }
 
-async function ebruSinmazKullanicisiniOlustur() {
-  const eposta = process.env.SEED_EBRU_EPOSTA ?? "ebru@eceshukuk.com";
-  const sifre = process.env.SEED_EBRU_SIFRE;
-
-  const mevcut = await prisma.kullanici.findUnique({ where: { eposta } });
-  if (mevcut) {
-    console.log(`✓ Kullanıcı zaten mevcut: ${eposta}`);
-    return;
-  }
-
-  if (!sifre) {
-    console.log(
-      "⚠ SEED_EBRU_SIFRE ortam değişkeni tanımlı değil, Ebru Sınmaz kullanıcısı atlanıyor.",
-    );
-    return;
-  }
-
-  const sifreHash = await bcrypt.hash(sifre, 12);
-  await prisma.kullanici.create({
-    data: {
-      adSoyad: "Ebru Sınmaz",
-      eposta,
-      sifreHash,
-      // Sistemde ayrı bir "Finans Müdürü" rolü yok; görev tanımı bu ada
-      // dayanıyor. Geniş yetki (silme dahil) ama sistem yöneticisi
-      // (geliştirme kutusu vb.) yetkisi olmasın diye ORTAK seçildi.
-      rol: "ORTAK",
-    },
-  });
-  console.log(`✓ Kullanıcı oluşturuldu: ${eposta} (Ebru Sınmaz - Finans Müdürü)`);
-}
-
 // Claude'un sohbet sirasinda GELISTIRME_KUTUSU.md'ye ekledigi maddelerin
 // otomatik olarak Kanban panosunda kart olarak belirmesi icin kullanilir.
 // Her satirin sabit bir "anahtar"i vardir; bu sayede HER deploy'da tekrar
@@ -607,7 +575,6 @@ async function paraKaydiAciklamasiBackfillEt() {
 async function main() {
   await secenekListeleriniOlustur();
   await baslangicKullanicisiniOlustur();
-  await ebruSinmazKullanicisiniOlustur();
   await gelistirmeKutusunuSenkronizeEt();
   await yinelenenKarsiTaraflariBirlestir();
   await yinelenenUyusmazlikGruplariniBirlestir();
