@@ -20,13 +20,16 @@ export async function davaDosyalariniListele(filtre: DavaDosyasiFiltre = {}) {
       ...(filtre.durumKod ? { durum: { kod: filtre.durumKod } } : {}),
       ...(filtre.musteriId ? { muvekkiller: { some: { musteriId: filtre.musteriId } } } : {}),
     },
+    // Liste ekrani (bkz. dava-dosyalari/page.tsx) hukukiIliskiTuru ve
+    // uyusmazlikGrubu'nu gostermez - gereksiz gidis-donusu onlemek icin
+    // burada cekilmez (detay sayfasi icin bkz. davaDosyasiGetir).
     include: {
       durum: true,
       tur: true,
-      hukukiIliskiTuru: true,
+      icraAltTuru: true,
+      yargiKolu: true,
       sorumluAvukat: true,
       karsiTaraflar: { include: { karsiTaraf: true } },
-      uyusmazlikGrubu: true,
       muvekkiller: { include: { musteri: true } },
     },
     orderBy: { olusturmaTarihi: "desc" },
@@ -39,6 +42,8 @@ export async function davaDosyasiGetir(id: string) {
     include: {
       durum: true,
       tur: true,
+      icraAltTuru: true,
+      yargiKolu: true,
       hukukiIliskiTuru: true,
       sorumluAvukat: true,
       karsiTaraflar: { include: { karsiTaraf: true } },

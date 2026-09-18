@@ -27,14 +27,17 @@ export async function DavaDosyasiFormu({
   gonderButonuMetni,
   onSecilenMusteriId,
 }: Props) {
-  const [durumlar, turler, hukukiIliskiTurleri, avukatlar, musteriler, alanDuzeni] = await Promise.all([
-    secenekleriGetir("dava_dosyasi_durumu"),
-    secenekleriGetir("dosya_turu"),
-    secenekleriGetir("hukuki_iliski_turu"),
-    avukatlariListele(),
-    musterileriListele(),
-    formAlanDuzeniniGetir("dava-dosyasi"),
-  ]);
+  const [durumlar, turler, icraAltTurleri, yargiKollari, hukukiIliskiTurleri, avukatlar, musteriler, alanDuzeni] =
+    await Promise.all([
+      secenekleriGetir("dava_dosyasi_durumu"),
+      secenekleriGetir("dosya_turu"),
+      secenekleriGetir("icra_dosyasi_alt_turu"),
+      secenekleriGetir("yargi_kolu"),
+      secenekleriGetir("hukuki_iliski_turu"),
+      avukatlariListele(),
+      musterileriListele(),
+      formAlanDuzeniniGetir("dava-dosyasi"),
+    ]);
 
   const seciliIdler =
     dosya?.muvekkiller.map((m) => m.musteriId) ?? (onSecilenMusteriId ? [onSecilenMusteriId] : []);
@@ -91,6 +94,38 @@ export async function DavaDosyasiFormu({
         </Secim>
       </Alan>
     ),
+    icraAltTuruId: (gizli) =>
+      gizli ? (
+        <input type="hidden" name="icraAltTuruId" value={dosya?.icraAltTuruId ?? ""} />
+      ) : (
+        <Alan>
+          <Etiket htmlFor="icraAltTuruId">İcra Dosyası Alt Türü (Dosya Türü “İcra Dosyası” ise)</Etiket>
+          <Secim id="icraAltTuruId" name="icraAltTuruId" defaultValue={dosya?.icraAltTuruId ?? ""}>
+            <option value="">—</option>
+            {icraAltTurleri.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.etiket}
+              </option>
+            ))}
+          </Secim>
+        </Alan>
+      ),
+    yargiKoluId: (gizli) =>
+      gizli ? (
+        <input type="hidden" name="yargiKoluId" value={dosya?.yargiKoluId ?? ""} />
+      ) : (
+        <Alan>
+          <Etiket htmlFor="yargiKoluId">Yargı Kolu (Dosya Türü “Dava Dosyası” ise)</Etiket>
+          <Secim id="yargiKoluId" name="yargiKoluId" defaultValue={dosya?.yargiKoluId ?? ""}>
+            <option value="">—</option>
+            {yargiKollari.map((y) => (
+              <option key={y.id} value={y.id}>
+                {y.etiket}
+              </option>
+            ))}
+          </Secim>
+        </Alan>
+      ),
     dosyaNo: (gizli) =>
       gizli ? (
         <input type="hidden" name="dosyaNo" value={dosya?.dosyaNo ?? ""} />

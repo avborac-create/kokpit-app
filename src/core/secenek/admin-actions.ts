@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
@@ -64,6 +64,7 @@ export async function secenekDegeriEkle(listeId: string, formData: FormData) {
   });
 
   revalidatePath(AYARLAR_YOLU);
+  updateTag("secenek-listeleri");
 }
 
 export async function secenekDegeriEtiketGuncelle(id: string, formData: FormData) {
@@ -76,12 +77,14 @@ export async function secenekDegeriEtiketGuncelle(id: string, formData: FormData
 
   await prisma.secenekDegeri.update({ where: { id }, data: { etiket } });
   revalidatePath(AYARLAR_YOLU);
+  updateTag("secenek-listeleri");
 }
 
 export async function secenekDegeriAktifligiDegistir(id: string, aktifMi: boolean) {
   await yetkiKontrolEt();
   await prisma.secenekDegeri.update({ where: { id }, data: { aktifMi } });
   revalidatePath(AYARLAR_YOLU);
+  updateTag("secenek-listeleri");
 }
 
 export async function secenekDegeriSiraDegistir(id: string, yon: "yukari" | "asagi") {
@@ -105,4 +108,5 @@ export async function secenekDegeriSiraDegistir(id: string, yon: "yukari" | "asa
   ]);
 
   revalidatePath(AYARLAR_YOLU);
+  updateTag("secenek-listeleri");
 }

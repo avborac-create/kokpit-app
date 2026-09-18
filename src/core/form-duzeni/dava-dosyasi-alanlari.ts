@@ -5,6 +5,8 @@
 export const DAVA_DOSYASI_ALAN_ETIKETLERI: Record<string, string> = {
   hukukiIliskiTuruId: "Hukuki İlişki Türü",
   turId: "Dosya Türü",
+  icraAltTuruId: "İcra Dosyası Alt Türü (Esas/Talimat)",
+  yargiKoluId: "Yargı Kolu (Hukuk/Ceza/İdari)",
   dosyaNo: "Dosya No",
   konu: "Konu",
   durumId: "Durum",
