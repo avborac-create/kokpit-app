@@ -65,8 +65,24 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
           <Girdi id="telefon" name="telefon" type="tel" defaultValue={musteri?.telefon ?? ""} />
         </Alan>
         <Alan>
+          <Etiket htmlFor="telefonSahibi">Telefon Kime Ait</Etiket>
+          <Girdi
+            id="telefonSahibi"
+            name="telefonSahibi"
+            placeholder="Ör. Genel Müdür Ahmet Yılmaz"
+            defaultValue={musteri?.telefonSahibi ?? ""}
+          />
+        </Alan>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Alan>
           <Etiket htmlFor="eposta">E-posta</Etiket>
           <Girdi id="eposta" name="eposta" type="email" defaultValue={musteri?.eposta ?? ""} />
+        </Alan>
+        <Alan>
+          <Etiket htmlFor="vergiNumarasi">Vergi Numarası</Etiket>
+          <Girdi id="vergiNumarasi" name="vergiNumarasi" defaultValue={musteri?.vergiNumarasi ?? ""} />
         </Alan>
       </div>
 

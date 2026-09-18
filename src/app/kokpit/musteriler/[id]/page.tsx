@@ -49,6 +49,9 @@ export default async function MusteriDetaySayfasi({
         <div>
           <p className="text-white/45">Genel Telefon</p>
           <p className="text-white">{musteri.telefon ?? "—"}</p>
+          {musteri.telefonSahibi && (
+            <p className="text-xs text-white/45">{musteri.telefonSahibi}</p>
+          )}
         </div>
         <div>
           <p className="text-white/45">Genel E-posta</p>
@@ -57,6 +60,10 @@ export default async function MusteriDetaySayfasi({
         <div>
           <p className="text-white/45">Sorumlu Avukat</p>
           <p className="text-white">{musteri.sorumluAvukat?.adSoyad ?? "—"}</p>
+        </div>
+        <div>
+          <p className="text-white/45">Vergi Numarası</p>
+          <p className="text-white">{musteri.vergiNumarasi ?? "—"}</p>
         </div>
         <div>
           <p className="text-white/45">Adres</p>

@@ -120,6 +120,8 @@ model Musteri {
   tipId            String
   tip              SecenekDegeri @relation("MusteriTipi", fields: [tipId], references: [id])
   telefon          String?
+  telefonSahibi    String?
+  vergiNumarasi    String?
   eposta           String?
   adres            String?
   durumId          String
