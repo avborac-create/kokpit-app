@@ -1,5 +1,5 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
-import { Dugme } from "@/core/ui/button";
+import { GonderButonu } from "@/core/ui/gonder-butonu";
 
 type SecenekOgesi = { id: string; etiket: string };
 type Avukat = { id: string; adSoyad: string };
@@ -82,7 +82,7 @@ export function HukukiMudahaleFormu({
         </Alan>
       </div>
       <div className="sm:col-span-2">
-        <Dugme type="submit">Ekle</Dugme>
+        <GonderButonu bekleyenMetin="Ekleniyor…">Ekle</GonderButonu>
       </div>
     </form>
   );
