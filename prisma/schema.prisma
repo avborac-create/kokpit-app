@@ -92,6 +92,8 @@ model SecenekDegeri {
   paraTrafigiKaynak             MusteriParaTrafigi[]  @relation("ParaTrafigiKaynagi")
   davaDosyalariDurum            DavaDosyasi[]         @relation("DavaDosyasiDurumu")
   davaDosyalariTuru             DavaDosyasi[]         @relation("DavaDosyasiTuru")
+  davaDosyalariIcraAltTuru      DavaDosyasi[]         @relation("DavaDosyasiIcraAltTuru")
+  davaDosyalariYargiKolu        DavaDosyasi[]         @relation("DavaDosyasiYargiKolu")
   davaDosyalariHukukiIliskiTuru DavaDosyasi[]         @relation("DavaDosyasiHukukiIliskiTuru")
   paraTrafigiTasnifCariKod      ParaTrafigiTasnif[]   @relation("ParaTrafigiTasnifCariKod")
   dosyaMasrafiCariKod           DosyaMasrafi[]        @relation("DosyaMasrafiCariKod")
@@ -408,12 +410,22 @@ model DavaDosyasi {
   birimAdi           String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
   konu               String
   // Dosya turu: ihtar/arabuluculuk/muzakere gibi dava/icra oncesi
-  // asamalari da, esas icra/talimat/dava/icra ceza gibi resmi dosyalari da
-  // kapsayan tek bir secenek listesi (bkz. ARCHITECTURE.md). Nullable:
-  // eski kayitlar geriye donuk turlendirilene kadar bos kalabilir, ama
-  // yeni dosya formunda zorunlu tutulur.
+  // asamalari da, icra/ihtiyati haciz/dava gibi resmi dosyalari da kapsayan
+  // tek bir secenek listesi (bkz. ARCHITECTURE.md). Nullable: eski kayitlar
+  // geriye donuk turlendirilene kadar bos kalabilir, ama yeni dosya
+  // formunda zorunlu tutulur.
   turId              String?
   tur                SecenekDegeri?   @relation("DavaDosyasiTuru", fields: [turId], references: [id])
+  // Icra Dosyasi alt turu: tur=icra_dosyasi secildiginde Esas mi Talimat mi
+  // oldugunu ayirt eder (bkz. ARCHITECTURE.md "Dosya Turu"). Digir turlerde
+  // (ihtar/arabuluculuk/dava vb.) anlamsizdir, bos kalir - bu yuzden
+  // Dosya Turu'nun kendisi degil, ayri, bagimsiz bir alan.
+  icraAltTuruId      String?
+  icraAltTuru        SecenekDegeri?   @relation("DavaDosyasiIcraAltTuru", fields: [icraAltTuruId], references: [id])
+  // Yargi kolu: tur=dava_dosyasi secildiginde Hukuk/Ceza/Idari ayrimini
+  // tasir. Icra/ihtar gibi mahkeme disi dosyalarda anlamsizdir, bos kalir.
+  yargiKoluId        String?
+  yargiKolu          SecenekDegeri?   @relation("DavaDosyasiYargiKolu", fields: [yargiKoluId], references: [id])
   // Alacagin/uyusmazligin dayandigi temel hukuki iliski: cek, senet, TTOK,
   // is hukuku uyusmazligi vb. Dosya Turu'nden (ihtar/icra/dava - hangi
   // ASAMADAYIZ) farkli bir boyut: bu "hangi hukuki ARACA dayaniyor" sorusuna
@@ -455,6 +467,8 @@ model DavaDosyasi {
   @@index([uyusmazlikGrubuId])
   @@index([bagliOlduguDosyaId])
   @@index([turId])
+  @@index([icraAltTuruId])
+  @@index([yargiKoluId])
   @@index([hukukiIliskiTuruId])
   @@map("dava_dosyalari")
 }

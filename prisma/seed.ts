@@ -148,13 +148,47 @@ const SECENEK_LISTELERI: {
       { kod: "ihtar_dosyasi", etiket: "İhtar Dosyası" },
       { kod: "arabuluculuk_dosyasi", etiket: "Arabuluculuk Dosyası" },
       { kod: "muzakere_dosyasi", etiket: "Müzakere Dosyası" },
-      // Resmi icra/dava dosyalari.
-      { kod: "esas_icra_dosyasi", etiket: "Esas İcra Dosyası" },
-      // Talimat dosyasi esas icranin alt turudur (bkz. bagliOlduguDosyaId).
-      { kod: "talimat_dosyasi", etiket: "Talimat Dosyası" },
+      // Icra Dosyasi: Esas/Talimat ayrimi burada DEGIL, ayri bir
+      // "icra_dosyasi_alt_turu" listesinde (DavaDosyasi.icraAltTuruId) -
+      // bkz. ARCHITECTURE.md. (Eskiden "esas_icra_dosyasi"/"talimat_dosyasi"
+      // diye iki ayri Dosya Turu vardi; 20260918120000 migration'i bunlari
+      // tek "icra_dosyasi" turu + alt tur alanina birlestirdi.)
+      { kod: "icra_dosyasi", etiket: "İcra Dosyası" },
       { kod: "ihtiyati_haciz_dosyasi", etiket: "İhtiyati Haciz Dosyası" },
-      { kod: "icra_ceza_davasi", etiket: "İcra Ceza Davası" },
-      { kod: "dava_dosyasi", etiket: "Dava Dosyası (Hukuk/Ceza)" },
+      // Dava Dosyasi: Hukuk/Ceza/Idari ayrimi burada DEGIL, ayri bir
+      // "yargi_kolu" listesinde (DavaDosyasi.yargiKoluId).
+      { kod: "dava_dosyasi", etiket: "Dava Dosyası" },
+      // Eski degerler: gecmis kayitlarin bozulmamasi icin silinmiyor, yeni
+      // giriste secilemesin diye pasife alindi (bkz. 20260918120000
+      // migration'i - bu satirlar sadece dokumantasyon amacli, seed var
+      // olan bir satirin etiketini/aktifMi'sini asla guncellemez).
+      {
+        kod: "talimat_dosyasi",
+        etiket: "Talimat Dosyası (eski - artık İcra Dosyası + Talimat alt türü)",
+        aktifMi: false,
+      },
+      {
+        kod: "icra_ceza_davasi",
+        etiket: "İcra Ceza Davası (eski - artık Dava Dosyası + Ceza yargı kolu)",
+        aktifMi: false,
+      },
+    ],
+  },
+  {
+    anahtar: "icra_dosyasi_alt_turu",
+    ad: "İcra Dosyası Alt Türü",
+    degerler: [
+      { kod: "esas", etiket: "Esas İcra Dosyası" },
+      { kod: "talimat", etiket: "Talimat Dosyası" },
+    ],
+  },
+  {
+    anahtar: "yargi_kolu",
+    ad: "Yargı Kolu",
+    degerler: [
+      { kod: "hukuk", etiket: "Hukuk" },
+      { kod: "ceza", etiket: "Ceza" },
+      { kod: "idari", etiket: "İdari" },
     ],
   },
   {
@@ -428,6 +462,14 @@ async function menuOgeleriniOlustur() {
 // alanlarin varsayilan sirasi (bkz. dava-dosyasi-formu.tsx). Muvekkil ve
 // Karsi Taraf seciciler burada YOK - onlar sabit/kilitli, FormAlanDuzeni
 // tablosuna hic girmiyor (bkz. ARCHITECTURE.md).
+// DIKKAT: yeni bir alan eklerken SONA ekleyin, araya degil. formAlanDuzeniOlustur
+// (asagida) sadece EKSIK olan alanlari, bu dizideki index'i siraNo olarak
+// kullanarak olusturur - var olan bir kurulumda mevcut satirlarin siraNo'su
+// hicbir zaman yeniden numaralandirilmaz. Araya eklenen bir anahtar, mevcut
+// kurulumlarda halihazirda o index'i tasiyan bir satirla siraNo cakismasina
+// yol acar (ör. "icraAltTuruId"/"yargiKoluId" ilk eklendiginde bu hataya
+// dusulmustu). Sona eklemek her zaman guvenlidir; admin isterse Ayarlar >
+// Form Duzeni'nden yeni alani suruklecek istedigi yere tasiyabilir.
 const VARSAYILAN_DAVA_DOSYASI_ALAN_SIRASI = [
   "hukukiIliskiTuruId",
   "turId",
@@ -441,6 +483,8 @@ const VARSAYILAN_DAVA_DOSYASI_ALAN_SIRASI = [
   "kapanisTarihi",
   "sorumluAvukatId",
   "aciklama",
+  "icraAltTuruId",
+  "yargiKoluId",
 ];
 
 async function formAlanDuzeniOlustur() {

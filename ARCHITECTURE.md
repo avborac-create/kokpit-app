@@ -155,22 +155,44 @@ Bu henüz geliştirilmedi; ileride bir modül olarak ele alınacak.
 Karışıklığa mahal vermemek için burada netleşen kavramlar kayıt altına
 alınır; yeni bir tartışma açmadan önce buraya bakılır.
 
-- **"Dosyalar" (eski adıyla "Dava Dosyaları")**: Sol menüdeki modül adı
-  bilinçli olarak "Dosyalar"a çevrildi — `DavaDosyasi` modeli artık sadece
-  resmi mahkeme/icra dosyalarını değil, dava/icra ÖNCESİ aşamaları da
-  (ihtar, arabuluculuk, müzakere) kapsıyor. Bunu ayırt eden alan
-  `DavaDosyasi.turId` → `dosya_turu` seçenek listesi: `ihtar_dosyasi`,
-  `arabuluculuk_dosyasi`, `muzakere_dosyasi` (dava/icra hiç açılmadan
-  sadece borçluyla pazarlık edilen dosyalar için), `esas_icra_dosyasi`,
-  `talimat_dosyasi` (esas icranın alt türü, `bagliOlduguDosyaId` ile
-  bağlanır), `ihtiyati_haciz_dosyasi`, `icra_ceza_davasi`, `dava_dosyasi`
-  (genel hukuk/ceza davası). Şimdilik hepsi AYNI `DavaDosyasi` şeması ve
-  formu üzerinden yönetiliyor (tür bazlı ayrı kart/şema tasarımı bilinçli
-  olarak ERTELENDİ — "kart" fikri ileride gerekirse türe göre farklı
-  layout/alan setleri şeklinde genişletilebilir). `turId` nullable: eski
-  kayıtlar geriye dönük türlendirilene kadar boş kalabilir, yeni dosya
-  formunda ise zorunludur. `birimAdi` da bu yüzden artık zorunlu değil —
-  bir ihtar/müzakere dosyasının mahkeme/icra dairesi olmayabilir.
+- **"Yargı Dosyaları" (eski adıyla "Dava Dosyaları", sonra kısaca "Dosyalar")**:
+  Sol menüde "Dosyalar" başlığı altında `DavaDosyasi` modülü "Yargı
+  Dosyaları", `CMKDosyasi` modülü ise "CMK Dosyaları" olarak ayrı iki alt
+  öğe halinde görünür — `DavaDosyasi` modeli sadece resmi mahkeme/icra
+  dosyalarını değil, dava/icra ÖNCESİ aşamaları da (ihtar, arabuluculuk,
+  müzakere) kapsıyor. Bunu ayırt eden alan `DavaDosyasi.turId` →
+  `dosya_turu` seçenek listesi: `ihtar_dosyasi`, `arabuluculuk_dosyasi`,
+  `muzakere_dosyasi` (dava/icra hiç açılmadan sadece borçluyla pazarlık
+  edilen dosyalar için), `icra_dosyasi`, `ihtiyati_haciz_dosyasi`,
+  `dava_dosyasi` (genel hukuk/ceza/idari dava). Şimdilik hepsi AYNI
+  `DavaDosyasi` şeması ve formu üzerinden yönetiliyor (tür bazlı ayrı
+  kart/şema tasarımı bilinçli olarak ERTELENDİ — "kart" fikri ileride
+  gerekirse türe göre farklı layout/alan setleri şeklinde
+  genişletilebilir). `turId` nullable: eski kayıtlar geriye dönük
+  türlendirilene kadar boş kalabilir, yeni dosya formunda ise zorunludur.
+  `birimAdi` da bu yüzden artık zorunlu değil — bir ihtar/müzakere
+  dosyasının mahkeme/icra dairesi olmayabilir.
+  - **İcra Dosyası alt türü (`DavaDosyasi.icraAltTuruId` → `icra_dosyasi_alt_turu`
+    seçenek listesi: `esas`/`talimat`)**: Eskiden "Esas İcra Dosyası" ve
+    "Talimat Dosyası" ayrı birer Dosya Türü idi; 20260918120000 migration'ı
+    bunları tek `icra_dosyasi` türü + bu ayrı, opsiyonel alt tür alanına
+    birleştirdi. Talimat dosyasının hangi esas dosyaya bağlı olduğu hâlâ
+    `bagliOlduguDosyaId` ile ifade edilir — bu alan DEĞİŞMEDİ, sadece
+    "Esas mı Talimat mı" sorusu artık Dosya Türü'nden ayrı bir kutuda.
+  - **Yargı kolu (`DavaDosyasi.yargiKoluId` → `yargi_kolu` seçenek listesi:
+    `hukuk`/`ceza`/`idari`)**: Eskiden "İcra Ceza Davası" ayrı bir Dosya
+    Türüydü ve genel "Dava Dosyası" seçeneği hukuk/ceza davasını ayırt
+    etmiyordu; aynı migration bunu `dava_dosyasi` türü + bu ayrı, opsiyonel
+    yargı kolu alanına taşıdı (İcra Ceza Davası → Dava Dosyası + Ceza).
+    Sadece `tur.kod = 'dava_dosyasi'` iken anlamlıdır; icra/ihtar gibi
+    mahkeme dışı dosyalarda boş kalır. Nullable: eski `dava_dosyasi`
+    kayıtlarının hangi yargı kolunda olduğu veriden çıkarılamadığı için
+    geriye dönük boş bırakıldı, elle sınıflandırılmayı bekliyor.
+  - Bu iki alanın ayrı tutulma amacı: ileride sol menüde "Yargı Dosyaları"nı
+    Hukuk/Ceza/İdari gibi ayrı alt menülere bölmek istenirse (kullanıcı
+    talebi üzerine değerlendirildi), tek yapılacak iş bu mevcut alana göre
+    filtrelemek/route eklemektir — ne şema değişir ne de mevcut veri
+    taşınır.
 - **Kokpit No (`DavaDosyasi.kayitNo`)**: "Dosya No" artık opsiyonel olduğu
   için (mahkeme/icra dairesinin verdiği esas no — bir ihtar/müzakere
   dosyasında hiç olmayabilir), HER dosyanın türü ne olursa olsun sahip

@@ -78,7 +78,12 @@ export default async function DavaDosyalariSayfasi({
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-white/60">{dosya.dosyaNo ?? "—"}</td>
-                <td className="px-4 py-3 text-white/60">{dosya.tur?.etiket ?? "—"}</td>
+                <td className="px-4 py-3 text-white/60">
+                  {dosya.tur?.etiket ?? "—"}
+                  {dosya.icraAltTuru || dosya.yargiKolu ? (
+                    <span className="text-white/40"> ({(dosya.icraAltTuru ?? dosya.yargiKolu)!.etiket})</span>
+                  ) : null}
+                </td>
                 <td className="px-4 py-3 text-white/60">{dosya.birimAdi ?? "—"}</td>
                 <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
                 <td className="px-4 py-3 text-white/60">
