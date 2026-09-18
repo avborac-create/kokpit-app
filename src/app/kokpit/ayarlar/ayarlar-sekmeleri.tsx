@@ -26,7 +26,11 @@ export function AyarlarSekmeleri({
   const yol = usePathname();
   const sekmeler =
     kullaniciRol === "YONETICI"
-      ? [...SEKMELER, { yol: "/kokpit/gelistirme-kutusu", ad: "Geliştirme Kutusu" }]
+      ? [
+          ...SEKMELER,
+          { yol: "/kokpit/ayarlar/kullanicilar", ad: "Kullanıcılar" },
+          { yol: "/kokpit/gelistirme-kutusu", ad: "Geliştirme Kutusu" },
+        ]
       : SEKMELER;
 
   return (
