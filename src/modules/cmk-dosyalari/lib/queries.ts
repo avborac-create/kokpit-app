@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/core/db/prisma";
 import type { CMKDosyaDurumu, Prisma } from "@prisma/client";
 
@@ -73,20 +74,31 @@ export async function cmkDosyasiGetir(id: string) {
 // Ana ekranin ust seridinde "yaklasan durusma"/"gecikmis kontrol" sayilarini
 // gosterir - bkz. cmk-ozet-seridi.tsx. Uygulanan filtrelerden BAGIMSIZ,
 // her zaman TUM kayitlar uzerinden hesaplanir (kullanici hangi filtreyi
-// secerse secsin bu sayilar sabit/guvenilir kalir).
-export async function cmkOzetSayilariniHesapla() {
-  const simdi = new Date();
-  const yediGunSonra = new Date(simdi);
-  yediGunSonra.setDate(yediGunSonra.getDate() + 7);
+// secerse secsin bu sayilar sabit/guvenilir kalir). Kokpit layout'u
+// (cookies() kullandigi icin) her navigasyonda yeniden calistigindan bu
+// sayilar 5 dakikada bir yenilenecek sekilde cache'lenir - CMK kaydi
+// eklenince/guncellenince zaten actions.ts revalidatePath("/kokpit/
+// cmk-dosyalari") cagiriyor, bu cache'i de gecersiz kilar; 5 dakikalik
+// pencere ise hicbir yazma olmadan sadece zaman ilerledigi icin (ör. bir
+// durusma "yaklasan"dan "gecmis"e gectiginde) sayilarin gunun ilerleyen
+// saatlerinde de tazelenmesini saglar.
+export const cmkOzetSayilariniHesapla = unstable_cache(
+  async () => {
+    const simdi = new Date();
+    const yediGunSonra = new Date(simdi);
+    yediGunSonra.setDate(yediGunSonra.getDate() + 7);
 
-  const [yaklasanDurusma, gecikmisKontrol] = await Promise.all([
-    prisma.cMKDosyasi.count({
-      where: { durusmaTarihi: { gte: simdi, lte: yediGunSonra } },
-    }),
-    prisma.cMKDosyasi.count({
-      where: { sonrakiKontrolTarihi: { lt: simdi } },
-    }),
-  ]);
+    const [yaklasanDurusma, gecikmisKontrol] = await Promise.all([
+      prisma.cMKDosyasi.count({
+        where: { durusmaTarihi: { gte: simdi, lte: yediGunSonra } },
+      }),
+      prisma.cMKDosyasi.count({
+        where: { sonrakiKontrolTarihi: { lt: simdi } },
+      }),
+    ]);
 
-  return { yaklasanDurusma, gecikmisKontrol };
-}
+    return { yaklasanDurusma, gecikmisKontrol };
+  },
+  ["cmk-ozet-sayilari"],
+  { revalidate: 300 },
+);
