@@ -18,7 +18,9 @@ export async function cmkBirimleriListele() {
     select: { birim: true },
     orderBy: { birim: "asc" },
   });
-  return satirlar.map((s) => s.birim);
+  // birim artik nullable (bkz. schema.prisma - ice aktarilan, birim bilgisi
+  // olmayan kayitlar) - oneri listesi bos degerleri disleyerek olusturulur.
+  return satirlar.map((s) => s.birim).filter((b): b is string => b !== null);
 }
 
 export type CMKDosyaFiltre = {

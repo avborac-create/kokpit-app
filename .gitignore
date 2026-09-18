@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ice aktarim script'inin ürettigi ayrintili raporlar (bkz. prisma/import-dava-veritabani.ts)
+/import-raporu-*.json

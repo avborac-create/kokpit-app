@@ -16,6 +16,11 @@ const SECENEK_LISTELERI: {
     degerler: [
       { kod: "gercek_kisi", etiket: "Gerçek Kişi" },
       { kod: "tuzel_kisi", etiket: "Tüzel Kişi" },
+      // Eski sistemden (Excel) toplu ice aktarimda gercek/tuzel kisi
+      // ayrimi kaynaktan guvenle anlasilamayan, otomatik olusturulan
+      // musteriler icin - TAHMIN ETMEMEK adina (bkz. import script). Elle
+      // duzenlenene kadar bu degerde kalir.
+      { kod: "bilinmiyor", etiket: "Bilinmiyor (İçe Aktarımdan)" },
     ],
   },
   {
@@ -136,6 +141,18 @@ const SECENEK_LISTELERI: {
       { kod: "acik", etiket: "Açık" },
       { kod: "kapali", etiket: "Kapalı" },
       { kod: "arsiv", etiket: "Arşiv" },
+      // Eski sistemden (Excel) toplu ice aktarilan dosyalarin kaynak
+      // "DURUM KODU" degeriyle (AÇILACAK/DERDEST/BS. DERDEST/BOZMA SONRASI
+      // YENİ ESAS/KESİNLEŞTİ) eslesen ek degerler - bkz. import script.
+      // "kapali" zaten var oldugu icin KESİNLEŞTİ o degere eslenir, ayrica
+      // eklenmez. Mevcut acik/kapali/arsiv anlamini/kullanimini DEGISTIRMEZ.
+      { kod: "acilacak", etiket: "Açılacak" },
+      { kod: "derdest", etiket: "Derdest" },
+      // Kaynak durum kodu bos/eslenmez oldugunda ana durumu TAHMIN ETMEMEK
+      // icin: dosya bu degerle acilir, orijinal kaynak metni
+      // legacyImportData'da saklanir ve import raporunda "inceleme
+      // gerekli" olarak listelenir.
+      { kod: "incelenmeli", etiket: "İncelenmeli (İçe Aktarımdan)" },
     ],
   },
   {

@@ -446,6 +446,22 @@ model DavaDosyasi {
   guncellemeTarihi   DateTime         @updatedAt
 
   // ============================================================
+  // Eski Sistem Aktarımı (bkz. ARCHITECTURE.md / import script) - bir
+  // toplu ice aktarim script'inin (orn. Excel'den) tekrar tekrar guvenle
+  // calistirilabilmesi icin: her kaynak satir icin sabit, benzersiz bir
+  // anahtar ("dava-veritabani-xlsx:{sayfa}:{satir}" gibi) - script bunu
+  // once arar, VARSA o kaydi bir daha OLUSTURMAZ/GUNCELLEMEZ (kullanicinin
+  // sonradan degistirdigi alanlari ezmemek icin), YOKSA yeni kayit acar.
+  // legacyImportData: Kokpit'in sade alanlarina karsiligi olmayan tum
+  // kaynak sutunlari (tur, dosya rumuzu, muvekkil konumu, icra dosyasi,
+  // tehir-i icra, uyap'a kayitli vekil, dava detayi, acan kisi, sorumlu,
+  // orijinal durum kodu, dava masrafi, masraf tahsilati vb.) - hicbir
+  // otomatik finans/dosya kaydi TURETMEZ, sadece tarihsel referans olarak
+  // saklar. Yeni dosya formunda gosterilmez.
+  legacyKaynakAnahtari String? @unique
+  legacyImportData     Json?
+
+  // ============================================================
   // Karar Sonrasi Takip (bkz. ARCHITECTURE.md "Dava Dosyasi Yasam
   // Dongusu") - hepsi opsiyonel, mevcut kayitlari bozmaz, tahmin/backfill
   // YAPILMAZ. `durumId` (acik/kapali/arsiv - yukarida) BUNDAN BAGIMSIZ:
@@ -781,8 +797,12 @@ model CMKDosyasi {
   cmkGorevlendirmeVarMi Boolean @default(true)
 
   suc     String
-  birim   String
-  dosyaNo String
+  // birim/dosyaNo formda (actions.ts) hala ZORUNLU tutulur - burada
+  // nullable olmasinin TEK sebebi, toplu ice aktarim script'inin (bkz.
+  // prisma/import-dava-veritabani.ts) kaynakta bu bilgiler yoksa
+  // TAHMIN ETMEDEN kayit acabilmesi.
+  birim   String?
+  dosyaNo String?
 
   durusmaTarihi DateTime?
 
@@ -798,9 +818,24 @@ model CMKDosyasi {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // ============================================================
+  // Eski Sistem Aktarımı - DavaDosyasi.legacyKaynakAnahtari/legacyImportData
+  // ile ayni ilke (bkz. yukarida) - toplu ice aktarimin tekrar guvenle
+  // calistirilabilmesi icin.
+  // ============================================================
+  dosyaRumuzu          String? // kaynaktaki "DOSYA RUMUZ" - kaybolmamasi ozellikle istendi
+  karsiTaraf           String? // kaynaktaki "KARŞI TARAF" - CMK modulunde ayri bir alan/tablo yok
+  sifatimiz            String? // "MÜŞTEKİ" vb. - kaynaktaki "SIFATIMIZ"
+  orijinalDurum        String? // kaynagin orijinal durum metni (dosyaDurumu enum'una guvenle girmediyse)
+  legacyKaynakAnahtari String? @unique
+  legacyImportData     Json?
+
   // "Ayni birim + dosyaNo yanlislikla iki kez kaydedilmesin" kurali -
   // DB seviyesinde garanti, actions.ts de bunu once dostca bir mesajla
-  // (P2002 yakalanarak) kullaniciya gosterir.
+  // (P2002 yakalanarak) kullaniciya gosterir. NULL degerler icin Postgres
+  // varsayilani gecerli (birden fazla NULL/NULL satira izin verir) -
+  // ice aktarilan, birim/dosyaNo'su olmayan kayitlarda asil benzersizlik
+  // garantisi legacyKaynakAnahtari uzerinden saglanir.
   @@unique([birim, dosyaNo])
   @@index([musteriId])
   @@index([dosyaDurumu])
