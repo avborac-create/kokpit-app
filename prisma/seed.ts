@@ -317,6 +317,11 @@ const GELISTIRME_TALEPLERI: { anahtar: string; metin: string }[] = [
     metin:
       "Dosyalar listesinden/detayından kayıtları manuel düzenleme ve silme imkanı (not: Düzenle/Sil dosyanın kendi detay sayfasında zaten var, listeden erişim netleştirilmeli).",
   },
+  {
+    anahtar: "yargi-dosyalari-icra-dava-ayrimi",
+    metin:
+      "Dosyalar menüsü altına 'Yargı Dosyaları' başlığı eklenip bunun altının İcra Dosyaları ve Dava Dosyaları olarak ikiye ayrılması. Her dosyanın kendi kart görünümü olmalı; karta tıklanınca o dosyayla ilgili kayıtlar (işlemler, evraklar, para trafiği vb.) okunabilmeli.",
+  },
 ];
 
 async function gelistirmeKutusunuSenkronizeEt() {
