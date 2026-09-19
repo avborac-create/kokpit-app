@@ -57,6 +57,7 @@ model Kullanici {
   gonderdigiOneriler             Oneri[]
   gonderdigiGelistirmeTalepleri  GelistirmeTalebi[]
   sorumluOlduguHukukiMudahaleler HukukiMudahale[]   @relation("HukukiMudahaleSorumluAvukat")
+  hacizRaporlari                 HacizRaporu[]      @relation("HacizRaporuAvukat")
 
   @@map("kullanicilar")
 }
@@ -104,6 +105,7 @@ model SecenekDegeri {
   uyusmazlikGrubuDurum          UyusmazlikGrubu[]     @relation("UyusmazlikGrubuDurumu")
   paraTrafigiSahiplik           MusteriParaTrafigi[]  @relation("ParaKaydiSahibi")
   paraKaydiKullanimAmaci        ParaTrafigiDagitimi[] @relation("ParaKaydiKullanimAmaci")
+  hacizRaporlariTahsilatKanali  HacizRaporu[]         @relation("HacizRaporuTahsilatKanali")
   hukukiMudahaleTuru            HukukiMudahale[]      @relation("HukukiMudahaleTuru")
   hukukiMudahaleOnceligi        HukukiMudahale[]      @relation("HukukiMudahaleOnceligi")
 
@@ -480,6 +482,7 @@ model DavaDosyasi {
   paraTrafigiDagitimlari ParaTrafigiDagitimi[]
   finansHareketleri      MusteriFinansHareketi[]
   hukukiMudahaleler      HukukiMudahale[]
+  hacizRaporlari         HacizRaporu[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -904,4 +907,116 @@ model HukukiMudahale {
   @@index([sorumluAvukatId])
   @@index([sonTarih])
   @@map("hukuki_mudahaleler")
+}
+
+// ============================================================
+// MODUL: Haciz Raporu (Haciz Artcilari)
+// ============================================================
+// Su ana kadar bu rapor bir Google Form + Google Drive uzerinden
+// dolduruluyordu (bkz. ARCHITECTURE.md "Haciz Raporu"). Bu modul onun
+// yerini alir: haciz avukati sahadan donunce bu formu doldurur, 3 belge
+// yukler (Haciz Tutanagi, Protokol, Fotograflar) ve sistem form
+// verisinden bir "Haciz Raporu.pdf" otomatik uretir - avukat ayrica bir
+// rapor belgesi hazirlamaz. Tumu tek bir ZIP olarak (haciz tarihini
+// tasiyan bir klasor icinde, her belge ayri PDF olarak - fotograflar
+// haric) tek tikla indirilebilir (bkz. src/app/kokpit/haciz-artcilari).
+
+enum HacizIslemDurumu {
+  VAR
+  YOK
+  KISMEN_VAR
+  UYGULANMADI
+
+  @@map("haciz_islemi_durumu")
+}
+
+enum TeminatMuvafakatDurumu {
+  VAR
+  YOK
+  ALINAMADI
+  IHTIYATI_ASAMASINDA_DEGIL
+
+  @@map("teminat_muvafakat_durumu")
+}
+
+enum BelgeTuru {
+  HACIZ_TUTANAGI
+  PROTOKOL
+  FOTOGRAF
+
+  @@map("belge_turu")
+}
+
+// Google Form'daki "ESAS İCRA VE DOSYA NO" / "TALİMAT İCRA VE DOSYA NO"
+// serbest metin alanlari yerine, dogrudan sistemdeki bir Icra Dosyasi'na
+// (DavaDosyasi, tur=icra_dosyasi) baglanir - boylece haciz raporu
+// dosyanin/musterinin altinda gorunur. Dosya henuz sistemde yoksa avukat
+// once /kokpit/dava-dosyalari/yeni'den olusturur, sonra bu formda secer.
+model HacizRaporu {
+  id String @id @default(cuid())
+
+  davaDosyasiId String
+  davaDosyasi   DavaDosyasi @relation(fields: [davaDosyasiId], references: [id])
+
+  avukatId String
+  avukat   Kullanici @relation("HacizRaporuAvukat", fields: [avukatId], references: [id])
+
+  hacizTarihi DateTime
+
+  islemYapilanBorclular String
+  // Google Form'da 5 ayri satir olarak toplanan telefon numaralari - tek
+  // bir metin dizisi olarak saklanir, formda satir satir girilir.
+  irtibatNumaralari String[]
+
+  muhafazaDurumu      HacizIslemDurumu
+  istihkakDurumu      HacizIslemDurumu
+  kiymetTakdiriDurumu HacizIslemDurumu
+
+  teminatIadesineMuvafakat TeminatMuvafakatDurumu
+
+  tahsilatMiktari  Decimal        @db.Decimal(14, 2)
+  tahsilatKanaliId String?
+  tahsilatKanali   SecenekDegeri? @relation("HacizRaporuTahsilatKanali", fields: [tahsilatKanaliId], references: [id])
+
+  avukatGorusu String?
+
+  // "Protokolü Taradınız mı?" - Google Form'da "Protokol Yapılmadı" bir
+  // secenekti (dosya yuklenmeden gecerli bir cevap). Protokol belgesinin
+  // kendisi varsa Belge tablosunda (tur=PROTOKOL) tutulur.
+  protokolYapildiMi Boolean @default(true)
+
+  belgeler Belge[]
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([davaDosyasiId])
+  @@index([avukatId])
+  @@index([tahsilatKanaliId])
+  @@map("haciz_raporlari")
+}
+
+// Sunucuda (Vercel Blob) saklanan, avukatin YUKLEDIGI belgeler - haciz
+// tutanagi/protokol taramalari, mahalde cekilen fotograflar. "Haciz
+// Raporu.pdf" burada YOKTUR - o form verisinden HER indirmede taze
+// olusturulur (bkz. pdf.tsx), ayrica saklanmaz. DB'de sadece meta veri +
+// depo url'i tutulur, dosyanin kendisi veritabanina GIRMEZ (bkz.
+// ARCHITECTURE.md "Belgeler" ilkesi).
+model Belge {
+  id String @id @default(cuid())
+
+  hacizRaporuId String
+  hacizRaporu   HacizRaporu @relation(fields: [hacizRaporuId], references: [id], onDelete: Cascade)
+
+  tur       BelgeTuru
+  // Indirilen ZIP'te kullanilacak dosya adi, ör. "Haciz Tutanağı.pdf" -
+  // orijinal yuklenen dosya adindan BAGIMSIZ, hep sabit/ongorulebilir.
+  adOnerisi String
+  depoUrl   String
+  mimeTipi  String
+  boyutBayt Int
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([hacizRaporuId])
+  @@map("belgeler")
 }
