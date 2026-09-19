@@ -6,7 +6,7 @@ import type { BelgeTuru, HacizIslemDurumu, TeminatMuvafakatDurumu } from "@prism
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { hacizAvukatiMi } from "@/core/auth/yetki";
-import { belgeYukle, belgeSil } from "./depo";
+import { belgeSil } from "./depo";
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
   const deger = String(formData.get(alan) ?? "").trim();
@@ -21,24 +21,44 @@ async function yetkiKontrolEt() {
   return kullanici;
 }
 
-// FormData'daki bos dosya input'lari (kullanici hicbir sey secmediginde)
-// tarayicidan boyutu 0 olan bir File nesnesi olarak gelir - gercek bir
-// yukleme ile ayirt etmek icin boyut kontrolu sart.
-function gercekDosyaMi(deger: FormDataEntryValue | null): deger is File {
-  return deger instanceof File && deger.size > 0;
+// Dosyalar artik bu action'a HIC gelmiyor - tarayici secilir secilmez
+// dogrudan Vercel Blob'a yukluyor (bkz. dosya-yukleme-alani.tsx,
+// /api/haciz-raporu/blob-upload). Buraya sadece yuklemenin SONUCU
+// (kucuk bir url + tarayicinin zaten bildigi ad/mime/boyut metadata'si)
+// gizli input'lar olarak ulasir - Next.js Server Action'larinin 1MB'lik
+// govde sinirini asmadan, zayif mobil sinyalde bile guvenilir calisir.
+function tekBelgeOku(formData: FormData, alanAdi: string): { url: string; ad: string; mimeTipi: string; boyutBayt: number } | null {
+  const url = metinYaAlNull(formData, `${alanAdi}Url`);
+  if (!url) return null;
+  return {
+    url,
+    ad: String(formData.get(`${alanAdi}Ad`) ?? alanAdi),
+    mimeTipi: String(formData.get(`${alanAdi}MimeTipi`) ?? "application/octet-stream"),
+    boyutBayt: Number(formData.get(`${alanAdi}Boyut`) ?? 0),
+  };
 }
 
-async function belgeKaydet(hacizRaporuId: string, dosya: File, tur: BelgeTuru, adOnerisi: string) {
-  const buffer = Buffer.from(await dosya.arrayBuffer());
-  const { depoUrl, boyutBayt } = await belgeYukle(hacizRaporuId, dosya.name, buffer, dosya.type || "application/octet-stream");
+function cokluBelgeOku(formData: FormData, alanAdi: string): { url: string; ad: string; mimeTipi: string; boyutBayt: number }[] {
+  const urller = formData.getAll(`${alanAdi}Url`).map(String);
+  const adlar = formData.getAll(`${alanAdi}Ad`).map(String);
+  const mimeTipleri = formData.getAll(`${alanAdi}MimeTipi`).map(String);
+  const boyutlar = formData.getAll(`${alanAdi}Boyut`).map(Number);
+  return urller.map((url, i) => ({ url, ad: adlar[i] ?? alanAdi, mimeTipi: mimeTipleri[i] ?? "application/octet-stream", boyutBayt: boyutlar[i] ?? 0 }));
+}
+
+async function belgeKaydet(
+  hacizRaporuId: string,
+  belge: { url: string; ad: string; mimeTipi: string; boyutBayt: number },
+  tur: BelgeTuru,
+) {
   await prisma.belge.create({
     data: {
       hacizRaporuId,
       tur,
-      adOnerisi,
-      depoUrl,
-      mimeTipi: dosya.type || "application/octet-stream",
-      boyutBayt,
+      adOnerisi: belge.ad,
+      depoUrl: belge.url,
+      mimeTipi: belge.mimeTipi,
+      boyutBayt: belge.boyutBayt,
     },
   });
 }
@@ -92,21 +112,18 @@ export async function hacizRaporuOlustur(formData: FormData) {
     },
   });
 
-  const tutanakDosyasi = formData.get("hacizTutanagiDosyasi");
-  if (gercekDosyaMi(tutanakDosyasi)) {
-    await belgeKaydet(rapor.id, tutanakDosyasi, "HACIZ_TUTANAGI", tutanakDosyasi.name);
+  const tutanakBelgesi = tekBelgeOku(formData, "hacizTutanagi");
+  if (tutanakBelgesi) {
+    await belgeKaydet(rapor.id, tutanakBelgesi, "HACIZ_TUTANAGI");
   }
 
-  const protokolDosyasi = formData.get("protokolDosyasi");
-  if (gercekDosyaMi(protokolDosyasi)) {
-    await belgeKaydet(rapor.id, protokolDosyasi, "PROTOKOL", protokolDosyasi.name);
+  const protokolBelgesi = tekBelgeOku(formData, "protokol");
+  if (protokolBelgesi) {
+    await belgeKaydet(rapor.id, protokolBelgesi, "PROTOKOL");
   }
 
-  const fotograflar = formData.getAll("fotograflar");
-  for (const fotograf of fotograflar) {
-    if (gercekDosyaMi(fotograf)) {
-      await belgeKaydet(rapor.id, fotograf, "FOTOGRAF", fotograf.name);
-    }
+  for (const fotograf of cokluBelgeOku(formData, "fotograf")) {
+    await belgeKaydet(rapor.id, fotograf, "FOTOGRAF");
   }
 
   revalidatePath("/kokpit/haciz-artcilari");

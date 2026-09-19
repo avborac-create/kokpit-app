@@ -601,6 +601,29 @@ Form + Google Drive üzerinden yürütülüyordu — Kokpit'e taşıyan modül
   verisinden HER indirmede taze üretilir (`lib/pdf.tsx`,
   `renderToBuffer`), ayrıca saklanmaz; böylece avukat görüşünü sonradan
   güncellerse rapor PDF'i de otomatik güncel kalır.
+- **Mobil yükleme mimarisi (KRİTİK)**: Haciz avukatları sahada çoğunlukla
+  telefonla çalışıyor - kamera fotoğrafları kolayca birkaç MB'a ulaşır.
+  Dosyalar bu yüzden bir Server Action'a GÖNDERİLMEZ - Next.js Server
+  Action'larının govdesi varsayılan olarak 1MB'la sınırlıdır
+  (`experimental.serverActions.bodySizeLimit`) ve Vercel'in platform
+  seviyesindeki istek boyutu sınırı (~4.5MB) zaten bunu aşardı; birkaç
+  fotoğraf bunu anında kırardı. Bunun yerine dosyalar tarayıcıdan
+  DOĞRUDAN Vercel Blob'a yüklenir (bkz. `components/dosya-yukleme-
+  alani.tsx`, `@vercel/blob/client`'in `upload()` fonksiyonu):
+  `/api/haciz-raporu/blob-upload` (`handleUpload`) sadece kısa ömürlü,
+  tek-dosyaya-özel bir token üretir (token üretmeden önce oturum +
+  SORUMLU_AVUKAT rol kontrolü yapılır - aksi halde oturumsuz herkes
+  Blob deposuna keyfi dosya yükleyebilirdi); asıl dosya baytları hiç
+  sunucumuzdan geçmez. Form gönderimi (`hacizRaporuOlustur`) sadece
+  küçük url + meta veri (ad/mime/boyut) alır - hep hızlı/küçük kalır.
+  "Gönder" butonu, herhangi bir dosya hâlâ yüklenirken PASİFTİR (bkz.
+  `haciz-gonder-butonu.tsx`) - aksi halde zayıf sinyalde tamamlanmamış
+  bir yükleme sessizce forma hiç girmeden kaybolabilirdi. Gerçek bir
+  tarayıcıda (Playwright) doğrulandı: dosya seçilince yükleme başlıyor,
+  buton "Dosyalar yükleniyor…" oluyor, hiçbir JS hatası oluşmuyor -
+  gerçek Blob deposuna erişim bu ortamdan test edilemedi (ağ kısıtı),
+  SDK'nın kendi retry mekanizması ağ hatasında düzgün şekilde tekrar
+  deniyor (crash yok).
 - **Türkçe font sorunu**: `@react-pdf/renderer`'ın varsayılan Helvetica'sı
   İ/ı/Ş/ç gibi Türkçe karakterleri YANLIŞ basıyor (test sırasında
   yakalandı - "HACİZ" yerine "HAC0Z" gibi çıktı veriyordu). Çözüm:

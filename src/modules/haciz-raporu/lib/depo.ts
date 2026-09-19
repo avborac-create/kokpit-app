@@ -1,31 +1,17 @@
-import { put, del, get } from "@vercel/blob";
+import { del, get } from "@vercel/blob";
 
 // Haciz raporu belgeleri (tutanak/protokol taramaları, saha fotoğrafları)
 // müvekkile/dosyaya özel, gizli belgeler - hepsi "private" olarak
-// saklanır (tahmin edilebilir/genel bir url ile ERİŞİLEMEZ). Tek okuma
-// yolu bu dosyadaki belgeIcerigiGetir - o da sunucu tarafında, oturum
-// açmış ve yetkili bir kullanıcı isteğinde çağrılır (bkz. actions.ts,
-// zip.ts). Gerekli BLOB_READ_WRITE_TOKEN ortam değişkeni olmadan hiçbir
-// fonksiyon çalışmaz - Vercel projesine bir Blob deposu bağlanmalı.
-
-function dosyaYoluOlustur(hacizRaporuId: string, dosyaAdi: string): string {
-  return `haciz-raporlari/${hacizRaporuId}/${crypto.randomUUID()}-${dosyaAdi}`;
-}
-
-export async function belgeYukle(
-  hacizRaporuId: string,
-  dosyaAdi: string,
-  icerik: Buffer | Blob,
-  mimeTipi: string,
-): Promise<{ depoUrl: string; boyutBayt: number }> {
-  const sonuc = await put(dosyaYoluOlustur(hacizRaporuId, dosyaAdi), icerik, {
-    access: "private",
-    contentType: mimeTipi,
-    addRandomSuffix: false,
-  });
-  const boyutBayt = icerik instanceof Blob ? icerik.size : icerik.byteLength;
-  return { depoUrl: sonuc.url, boyutBayt };
-}
+// saklanır (tahmin edilebilir/genel bir url ile ERİŞİLEMEZ). Yükleme
+// SUNUCUDAN yapılmaz - tarayıcı dosyayı doğrudan Vercel Blob'a yükler
+// (bkz. dosya-yukleme-alani.tsx, /api/haciz-raporu/blob-upload) - Next.js
+// Server Action'larının 1MB'lik govde sınırını (ve Vercel'in platform
+// sınırını) aşmadan, mobil sahada çekilen büyük fotoğraflarla da
+// çalışabilsin diye. Tek okuma yolu bu dosyadaki belgeIcerigiGetir - o da
+// sunucu tarafında, oturum açmış ve yetkili bir kullanıcı isteğinde
+// çağrılır (bkz. zip.ts). Gerekli BLOB_READ_WRITE_TOKEN ortam değişkeni
+// olmadan hiçbir fonksiyon çalışmaz - Vercel projesine bir Blob deposu
+// bağlanmalı.
 
 export async function belgeIcerigiGetir(depoUrl: string): Promise<Buffer> {
   const sonuc = await get(depoUrl, { access: "private" });
