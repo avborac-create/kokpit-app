@@ -643,6 +643,29 @@ Form + Google Drive üzerinden yürütülüyordu — Kokpit'e taşıyan modül
   Bu fontta da Türk Lirası işareti (₺) YOK - bu yüzden PDF'te tutar "₺"
   değil "... TL" olarak yazılır (web arayüzünde hâlâ ₺ kullanılır, sorun
   sadece gömülü PDF fontunda).
+- **E-posta bildirimi** (`lib/bildirim.ts`): Her yeni haciz raporu
+  kaydedildiğinde `info@eceshukuk.com` ve `bora.colakoglu@eceshukuk.com`
+  adreslerine, rapor özetini içeren bir HTML e-posta gönderilir
+  (`resend` paketi, `core/email/resend-istemcisi.ts`). **Best-effort**:
+  `RESEND_API_KEY` tanımlı değilse ya da Resend API'sine erişilemezse
+  fonksiyon sadece `console.warn`/`console.error` yazıp sessizce döner -
+  ASLA hata fırlatmaz, çünkü zaten veritabanına kaydedilmiş bir raporun
+  sırf bildirim e-postası gönderilemedi diye kullanıcıya hata olarak
+  gösterilmesi/kaydın geri alınması yanlış olurdu. Alıcı listesi şimdilik
+  kod içinde sabit (`BILDIRIM_ALICILARI`) - kişi bazlı/yapılandırılabilir
+  hale getirilmesi istenirse tek satırlık bir değişiklik.
+  - **Kurulum gereksinimi**: [resend.com](https://resend.com)'da bir hesap
+    açılıp `RESEND_API_KEY` Vercel ortam değişkeni olarak eklenmeli. Bu
+    adım bu oturumdan yapılamadı (ağ kısıtı + Vercel dashboard erişimi
+    yok) - gerçek bir e-posta gönderimi test EDİLEMEDİ, sadece
+    "API anahtarı yoksa çökmüyor" yolu doğrulandı.
+  - Varsayılan gönderen adresi Resend'in kendi sandbox adresi
+    (`onboarding@resend.dev`) - `eceshukuk.com` Resend'de doğrulanmış bir
+    domain olarak eklenirse `HACIZ_RAPORU_BILDIRIM_GONDEREN` ortam
+    değişkeniyle örn. `Kokpit <bildirim@eceshukuk.com>` yapılabilir.
+    Resend'in sandbox gönderen adresinin güncel gönderim
+    kısıtlarını (hangi alıcılara ulaşabildiğini) bu ortamdan
+    doğrulayamadık - resend.com dokümantasyonundan kontrol edilmeli.
 - **Tek tıkla indirme**: `/kokpit/haciz-artcilari/[id]/indir` (route
   handler) haczin tarihini taşıyan TEK bir klasör içinde - Haciz
   Tutanağı, Protokol ve Haciz Raporu ayrı PDF'ler, fotoğraflar orijinal

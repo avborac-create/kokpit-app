@@ -7,6 +7,8 @@ import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { hacizAvukatiMi } from "@/core/auth/yetki";
 import { belgeSil } from "./depo";
+import { hacizRaporuGetir } from "./queries";
+import { hacizRaporuBildirimGonder } from "./bildirim";
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
   const deger = String(formData.get(alan) ?? "").trim();
@@ -124,6 +126,11 @@ export async function hacizRaporuOlustur(formData: FormData) {
 
   for (const fotograf of cokluBelgeOku(formData, "fotograf")) {
     await belgeKaydet(rapor.id, fotograf, "FOTOGRAF");
+  }
+
+  const raporDetayi = await hacizRaporuGetir(rapor.id);
+  if (raporDetayi) {
+    await hacizRaporuBildirimGonder(raporDetayi);
   }
 
   revalidatePath("/kokpit/haciz-artcilari");
