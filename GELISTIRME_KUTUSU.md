@@ -9,8 +9,6 @@ işlenir).
 
 ## Beklemede
 
-- Dosyalar tablosundaki sütunların admin tarafından manuel olarak yeniden
-  sıralanabilmesi (dinamik sütun sırası).
 - Dosyalar menüsü altına "Yargı Dosyaları" başlığı eklenip bunun altının
   İcra Dosyaları ve Dava Dosyaları olarak ikiye ayrılması. Her dosyanın
   kendi kart görünümü olmalı; karta tıklanınca o dosyayla ilgili kayıtlar
@@ -39,10 +37,16 @@ işlenir).
 - Kokpit No formatı "KP-0006" yerine "KN-1" şeklinde olsun (baştaki
   sıfırlar kaldırılsın) ve KN-999'a, gerekirse daha da ileriye kadar
   gidebilsin.
+- "Müvekkil(ler)" ibaresi uygulamanın HER yerinde "Müvekkil" olarak
+  değiştirilmeli — "ler" ekini parantez içinde hiçbir yerde göstermeyin.
+- Yeni Dosya formundaki Müvekkil seçimi şu an bir onay kutusu (checkbox)
+  listesi; bunun yerine açılır menü (dropdown/select) stiline
+  dönüştürülmeli.
 
 ## Yapılıyor
 
-_(şu an yok)_
+- Dosyalar tablosundaki sütunların admin tarafından manuel olarak yeniden
+  sıralanabilmesi (dinamik sütun sırası).
 
 ## Tamamlandı
 

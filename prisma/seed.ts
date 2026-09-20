@@ -347,6 +347,16 @@ const GELISTIRME_TALEPLERI: { anahtar: string; metin: string }[] = [
     metin:
       "Kokpit No formatı 'KP-0006' yerine 'KN-1' şeklinde olsun (baştaki sıfırlar kaldırılsın) ve KN-999'a, gerekirse daha da ileriye kadar gidebilsin.",
   },
+  {
+    anahtar: "muvekkil-ler-eki-kaldir",
+    metin:
+      "'Müvekkil(ler)' ibaresi uygulamanın HER yerinde 'Müvekkil' olarak değiştirilmeli - 'ler' ekini parantez içinde hiçbir yerde göstermeyin.",
+  },
+  {
+    anahtar: "yeni-dosya-muvekkil-secimi-dropdown",
+    metin:
+      "Yeni Dosya formundaki Müvekkil seçimi şu an bir onay kutusu (checkbox) listesi; bunun yerine açılır menü (dropdown/select) stiline dönüştürülmeli.",
+  },
 ];
 
 async function gelistirmeKutusunuSenkronizeEt() {
