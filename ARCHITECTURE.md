@@ -649,6 +649,31 @@ Form + Google Drive üzerinden yürütülüyordu — Kokpit'e taşıyan modül
   Create Database → Blob) - bu adım bu oturumdan yapılamadı (bkz. ağ
   kısıtı), kullanıcı tarafından tamamlanmalı.
 
+## Kullanıcılar (Ayarlar > Kullanıcılar)
+
+- Uygulamada self-servis kayıt/davet akışı YOK - tek giriş kapısı
+  `src/app/kokpit/ayarlar/kullanicilar/page.tsx`. YONETICI/ORTAK
+  (`silebilirMi`) buradan personel/avukat için e-posta+geçici şifre+rol
+  ile hesap açar (`sifreyiHashle` ile bcrypt) ve mevcut hesapların
+  girişini aç/kapa (`aktifMi`) yapabilir - şifre sıfırlama henüz yok,
+  şimdilik yeni bir hesap açılması gerekir.
+- **Rol yükselmesi engeli** (`core/kullanici/rol-etiketleri.ts`,
+  `atanabilirRoller`): YONETICI rolü sistem yöneticiliği anlamına geldiği
+  için sadece mevcut bir YONETICI başka bir YONETICI oluşturabilir/
+  durumunu değiştirebilir - bir ORTAK'ın formda bu rolü görmesi/ataması
+  engellenir (hem formda hem server action'da).
+- **Kendi kendini kilitleme engeli**: Bir kullanıcı kendi satırındaki
+  aç/kapa butonunu göremez, server action da kendi id'sine karşı
+  çağrılırsa hata fırlatır.
+- **Mimari not**: `KullaniciDurumButonu` (aç/kapa butonu) ayrı, küçük bir
+  "use client" sarmalayıcı olarak var - sebebi, bir Server Component'ten
+  (page.tsx) `OnayliButon`'a doğrudan `() => sunucuAction(...)` gibi bir ok
+  fonksiyonu GEÇİRİLEMEMESİ (yalnızca "use server" ile işaretli
+  fonksiyonların kendisi Server->Client sınırını geçebilir, onu saran yeni
+  bir fonksiyon geçemez - build zamanı değil, çalışma zamanı hatası
+  olarak ortaya çıkar). Closure bu yüzden zaten "use client" olan küçük
+  sarmalayıcının içinde kurulur.
+
 ## PWA
 
 - `public/manifest.json` + `public/sw.js`: kullanıcılar Chrome/Safari'nin
