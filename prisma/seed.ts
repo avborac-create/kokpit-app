@@ -332,6 +332,11 @@ const GELISTIRME_TALEPLERI: { anahtar: string; metin: string }[] = [
     metin:
       "Mobilde tablo satırları (Kokpit No/Dosya No/Tür/Birim vb.) çok uzun görünüyor - özellikle 'Tür' hücresindeki uzun etiketler satırı gereksiz büyütüyor. Satır yüksekliği en fazla 2 satır metin kadar olacak şekilde revize edilmeli (kırpma/kısaltma, daha kompakt mobil düzen ya da kart görünümü ele alınabilir).",
   },
+  {
+    anahtar: "dosya-silme-onay-akisi",
+    metin:
+      "Dosya silme iş akışı: (1) Silmek isteyen kişi yetkiliyse şifre girmesi istenir; değilse 2'ye geç. (2) Yöneticiye silme talebi gider. (3) Talep uygun görülürse 1'e dön (şifre sorulup silme tamamlanır).",
+  },
 ];
 
 async function gelistirmeKutusunuSenkronizeEt() {

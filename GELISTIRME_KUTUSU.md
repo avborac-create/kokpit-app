@@ -31,6 +31,9 @@ işlenir).
   (Esas İcra Dosyası)" gibi) satırı gereksiz büyütüyor. Satır yüksekliği en
   fazla 2 satır metin kadar olacak şekilde revize edilmeli (kırpma/kısaltma,
   daha kompakt mobil düzeni ya da tablo yerine kart görünümü ele alınabilir).
+- Dosya silme iş akışı: (1) Silmek isteyen kişi yetkiliyse şifre girmesi
+  istenir; değilse 2'ye geç. (2) Yöneticiye silme talebi gider. (3) Talep
+  uygun görülürse 1'e dön (şifre sorulup silme tamamlanır).
 
 ## Yapılıyor
 
