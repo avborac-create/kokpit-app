@@ -6,6 +6,17 @@ import type { HukukiMudahaleDurumu, DosyaEvresi } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
+import { bagliDosyaAdaylariniAra, type BagliDosyaAday } from "@/modules/dava-dosyasi/lib/queries";
+
+// "Bağlantılı Dosya Seçimi" combobox'ının (client component) yazarken
+// aramayı sunucuda çalıştırabilmesi için - salt okunur, sadece giriş
+// yapılmış olması yeterli (silebilirMi gerekmiyor, aynı liste zaten
+// Dosyalar sayfasında herkese görünür).
+export async function bagliDosyaAra(arama: string, haricTutulanId?: string): Promise<BagliDosyaAday[]> {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) return [];
+  return bagliDosyaAdaylariniAra(arama, haricTutulanId);
+}
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
   const deger = String(formData.get(alan) ?? "").trim();

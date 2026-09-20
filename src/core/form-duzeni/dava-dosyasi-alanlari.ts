@@ -10,7 +10,7 @@ export const DAVA_DOSYASI_ALAN_ETIKETLERI: Record<string, string> = {
   durumId: "Durum",
   birimAdi: "Birim Adı (Mahkeme/İcra Dairesi)",
   uyusmazlikGrubuId: "Dosya Kümesi",
-  bagliOlduguDosyaId: "Bağlı Olduğu Esas Dosya",
+  bagliOlduguDosyaId: "Bağlantılı Dosya Seçimi",
   acilisTarihi: "Açılış Tarihi",
   kapanisTarihi: "Kapanış Tarihi",
   sorumluAvukatId: "Sorumlu Avukat",

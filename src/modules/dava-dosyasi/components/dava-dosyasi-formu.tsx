@@ -2,15 +2,12 @@ import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterileriListele, avukatlariListele } from "@/modules/musteri/lib/queries";
-import {
-  uyusmazlikGruplariniListele,
-  musterininDosyalari,
-  type davaDosyasiGetir,
-} from "@/modules/dava-dosyasi/lib/queries";
+import { uyusmazlikGruplariniListele, type davaDosyasiGetir } from "@/modules/dava-dosyasi/lib/queries";
 import { formAlanDuzeniniGetir } from "@/core/form-duzeni/queries";
 import { DAVA_DOSYASI_GIZLENEMEZ_ALANLAR } from "@/core/form-duzeni/dava-dosyasi-alanlari";
 import { MuvekkilSecici } from "./muvekkil-secici";
 import { KarsiTarafEkleyici } from "./karsi-taraf-ekleyici";
+import { BagliDosyaSecici } from "./bagli-dosya-secici";
 
 type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
 
@@ -38,11 +35,7 @@ export async function DavaDosyasiFormu({
 
   const seciliIdler =
     dosya?.muvekkiller.map((m) => m.musteriId) ?? (onSecilenMusteriId ? [onSecilenMusteriId] : []);
-  const [uyusmazlikGruplari, muvekkilinDosyalari] = await Promise.all([
-    uyusmazlikGruplariniListele(seciliIdler),
-    seciliIdler[0] ? musterininDosyalari(seciliIdler[0]) : Promise.resolve([]),
-  ]);
-  const esasDosyaAdaylari = muvekkilinDosyalari.filter((d) => d.id !== dosya?.id);
+  const uyusmazlikGruplari = await uyusmazlikGruplariniListele(seciliIdler);
   const acilisVarsayilan = dosya
     ? dosya.acilisTarihi.toISOString().slice(0, 10)
     : new Date().toISOString().slice(0, 10);
@@ -177,27 +170,7 @@ export async function DavaDosyasiFormu({
       gizli ? (
         <input type="hidden" name="bagliOlduguDosyaId" value={dosya?.bagliOlduguDosyaId ?? ""} />
       ) : (
-        <Alan>
-          <Etiket htmlFor="bagliOlduguDosyaId">Bağlı Olduğu Esas Dosya (opsiyonel)</Etiket>
-          <Secim
-            id="bagliOlduguDosyaId"
-            name="bagliOlduguDosyaId"
-            defaultValue={dosya?.bagliOlduguDosyaId ?? ""}
-          >
-            <option value="">— (bağımsız/esas dosya) —</option>
-            {esasDosyaAdaylari.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.dosyaNo ? `${d.dosyaNo} — ` : ""}
-                {d.konu}
-              </option>
-            ))}
-          </Secim>
-          <p className="mt-1 text-xs text-white/35">
-            Talimat dosyası gibi başka bir dosyanın uzantısı olan dosyalar için: hangi esas dosyaya
-            bağlı olduğunu seçin (örn. bir icra dosyasının haciz için başka bir icra dairesine
-            gönderilen talimat dosyası).
-          </p>
-        </Alan>
+        <BagliDosyaSecici dosyaId={dosya?.id} baslangicSecili={dosya?.bagliOlduguDosya ?? null} />
       ),
     acilisTarihi: () => (
       <Alan>

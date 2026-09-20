@@ -76,6 +76,33 @@ export async function davaDosyasiGetir(id: string) {
   });
 }
 
+export type BagliDosyaAday = { id: string; dosyaNo: string | null; konu: string; kayitNo: number };
+
+// "Bağlantılı Dosya Seçimi" combobox'ı icin hafif arama - davaDosyalariniListele'nin
+// tersine derin include YAPMAZ, sadece secim listesinde gosterilecek 3 alani
+// (select) ceker ve sonucu kucuk bir sayiyla sinirlar (cok fazla dosya olsa
+// bile combobox'a agir bir sorgu yuklenmesin diye). Butun burodaki dosyalarda
+// arar - tek bir musteriyle sinirli DEGILDIR (bkz. musterininDosyalari).
+export async function bagliDosyaAdaylariniAra(arama: string, haricTutulanId?: string): Promise<BagliDosyaAday[]> {
+  const temizlenmisArama = arama.trim();
+  return prisma.davaDosyasi.findMany({
+    where: {
+      ...(haricTutulanId ? { id: { not: haricTutulanId } } : {}),
+      ...(temizlenmisArama
+        ? {
+            OR: [
+              { konu: { contains: temizlenmisArama, mode: "insensitive" } },
+              { dosyaNo: { contains: temizlenmisArama, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
+    select: { id: true, dosyaNo: true, konu: true, kayitNo: true },
+    orderBy: { olusturmaTarihi: "desc" },
+    take: 20,
+  });
+}
+
 export async function musterininDosyalari(musteriId: string) {
   return prisma.davaDosyasi.findMany({
     where: { muvekkiller: { some: { musteriId } } },
