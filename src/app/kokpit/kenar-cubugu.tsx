@@ -11,6 +11,7 @@ import {
   DosyalarIkonu,
   HukukDosyalariIkonu,
   CezaDosyalariIkonu,
+  HacizRaporlariIkonu,
   MuvekkilFinansIkonu,
   OnerilerIkonu,
   AyarlarIkonu,
@@ -86,7 +87,10 @@ export function KenarCubugu({
   }
 
   const hukukDosyalariAktifMi = yol.startsWith("/kokpit/dava-dosyalari");
-  const dosyalarCocukAktifMi = yol.startsWith("/kokpit/dava-dosyalari") || yol.startsWith("/kokpit/cmk-dosyalari");
+  const dosyalarCocukAktifMi =
+    yol.startsWith("/kokpit/dava-dosyalari") ||
+    yol.startsWith("/kokpit/cmk-dosyalari") ||
+    yol.startsWith("/kokpit/haciz-raporlari");
   const kayitliAcikMi = useSyncExternalStore(dosyalarAbone, dosyalarDegeriOku, () => null);
   const dosyalarAcikMi = kayitliAcikMi ?? dosyalarCocukAktifMi;
 
@@ -108,7 +112,7 @@ export function KenarCubugu({
         {gorunurMu("musteriler") && (
           <MenuBagi modul={modulHaritasi.get("musteriler")!} ikon={MuvekkillerIkonu} seciliMi={yol.startsWith("/kokpit/musteriler")} />
         )}
-        {(gorunurMu("dava-dosyalari") || gorunurMu("cmk-dosyalari")) && (
+        {(gorunurMu("dava-dosyalari") || gorunurMu("cmk-dosyalari") || gorunurMu("haciz-raporlari")) && (
           <>
             <button
               type="button"
@@ -138,6 +142,13 @@ export function KenarCubugu({
                     ikon={CezaDosyalariIkonu}
                     seciliMi={yol.startsWith("/kokpit/cmk-dosyalari")}
                     rozetSayisi={cmkDikkatSayisi}
+                  />
+                )}
+                {gorunurMu("haciz-raporlari") && (
+                  <MenuBagi
+                    modul={modulHaritasi.get("haciz-raporlari")!}
+                    ikon={HacizRaporlariIkonu}
+                    seciliMi={yol.startsWith("/kokpit/haciz-raporlari")}
                   />
                 )}
               </div>

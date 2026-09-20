@@ -104,6 +104,9 @@ model SecenekDegeri {
   paraKaydiKullanimAmaci        ParaTrafigiDagitimi[] @relation("ParaKaydiKullanimAmaci")
   hukukiMudahaleTuru            HukukiMudahale[]      @relation("HukukiMudahaleTuru")
   hukukiMudahaleOnceligi        HukukiMudahale[]      @relation("HukukiMudahaleOnceligi")
+  hacizRaporuMuhafaza           HacizRaporu[]         @relation("HacizRaporuMuhafaza")
+  hacizRaporuIstihkak           HacizRaporu[]         @relation("HacizRaporuIstihkak")
+  hacizRaporuKiymetTakdiri      HacizRaporu[]         @relation("HacizRaporuKiymetTakdiri")
 
   @@unique([listeId, kod])
   @@map("secenek_degerleri")
@@ -468,6 +471,7 @@ model DavaDosyasi {
   paraTrafigiDagitimlari ParaTrafigiDagitimi[]
   finansHareketleri      MusteriFinansHareketi[]
   hukukiMudahaleler      HukukiMudahale[]
+  hacizRaporlari         HacizRaporu[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -904,4 +908,38 @@ model HukukiMudahale {
   @@index([sorumluAvukatId])
   @@index([sonTarih])
   @@map("hukuki_mudahaleler")
+}
+
+// Bir icra dosyasinda yapilan bir haciz isleminin kaydi. icraDosyasiId,
+// DavaDosyasi'nin GENEL (tur ayrimi yapmayan) tablosuna baglanir - "İcra
+// Dosyası" secimi formda tur=icra olan dosyalarla sinirlanir, ama semada
+// ayri bir tablo YOK (bkz. sema basindaki genel ilke: tek DavaDosyasi
+// tablosu, tur SecenekListesi ile ayirt edilir).
+model HacizRaporu {
+  id            String      @id @default(cuid())
+  icraDosyasiId String
+  icraDosyasi   DavaDosyasi @relation(fields: [icraDosyasiId], references: [id], onDelete: Cascade)
+
+  hacizTarihi     DateTime
+  islemYapan      String?
+  irtibatNumarasi String?
+
+  // Ucu, buronun ihtiyaci degistikce yeni deger eklenebilsin diye
+  // SecenekListesi/SecenekDegeri ile - sema basindaki genel ilke.
+  muhafazaId String?
+  muhafaza   SecenekDegeri? @relation("HacizRaporuMuhafaza", fields: [muhafazaId], references: [id])
+
+  istihkakId String?
+  istihkak   SecenekDegeri? @relation("HacizRaporuIstihkak", fields: [istihkakId], references: [id])
+
+  kiymetTakdiriId String?
+  kiymetTakdiri   SecenekDegeri? @relation("HacizRaporuKiymetTakdiri", fields: [kiymetTakdiriId], references: [id])
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([icraDosyasiId])
+  @@index([muhafazaId])
+  @@index([istihkakId])
+  @@index([kiymetTakdiriId])
+  @@map("haciz_raporlari")
 }

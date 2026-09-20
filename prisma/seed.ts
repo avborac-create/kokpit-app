@@ -238,6 +238,37 @@ const SECENEK_LISTELERI: {
       { kod: "acil", etiket: "Acil" },
     ],
   },
+  // Haciz Raporu - haczedilen malin akibeti.
+  {
+    anahtar: "haciz_muhafaza_durumu",
+    ad: "Haciz Muhafaza Durumu",
+    degerler: [
+      { kod: "muhafazaya_alindi", etiket: "Muhafazaya Alındı" },
+      { kod: "yediemin_borcluda", etiket: "Yediemin Olarak Borçluda Bırakıldı" },
+      { kod: "yediemin_ucuncu_kisi", etiket: "Yediemin Olarak Üçüncü Kişiye Bırakıldı" },
+      { kod: "muhafaza_yapilmadi", etiket: "Muhafaza Yapılmadı" },
+    ],
+  },
+  {
+    anahtar: "haciz_istihkak_durumu",
+    ad: "Haciz İstihkak Durumu",
+    degerler: [
+      { kod: "istihkak_iddiasi_yok", etiket: "İstihkak İddiası Yok" },
+      { kod: "istihkak_iddiasi_var_incelemede", etiket: "İstihkak İddiası Var — İncelemede" },
+      { kod: "istihkak_kabul_edildi", etiket: "İstihkak İddiası Kabul Edildi" },
+      { kod: "istihkak_reddedildi", etiket: "İstihkak İddiası Reddedildi" },
+    ],
+  },
+  {
+    anahtar: "haciz_kiymet_takdiri_durumu",
+    ad: "Haciz Kıymet Takdiri Durumu",
+    degerler: [
+      { kod: "talep_edilmedi", etiket: "Talep Edilmedi" },
+      { kod: "talep_edildi", etiket: "Talep Edildi" },
+      { kod: "kiymet_takdiri_yapildi", etiket: "Kıymet Takdiri Yapıldı" },
+      { kod: "kiymet_takdirine_itiraz_edildi", etiket: "Kıymet Takdirine İtiraz Edildi" },
+    ],
+  },
 ];
 
 async function secenekListeleriniOlustur() {
@@ -478,6 +509,7 @@ const VARSAYILAN_MENU_SIRASI = [
   "dava-dosyalari",
   "avukat-sapkasi",
   "karar-sonrasi-takip",
+  "haciz-raporlari",
   "muvekkil-finans",
   "cmk-dosyalari",
   "oneriler",
