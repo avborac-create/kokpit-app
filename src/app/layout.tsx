@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "KOKPİT",
+    title: "Kokpit",
   },
   icons: {
     // iOS Safari, ikonlari agresif sekilde onbelleklediginden, ikon her
