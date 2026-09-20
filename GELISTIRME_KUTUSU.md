@@ -37,16 +37,13 @@ işlenir).
 - Kokpit No formatı "KP-0006" yerine "KN-1" şeklinde olsun (baştaki
   sıfırlar kaldırılsın) ve KN-999'a, gerekirse daha da ileriye kadar
   gidebilsin.
-- "Müvekkil(ler)" ibaresi uygulamanın HER yerinde "Müvekkil" olarak
-  değiştirilmeli — "ler" ekini parantez içinde hiçbir yerde göstermeyin.
 - Yeni Dosya formundaki Müvekkil seçimi şu an bir onay kutusu (checkbox)
   listesi; bunun yerine açılır menü (dropdown/select) stiline
   dönüştürülmeli.
 
 ## Yapılıyor
 
-- Dosyalar tablosundaki sütunların admin tarafından manuel olarak yeniden
-  sıralanabilmesi (dinamik sütun sırası).
+_(şu an yok)_
 
 ## Tamamlandı
 
@@ -55,3 +52,13 @@ işlenir).
   tablosuna "İşlemler" sütunu (Düzenle/Sil) eklendi. (Panodaki karşılık
   kart hâlâ "Beklemede"de duruyor — DB'ye yazamadığım için elle
   "Tamamlandı"ya sürüklemeniz gerekiyor.)
+- Dosyalar tablosundaki sütunların admin tarafından manuel olarak yeniden
+  sıralanabilmesi (dinamik sütun sırası) — Ayarlar > Sütun Düzeni sekmesi
+  eklendi, Dosyalar tablosu artık bu sıraya/görünürlüğe göre render
+  ediliyor. (DB migration'ı deploy'da otomatik uygulanacak; kod pushlandı
+  ama gerçek ortamda test edemediğim için elle "Tamamlandı"ya
+  sürüklemeniz gerekiyor.)
+- "Müvekkil(ler)" ibaresi uygulamanın her yerinde "Müvekkil" olarak
+  değiştirildi (Dosyalar tablosu, dosya detayı, Yeni Dosya formu, Form
+  Düzeni ayarları). (Aynı gerekçeyle elle "Tamamlandı"ya taşımanız
+  gerekiyor.)

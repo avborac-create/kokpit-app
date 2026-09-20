@@ -8,6 +8,7 @@ const SEKMELER = [
   { yol: "/kokpit/ayarlar/secenekler", ad: "Seçenek Listeleri" },
   { yol: "/kokpit/ayarlar/menu", ad: "Menü Düzeni" },
   { yol: "/kokpit/ayarlar/form-duzeni", ad: "Form Düzeni" },
+  { yol: "/kokpit/ayarlar/sutun-duzeni", ad: "Sütun Düzeni" },
 ];
 
 // Geliştirme Kutusu, normal kullanıcının sol menüsünden kaldırıldı (bkz.

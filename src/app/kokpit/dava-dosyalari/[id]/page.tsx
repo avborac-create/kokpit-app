@@ -165,7 +165,7 @@ export default async function DavaDosyasiDetaySayfasi({
           </p>
         </div>
         <div>
-          <p className="text-white/45">Müvekkil(ler)</p>
+          <p className="text-white/45">Müvekkil</p>
           <p className="text-white">
             {dosya.muvekkiller.map((m, i) => (
               <span key={m.musteriId}>

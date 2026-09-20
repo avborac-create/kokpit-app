@@ -533,6 +533,40 @@ async function formAlanDuzeniOlustur() {
   }
 }
 
+// Dosyalar tablosundaki, admin'in surukleyerek sirasini/gorunurlugunu
+// degistirebildigi sutunlarin varsayilan sirasi - etiketleri (tek dogru
+// kaynak) src/core/tablo-duzeni/dava-dosyalari-sutunlari.ts icinde.
+// "İşlemler" sutunu burada YOK - o bir veri sutunu degil, tabloda her
+// zaman sabit en sonda durur, bu tabloya hic girmiyor.
+const VARSAYILAN_DAVA_DOSYALARI_SUTUN_SIRASI = [
+  "kayitNo",
+  "dosyaNo",
+  "tur",
+  "birimAdi",
+  "konu",
+  "karsiTaraflar",
+  "muvekkiller",
+  "durum",
+  "sorumluAvukat",
+];
+
+async function tabloSutunDuzeniOlustur() {
+  let eklenen = 0;
+  for (const [index, sutunAnahtari] of VARSAYILAN_DAVA_DOSYALARI_SUTUN_SIRASI.entries()) {
+    const mevcut = await prisma.tabloSutunDuzeni.findUnique({
+      where: { tabloAnahtari_sutunAnahtari: { tabloAnahtari: "dava-dosyalari", sutunAnahtari } },
+    });
+    if (mevcut) continue;
+    await prisma.tabloSutunDuzeni.create({
+      data: { tabloAnahtari: "dava-dosyalari", sutunAnahtari, siraNo: index },
+    });
+    eklenen += 1;
+  }
+  if (eklenen > 0) {
+    console.log(`✓ Sütun Düzeni: ${eklenen} yeni sütun eklendi.`);
+  }
+}
+
 // "Dosya Kumesi" zorunlu hale getirilmeden once, kumesiz kalmis TUM eski
 // dosyalar icin otomatik birer TEKIL kume olusturur (dosyanin konusuyla
 // adlandirilir, dosyanin ilk muvekkiline baglanir). Hicbir DavaDosyasi
@@ -620,6 +654,7 @@ async function main() {
   await yinelenenUyusmazlikGruplariniBirlestir();
   await menuOgeleriniOlustur();
   await formAlanDuzeniOlustur();
+  await tabloSutunDuzeniOlustur();
   await kumesizDosyalariBackfillEt();
   await kumesizParaKayitlariniBackfillEt();
   await paraKaydiAciklamasiBackfillEt();
