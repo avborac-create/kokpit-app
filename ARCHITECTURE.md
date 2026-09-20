@@ -591,9 +591,9 @@ Form + Google Drive üzerinden yürütülüyordu — Kokpit'e taşıyan modül
   oluştur" akışı BİLİNÇLİ OLARAK eklenmedi (DavaDosyasi'nin zorunlu
   alanları - Dosya Kümesi, müvekkil vb. - haciz formunda tekrar etmek
   yerine mevcut, test edilmiş oluşturma akışı yeniden kullanılır).
-- **Yetki**: Panel YONETICI/ORTAK/SORUMLU_AVUKAT'a GÖRÜNÜR (denetim
-  amaçlı), ama yeni rapor girişi/silme SADECE SORUMLU_AVUKAT rolüne açık
-  (bkz. `core/auth/yetki.ts` → `hacizAvukatiMi`).
+- **Yetki**: Panel YONETICI/ORTAK/SORUMLU_AVUKAT'a GÖRÜNÜR; yeni rapor
+  girişi/silme de aynı üç role açık (PERSONEL hariç) - bkz.
+  `core/auth/yetki.ts` → `hacizAvukatiMi`.
 - **Belgeler**: Avukatın yüklediği taramalar (Haciz Tutanağı, Protokol,
   fotoğraflar) `Belge` tablosunda meta veri olarak, dosyanın kendisi
   Vercel Blob'da (`access: "private"`) tutulur — DB'ye asla girmez (bkz.
@@ -612,7 +612,7 @@ Form + Google Drive üzerinden yürütülüyordu — Kokpit'e taşıyan modül
   alani.tsx`, `@vercel/blob/client`'in `upload()` fonksiyonu):
   `/api/haciz-raporu/blob-upload` (`handleUpload`) sadece kısa ömürlü,
   tek-dosyaya-özel bir token üretir (token üretmeden önce oturum +
-  SORUMLU_AVUKAT rol kontrolü yapılır - aksi halde oturumsuz herkes
+  `hacizAvukatiMi` rol kontrolü yapılır - aksi halde oturumsuz herkes
   Blob deposuna keyfi dosya yükleyebilirdi); asıl dosya baytları hiç
   sunucumuzdan geçmez. Form gönderimi (`hacizRaporuOlustur`) sadece
   küçük url + meta veri (ad/mime/boyut) alır - hep hızlı/küçük kalır.
