@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { KullaniciRolu } from "@prisma/client";
 
 const SEKMELER = [
+  { yol: "/kokpit/ayarlar/kullanicilar", ad: "Kullanıcılar" },
   { yol: "/kokpit/ayarlar/secenekler", ad: "Seçenek Listeleri" },
   { yol: "/kokpit/ayarlar/menu", ad: "Menü Düzeni" },
   { yol: "/kokpit/ayarlar/form-duzeni", ad: "Form Düzeni" },
