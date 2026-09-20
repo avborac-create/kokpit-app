@@ -327,6 +327,11 @@ const GELISTIRME_TALEPLERI: { anahtar: string; metin: string }[] = [
     metin:
       "Sayfa geçişlerindeki ~2 saniyelik gecikme giderilmeli. Muhtemel nedenler: liste sayfaları sayfalama olmadan tüm kayıtları derin include ile çekiyor, hiçbir route'ta loading.tsx/Suspense iskeleti yok, durağan referans verileri (Seçenek Listeleri/Menü/Form Düzeni) her istekte yeniden sorgulanıyor. Çözüm: sayfalama/limit, include'ların daraltılması, loading.tsx eklenmesi, durağan verilerin cache'lenmesi.",
   },
+  {
+    anahtar: "mobil-tablo-satir-yuksekligi",
+    metin:
+      "Mobilde tablo satırları (Kokpit No/Dosya No/Tür/Birim vb.) çok uzun görünüyor - özellikle 'Tür' hücresindeki uzun etiketler satırı gereksiz büyütüyor. Satır yüksekliği en fazla 2 satır metin kadar olacak şekilde revize edilmeli (kırpma/kısaltma, daha kompakt mobil düzen ya da kart görünümü ele alınabilir).",
+  },
 ];
 
 async function gelistirmeKutusunuSenkronizeEt() {

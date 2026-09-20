@@ -26,6 +26,11 @@ işlenir).
   dallarının daraltılması, en az trafikli route'lara `loading.tsx`
   eklenmesi, durağan verilerin `unstable_cache`/`revalidate` ile
   önbelleklenmesi.
+- Mobilde (Kokpit No/Dosya No/Tür/Birim gibi) tablo satırları çok uzun
+  görünüyor — özellikle "Tür" hücresindeki uzun etiketler ("İcra Dosyası
+  (Esas İcra Dosyası)" gibi) satırı gereksiz büyütüyor. Satır yüksekliği en
+  fazla 2 satır metin kadar olacak şekilde revize edilmeli (kırpma/kısaltma,
+  daha kompakt mobil düzeni ya da tablo yerine kart görünümü ele alınabilir).
 
 ## Yapılıyor
 
