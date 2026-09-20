@@ -36,6 +36,9 @@ işlenir).
   uygun görülürse 1'e dön (şifre sorulup silme tamamlanır).
 - Dosya silindiğinde geri getirme (restore) seçeneği mutlaka olmalı —
   silme işlemi kalıcı olmamalı, silinen dosyalar geri yüklenebilmeli.
+- Kokpit No formatı "KP-0006" yerine "KN-1" şeklinde olsun (baştaki
+  sıfırlar kaldırılsın) ve KN-999'a, gerekirse daha da ileriye kadar
+  gidebilsin.
 
 ## Yapılıyor
 

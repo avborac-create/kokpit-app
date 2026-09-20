@@ -342,6 +342,11 @@ const GELISTIRME_TALEPLERI: { anahtar: string; metin: string }[] = [
     metin:
       "Dosya silindiğinde geri getirme (restore) seçeneği mutlaka olmalı - silme işlemi kalıcı olmamalı, silinen dosyalar geri yüklenebilmeli.",
   },
+  {
+    anahtar: "kokpit-no-format-kn",
+    metin:
+      "Kokpit No formatı 'KP-0006' yerine 'KN-1' şeklinde olsun (baştaki sıfırlar kaldırılsın) ve KN-999'a, gerekirse daha da ileriye kadar gidebilsin.",
+  },
 ];
 
 async function gelistirmeKutusunuSenkronizeEt() {
