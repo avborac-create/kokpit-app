@@ -536,20 +536,33 @@ const VARSAYILAN_DAVA_DOSYASI_ALAN_SIRASI = [
   "yargiKoluId",
 ];
 
-async function formAlanDuzeniOlustur() {
+// Müvekkil formundaki alanların varsayılan sırası (bkz. musteri-formu.tsx,
+// Form Düzeni Faz 2). Aynı "sona ekle" kuralı burada da geçerlidir.
+const VARSAYILAN_MUSTERI_ALAN_SIRASI = [
+  "adSoyadUnvan",
+  "tipId",
+  "durumId",
+  "telefon",
+  "eposta",
+  "adres",
+  "sorumluAvukatId",
+  "notlar",
+];
+
+async function formAlanDuzeniOlustur(formAnahtari: string, alanSirasi: string[]) {
   let eklenen = 0;
-  for (const [index, alanAnahtari] of VARSAYILAN_DAVA_DOSYASI_ALAN_SIRASI.entries()) {
+  for (const [index, alanAnahtari] of alanSirasi.entries()) {
     const mevcut = await prisma.formAlanDuzeni.findUnique({
-      where: { formAnahtari_alanAnahtari: { formAnahtari: "dava-dosyasi", alanAnahtari } },
+      where: { formAnahtari_alanAnahtari: { formAnahtari, alanAnahtari } },
     });
     if (mevcut) continue;
     await prisma.formAlanDuzeni.create({
-      data: { formAnahtari: "dava-dosyasi", alanAnahtari, siraNo: index },
+      data: { formAnahtari, alanAnahtari, siraNo: index },
     });
     eklenen += 1;
   }
   if (eklenen > 0) {
-    console.log(`✓ Form Düzeni: ${eklenen} yeni alan eklendi.`);
+    console.log(`✓ Form Düzeni (${formAnahtari}): ${eklenen} yeni alan eklendi.`);
   }
 }
 
@@ -639,7 +652,8 @@ async function main() {
   await yinelenenKarsiTaraflariBirlestir();
   await yinelenenUyusmazlikGruplariniBirlestir();
   await menuOgeleriniOlustur();
-  await formAlanDuzeniOlustur();
+  await formAlanDuzeniOlustur("dava-dosyasi", VARSAYILAN_DAVA_DOSYASI_ALAN_SIRASI);
+  await formAlanDuzeniOlustur("musteri", VARSAYILAN_MUSTERI_ALAN_SIRASI);
   await kumesizDosyalariBackfillEt();
   await kumesizParaKayitlariniBackfillEt();
   await paraKaydiAciklamasiBackfillEt();

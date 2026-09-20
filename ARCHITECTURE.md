@@ -572,10 +572,17 @@ olarak çıkarıldı; hem Menü Düzeni hem Form Düzeni artık bunun ince birer
 sarmalayıcısı (DB/server action'lardan habersiz, sadece `onSirala`/
 `onGorunurlukDegistir` callback'leri alır).
 
-**Faz 2 (henüz yapılmadı)**: Aynı mekanizma diğer formlara
-(`musteri-formu`, `para-trafigi-formu`, `irtibat-kisisi-formu`) tek tek,
-ayrı oturumlarda genişletilecek — `karsi-taraf-alacagi-formu` ve
+**Faz 2 (devam ediyor)**: Aynı mekanizma diğer formlara tek tek, ayrı
+oturumlarda genişletiliyor — `karsi-taraf-alacagi-formu` ve
 `masraf-formu`'nun tüm alanları zorunlu olduğu için düşük öncelikli.
+- ✅ `musteri-formu` (Yeni Müvekkil Formu) — tamamlandı. Zorunlu/
+  gizlenemez alanlar: `adSoyadUnvan, tipId, durumId` (bkz.
+  `core/form-duzeni/musteri-alanlari.ts`). Diğerleri (telefon, eposta,
+  adres, sorumluAvukatId, notlar) admin tarafından sıralanıp
+  gizlenebilir. `formAlanDuzeniOlustur` (seed.ts) genel amaçlı hale
+  getirildi (`formAnahtari` + alan sırası parametre) — yeni form
+  eklerken artık tekrar yazılmıyor, sadece çağrılıyor.
+- ⏳ `para-trafigi-formu`, `irtibat-kisisi-formu` — henüz yapılmadı.
 
 ## Haciz Raporu (Haciz Artçıları)
 

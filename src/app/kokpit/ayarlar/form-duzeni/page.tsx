@@ -6,6 +6,7 @@ import {
   DAVA_DOSYASI_ALAN_ETIKETLERI,
   DAVA_DOSYASI_GIZLENEMEZ_ALANLAR,
 } from "@/core/form-duzeni/dava-dosyasi-alanlari";
+import { MUSTERI_ALAN_ETIKETLERI, MUSTERI_GIZLENEMEZ_ALANLAR } from "@/core/form-duzeni/musteri-alanlari";
 import { FormAlanListesi, type FormAlanSatiri } from "@/core/form-duzeni/form-alan-listesi";
 
 export default async function FormDuzeniSayfasi() {
@@ -14,12 +15,21 @@ export default async function FormDuzeniSayfasi() {
     redirect("/kokpit");
   }
 
-  const kayitlar = await formAlanDuzeniniGetir("dava-dosyasi");
-  const ogeler: FormAlanSatiri[] = kayitlar.map((k) => ({
+  const [davaDosyasiKayitlari, musteriKayitlari] = await Promise.all([
+    formAlanDuzeniniGetir("dava-dosyasi"),
+    formAlanDuzeniniGetir("musteri"),
+  ]);
+  const ogeler: FormAlanSatiri[] = davaDosyasiKayitlari.map((k) => ({
     anahtar: k.alanAnahtari,
     etiket: DAVA_DOSYASI_ALAN_ETIKETLERI[k.alanAnahtari] ?? k.alanAnahtari,
     gizliMi: k.gizliMi,
     gizlenebilirMi: !DAVA_DOSYASI_GIZLENEMEZ_ALANLAR.includes(k.alanAnahtari),
+  }));
+  const musteriOgeleri: FormAlanSatiri[] = musteriKayitlari.map((k) => ({
+    anahtar: k.alanAnahtari,
+    etiket: MUSTERI_ALAN_ETIKETLERI[k.alanAnahtari] ?? k.alanAnahtari,
+    gizliMi: k.gizliMi,
+    gizlenebilirMi: !MUSTERI_GIZLENEMEZ_ALANLAR.includes(k.alanAnahtari),
   }));
 
   return (
@@ -50,6 +60,11 @@ export default async function FormDuzeniSayfasi() {
       </p>
 
       <FormAlanListesi formAnahtari="dava-dosyasi" ogeler={ogeler} />
+
+      <h2 className="mb-3 mt-10 text-sm font-medium uppercase tracking-wide text-white/40">
+        Yeni Müvekkil Formu
+      </h2>
+      <FormAlanListesi formAnahtari="musteri" ogeler={musteriOgeleri} />
     </div>
   );
 }
