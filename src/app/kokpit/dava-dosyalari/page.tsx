@@ -11,7 +11,10 @@ import { tabloSutunDuzeniniGetir } from "@/core/tablo-duzeni/queries";
 import {
   DAVA_DOSYALARI_SUTUN_ETIKETLERI,
   DAVA_DOSYALARI_VARSAYILAN_SUTUN_SIRASI,
+  DAVA_DOSYALARI_GIZLENEMEZ_SUTUNLAR,
 } from "@/core/tablo-duzeni/dava-dosyalari-sutunlari";
+import { SutunDuzeniPaneli } from "@/core/tablo-duzeni/sutun-duzeni-paneli";
+import type { TabloSutunSatiri } from "@/core/tablo-duzeni/tablo-sutun-listesi";
 
 type Dosya = Awaited<ReturnType<typeof davaDosyalariniListele>>[number];
 
@@ -64,13 +67,27 @@ export default async function DavaDosyalariSayfasi({
   const gizliSutunlar = new Set(sutunDuzeni.filter((s) => s.gizliMi).map((s) => s.sutunAnahtari));
   const gorunurSutunlar = sutunSirasi.filter((anahtar) => SUTUN_HUCRELERI[anahtar] && !gizliSutunlar.has(anahtar));
 
+  const sutunPaneliOgeleri: TabloSutunSatiri[] = sutunSirasi
+    .filter((anahtar) => SUTUN_HUCRELERI[anahtar])
+    .map((anahtar) => ({
+      anahtar,
+      etiket: DAVA_DOSYALARI_SUTUN_ETIKETLERI[anahtar] ?? anahtar,
+      gizliMi: gizliSutunlar.has(anahtar),
+      gizlenebilirMi: !DAVA_DOSYALARI_GIZLENEMEZ_SUTUNLAR.includes(anahtar),
+    }));
+
   return (
     <div className="pt-3">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight text-white">Dosyalar</h1>
-        <Link href="/kokpit/dava-dosyalari/yeni">
-          <Dugme>+ Yeni Dosya</Dugme>
-        </Link>
+        <div className="flex items-center gap-2">
+          {silmeYetkisiVar && (
+            <SutunDuzeniPaneli tabloAnahtari="dava-dosyalari" ogeler={sutunPaneliOgeleri} />
+          )}
+          <Link href="/kokpit/dava-dosyalari/yeni">
+            <Dugme>+ Yeni Dosya</Dugme>
+          </Link>
+        </div>
       </div>
 
       <form className="mb-6 flex flex-wrap gap-3" method="get">
