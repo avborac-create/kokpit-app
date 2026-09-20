@@ -91,6 +91,18 @@ export function KararSonrasiTakipIkonu(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+// Haciz Artcilari - mahalde muhafaza altina alinan esyayi temsil eden bir
+// sandik/kasa.
+export function HacizArtcilariIkonu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Taban {...props}>
+      <path d="M3 7.5 10 4.5 17 7.5 10 10.5Z" />
+      <path d="M3 7.5V14l7 3 7-3V7.5" />
+      <path d="M10 10.5V17.5" />
+    </Taban>
+  );
+}
+
 export function MuvekkilFinansIkonu(props: SVGProps<SVGSVGElement>) {
   return (
     <Taban {...props}>

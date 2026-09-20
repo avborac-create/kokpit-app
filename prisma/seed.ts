@@ -272,6 +272,22 @@ const SECENEK_LISTELERI: {
       { kod: "acil", etiket: "Acil" },
     ],
   },
+  // Haciz Raporu (bkz. ARCHITECTURE.md) - eskiden Google Form'daki
+  // "TAHSİLAT KANALI" sorusunun secenekleri; yeni bir banka eklenmesi
+  // gerekirse Ayarlar > Seçenek Listeleri'nden buraya satır eklenir.
+  {
+    anahtar: "tahsilat_kanali",
+    ad: "Tahsilat Kanalı",
+    degerler: [
+      { kod: "yok", etiket: "Yok" },
+      { kod: "nakit", etiket: "Nakit" },
+      { kod: "qnb", etiket: "QNB" },
+      { kod: "vakifbank", etiket: "Vakıfbank" },
+      { kod: "esasa_yatti", etiket: "Esasa Yattı" },
+      { kod: "talimata_yatti", etiket: "Talimata Yattı" },
+      { kod: "diger", etiket: "Diğer" },
+    ],
+  },
 ];
 
 async function secenekListeleriniOlustur() {

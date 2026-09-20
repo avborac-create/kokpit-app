@@ -31,6 +31,13 @@ export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
   { anahtar: "musteriler", ad: "Müvekkiller", yol: "/kokpit/musteriler", aktif: true },
   { anahtar: "dava-dosyalari", ad: "Yargı Dosyaları", yol: "/kokpit/dava-dosyalari", aktif: true },
   { anahtar: "cmk-dosyalari", ad: "CMK Dosyaları", yol: "/kokpit/cmk-dosyalari", aktif: true },
+  {
+    anahtar: "haciz-artcilari",
+    ad: "Haciz Artçıları",
+    yol: "/kokpit/haciz-artcilari",
+    aktif: true,
+    rolGorebilir: ["SORUMLU_AVUKAT", "YONETICI", "ORTAK"],
+  },
   { anahtar: "muvekkil-finans", ad: "Müvekkil Finans", yol: "/kokpit/muvekkil-finans", aktif: true },
   {
     anahtar: "oneriler",

@@ -15,3 +15,10 @@ export function silebilirMi(rol: KullaniciRolu): boolean {
 export function sistemYoneticisiMi(rol: KullaniciRolu): boolean {
   return rol === "YONETICI";
 }
+
+// Haciz Raporu OLUSTURMA/YUKLEME - sahaya cikan haciz avukatlarina ozel
+// (bkz. ARCHITECTURE.md "Haciz Raporu"). Panel YONETICI/ORTAK'a da
+// GORUNUR (denetim amacli), ama yeni rapor girisi sadece bu role acik.
+export function hacizAvukatiMi(rol: KullaniciRolu): boolean {
+  return rol === "SORUMLU_AVUKAT";
+}

@@ -577,6 +577,78 @@ sarmalayıcısı (DB/server action'lardan habersiz, sadece `onSirala`/
 ayrı oturumlarda genişletilecek — `karsi-taraf-alacagi-formu` ve
 `masraf-formu`'nun tüm alanları zorunlu olduğu için düşük öncelikli.
 
+## Haciz Raporu (Haciz Artçıları)
+
+Sahaya çıkan haciz avukatlarının doldurduğu raporu — eskiden bir Google
+Form + Google Drive üzerinden yürütülüyordu — Kokpit'e taşıyan modül
+(`src/modules/haciz-raporu`, `src/app/kokpit/haciz-artcilari`).
+
+- **Dosya bağlantısı**: Google Form'daki serbest metin "Esas/Talimat
+  İcra ve Dosya No" alanları yerine, `HacizRaporu.davaDosyasiId` doğrudan
+  sistemdeki bir `DavaDosyasi` (tur=`icra_dosyasi`) kaydına bağlanır.
+  Dosya sistemde henüz yoksa avukat önce `/kokpit/dava-dosyalari/yeni`den
+  oluşturur, sonra bu formda seçer — ayrı bir "dosyayı formun içinden
+  oluştur" akışı BİLİNÇLİ OLARAK eklenmedi (DavaDosyasi'nin zorunlu
+  alanları - Dosya Kümesi, müvekkil vb. - haciz formunda tekrar etmek
+  yerine mevcut, test edilmiş oluşturma akışı yeniden kullanılır).
+- **Yetki**: Panel YONETICI/ORTAK/SORUMLU_AVUKAT'a GÖRÜNÜR (denetim
+  amaçlı), ama yeni rapor girişi/silme SADECE SORUMLU_AVUKAT rolüne açık
+  (bkz. `core/auth/yetki.ts` → `hacizAvukatiMi`).
+- **Belgeler**: Avukatın yüklediği taramalar (Haciz Tutanağı, Protokol,
+  fotoğraflar) `Belge` tablosunda meta veri olarak, dosyanın kendisi
+  Vercel Blob'da (`access: "private"`) tutulur — DB'ye asla girmez (bkz.
+  `lib/depo.ts`). **"Haciz Raporu.pdf" bir Belge DEĞİLDİR** — form
+  verisinden HER indirmede taze üretilir (`lib/pdf.tsx`,
+  `renderToBuffer`), ayrıca saklanmaz; böylece avukat görüşünü sonradan
+  güncellerse rapor PDF'i de otomatik güncel kalır.
+- **Mobil yükleme mimarisi (KRİTİK)**: Haciz avukatları sahada çoğunlukla
+  telefonla çalışıyor - kamera fotoğrafları kolayca birkaç MB'a ulaşır.
+  Dosyalar bu yüzden bir Server Action'a GÖNDERİLMEZ - Next.js Server
+  Action'larının govdesi varsayılan olarak 1MB'la sınırlıdır
+  (`experimental.serverActions.bodySizeLimit`) ve Vercel'in platform
+  seviyesindeki istek boyutu sınırı (~4.5MB) zaten bunu aşardı; birkaç
+  fotoğraf bunu anında kırardı. Bunun yerine dosyalar tarayıcıdan
+  DOĞRUDAN Vercel Blob'a yüklenir (bkz. `components/dosya-yukleme-
+  alani.tsx`, `@vercel/blob/client`'in `upload()` fonksiyonu):
+  `/api/haciz-raporu/blob-upload` (`handleUpload`) sadece kısa ömürlü,
+  tek-dosyaya-özel bir token üretir (token üretmeden önce oturum +
+  SORUMLU_AVUKAT rol kontrolü yapılır - aksi halde oturumsuz herkes
+  Blob deposuna keyfi dosya yükleyebilirdi); asıl dosya baytları hiç
+  sunucumuzdan geçmez. Form gönderimi (`hacizRaporuOlustur`) sadece
+  küçük url + meta veri (ad/mime/boyut) alır - hep hızlı/küçük kalır.
+  "Gönder" butonu, herhangi bir dosya hâlâ yüklenirken PASİFTİR (bkz.
+  `haciz-gonder-butonu.tsx`) - aksi halde zayıf sinyalde tamamlanmamış
+  bir yükleme sessizce forma hiç girmeden kaybolabilirdi. Gerçek bir
+  tarayıcıda (Playwright) doğrulandı: dosya seçilince yükleme başlıyor,
+  buton "Dosyalar yükleniyor…" oluyor, hiçbir JS hatası oluşmuyor -
+  gerçek Blob deposuna erişim bu ortamdan test edilemedi (ağ kısıtı),
+  SDK'nın kendi retry mekanizması ağ hatasında düzgün şekilde tekrar
+  deniyor (crash yok).
+- **Türkçe font sorunu**: `@react-pdf/renderer`'ın varsayılan Helvetica'sı
+  İ/ı/Ş/ç gibi Türkçe karakterleri YANLIŞ basıyor (test sırasında
+  yakalandı - "HACİZ" yerine "HAC0Z" gibi çıktı veriyordu). Çözüm:
+  Liberation Sans (SIL Open Font License) `lib/yazi-tipleri/
+  liberation-sans.ts` içine base64 data URL olarak GÖMÜLÜ - bir dosya
+  yoluna (fs) BİLEREK değil, çünkü Vercel'in sunucusuz fonksiyon
+  paketleme (file tracing) mekanizması düz bir string dosya yoluna
+  referans veren kodu her zaman güvenilir biçimde yakalamayabilir; data
+  URL saf bir JS sabiti olduğu için bu riski tamamen ortadan kaldırır.
+  Bu fontta da Türk Lirası işareti (₺) YOK - bu yüzden PDF'te tutar "₺"
+  değil "... TL" olarak yazılır (web arayüzünde hâlâ ₺ kullanılır, sorun
+  sadece gömülü PDF fontunda).
+- **Tek tıkla indirme**: `/kokpit/haciz-artcilari/[id]/indir` (route
+  handler) haczin tarihini taşıyan TEK bir klasör içinde - Haciz
+  Tutanağı, Protokol ve Haciz Raporu ayrı PDF'ler, fotoğraflar orijinal
+  formatlarında - bir ZIP (`jszip`) üretip döner. Yerel bir Postgres +
+  gerçek `next build`/`next start` ile uçtan uca doğrulandı (sahte 3
+  saniyelik gecikme eklenerek DEĞİL - gerçek dosya/klasör içeriği
+  üretilip PDF olarak okunarak).
+- **Kurulum gereksinimi**: Bu modülün çalışması için Vercel projesine bir
+  **Blob deposu** bağlanması ve `BLOB_READ_WRITE_TOKEN` ortam
+  değişkeninin otomatik oluşması gerekir (Vercel Dashboard → Storage →
+  Create Database → Blob) - bu adım bu oturumdan yapılamadı (bkz. ağ
+  kısıtı), kullanıcı tarafından tamamlanmalı.
+
 ## PWA
 
 - `public/manifest.json` + `public/sw.js`: kullanıcılar Chrome/Safari'nin
