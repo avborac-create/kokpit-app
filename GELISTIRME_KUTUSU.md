@@ -34,6 +34,8 @@ işlenir).
 - Dosya silme iş akışı: (1) Silmek isteyen kişi yetkiliyse şifre girmesi
   istenir; değilse 2'ye geç. (2) Yöneticiye silme talebi gider. (3) Talep
   uygun görülürse 1'e dön (şifre sorulup silme tamamlanır).
+- Dosya silindiğinde geri getirme (restore) seçeneği mutlaka olmalı —
+  silme işlemi kalıcı olmamalı, silinen dosyalar geri yüklenebilmeli.
 
 ## Yapılıyor
 
