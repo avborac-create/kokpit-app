@@ -1,11 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { KullaniciRolu } from "@prisma/client";
 import { cikisYap } from "@/core/auth/actions";
 import { Dugme } from "@/core/ui/button";
 import { OneriButonu } from "@/core/oneri/oneri-butonu";
+import { UYGULAMA_LOGOSU_YOLU } from "@/core/ui/marka";
 import { KenarCubugu } from "./kenar-cubugu";
 
 // Apple'in kendi uygulamalarindaki (Ayarlar, Mail) master-detail deseni:
@@ -36,9 +38,18 @@ export function KokpitKabuk({
           modulSeciliMi ? "hidden" : "flex"
         }`}
       >
-        <div className="shrink-0 border-b border-white/10 px-5 py-5">
-          <p className="text-base font-semibold tracking-tight text-white">KOKPİT</p>
-          <p className="text-sm text-white/45">Eces Hukuk Bürosu</p>
+        <div className="flex shrink-0 items-center gap-3 border-b border-white/10 px-5 py-5">
+          <Image
+            src={UYGULAMA_LOGOSU_YOLU}
+            alt=""
+            width={36}
+            height={36}
+            className="shrink-0 rounded-xl"
+          />
+          <div>
+            <p className="text-base font-semibold tracking-tight text-white">KOKPİT</p>
+            <p className="text-sm text-white/45">Eces Hukuk Bürosu</p>
+          </div>
         </div>
         <KenarCubugu kullaniciRol={kullaniciRol} menuDuzeni={menuDuzeni} cmkDikkatSayisi={cmkDikkatSayisi} />
       </aside>
