@@ -25,6 +25,17 @@ export const metadata: Metadata = {
   icons: {
     // iOS Safari, ikonlari agresif sekilde onbelleklediginden, ikon her
     // degistiginde bu surum numarasi da artirilmali (cache-busting).
+    //
+    // BILEREK src/app/favicon.ico YOK: Next.js bu ozel dosyayi HER ZAMAN
+    // sabit /favicon.ico adresinde sunar (bkz. Next.js "favicon, icon,
+    // and apple-icon" API referansi) - adres hicbir zaman degismedigi
+    // icin sorgu parametresiyle (?v=) onbellek kirmak MUMKUN DEGIL.
+    // Tarayicilar favicon.ico'yu normal HTTP onbellek kurallarindan
+    // BAGIMSIZ, alisilmadik derecede israrla onbellekte tutar - bu
+    // yuzden ikon degisikliklerinden biri sekme ikonunda gorunmedi
+    // (gercek bir kullanicidan bildirildi, kok neden buradan bulundu).
+    // Kalici cozum: /favicon.ico rotasini hic uretmemek, sadece asagidaki
+    // versiyonlanabilir PNG linkine guvenmek.
     icon: [{ url: "/icons/favicon-32.png?v=13", sizes: "32x32", type: "image/png" }],
     apple: [{ url: "/icons/apple-touch-icon.png?v=13", sizes: "180x180", type: "image/png" }],
   },

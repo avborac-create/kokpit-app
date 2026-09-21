@@ -713,3 +713,14 @@ Form + Google Drive üzerinden yürütülüyordu — Kokpit'e taşıyan modül
 - Servis çalışanı (service worker) ilk faz için minimaldir (agresif
   önbellekleme yapmaz); sadece yüklenebilirlik kriterini karşılar ve son
   görülen sayfaların temel bir çevrimdışı deneyimini sağlar.
+- **`src/app/favicon.ico` BİLEREK YOK** (bir ikon değişikliğinin tarayıcı
+  sekmesinde hiç görünmemesi üzerine kök nedeni bulunup kaldırıldı):
+  Next.js bu özel dosyayı her zaman sabit `/favicon.ico` adresinde sunar
+  (bkz. Next.js "favicon, icon, and apple-icon" API referansı) - adres
+  hiçbir zaman değişmediği için `?v=` sorgu parametresiyle önbellek
+  kırmak mümkün değil, tarayıcılar da favicon.ico'yu normal HTTP
+  önbellek kurallarından bağımsız, alışılmadık derecede ısrarla
+  önbellekte tutar. Sekme ikonu artık SADECE `layout.tsx`'teki
+  `metadata.icons.icon` üzerinden, versiyonlanabilir
+  `/icons/favicon-32.png?v=N` linkiyle sağlanır - her ikon
+  değişikliğinde `?v=` numarası artırılmalı (bkz. o dosyadaki yorum).
