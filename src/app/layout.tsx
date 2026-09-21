@@ -36,8 +36,8 @@ export const metadata: Metadata = {
     // (gercek bir kullanicidan bildirildi, kok neden buradan bulundu).
     // Kalici cozum: /favicon.ico rotasini hic uretmemek, sadece asagidaki
     // versiyonlanabilir PNG linkine guvenmek.
-    icon: [{ url: "/icons/favicon-32.png?v=13", sizes: "32x32", type: "image/png" }],
-    apple: [{ url: "/icons/apple-touch-icon.png?v=13", sizes: "180x180", type: "image/png" }],
+    icon: [{ url: "/icons/favicon-32.png?v=14", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png?v=14", sizes: "180x180", type: "image/png" }],
   },
 };
 
