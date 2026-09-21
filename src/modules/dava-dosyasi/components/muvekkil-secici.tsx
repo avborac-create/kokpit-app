@@ -1,3 +1,11 @@
+"use client";
+
+// "use client": DavaDosyasiFormu (ebeveyn) her form gonderiminde
+// (useActionState) yeniden calisan bir Server Component - bu bileseni
+// istemci tarafinda tutmak, React'in checkbox'larin DOM durumunu (Server
+// Component agacinin dogrudan bir parcasi olsaydi oldugu gibi) her
+// gonderimde sifirdan render etmek yerine korumasini saglar (bkz.
+// dava-dosyasi-form-alanlar.tsx'teki ayni gerekce).
 export function MuvekkilSecici({
   musteriler,
   seciliIdler = [],

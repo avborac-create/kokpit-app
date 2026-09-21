@@ -28,7 +28,15 @@ export function KarsiTarafEkleyici({
   function ekle() {
     const ad = girdi.trim();
     if (!ad) return;
-    setCipler((liste) => [...liste, { id: ad, ad, mevcutMu: false }]);
+    setCipler((liste) => {
+      // Ayni ismi (buyuk/kucuk harf duyarsiz) iki kez eklemeyi engelle -
+      // sunucu tarafinda ayni karsi tarafa iki kez baglanmaya calisip
+      // formu hataya dusurmesin (bkz. actions.ts karsiTarafIdleriniCozumle).
+      if (liste.some((cip) => cip.ad.trim().toLowerCase() === ad.toLowerCase())) {
+        return liste;
+      }
+      return [...liste, { id: ad, ad, mevcutMu: false }];
+    });
     setGirdi("");
   }
 

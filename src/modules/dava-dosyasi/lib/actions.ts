@@ -48,7 +48,13 @@ async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: stri
     yeniIdler.push(id);
   }
 
-  return [...secilenIdler, ...yeniIdler];
+  // Ayni ismi iki kez "Ekle"ye basarak ya da hem var olan bir karsi tarafi
+  // secip hem ayni ismi yeniden yazarak eklemek, yukaridaki cozumleme
+  // sonunda AYNI id'yi birden fazla kez getirebilir - DosyaKarsiTarafi'nin
+  // (dosyaId, karsiTarafId) unique kisitini ihlal edip formu (ve girilen
+  // tum veriyi) kaybettiren bir hataya dusurur. Burada tekillestirmek bunu
+  // en erken noktada engeller.
+  return [...new Set([...secilenIdler, ...yeniIdler])];
 }
 
 // Uyusmazlik grubu secimini cozumler: "yeniUyusmazlikGrubuAdi" doluysa yeni
@@ -73,7 +79,22 @@ async function uyusmazlikGrubuIdCozumle(formData: FormData, musteriIdleri: strin
   return metinYaAlNull(formData, "uyusmazlikGrubuId");
 }
 
-export async function davaDosyasiOlustur(formData: FormData) {
+// davaDosyasiOlustur/Guncelle'nin validasyon geri bildirimi: throw yerine
+// deger olarak dondurulur (bkz. DavaDosyasiFormKabugu + Next'in kendi
+// onerdigi "expected errors as return values" deseni,
+// node_modules/next/dist/docs/01-app/01-getting-started/10-error-handling.md) -
+// throw edilen bir hata, useActionState ile istemciden cagrilan bir Server
+// Action sinirini gectiginde React tarafindan (dev/prod fark etmeksizin)
+// "Minified React error #441" gibi genel/redakte bir mesaja donusturulur;
+// deger olarak donmek bu sorunu tamamen ortadan kaldirir. Gercekten
+// BEKLENMEYEN hatalar (ör. Prisma kisit ihlali) burada hala throw edilir -
+// onlar zaten error.tsx'e dusmesi gereken gercek hatalardir.
+export type DavaDosyasiFormDurumu = { hata: string | null };
+
+export async function davaDosyasiOlustur(
+  _oncekiDurum: DavaDosyasiFormDurumu,
+  formData: FormData,
+): Promise<DavaDosyasiFormDurumu> {
   const konu = String(formData.get("konu") ?? "").trim();
   const durumId = String(formData.get("durumId") ?? "");
   const turId = String(formData.get("turId") ?? "");
@@ -81,16 +102,16 @@ export async function davaDosyasiOlustur(formData: FormData) {
   const musteriIdleri = musteriIdleriniAl(formData);
 
   if (!konu || !durumId || !turId || !acilisTarihi) {
-    throw new Error("Konu, tür, durum ve açılış tarihi alanları zorunludur.");
+    return { hata: "Konu, tür, durum ve açılış tarihi alanları zorunludur." };
   }
   if (musteriIdleri.length === 0) {
-    throw new Error("En az bir müvekkil seçilmelidir.");
+    return { hata: "En az bir müvekkil seçilmelidir." };
   }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
   if (!uyusmazlikGrubuId) {
-    throw new Error("Dosya Kümesi seçilmelidir.");
+    return { hata: "Dosya Kümesi seçilmelidir." };
   }
   const bagliOlduguDosyaId = metinYaAlNull(formData, "bagliOlduguDosyaId");
   const hukukiIliskiTuruId = metinYaAlNull(formData, "hukukiIliskiTuruId");
@@ -125,7 +146,11 @@ export async function davaDosyasiOlustur(formData: FormData) {
   redirect(`/kokpit/dava-dosyalari/${dosya.id}`);
 }
 
-export async function davaDosyasiGuncelle(id: string, formData: FormData) {
+export async function davaDosyasiGuncelle(
+  id: string,
+  _oncekiDurum: DavaDosyasiFormDurumu,
+  formData: FormData,
+): Promise<DavaDosyasiFormDurumu> {
   const konu = String(formData.get("konu") ?? "").trim();
   const durumId = String(formData.get("durumId") ?? "");
   const turId = String(formData.get("turId") ?? "");
@@ -134,16 +159,16 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
   const musteriIdleri = musteriIdleriniAl(formData);
 
   if (!konu || !durumId || !turId || !acilisTarihi) {
-    throw new Error("Konu, tür, durum ve açılış tarihi alanları zorunludur.");
+    return { hata: "Konu, tür, durum ve açılış tarihi alanları zorunludur." };
   }
   if (musteriIdleri.length === 0) {
-    throw new Error("En az bir müvekkil seçilmelidir.");
+    return { hata: "En az bir müvekkil seçilmelidir." };
   }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
   if (!uyusmazlikGrubuId) {
-    throw new Error("Dosya Kümesi seçilmelidir.");
+    return { hata: "Dosya Kümesi seçilmelidir." };
   }
   const bagliOlduguDosyaIdHam = metinYaAlNull(formData, "bagliOlduguDosyaId");
   const bagliOlduguDosyaId = bagliOlduguDosyaIdHam === id ? null : bagliOlduguDosyaIdHam;
