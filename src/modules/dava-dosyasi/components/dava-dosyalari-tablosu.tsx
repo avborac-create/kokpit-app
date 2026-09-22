@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { davaDosyalariniListele } from "@/modules/dava-dosyasi/lib/queries";
 import { Dugme } from "@/core/ui/button";
 import { DavaDosyasiSilmeButonu } from "./dava-dosyasi-silme-butonu";
@@ -116,6 +117,26 @@ function KisaMetin({ children, genislik = "10rem" }: { children: React.ReactNode
     <div className="truncate" style={{ maxWidth: genislik }} title={metin}>
       {children}
     </div>
+  );
+}
+
+// Düzenle sayfası bir sunucu bileşeni olduğu için tıklama ile ekranın
+// fiilen değişmesi arasında (veri çekme süresince) fark edilir bir
+// boşluk oluşabiliyor - useTransition'ın isPending'i tam da bu bekleme
+// süresini yansıttığı için (bkz. onayli-buton.tsx'teki aynı desen)
+// tıklanan satırda anında "Açılıyor…" göstererek tepkisiz kalmıyor.
+function DuzenleButonu({ href }: { href: string }) {
+  const router = useRouter();
+  const [beklemede, baslatTransition] = useTransition();
+  return (
+    <Dugme
+      type="button"
+      varyant="ikincil"
+      disabled={beklemede}
+      onClick={() => baslatTransition(() => router.push(href))}
+    >
+      {beklemede ? "Açılıyor…" : "Düzenle"}
+    </Dugme>
   );
 }
 
@@ -247,11 +268,7 @@ export function DavaDosyalariTablosu({
               ))}
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <Link href={`/kokpit/dava-dosyalari/${dosya.id}/duzenle`}>
-                    <Dugme type="button" varyant="ikincil">
-                      Düzenle
-                    </Dugme>
-                  </Link>
+                  <DuzenleButonu href={`/kokpit/dava-dosyalari/${dosya.id}/duzenle`} />
                   {silmeYetkisiVar && <DavaDosyasiSilmeButonu dosyaId={dosya.id} />}
                 </div>
               </td>
