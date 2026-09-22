@@ -1,4 +1,5 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
+import { FormKarti } from "@/core/ui/form-karti";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterileriListele, avukatlariListele } from "@/modules/musteri/lib/queries";
@@ -276,20 +277,57 @@ export async function DavaDosyasiFormu({
       ),
   };
 
+  // Form Duzeni'nin (Ayarlar > Form Duzeni) tek boyutlu sira/gizle
+  // listesini BOZMADAN - sadece render sirasinda gorsel olarak kart
+  // gruplarina ayirir. Bir kart icindeki alanlarin GORECELI sirasi hala
+  // admin'in belirledigi siradir; kartin kendisi (hangi alanin hangi
+  // grupta oldugu) sabittir, admin panelinden degistirilemez - bu bilerek
+  // boyle: cok daha fazla karmasiklik getirmeden (her kart icin ayri bir
+  // surukle-birak) tutarli bir gorsel yapi saglar.
+  const kartlar: { baslik: string; alanlar: string[] }[] = [
+    {
+      baslik: "Dosya Bilgileri",
+      alanlar: ["hukukiIliskiTuruId", "turId", "icraAltTuruId", "yargiKoluId", "dosyaNo", "konu", "durumId", "birimAdi"],
+    },
+    { baslik: "Sınıflandırma", alanlar: ["uyusmazlikGrubuId", "bagliOlduguDosyaId"] },
+    { baslik: "Tarih ve Sorumluluk", alanlar: ["acilisTarihi", "kapanisTarihi", "sorumluAvukatId"] },
+    { baslik: "Açıklama", alanlar: ["aciklama"] },
+  ];
+
+  function oge(alanAnahtari: string) {
+    return alanDuzeni.find((o) => o.alanAnahtari === alanAnahtari);
+  }
+  function alanGizliMi(alanAnahtari: string) {
+    return DAVA_DOSYASI_GIZLENEMEZ_ALANLAR.includes(alanAnahtari) ? false : (oge(alanAnahtari)?.gizliMi ?? false);
+  }
+  function alanRenderEt(alanAnahtari: string) {
+    const render = alanRenderHaritasi[alanAnahtari];
+    return render ? <div key={alanAnahtari}>{render(alanGizliMi(alanAnahtari))}</div> : null;
+  }
+
   return (
-    <form action={action} className="max-w-xl">
-      <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdler} />
+    <form action={action} className="max-w-2xl">
+      <FormKarti baslik="Taraflar">
+        <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdler} />
+        <KarsiTarafEkleyici
+          baslangicKarsiTaraflar={
+            dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad })) ?? []
+          }
+        />
+      </FormKarti>
 
-      <KarsiTarafEkleyici
-        baslangicKarsiTaraflar={
-          dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad })) ?? []
-        }
-      />
-
-      {alanDuzeni.map((oge) => {
-        const gizli = DAVA_DOSYASI_GIZLENEMEZ_ALANLAR.includes(oge.alanAnahtari) ? false : oge.gizliMi;
-        const render = alanRenderHaritasi[oge.alanAnahtari];
-        return render ? <div key={oge.alanAnahtari}>{render(gizli)}</div> : null;
+      {kartlar.map((kart) => {
+        // Admin'in sirasi + gorunurlugu, ama bu karta ait alanlarla
+        // sinirli - kartlar arasi gecis admin panelinden ETKİLENMEZ.
+        const kartAlanDuzeni = alanDuzeni.filter((o) => kart.alanlar.includes(o.alanAnahtari));
+        // Kartin TUM alanlari gizliyse (ör. Açıklama bos/gizliyse) bos bir
+        // kart kabugu gostermek yerine karti tamamen atla.
+        if (!kartAlanDuzeni.some((o) => !alanGizliMi(o.alanAnahtari))) return null;
+        return (
+          <FormKarti key={kart.baslik} baslik={kart.baslik}>
+            {kartAlanDuzeni.map((o) => alanRenderEt(o.alanAnahtari))}
+          </FormKarti>
+        );
       })}
 
       <GonderButonu>{gonderButonuMetni}</GonderButonu>

@@ -20,8 +20,21 @@ import { avukatlariListele } from "@/modules/musteri/lib/queries";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { Dugme } from "@/core/ui/button";
+import { FormKarti } from "@/core/ui/form-karti";
 
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
+
+// FormKarti icinde salt-okunur bir alan/deger cifti - Dava Dosyasi
+// formundaki Etiket+Girdi ikilisinin goruntuleme-modu karsiligi, ayni
+// kart yapisi iki ekranda da tutarli kalsin diye.
+function Bilgi({ baslik, children }: { baslik: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-4 text-sm last:mb-0">
+      <p className="text-white/45">{baslik}</p>
+      <p className="text-white">{children}</p>
+    </div>
+  );
+}
 
 export default async function DavaDosyasiDetaySayfasi({
   params,
@@ -126,52 +139,9 @@ export default async function DavaDosyasiDetaySayfasi({
         </div>
       </div>
 
-      <div className="glass mb-8 grid grid-cols-2 gap-4 rounded-2xl p-5 text-sm md:grid-cols-4">
-        <div>
-          <p className="text-white/45">Birim (Mahkeme/İcra Dairesi)</p>
-          <p className="text-white">{dosya.birimAdi ?? "—"}</p>
-        </div>
-        <div>
-          <p className="text-white/45">Karşı Taraf(lar)</p>
-          <p className="text-white">
-            {dosya.karsiTaraflar.length > 0
-              ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ")
-              : "—"}
-          </p>
-        </div>
-        <div>
-          <p className="text-white/45">Dosya Kümesi</p>
-          <p className="text-white">
-            {dosya.uyusmazlikGrubu ? (
-              <Link
-                href={`/kokpit/dava-dosyalari/gruplar/${dosya.uyusmazlikGrubu.id}`}
-                className="hover:text-[#6db8ff] hover:underline"
-              >
-                {dosya.uyusmazlikGrubu.ad}
-              </Link>
-            ) : (
-              "—"
-            )}
-          </p>
-        </div>
-        <div>
-          <p className="text-white/45">Bağlı Olduğu Esas Dosya</p>
-          <p className="text-white">
-            {dosya.bagliOlduguDosya ? (
-              <Link
-                href={`/kokpit/dava-dosyalari/${dosya.bagliOlduguDosya.id}`}
-                className="hover:text-[#6db8ff] hover:underline"
-              >
-                {dosya.bagliOlduguDosya.dosyaNo ?? dosya.bagliOlduguDosya.konu}
-              </Link>
-            ) : (
-              "—"
-            )}
-          </p>
-        </div>
-        <div>
-          <p className="text-white/45">Müvekkil(ler)</p>
-          <p className="text-white">
+      <div className="mb-8 max-w-2xl">
+        <FormKarti baslik="Taraflar">
+          <Bilgi baslik="Müvekkil(ler)">
             {dosya.muvekkiller.map((m, i) => (
               <span key={m.musteriId}>
                 {i > 0 && ", "}
@@ -183,27 +153,63 @@ export default async function DavaDosyasiDetaySayfasi({
                 </Link>
               </span>
             ))}
-          </p>
-        </div>
-        <div>
-          <p className="text-white/45">Sorumlu Avukat</p>
-          <p className="text-white">{dosya.sorumluAvukat?.adSoyad ?? "—"}</p>
-        </div>
-        <div>
-          <p className="text-white/45">Açılış Tarihi</p>
-          <p className="text-white">{tarihFormatlayici.format(dosya.acilisTarihi)}</p>
-        </div>
-        <div>
-          <p className="text-white/45">Kapanış Tarihi</p>
-          <p className="text-white">
-            {dosya.kapanisTarihi ? tarihFormatlayici.format(dosya.kapanisTarihi) : "—"}
-          </p>
-        </div>
-        {dosya.aciklama && (
-          <div className="col-span-2 md:col-span-4">
-            <p className="text-white/45">Açıklama</p>
-            <p className="whitespace-pre-wrap text-white">{dosya.aciklama}</p>
+          </Bilgi>
+          <Bilgi baslik="Karşı Taraf(lar)">
+            {dosya.karsiTaraflar.length > 0
+              ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ")
+              : "—"}
+          </Bilgi>
+        </FormKarti>
+
+        <FormKarti baslik="Dosya Bilgileri">
+          <Bilgi baslik="Birim (Mahkeme/İcra Dairesi)">
+            {dosya.birimAdi ?? "—"}
+          </Bilgi>
+        </FormKarti>
+
+        <FormKarti baslik="Sınıflandırma">
+          <Bilgi baslik="Dosya Kümesi">
+            {dosya.uyusmazlikGrubu ? (
+              <Link
+                href={`/kokpit/dava-dosyalari/gruplar/${dosya.uyusmazlikGrubu.id}`}
+                className="hover:text-[#6db8ff] hover:underline"
+              >
+                {dosya.uyusmazlikGrubu.ad}
+              </Link>
+            ) : (
+              "—"
+            )}
+          </Bilgi>
+          <Bilgi baslik="Bağlı Olduğu Esas Dosya">
+            {dosya.bagliOlduguDosya ? (
+              <Link
+                href={`/kokpit/dava-dosyalari/${dosya.bagliOlduguDosya.id}`}
+                className="hover:text-[#6db8ff] hover:underline"
+              >
+                {dosya.bagliOlduguDosya.dosyaNo ?? dosya.bagliOlduguDosya.konu}
+              </Link>
+            ) : (
+              "—"
+            )}
+          </Bilgi>
+        </FormKarti>
+
+        <FormKarti baslik="Tarih ve Sorumluluk">
+          <Bilgi baslik="Sorumlu Avukat">{dosya.sorumluAvukat?.adSoyad ?? "—"}</Bilgi>
+          <div className="grid grid-cols-2 gap-4">
+            <Bilgi baslik="Açılış Tarihi">
+              {tarihFormatlayici.format(dosya.acilisTarihi)}
+            </Bilgi>
+            <Bilgi baslik="Kapanış Tarihi">
+              {dosya.kapanisTarihi ? tarihFormatlayici.format(dosya.kapanisTarihi) : "—"}
+            </Bilgi>
           </div>
+        </FormKarti>
+
+        {dosya.aciklama && (
+          <FormKarti baslik="Açıklama">
+            <p className="whitespace-pre-wrap text-sm text-white">{dosya.aciklama}</p>
+          </FormKarti>
         )}
       </div>
 
