@@ -34,6 +34,28 @@ function Bilgi({ baslik, children }: { baslik: string; children: React.ReactNode
   );
 }
 
+// Dosya Ekonomisi sekmesindeki 3 cari hesap iliskisini (Müvekkil-Büro,
+// Büro-Adli Birim, Borçlu-Büro) birbirinden GORSEL OLARAK NET AYIRMAK
+// icin - kullanici geri bildirimi: bunlar art arda akan basliklar degil,
+// ayri kartlar olarak durmali.
+function CariHesapBolumu({
+  baslik,
+  aciklama,
+  children,
+}: {
+  baslik: string;
+  aciklama?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-8 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+      <h2 className="mb-1 text-lg font-semibold tracking-tight text-white">{baslik}</h2>
+      {aciklama && <p className="mb-4 text-sm text-white/45">{aciklama}</p>}
+      {children}
+    </div>
+  );
+}
+
 export default async function DavaDosyasiDetaySayfasi({
   params,
   searchParams,
@@ -188,97 +210,90 @@ export default async function DavaDosyasiDetaySayfasi({
         </>
       ) : (
         <>
-          <h2 className="mb-1 text-lg font-semibold tracking-tight text-white">
-            Müvekkil-Büro Cari Hesabı
-          </h2>
-          {dosya.uyusmazlikGrubu && (
+          <CariHesapBolumu
+            baslik="Müvekkil-Büro Cari Hesabı"
+            aciklama={
+              dosya.uyusmazlikGrubu && (
+                <>
+                  Bu sadece bu dosyanın kırılımıdır. Müvekkilden gelen bir avans genelde tüm{" "}
+                  <Link
+                    href={`/kokpit/dava-dosyalari/gruplar/${dosya.uyusmazlikGrubu.id}`}
+                    className="text-[#6db8ff] hover:underline"
+                  >
+                    {dosya.uyusmazlikGrubu.ad}
+                  </Link>{" "}
+                  grubuna aittir — asıl Borç/Alacak durumunu grup sayfasından takip edin.
+                </>
+              )
+            }
+          >
+            <div className="mb-8">
+              <CariHesapOzeti ozet={cariHesapOzeti} />
+            </div>
+
+            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">
+              Dosya Bazında Döküm
+            </h3>
             <p className="mb-3 text-sm text-white/45">
-              Bu sadece bu dosyanın kırılımıdır. Müvekkilden gelen bir avans genelde tüm{" "}
-              <Link
-                href={`/kokpit/dava-dosyalari/gruplar/${dosya.uyusmazlikGrubu.id}`}
-                className="text-[#6db8ff] hover:underline"
-              >
-                {dosya.uyusmazlikGrubu.ad}
-              </Link>{" "}
-              grubuna aittir — asıl Borç/Alacak durumunu grup sayfasından takip edin.
+              Bu dosyaya işlenen masraflar ve müvekkilden gelen paranın bu dosyaya ayrılan dağıtım
+              kalemleri, tek bir kronolojik listede.
             </p>
-          )}
-          <div className="mb-8">
-            <CariHesapOzeti ozet={cariHesapOzeti} />
-          </div>
+            <div className="mb-8">
+              <DokumTablosu satirlar={dosyaDokumu} dosyaSutunuGoster={false} />
+            </div>
 
-          <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">
-            Dosya Bazında Döküm
-          </h3>
-          <p className="mb-3 text-sm text-white/45">
-            Bu dosyaya işlenen masraflar ve müvekkilden gelen paranın bu dosyaya ayrılan dağıtım
-            kalemleri, tek bir kronolojik listede.
-          </p>
-          <div className="mb-8">
-            <DokumTablosu satirlar={dosyaDokumu} dosyaSutunuGoster={false} />
-          </div>
+            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">Para Trafiği</h3>
+            <p className="mb-3 text-sm text-white/45">
+              Yeni bir kayıt eklemek için ilgili müvekkilin Finans sayfasına gidip &quot;Hangi
+              Uyuşmazlık Dosyası/Dosyalarına İstinaden&quot; alanından bu dosyayı seçin.
+            </p>
+            <div className="mb-8">
+              <DosyaParaTrafigiListesi baglantilar={dosya.paraTrafigiKayitlari} />
+            </div>
 
-          <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">Para Trafiği</h3>
-          <p className="mb-3 text-sm text-white/45">
-            Yeni bir kayıt eklemek için ilgili müvekkilin Finans sayfasına gidip &quot;Hangi
-            Uyuşmazlık Dosyası/Dosyalarına İstinaden&quot; alanından bu dosyayı seçin.
-          </p>
-          <div className="mb-8">
-            <DosyaParaTrafigiListesi baglantilar={dosya.paraTrafigiKayitlari} />
-          </div>
-
-          <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">Masraflar</h3>
-          <div className="mb-4">
-            <MasrafFormu action={dosyaMasrafiEkle.bind(null, id)} />
-          </div>
-          <div className="mb-10">
+            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">Masraflar</h3>
+            <div className="mb-4">
+              <MasrafFormu action={dosyaMasrafiEkle.bind(null, id)} />
+            </div>
             <MasrafListesi
               masraflar={dosya.masraflar.map((m) => ({ ...m, tutar: Number(m.tutar) }))}
               dosyaId={id}
               silmeYetkisiVar={silmeYetkisiVar}
             />
-          </div>
+          </CariHesapBolumu>
 
-          <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">
-            Büro-Adli Birim Cari Hesabı
-          </h2>
-          <p className="mb-3 text-sm text-white/45">
-            Büronun mahkeme/icra dairesine yaptığı ödemeler (harç, tebligat gideri vb. — borç) ve
-            oradan büroya gelen tutarlar (iade, aktarılan tahsilat vb. — alacak).
-          </p>
-          <div className="mb-4">
-            <AdliBirimHareketFormu action={adliBirimHareketiEkle.bind(null, id)} />
-          </div>
-          <div className="mb-10">
+          <CariHesapBolumu
+            baslik="Büro-Adli Birim Cari Hesabı"
+            aciklama="Büronun mahkeme/icra dairesine yaptığı ödemeler (harç, tebligat gideri vb. — borç) ve oradan büroya gelen tutarlar (iade, aktarılan tahsilat vb. — alacak)."
+          >
+            <div className="mb-4">
+              <AdliBirimHareketFormu action={adliBirimHareketiEkle.bind(null, id)} />
+            </div>
             <AdliBirimHareketListesi
               hareketler={dosya.adliBirimHareketleri.map((h) => ({ ...h, tutar: Number(h.tutar) }))}
               dosyaId={id}
             />
-          </div>
+          </CariHesapBolumu>
 
-          <h2 className="mb-1 text-lg font-semibold tracking-tight text-white">
-            Borçlu-Büro Cari Hesabı
-          </h2>
-          <p className="mb-3 text-sm text-white/45">
-            Müvekkilin cari hesabıyla (yukarısı) karıştırılmamalı: bu, cebimizden çıkan bir para
-            değil — karşı tarafın (borçlunun) dava/icra sonucu bize/müvekkile ayrıca ödemesi
-            gereken bir alacak (ör. icra vekalet ücreti).
-          </p>
-          <div className="mb-4">
-            <KarsiTarafAlacagiFormu action={karsiTarafAlacagiEkle.bind(null, id)} />
-          </div>
-          <div className="mb-10">
-            <KarsiTarafAlacagiListesi
-              alacaklar={dosya.karsiTarafAlacaklari.map((a) => ({ ...a, tutar: Number(a.tutar) }))}
-              dosyaId={id}
-              silmeYetkisiVar={silmeYetkisiVar}
+          <CariHesapBolumu
+            baslik="Borçlu-Büro Cari Hesabı"
+            aciklama="Müvekkilin cari hesabıyla (yukarısı) karıştırılmamalı: bu, cebimizden çıkan bir para değil — karşı tarafın (borçlunun) dava/icra sonucu bize/müvekkile ayrıca ödemesi gereken bir alacak (ör. icra vekalet ücreti)."
+          >
+            <div className="mb-4">
+              <KarsiTarafAlacagiFormu action={karsiTarafAlacagiEkle.bind(null, id)} />
+            </div>
+            <div className="mb-6">
+              <KarsiTarafAlacagiListesi
+                alacaklar={dosya.karsiTarafAlacaklari.map((a) => ({ ...a, tutar: Number(a.tutar) }))}
+                dosyaId={id}
+                silmeYetkisiVar={silmeYetkisiVar}
+              />
+            </div>
+            <ArtciIslerBlok
+              karsiTarafAlacaklari={dosya.karsiTarafAlacaklari.map((a) => ({ ...a, tutar: Number(a.tutar) }))}
+              finansHareketleri={dosya.finansHareketleri.map((h) => ({ ...h, tutar: Number(h.tutar) }))}
             />
-          </div>
-
-          <ArtciIslerBlok
-            karsiTarafAlacaklari={dosya.karsiTarafAlacaklari.map((a) => ({ ...a, tutar: Number(a.tutar) }))}
-            finansHareketleri={dosya.finansHareketleri.map((h) => ({ ...h, tutar: Number(h.tutar) }))}
-          />
+          </CariHesapBolumu>
         </>
       )}
     </div>
