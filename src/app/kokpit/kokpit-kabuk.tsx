@@ -3,30 +3,31 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { KullaniciRolu } from "@prisma/client";
 import { cikisYap } from "@/core/auth/actions";
 import { Dugme } from "@/core/ui/button";
 import { OneriButonu } from "@/core/oneri/oneri-butonu";
 import { UYGULAMA_LOGOSU_YOLU } from "@/core/ui/marka";
-import { KenarCubugu } from "./kenar-cubugu";
 
 // Apple'in kendi uygulamalarindaki (Ayarlar, Mail) master-detail deseni:
 // telefon genisliginde (md altinda) tek seferde tek panel gorunur - modul
 // listesi ya da secilen modulun icerigi, ikisi birden degil. md ve ustunde
 // (tablet/masaustu) ikisi yan yana kalir. Hangi panelin gorunecegine mevcut
 // rotaya bakarak (tam /kokpit mi, yoksa bir alt modul mu) karar verilir.
+//
+// kenarCubugu/ustBilgi artik ham veri (kullaniciAdSoyad/Rol/menuDuzeni/
+// cmkDikkatSayisi) DEGIL, sunucuda ONCEDEN RENDER EDILMIS ReactNode olarak
+// gelir - bkz. layout.tsx + kokpit-kabuk-verisi.tsx. Boylece bu veriyi
+// cookies() ile okuyan (dolayisiyla "runtime veri" sayilan) kisim kendi
+// <Suspense> sinirinda kalir, {children} (sayfa icerigi) onu beklemeden
+// akar (bkz. Next.js "layout.js - Interaction with loading.js").
 export function KokpitKabuk({
   children,
-  kullaniciAdSoyad,
-  kullaniciRol,
-  menuDuzeni,
-  cmkDikkatSayisi,
+  kenarCubugu,
+  ustBilgi,
 }: {
   children: React.ReactNode;
-  kullaniciAdSoyad?: string;
-  kullaniciRol?: KullaniciRolu;
-  menuDuzeni: { anahtar: string; gizliMi: boolean }[];
-  cmkDikkatSayisi?: number;
+  kenarCubugu: React.ReactNode;
+  ustBilgi: React.ReactNode;
 }) {
   const pathname = usePathname();
   const modulSeciliMi = pathname !== "/kokpit";
@@ -51,7 +52,7 @@ export function KokpitKabuk({
             <p className="text-sm text-white/45">Eces Hukuk Bürosu</p>
           </div>
         </div>
-        <KenarCubugu kullaniciRol={kullaniciRol} menuDuzeni={menuDuzeni} cmkDikkatSayisi={cmkDikkatSayisi} />
+        {kenarCubugu}
       </aside>
       <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
         <header className="glass m-3 flex items-center justify-between rounded-2xl px-4 py-3 md:px-6">
@@ -62,12 +63,7 @@ export function KokpitKabuk({
             >
               ‹ Ana Sayfa
             </Link>
-            <div className="hidden text-sm text-white/75 md:block">
-              {kullaniciAdSoyad}
-              <span className="ml-2 whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#6db8ff]">
-                {kullaniciRol}
-              </span>
-            </div>
+            {ustBilgi}
           </div>
           <div className="flex items-center gap-2">
             <OneriButonu />
