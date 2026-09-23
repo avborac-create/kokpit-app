@@ -97,6 +97,7 @@ model SecenekDegeri {
   davaDosyalariIcraAltTuru      DavaDosyasi[]         @relation("DavaDosyasiIcraAltTuru")
   davaDosyalariYargiKolu        DavaDosyasi[]         @relation("DavaDosyasiYargiKolu")
   davaDosyalariHukukiIliskiTuru DavaDosyasi[]         @relation("DavaDosyasiHukukiIliskiTuru")
+  davaDosyalariDavaTuru         DavaDosyasi[]         @relation("DavaDosyasiDavaTuru")
   paraTrafigiTasnifCariKod      ParaTrafigiTasnif[]   @relation("ParaTrafigiTasnifCariKod")
   dosyaMasrafiCariKod           DosyaMasrafi[]        @relation("DosyaMasrafiCariKod")
   dosyaMasrafiTuru              DosyaMasrafi[]        @relation("DosyaMasrafiTuru")
@@ -438,6 +439,15 @@ model DavaDosyasi {
   // olmayabilir.
   hukukiIliskiTuruId String?
   hukukiIliskiTuru   SecenekDegeri?   @relation("DavaDosyasiHukukiIliskiTuru", fields: [hukukiIliskiTuruId], references: [id])
+  // Dava Turu: "Iscilik Alacagi Davasi" gibi somut, spesifik dava
+  // sinifi - Dosya Turu'nden (asama: ihtar/icra/dava) VE Hukuki Iliski
+  // Turu'nden (hangi hukuki araca dayaniyor: cek/senet/TTOK) farkli,
+  // uctuncu bir boyut. Sadelestirilmis Yeni Dosya formunun cekirdek
+  // alanlarindan biri (bkz. dava-dosyasi-formu.tsx).
+  davaTuruId         String?
+  davaTuru           SecenekDegeri?   @relation("DavaDosyasiDavaTuru", fields: [davaTuruId], references: [id])
+  talepSonucu        String?
+  durusmaTarihi      DateTime?
   uyusmazlikGrubuId  String?
   uyusmazlikGrubu    UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])
   // Talimat dosyasi gibi baska bir dosyaya siki sikiya bagli (o dosyanin
@@ -492,6 +502,7 @@ model DavaDosyasi {
   @@index([icraAltTuruId])
   @@index([yargiKoluId])
   @@index([hukukiIliskiTuruId])
+  @@index([davaTuruId])
   @@index([dosyaEvresi])
   @@map("dava_dosyalari")
 }

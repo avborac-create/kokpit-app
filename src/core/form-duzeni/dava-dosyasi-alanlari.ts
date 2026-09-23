@@ -1,28 +1,28 @@
-// Dava Dosyasi formunun admin tarafindan siralanabilir/gizlenebilir alan
-// kumesi icin tek dogru kaynak - hem admin ekrani (etiketler) hem server
-// action (hangi alanlar hic gizlenemez) hem de formun kendisi (savunma
-// amacli: gizlenemez alanlar icin gizli=false zorlanir) burayi kullanir.
+// Dava Dosyasi formunun admin tarafindan siralanabilir alan kumesi icin
+// tek dogru kaynak - hem admin ekrani (etiketler) hem server action
+// (hangi alanlar hic gizlenemez) hem de formun kendisi (savunma amacli:
+// gizlenemez alanlar icin gizli=false zorlanir) burayi kullanir.
+//
+// NOT: Form, "gereğinden çok veri giriş kutusu var" geri bildirimi
+// uzerine cekirdek 6 alana (+ Muvekkil/Karsi Taraf secicileri, bunlar
+// ayri) indirildi - Dosya Turu/Durum/Dosya Kumesi/Acilis Tarihi/Konu
+// artik formda hic gorunmuyor, actions.ts tarafinda otomatik dolduruluyor
+// (bkz. dava-dosyasi/lib/actions.ts). Eski alanlar (turId, konu, durumId,
+// uyusmazlikGrubuId, acilisTarihi, kapanisTarihi, sorumluAvukatId,
+// aciklama, icraAltTuruId, yargiKoluId, bagliOlduguDosyaId) BILEREK bu
+// listeden cikarildi - form-duzeni sayfasi bu listede olmayan eski DB
+// kayitlarini otomatik gizler (bkz. form-duzeni/page.tsx).
 export const DAVA_DOSYASI_ALAN_ETIKETLERI: Record<string, string> = {
-  hukukiIliskiTuruId: "Hukuki İlişki Türü",
-  turId: "Dosya Türü",
-  icraAltTuruId: "İcra Dosyası Alt Türü (Esas/Talimat)",
-  yargiKoluId: "Yargı Kolu (Hukuk/Ceza/İdari)",
+  hukukiIliskiTuruId: "Uyuşmazlık Türü",
+  davaTuruId: "Dava Türü",
   dosyaNo: "Dosya No",
-  konu: "Konu",
-  durumId: "Durum",
   birimAdi: "Birim Adı (Mahkeme/İcra Dairesi)",
-  uyusmazlikGrubuId: "Dosya Kümesi",
-  bagliOlduguDosyaId: "Bağlı Olduğu Esas Dosya",
-  acilisTarihi: "Açılış Tarihi",
-  kapanisTarihi: "Kapanış Tarihi",
-  sorumluAvukatId: "Sorumlu Avukat",
-  aciklama: "Açıklama",
+  talepSonucu: "Talep Sonucu",
+  durusmaTarihi: "Duruşma Tarihi",
 };
 
-// Bunlar DB'de zorunlu VE davaDosyasiOlustur/Guncelle server action'i
-// tarafindan ek olarak dogrulanan alanlar - admin panelinde asla
-// "Gizli" yapilamaz, sadece sirasi degisebilir. uyusmazlikGrubuId
-// (Dosya Kumesi) buraya sonradan eklendi: her yargisal dosya artik bir
-// kumeye bagli olmak ZORUNDA (bkz. davaDosyasiOlustur/Guncelle), bu
-// alanin gizlenebilir kalmasi formu sessizce kirardi.
-export const DAVA_DOSYASI_GIZLENEMEZ_ALANLAR = ["turId", "konu", "durumId", "acilisTarihi", "uyusmazlikGrubuId"];
+// Bunlar artik formun TAMAMI - sadelestirme sonrasi geriye kalanlarin
+// hepsi cekirdek kabul edilip gizlenemez yapildi (sadece sirasi
+// degisebilir). Dava Turu ayrica Konu'nun otomatik uretiminde
+// kullanildigi icin (bkz. actions.ts) zorunlu tutuluyor.
+export const DAVA_DOSYASI_GIZLENEMEZ_ALANLAR = Object.keys(DAVA_DOSYASI_ALAN_ETIKETLERI);
