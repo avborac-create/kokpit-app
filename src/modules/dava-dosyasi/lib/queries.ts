@@ -45,6 +45,7 @@ export async function davaDosyasiGetir(id: string) {
       icraAltTuru: true,
       yargiKolu: true,
       hukukiIliskiTuru: true,
+      davaTuru: true,
       sorumluAvukat: true,
       karsiTaraflar: { include: { karsiTaraf: true } },
       uyusmazlikGrubu: true,

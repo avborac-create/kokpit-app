@@ -19,12 +19,18 @@ export default async function FormDuzeniSayfasi() {
     formAlanDuzeniniGetir("dava-dosyasi"),
     formAlanDuzeniniGetir("musteri"),
   ]);
-  const ogeler: FormAlanSatiri[] = davaDosyasiKayitlari.map((k) => ({
-    anahtar: k.alanAnahtari,
-    etiket: DAVA_DOSYASI_ALAN_ETIKETLERI[k.alanAnahtari] ?? k.alanAnahtari,
-    gizliMi: k.gizliMi,
-    gizlenebilirMi: !DAVA_DOSYASI_GIZLENEMEZ_ALANLAR.includes(k.alanAnahtari),
-  }));
+  // Form sadelestirmesi ile bircok eski alan (turId, konu, durumId vb.)
+  // formda hic gorunmez oldu (bkz. dava-dosyasi-alanlari.ts) ama eski
+  // form_alan_duzeni satirlari DB'de kalmis olabilir - bu ekranda hicbir
+  // seye karsilik gelmeyen "hayalet" satirlar gostermemek icin filtrelenir.
+  const ogeler: FormAlanSatiri[] = davaDosyasiKayitlari
+    .filter((k) => k.alanAnahtari in DAVA_DOSYASI_ALAN_ETIKETLERI)
+    .map((k) => ({
+      anahtar: k.alanAnahtari,
+      etiket: DAVA_DOSYASI_ALAN_ETIKETLERI[k.alanAnahtari] ?? k.alanAnahtari,
+      gizliMi: k.gizliMi,
+      gizlenebilirMi: !DAVA_DOSYASI_GIZLENEMEZ_ALANLAR.includes(k.alanAnahtari),
+    }));
   const musteriOgeleri: FormAlanSatiri[] = musteriKayitlari.map((k) => ({
     anahtar: k.alanAnahtari,
     etiket: MUSTERI_ALAN_ETIKETLERI[k.alanAnahtari] ?? k.alanAnahtari,

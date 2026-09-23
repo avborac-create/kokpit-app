@@ -192,8 +192,13 @@ const SECENEK_LISTELERI: {
     ],
   },
   {
+    // NOT: anahtar tarihsel nedenlerle "hukuki_iliski_turu" kaldi (mevcut
+    // kayitlarin FK'si bozulmasin diye), ama admin ekraninda ve formda
+    // artik "Uyuşmazlık Türü" olarak gosteriliyor - "ad" alani asagida
+    // guncellendi, upsert bunu her deploy'da senkronize eder (degerlerin
+    // etiketi ise DEGISTIRILMEZ, bkz. secenekListeleriniOlustur).
     anahtar: "hukuki_iliski_turu",
-    ad: "Hukuki İlişki Türü",
+    ad: "Uyuşmazlık Türü",
     degerler: [
       // Dosya Turu'nden farkli bir boyut: "hangi ASAMADAYIZ" (ihtar/icra/
       // dava) degil, "hangi hukuki ARACA/iliskiye dayaniyor" sorusuna
@@ -204,6 +209,16 @@ const SECENEK_LISTELERI: {
       { kod: "is_hukuku_uyusmazligi", etiket: "İş Hukuku Uyuşmazlığı" },
       { kod: "sozlesme_uyusmazligi", etiket: "Sözleşme Uyuşmazlığı" },
       { kod: "diger", etiket: "Diğer" },
+    ],
+  },
+  {
+    anahtar: "dava_turu",
+    ad: "Dava Türü",
+    degerler: [
+      // Sadelestirilmis Yeni Dosya formunun cekirdek alanlarindan biri -
+      // somut dava sinifi (ör. "İşçilik Alacağı Davası"). Admin, Ayarlar >
+      // Seçenek Listeleri'nden yeni degerler ekleyebilir.
+      { kod: "iscilik_alacagi_davasi", etiket: "İşçilik Alacağı Davası" },
     ],
   },
   {
@@ -534,6 +549,9 @@ const VARSAYILAN_DAVA_DOSYASI_ALAN_SIRASI = [
   "aciklama",
   "icraAltTuruId",
   "yargiKoluId",
+  "davaTuruId",
+  "talepSonucu",
+  "durusmaTarihi",
 ];
 
 // Müvekkil formundaki alanların varsayılan sırası (bkz. musteri-formu.tsx,

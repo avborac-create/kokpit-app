@@ -162,55 +162,20 @@ export default async function DavaDosyasiDetaySayfasi({
         </FormKarti>
 
         <FormKarti baslik="Dosya Bilgileri">
-          <Bilgi baslik="Birim (Mahkeme/İcra Dairesi)">
-            {dosya.birimAdi ?? "—"}
-          </Bilgi>
+          <Bilgi baslik="Uyuşmazlık Türü">{dosya.hukukiIliskiTuru?.etiket ?? "—"}</Bilgi>
+          <Bilgi baslik="Dava Türü">{dosya.davaTuru?.etiket ?? "—"}</Bilgi>
+          <Bilgi baslik="Birim (Mahkeme/İcra Dairesi)">{dosya.birimAdi ?? "—"}</Bilgi>
+          <Bilgi baslik="Dosya Numarası">{dosya.dosyaNo ?? "—"}</Bilgi>
         </FormKarti>
 
-        <FormKarti baslik="Sınıflandırma">
-          <Bilgi baslik="Dosya Kümesi">
-            {dosya.uyusmazlikGrubu ? (
-              <Link
-                href={`/kokpit/dava-dosyalari/gruplar/${dosya.uyusmazlikGrubu.id}`}
-                className="hover:text-[#6db8ff] hover:underline"
-              >
-                {dosya.uyusmazlikGrubu.ad}
-              </Link>
-            ) : (
-              "—"
-            )}
+        <FormKarti baslik="Talep ve Duruşma">
+          <Bilgi baslik="Talep Sonucu">
+            <span className="whitespace-pre-wrap">{dosya.talepSonucu ?? "—"}</span>
           </Bilgi>
-          <Bilgi baslik="Bağlı Olduğu Esas Dosya">
-            {dosya.bagliOlduguDosya ? (
-              <Link
-                href={`/kokpit/dava-dosyalari/${dosya.bagliOlduguDosya.id}`}
-                className="hover:text-[#6db8ff] hover:underline"
-              >
-                {dosya.bagliOlduguDosya.dosyaNo ?? dosya.bagliOlduguDosya.konu}
-              </Link>
-            ) : (
-              "—"
-            )}
+          <Bilgi baslik="Duruşma Tarihi">
+            {dosya.durusmaTarihi ? tarihFormatlayici.format(dosya.durusmaTarihi) : "—"}
           </Bilgi>
         </FormKarti>
-
-        <FormKarti baslik="Tarih ve Sorumluluk">
-          <Bilgi baslik="Sorumlu Avukat">{dosya.sorumluAvukat?.adSoyad ?? "—"}</Bilgi>
-          <div className="grid grid-cols-2 gap-4">
-            <Bilgi baslik="Açılış Tarihi">
-              {tarihFormatlayici.format(dosya.acilisTarihi)}
-            </Bilgi>
-            <Bilgi baslik="Kapanış Tarihi">
-              {dosya.kapanisTarihi ? tarihFormatlayici.format(dosya.kapanisTarihi) : "—"}
-            </Bilgi>
-          </div>
-        </FormKarti>
-
-        {dosya.aciklama && (
-          <FormKarti baslik="Açıklama">
-            <p className="whitespace-pre-wrap text-sm text-white">{dosya.aciklama}</p>
-          </FormKarti>
-        )}
       </div>
 
       <div className="mb-8 flex flex-col gap-4">

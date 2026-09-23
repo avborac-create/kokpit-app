@@ -6,10 +6,57 @@ import type { HukukiMudahaleDurumu, DosyaEvresi } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
+import { secenekleriGetir } from "@/core/secenek/secenek-service";
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
   const deger = String(formData.get(alan) ?? "").trim();
   return deger === "" ? null : deger;
+}
+
+// useActionState ile dogrulama hatasinda formu yeniden doldurmak icin:
+// gonderilen TUM duz metin/select degerlerini (File olanlar disinda)
+// yakalar - React, bir form action'i tamamlandiginda (basarili ya da
+// { hata } donse de fark etmez, throw ETMEDIGI surece) uncontrolled
+// alanlari otomatik SIFIRLAR (React 19'un dokumante edilen davranisi);
+// bu yuzden bir sonraki render'da defaultValue'yu buradan (dosya'nin
+// mevcut degeri degil, kullanicinin SON yazdigi deger) beslemek gerekir
+// (bkz. dava-dosyasi-form-icerik.tsx).
+function formVerileriniAl(formData: FormData): Record<string, string> {
+  const veriler: Record<string, string> = {};
+  for (const [anahtar, deger] of formData.entries()) {
+    if (typeof deger === "string") veriler[anahtar] = deger;
+  }
+  return veriler;
+}
+
+async function varsayilanDurumIdGetir(): Promise<string> {
+  const durumlar = await secenekleriGetir("dava_dosyasi_durumu");
+  const acik = durumlar.find((d) => d.kod === "acik");
+  if (!acik) throw new Error("Varsayılan durum (Açık) bulunamadı.");
+  return acik.id;
+}
+
+async function varsayilanTurIdGetir(): Promise<string> {
+  const turler = await secenekleriGetir("dosya_turu");
+  const davaDosyasi = turler.find((t) => t.kod === "dava_dosyasi");
+  if (!davaDosyasi) throw new Error("Varsayılan dosya türü (Dava Dosyası) bulunamadı.");
+  return davaDosyasi.id;
+}
+
+// Sadelestirilmis formda Dosya Kumesi artik kullaniciya sorulmuyor -
+// musterinin kendi adiyla ayni isimde zaten bir kumesi varsa onu kullanir
+// (finans/cari hesap ozeti hep ayni yerde birikir), yoksa musteri adiyla
+// otomatik bir tane olusturur. Birden fazla muvekkil secilmisse ilkinin
+// kumesi esas alinir (bkz. karsiTarafIdleriniCozumle'deki ayni "ilk
+// musteri" varsayimi).
+async function uyusmazlikGrubuOtomatikCozumle(musteriId: string): Promise<string> {
+  const musteri = await prisma.musteri.findUniqueOrThrow({ where: { id: musteriId } });
+  const mevcut = await prisma.uyusmazlikGrubu.findFirst({
+    where: { musteriId, ad: { equals: musteri.adSoyadUnvan, mode: "insensitive" } },
+  });
+  if (mevcut) return mevcut.id;
+  const yeni = await prisma.uyusmazlikGrubu.create({ data: { musteriId, ad: musteri.adSoyadUnvan } });
+  return yeni.id;
 }
 
 function musteriIdleriniAl(formData: FormData): string[] {
@@ -51,29 +98,14 @@ async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: stri
   return [...secilenIdler, ...yeniIdler];
 }
 
-// Uyusmazlik grubu secimini cozumler: "yeniUyusmazlikGrubuAdi" doluysa yeni
-// bir UyusmazlikGrubu olusturup id'sini dondurur, degilse secilen
-// "uyusmazlikGrubuId"yi (varsa) kullanir. Ayni alacagin/uyusmazligin birden
-// fazla dosyaya (asil borclu + sonradan devreye giren kefil vb.) yayilmasi
-// durumunda dosyalari tek bir grup altinda toplamak icin kullanilir.
-async function uyusmazlikGrubuIdCozumle(formData: FormData, musteriIdleri: string[]): Promise<string | null> {
-  const yeniAd = metinYaAlNull(formData, "yeniUyusmazlikGrubuAdi");
-  if (yeniAd) {
-    // Ayni musteri altinda ayni isimde bir grup zaten varsa onu kullan -
-    // bkz. karsiTarafIdleriniCozumle'deki ayni gerekcedeki duzeltme.
-    const mevcut = await prisma.uyusmazlikGrubu.findFirst({
-      where: { musteriId: musteriIdleri[0], ad: { equals: yeniAd, mode: "insensitive" } },
-    });
-    if (mevcut) return mevcut.id;
-    const yeni = await prisma.uyusmazlikGrubu.create({
-      data: { musteriId: musteriIdleri[0], ad: yeniAd },
-    });
-    return yeni.id;
-  }
-  return metinYaAlNull(formData, "uyusmazlikGrubuId");
-}
-
-export type DavaDosyasiSonucu = { hata: string } | undefined;
+// gonderilenMusteriIdleri AYRI tutulur: MuvekkilSecici de (KarsiTarafEkleyici'nin
+// aksine) React state'i olmayan, defaultChecked'e dayanan uncontrolled bir
+// checkbox listesi - o da React 19'un form-sifirlama davranisindan
+// etkileniyor. Coklu deger oldugu icin (formData.getAll) formVerileriniAl'in
+// tek-degerli Record'una sigmiyor, ayri tasinir.
+export type DavaDosyasiSonucu =
+  | { hata: string; gonderilenAlanlar: Record<string, string>; gonderilenMusteriIdleri: string[] }
+  | undefined;
 
 // useActionState ile kullanilir: dogrulama hatalarinda throw yerine
 // { hata } donerek formun (ve icindeki tum musteri/karsi taraf secimleri,
@@ -85,28 +117,35 @@ export async function davaDosyasiOlustur(
   _oncekiDurum: DavaDosyasiSonucu,
   formData: FormData,
 ): Promise<DavaDosyasiSonucu> {
-  const konu = String(formData.get("konu") ?? "").trim();
-  const durumId = String(formData.get("durumId") ?? "");
-  const turId = String(formData.get("turId") ?? "");
-  const acilisTarihi = String(formData.get("acilisTarihi") ?? "");
   const musteriIdleri = musteriIdleriniAl(formData);
+  const davaTuruId = metinYaAlNull(formData, "davaTuruId");
+  const talepSonucu = metinYaAlNull(formData, "talepSonucu");
+  const gonderilenAlanlar = formVerileriniAl(formData);
 
-  if (!konu || !durumId || !turId || !acilisTarihi) {
-    return { hata: "Konu, tür, durum ve açılış tarihi alanları zorunludur." };
-  }
   if (musteriIdleri.length === 0) {
-    return { hata: "En az bir müvekkil seçilmelidir." };
+    return { hata: "En az bir müvekkil seçilmelidir.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
+  }
+  if (!davaTuruId) {
+    return { hata: "Dava türü seçilmelidir.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
+  }
+  if (!talepSonucu) {
+    return { hata: "Talep sonucu zorunludur.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
   }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
-  const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
-  if (!uyusmazlikGrubuId) {
-    return { hata: "Dosya Kümesi seçilmelidir." };
-  }
-  const bagliOlduguDosyaId = metinYaAlNull(formData, "bagliOlduguDosyaId");
   const hukukiIliskiTuruId = metinYaAlNull(formData, "hukukiIliskiTuruId");
-  const icraAltTuruId = metinYaAlNull(formData, "icraAltTuruId");
-  const yargiKoluId = metinYaAlNull(formData, "yargiKoluId");
+  const durusmaTarihiHam = metinYaAlNull(formData, "durusmaTarihi");
+
+  const [durumId, turId, davaTuru, uyusmazlikGrubuId] = await Promise.all([
+    varsayilanDurumIdGetir(),
+    varsayilanTurIdGetir(),
+    prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } }),
+    uyusmazlikGrubuOtomatikCozumle(musteriIdleri[0]),
+  ]);
+  // Konu artik ayrica sorulmuyor - Dava Turu + Talep Sonucu'ndan
+  // otomatik uretilir (liste/detay basliklarinda tek bir kisa etiket
+  // olarak kullanilir, bkz. dava-dosyalari-tablosu.tsx).
+  const konu = `${davaTuru?.etiket ?? ""} — ${talepSonucu}`;
 
   const dosya = await prisma.davaDosyasi.create({
     data: {
@@ -114,15 +153,13 @@ export async function davaDosyasiOlustur(
       birimAdi: metinYaAlNull(formData, "birimAdi"),
       konu,
       turId,
-      icraAltTuruId,
-      yargiKoluId,
       hukukiIliskiTuruId,
+      davaTuruId,
+      talepSonucu,
+      durusmaTarihi: durusmaTarihiHam ? new Date(durusmaTarihiHam) : null,
       uyusmazlikGrubuId,
-      bagliOlduguDosyaId,
       durumId,
-      sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
-      acilisTarihi: new Date(acilisTarihi),
-      aciklama: metinYaAlNull(formData, "aciklama"),
+      acilisTarihi: new Date(),
       muvekkiller: {
         create: musteriIdleri.map((musteriId) => ({ musteriId })),
       },
@@ -141,31 +178,32 @@ export async function davaDosyasiGuncelle(
   _oncekiDurum: DavaDosyasiSonucu,
   formData: FormData,
 ): Promise<DavaDosyasiSonucu> {
-  const konu = String(formData.get("konu") ?? "").trim();
-  const durumId = String(formData.get("durumId") ?? "");
-  const turId = String(formData.get("turId") ?? "");
-  const acilisTarihi = String(formData.get("acilisTarihi") ?? "");
-  const kapanisTarihiHam = String(formData.get("kapanisTarihi") ?? "").trim();
   const musteriIdleri = musteriIdleriniAl(formData);
+  const davaTuruId = metinYaAlNull(formData, "davaTuruId");
+  const talepSonucu = metinYaAlNull(formData, "talepSonucu");
+  const gonderilenAlanlar = formVerileriniAl(formData);
 
-  if (!konu || !durumId || !turId || !acilisTarihi) {
-    return { hata: "Konu, tür, durum ve açılış tarihi alanları zorunludur." };
-  }
   if (musteriIdleri.length === 0) {
-    return { hata: "En az bir müvekkil seçilmelidir." };
+    return { hata: "En az bir müvekkil seçilmelidir.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
+  }
+  if (!davaTuruId) {
+    return { hata: "Dava türü seçilmelidir.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
+  }
+  if (!talepSonucu) {
+    return { hata: "Talep sonucu zorunludur.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
   }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
-  const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
-  if (!uyusmazlikGrubuId) {
-    return { hata: "Dosya Kümesi seçilmelidir." };
-  }
-  const bagliOlduguDosyaIdHam = metinYaAlNull(formData, "bagliOlduguDosyaId");
-  const bagliOlduguDosyaId = bagliOlduguDosyaIdHam === id ? null : bagliOlduguDosyaIdHam;
   const hukukiIliskiTuruId = metinYaAlNull(formData, "hukukiIliskiTuruId");
-  const icraAltTuruId = metinYaAlNull(formData, "icraAltTuruId");
-  const yargiKoluId = metinYaAlNull(formData, "yargiKoluId");
+  const durusmaTarihiHam = metinYaAlNull(formData, "durusmaTarihi");
+  const davaTuru = await prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } });
+  const konu = `${davaTuru?.etiket ?? ""} — ${talepSonucu}`;
 
+  // DIKKAT: turId/durumId/acilisTarihi/uyusmazlikGrubuId/kapanisTarihi/
+  // sorumluAvukatId/aciklama/icraAltTuruId/yargiKoluId/bagliOlduguDosyaId
+  // BILEREK bu update'e dahil DEGIL - sadelestirilmis formda artik hic
+  // toplanmiyorlar, update data'sinda olmayan bir alan Prisma tarafindan
+  // DOKUNULMADAN oldugu gibi birakilir (silinmez/sifirlanmaz).
   await prisma.$transaction([
     prisma.davaDosyasi.update({
       where: { id },
@@ -173,17 +211,10 @@ export async function davaDosyasiGuncelle(
         dosyaNo: metinYaAlNull(formData, "dosyaNo"),
         birimAdi: metinYaAlNull(formData, "birimAdi"),
         konu,
-        turId,
-        icraAltTuruId,
-        yargiKoluId,
         hukukiIliskiTuruId,
-        uyusmazlikGrubuId,
-        bagliOlduguDosyaId,
-        durumId,
-        sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
-        acilisTarihi: new Date(acilisTarihi),
-        kapanisTarihi: kapanisTarihiHam ? new Date(kapanisTarihiHam) : null,
-        aciklama: metinYaAlNull(formData, "aciklama"),
+        davaTuruId,
+        talepSonucu,
+        durusmaTarihi: durusmaTarihiHam ? new Date(durusmaTarihiHam) : null,
       },
     }),
     prisma.dosyaMuvekkili.deleteMany({
