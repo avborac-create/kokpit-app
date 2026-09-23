@@ -1,12 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
+import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
 import { FormKarti } from "@/core/ui/form-karti";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import type { DavaDosyasiSonucu } from "@/modules/dava-dosyasi/lib/actions";
 import { MuvekkilSecici } from "./muvekkil-secici";
 import { KarsiTarafEkleyici } from "./karsi-taraf-ekleyici";
+import { TalepSonucuListesi } from "./talep-sonucu-listesi";
+import { DavaDosyasiSekmeleri } from "./dava-dosyasi-sekmeleri";
 
 type Secenek = { id: string; etiket: string };
 
@@ -40,11 +42,13 @@ export function DavaDosyasiFormIcerik({
   hukukiIliskiTurleri,
   davaTurleri,
   dosya,
+  dosyaId,
   baslangicKarsiTaraflar,
   alanSirasi,
 }: {
   action: (oncekiDurum: DavaDosyasiSonucu, formData: FormData) => Promise<DavaDosyasiSonucu>;
   gonderButonuMetni: string;
+  dosyaId?: string;
   musteriler: { id: string; adSoyadUnvan: string }[];
   seciliIdler: string[];
   hukukiIliskiTurleri: Secenek[];
@@ -66,6 +70,7 @@ export function DavaDosyasiFormIcerik({
   const g = durum?.gonderilenAlanlar;
   const anahtar = durum ? JSON.stringify(durum) : "ilk";
   const seciliIdlerGuncel = durum?.gonderilenMusteriIdleri ?? seciliIdler;
+  const talepMaddeleriGuncel = durum?.gonderilenTalepMaddeleri ?? dosya?.talepSonucu?.split("\n") ?? [];
 
   const alanRenderHaritasi: Record<string, () => React.ReactNode> = {
     hukukiIliskiTuruId: () => (
@@ -122,18 +127,7 @@ export function DavaDosyasiFormIcerik({
         />
       </Alan>
     ),
-    talepSonucu: () => (
-      <Alan>
-        <Etiket htmlFor="talepSonucu">Talep Sonucu</Etiket>
-        <MetinAlani
-          id="talepSonucu"
-          name="talepSonucu"
-          required
-          rows={3}
-          defaultValue={g?.talepSonucu ?? dosya?.talepSonucu ?? ""}
-        />
-      </Alan>
-    ),
+    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} />,
     durusmaTarihi: () => (
       <Alan>
         <Etiket htmlFor="durusmaTarihi">Duruşma Tarihi</Etiket>
@@ -149,6 +143,7 @@ export function DavaDosyasiFormIcerik({
 
   return (
     <form action={formAction} className="max-w-2xl" autoComplete="off">
+      <DavaDosyasiSekmeleri dosyaId={dosyaId} aktif="genel" />
       <FormKarti baslik="Taraflar">
         <div key={anahtar}>
           <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdlerGuncel} />

@@ -493,6 +493,7 @@ model DavaDosyasi {
   finansHareketleri      MusteriFinansHareketi[]
   hukukiMudahaleler      HukukiMudahale[]
   hacizRaporlari         HacizRaporu[]
+  adliBirimHareketleri   AdliBirimHareketi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -564,6 +565,31 @@ model DosyaMasrafi {
   @@index([turId])
   @@index([durumId])
   @@map("dosya_masraflari")
+}
+
+// Buro <-> Adli Birim (mahkeme/icra dairesi) arasindaki klasik cari hesap
+// hareketi - "Dosya Ekonomisi" sekmesindeki 3 cari hesap ilişkisinden
+// biri (digerleri: Musteri-Buro = dosyaCariHesapOzeti, Borclu-Buro =
+// KarsiTarafAlacagi). Musteri-Buro'dan farkli: burada karsi taraf
+// musteri/borclu degil, mahkeme/icra dairesinin kendisi - buronun onlara
+// yaptigi harc/masraf odemeleri (ODEME, borc hanesi) ile oradan geri
+// gelen/iade edilen tutarlar (TAHSILAT, alacak hanesi) ayri takip edilir.
+// Bakiye = toplam ODEME - toplam TAHSILAT (pozitifse buro net avans
+// vermis/alacaklidir).
+model AdliBirimHareketi {
+  id      String              @id @default(cuid())
+  dosyaId String
+  dosya   DavaDosyasi         @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+  yon     AdliBirimHareketYonu
+
+  tarih    DateTime
+  aciklama String
+  tutar    Decimal  @db.Decimal(14, 2)
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([dosyaId])
+  @@map("adli_birim_hareketleri")
 }
 
 // Musteri <-> DavaDosyasi coka-cok iliski (ara) tablosu.
@@ -879,6 +905,13 @@ enum HukukiMudahaleDurumu {
   IPTAL_EDILDI
 
   @@map("hukuki_mudahale_durumu")
+}
+
+enum AdliBirimHareketYonu {
+  ODEME // Buro -> Adli Birim (borc hanesi)
+  TAHSILAT // Adli Birim -> Buro (alacak hanesi)
+
+  @@map("adli_birim_hareket_yonu")
 }
 
 // Bir dava dosyasinda avukatin AKTIF, eyleme donuk hukuki isi (dilekce
