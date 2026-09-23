@@ -11,15 +11,10 @@ import { DokumTablosu } from "@/modules/dava-dosyasi/components/dokum-tablosu";
 import type { DokumSatiri } from "@/modules/dava-dosyasi/lib/queries";
 import { KarsiTarafAlacagiFormu } from "@/modules/dava-dosyasi/components/karsi-taraf-alacagi-formu";
 import { KarsiTarafAlacagiListesi } from "@/modules/dava-dosyasi/components/karsi-taraf-alacagi-listesi";
-import { DosyaEvresiBlok } from "@/modules/dava-dosyasi/components/dosya-evresi-blok";
-import { AvukatSapkasiBlok } from "@/modules/dava-dosyasi/components/avukat-sapkasi-blok";
 import { ArtciIslerBlok } from "@/modules/dava-dosyasi/components/artci-isler-blok";
 import { AdliBirimHareketFormu } from "@/modules/dava-dosyasi/components/adli-birim-hareket-formu";
 import { AdliBirimHareketListesi } from "@/modules/dava-dosyasi/components/adli-birim-hareket-listesi";
 import { DavaDosyasiSekmeleri } from "@/modules/dava-dosyasi/components/dava-dosyasi-sekmeleri";
-import { EVRE_ONERI_HARITASI, ACIK_HUKUKI_MUDAHALE_DURUMLARI } from "@/modules/dava-dosyasi/lib/sabitler";
-import { secenekleriGetir } from "@/core/secenek/secenek-service";
-import { avukatlariListele } from "@/modules/musteri/lib/queries";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { Dugme } from "@/core/ui/button";
@@ -49,40 +44,14 @@ export default async function DavaDosyasiDetaySayfasi({
   const { id } = await params;
   const { sekme } = await searchParams;
   const aktifSekme = sekme === "ekonomi" ? "ekonomi" : "genel";
-  const [dosya, kullanici, cariHesapOzeti, mudahaleTurleri, oncelikler, avukatlar] = await Promise.all([
+  const [dosya, kullanici, cariHesapOzeti] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
     dosyaCariHesapOzeti(id),
-    secenekleriGetir("hukuki_mudahale_turu"),
-    secenekleriGetir("hukuki_mudahale_onceligi"),
-    avukatlariListele(),
   ]);
   if (!dosya) notFound();
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
-
-  const acikMudahaleler = dosya.hukukiMudahaleler.filter((m) =>
-    ACIK_HUKUKI_MUDAHALE_DURUMLARI.includes(m.durum),
-  );
-  const evreOneri = dosya.dosyaEvresi ? EVRE_ONERI_HARITASI[dosya.dosyaEvresi] : undefined;
-  // İPTAL_EDILDI haric tum mudahaleler: is tamamlanmissa oneri tekrar
-  // cikmamali, ama kullanici oneriyi iptal ettiyse tekrar sorulabilir.
-  const oneriHalihazirdaVarMi = evreOneri
-    ? dosya.hukukiMudahaleler
-        .filter((m) => m.durum !== "IPTAL_EDILDI")
-        .some(
-          (m) =>
-            m.mudahaleTuru?.kod === evreOneri.mudahaleTuruKodu ||
-            m.baslik.trim().toLowerCase() === evreOneri.baslik.trim().toLowerCase(),
-        )
-    : false;
-  const oneri =
-    evreOneri && !oneriHalihazirdaVarMi
-      ? {
-          baslik: evreOneri.baslik,
-          mudahaleTuruId: mudahaleTurleri.find((t) => t.kod === evreOneri.mudahaleTuruKodu)?.id ?? null,
-        }
-      : null;
 
   const dosyaDokumu: DokumSatiri[] = [
     ...dosya.masraflar.map((m) => ({
@@ -195,34 +164,6 @@ export default async function DavaDosyasiDetaySayfasi({
                 {dosya.durusmaTarihi ? tarihFormatlayici.format(dosya.durusmaTarihi) : "—"}
               </Bilgi>
             </FormKarti>
-          </div>
-
-          <div className="mb-8 flex flex-col gap-4">
-            <DosyaEvresiBlok
-              davaDosyasiId={id}
-              dosyaEvresi={dosya.dosyaEvresi}
-              evreDegisiklikTarihi={dosya.evreDegisiklikTarihi}
-              sonrakiKontrolTarihi={dosya.sonrakiKontrolTarihi}
-              sonrakiKontrolSorusu={dosya.sonrakiKontrolSorusu}
-              sonKontrolTarihi={dosya.sonKontrolTarihi}
-              sonKontrolSonucu={dosya.sonKontrolSonucu}
-            />
-            <AvukatSapkasiBlok
-              davaDosyasiId={id}
-              acikMudahaleler={acikMudahaleler.map((m) => ({
-                id: m.id,
-                baslik: m.baslik,
-                durum: m.durum,
-                sonTarih: m.sonTarih,
-                mudahaleTuru: m.mudahaleTuru,
-                oncelik: m.oncelik,
-                sorumluAvukat: m.sorumluAvukat,
-              }))}
-              oneri={oneri}
-              mudahaleTurleri={mudahaleTurleri}
-              oncelikler={oncelikler}
-              avukatlar={avukatlar}
-            />
           </div>
 
           {dosya.baglananDosyalar.length > 0 && (
