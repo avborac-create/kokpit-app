@@ -78,6 +78,9 @@ export async function davaDosyasiGetir(id: string) {
       finansHareketleri: {
         orderBy: { tarih: "desc" },
       },
+      adliBirimHareketleri: {
+        orderBy: { tarih: "desc" },
+      },
     },
   });
 }

@@ -38,6 +38,7 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
       hukukiIliskiTurleri={hukukiIliskiTurleri}
       davaTurleri={davaTurleri}
       dosya={dosya}
+      dosyaId={dosya?.id}
       baslangicKarsiTaraflar={dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad })) ?? []}
       alanSirasi={alanSirasi}
     />

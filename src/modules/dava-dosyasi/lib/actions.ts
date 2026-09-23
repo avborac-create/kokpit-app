@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { HukukiMudahaleDurumu, DosyaEvresi } from "@prisma/client";
+import type { HukukiMudahaleDurumu, DosyaEvresi, AdliBirimHareketYonu } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
@@ -98,13 +98,32 @@ async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: stri
   return [...secilenIdler, ...yeniIdler];
 }
 
-// gonderilenMusteriIdleri AYRI tutulur: MuvekkilSecici de (KarsiTarafEkleyici'nin
-// aksine) React state'i olmayan, defaultChecked'e dayanan uncontrolled bir
-// checkbox listesi - o da React 19'un form-sifirlama davranisindan
-// etkileniyor. Coklu deger oldugu icin (formData.getAll) formVerileriniAl'in
-// tek-degerli Record'una sigmiyor, ayri tasinir.
+// Talep Sonucu artik tek bir metin kutusu degil, kullanicinin ayri ayri
+// ekleyip cikarabildigi maddelerin listesi (bkz. talep-sonucu-listesi.tsx) -
+// sunucuda tum maddeler "\n" ile birlestirilip mevcut `talepSonucu`
+// sutununa yazilir, ayri bir tablo gerekmez.
+function talepSonucuAl(formData: FormData): string | null {
+  const maddeler = formData
+    .getAll("talepMaddeleri")
+    .map(String)
+    .map((m) => m.trim())
+    .filter(Boolean);
+  return maddeler.length > 0 ? maddeler.join("\n") : null;
+}
+
+// gonderilenMusteriIdleri ve gonderilenTalepMaddeleri AYRI tutulur:
+// MuvekkilSecici (defaultChecked'e dayanan uncontrolled checkbox listesi)
+// ve TalepSonucuListesi (coklu "talepMaddeleri" alani) React 19'un
+// form-sifirlama davranisindan etkileniyor, ama coklu deger oldugu icin
+// (formData.getAll) formVerileriniAl'in tek-degerli Record'una sigmiyorlar,
+// ayri tasinirlar.
 export type DavaDosyasiSonucu =
-  | { hata: string; gonderilenAlanlar: Record<string, string>; gonderilenMusteriIdleri: string[] }
+  | {
+      hata: string;
+      gonderilenAlanlar: Record<string, string>;
+      gonderilenMusteriIdleri: string[];
+      gonderilenTalepMaddeleri: string[];
+    }
   | undefined;
 
 // useActionState ile kullanilir: dogrulama hatalarinda throw yerine
@@ -119,17 +138,33 @@ export async function davaDosyasiOlustur(
 ): Promise<DavaDosyasiSonucu> {
   const musteriIdleri = musteriIdleriniAl(formData);
   const davaTuruId = metinYaAlNull(formData, "davaTuruId");
-  const talepSonucu = metinYaAlNull(formData, "talepSonucu");
+  const talepSonucu = talepSonucuAl(formData);
   const gonderilenAlanlar = formVerileriniAl(formData);
+  const gonderilenTalepMaddeleri = formData.getAll("talepMaddeleri").map(String);
 
   if (musteriIdleri.length === 0) {
-    return { hata: "En az bir müvekkil seçilmelidir.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
+    return {
+      hata: "En az bir müvekkil seçilmelidir.",
+      gonderilenAlanlar,
+      gonderilenMusteriIdleri: musteriIdleri,
+      gonderilenTalepMaddeleri,
+    };
   }
   if (!davaTuruId) {
-    return { hata: "Dava türü seçilmelidir.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
+    return {
+      hata: "Dava türü seçilmelidir.",
+      gonderilenAlanlar,
+      gonderilenMusteriIdleri: musteriIdleri,
+      gonderilenTalepMaddeleri,
+    };
   }
   if (!talepSonucu) {
-    return { hata: "Talep sonucu zorunludur.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
+    return {
+      hata: "Talep sonucu zorunludur.",
+      gonderilenAlanlar,
+      gonderilenMusteriIdleri: musteriIdleri,
+      gonderilenTalepMaddeleri,
+    };
   }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
@@ -142,10 +177,14 @@ export async function davaDosyasiOlustur(
     prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } }),
     uyusmazlikGrubuOtomatikCozumle(musteriIdleri[0]),
   ]);
-  // Konu artik ayrica sorulmuyor - Dava Turu + Talep Sonucu'ndan
-  // otomatik uretilir (liste/detay basliklarinda tek bir kisa etiket
-  // olarak kullanilir, bkz. dava-dosyalari-tablosu.tsx).
-  const konu = `${davaTuru?.etiket ?? ""} — ${talepSonucu}`;
+  // Konu artik ayrica sorulmuyor - Dava Turu'nden otomatik uretilir
+  // (liste/detay basliklarinda TEK SATIRLIK kisa bir etiket olarak
+  // kullanilir, bkz. dava-dosyalari-tablosu.tsx). Talep Sonucu BILEREK
+  // buna dahil edilmiyor - o artik coklu madde icerebiliyor (bkz.
+  // talep-sonucu-listesi.tsx), Konu'ya eklenirse baslik devasa buyur ve
+  // zaten kendi kartinda ayrica gosterildigi icin ayni bilgi iki yerde
+  // tekrar eder (bkz. kullanici geri bildirimi).
+  const konu = davaTuru?.etiket ?? "";
 
   const dosya = await prisma.davaDosyasi.create({
     data: {
@@ -180,24 +219,40 @@ export async function davaDosyasiGuncelle(
 ): Promise<DavaDosyasiSonucu> {
   const musteriIdleri = musteriIdleriniAl(formData);
   const davaTuruId = metinYaAlNull(formData, "davaTuruId");
-  const talepSonucu = metinYaAlNull(formData, "talepSonucu");
+  const talepSonucu = talepSonucuAl(formData);
   const gonderilenAlanlar = formVerileriniAl(formData);
+  const gonderilenTalepMaddeleri = formData.getAll("talepMaddeleri").map(String);
 
   if (musteriIdleri.length === 0) {
-    return { hata: "En az bir müvekkil seçilmelidir.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
+    return {
+      hata: "En az bir müvekkil seçilmelidir.",
+      gonderilenAlanlar,
+      gonderilenMusteriIdleri: musteriIdleri,
+      gonderilenTalepMaddeleri,
+    };
   }
   if (!davaTuruId) {
-    return { hata: "Dava türü seçilmelidir.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
+    return {
+      hata: "Dava türü seçilmelidir.",
+      gonderilenAlanlar,
+      gonderilenMusteriIdleri: musteriIdleri,
+      gonderilenTalepMaddeleri,
+    };
   }
   if (!talepSonucu) {
-    return { hata: "Talep sonucu zorunludur.", gonderilenAlanlar, gonderilenMusteriIdleri: musteriIdleri };
+    return {
+      hata: "Talep sonucu zorunludur.",
+      gonderilenAlanlar,
+      gonderilenMusteriIdleri: musteriIdleri,
+      gonderilenTalepMaddeleri,
+    };
   }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const hukukiIliskiTuruId = metinYaAlNull(formData, "hukukiIliskiTuruId");
   const durusmaTarihiHam = metinYaAlNull(formData, "durusmaTarihi");
   const davaTuru = await prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } });
-  const konu = `${davaTuru?.etiket ?? ""} — ${talepSonucu}`;
+  const konu = davaTuru?.etiket ?? "";
 
   // DIKKAT: turId/durumId/acilisTarihi/uyusmazlikGrubuId/kapanisTarihi/
   // sorumluAvukatId/aciklama/icraAltTuruId/yargiKoluId/bagliOlduguDosyaId
@@ -643,4 +698,41 @@ export async function dosyaEvresiGuncelle(davaDosyasiId: string, formData: FormD
 
   revalidatePath(`/kokpit/dava-dosyalari/${davaDosyasiId}`);
   revalidatePath("/kokpit/dava-dosyalari/karar-sonrasi-takip");
+}
+
+// ============================================================
+// Büro <-> Adli Birim Cari Hesabı (Dosya Ekonomisi sekmesi) -
+// bkz. AdliBirimHareketi model yorumu. Klasik cari hesap mantığı: büro
+// adli birime (mahkeme/icra dairesi) öderse ODEME (borç hanesi), adli
+// birimden para gelirse (iade, aktarılan tahsilat vb.) TAHSILAT (alacak
+// hanesi).
+// ============================================================
+
+const GECERLI_ADLI_BIRIM_HAREKET_YONLERI: AdliBirimHareketYonu[] = ["ODEME", "TAHSILAT"];
+
+export async function adliBirimHareketiEkle(dosyaId: string, formData: FormData) {
+  const tarih = String(formData.get("tarih") ?? "");
+  const yon = String(formData.get("yon") ?? "") as AdliBirimHareketYonu;
+  const aciklama = String(formData.get("aciklama") ?? "").trim();
+  const tutar = String(formData.get("tutar") ?? "");
+
+  if (!tarih || !GECERLI_ADLI_BIRIM_HAREKET_YONLERI.includes(yon) || !aciklama || !tutar) {
+    throw new Error("Tarih, yön, açıklama ve tutar alanları zorunludur.");
+  }
+
+  await prisma.adliBirimHareketi.create({
+    data: { dosyaId, yon, tarih: new Date(tarih), aciklama, tutar },
+  });
+
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+export async function adliBirimHareketiSil(id: string, dosyaId: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici || !silebilirMi(kullanici.rol)) {
+    throw new Error("Bu işlem için yetkiniz yok.");
+  }
+
+  await prisma.adliBirimHareketi.delete({ where: { id } });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
