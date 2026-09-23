@@ -1,6 +1,5 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { FormKarti } from "@/core/ui/form-karti";
-import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { musterileriListele, avukatlariListele } from "@/modules/musteri/lib/queries";
 import {
@@ -8,15 +7,17 @@ import {
   musterininDosyalari,
   type davaDosyasiGetir,
 } from "@/modules/dava-dosyasi/lib/queries";
+import type { DavaDosyasiSonucu } from "@/modules/dava-dosyasi/lib/actions";
 import { formAlanDuzeniniGetir } from "@/core/form-duzeni/queries";
 import { DAVA_DOSYASI_GIZLENEMEZ_ALANLAR } from "@/core/form-duzeni/dava-dosyasi-alanlari";
 import { MuvekkilSecici } from "./muvekkil-secici";
 import { KarsiTarafEkleyici } from "./karsi-taraf-ekleyici";
+import { DavaDosyasiFormGovdesi } from "./dava-dosyasi-form-govdesi";
 
 type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
 
 type Props = {
-  action: (formData: FormData) => void;
+  action: (oncekiDurum: DavaDosyasiSonucu, formData: FormData) => Promise<DavaDosyasiSonucu>;
   dosya?: DosyaDetay;
   gonderButonuMetni: string;
   onSecilenMusteriId?: string;
@@ -306,7 +307,7 @@ export async function DavaDosyasiFormu({
   }
 
   return (
-    <form action={action} className="max-w-2xl">
+    <DavaDosyasiFormGovdesi action={action} gonderButonuMetni={gonderButonuMetni}>
       <FormKarti baslik="Taraflar">
         <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdler} />
         <KarsiTarafEkleyici
@@ -329,8 +330,6 @@ export async function DavaDosyasiFormu({
           </FormKarti>
         );
       })}
-
-      <GonderButonu>{gonderButonuMetni}</GonderButonu>
-    </form>
+    </DavaDosyasiFormGovdesi>
   );
 }

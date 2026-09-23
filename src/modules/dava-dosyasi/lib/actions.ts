@@ -73,7 +73,18 @@ async function uyusmazlikGrubuIdCozumle(formData: FormData, musteriIdleri: strin
   return metinYaAlNull(formData, "uyusmazlikGrubuId");
 }
 
-export async function davaDosyasiOlustur(formData: FormData) {
+export type DavaDosyasiSonucu = { hata: string } | undefined;
+
+// useActionState ile kullanilir: dogrulama hatalarinda throw yerine
+// { hata } donerek formun (ve icindeki tum musteri/karsi taraf secimleri,
+// yazilmis alanlar gibi client state'in) hata sonrasi SIFIRLANMASINI
+// (error.tsx'e dusup tum agacin unmount olmasini) engeller - throw edilen
+// bir hata useActionState tarafindan yakalanmaz, en yakin error boundary'ye
+// gider ve formu komple kaybettirir (bkz. girisYap'taki ayni desen).
+export async function davaDosyasiOlustur(
+  _oncekiDurum: DavaDosyasiSonucu,
+  formData: FormData,
+): Promise<DavaDosyasiSonucu> {
   const konu = String(formData.get("konu") ?? "").trim();
   const durumId = String(formData.get("durumId") ?? "");
   const turId = String(formData.get("turId") ?? "");
@@ -81,16 +92,16 @@ export async function davaDosyasiOlustur(formData: FormData) {
   const musteriIdleri = musteriIdleriniAl(formData);
 
   if (!konu || !durumId || !turId || !acilisTarihi) {
-    throw new Error("Konu, tür, durum ve açılış tarihi alanları zorunludur.");
+    return { hata: "Konu, tür, durum ve açılış tarihi alanları zorunludur." };
   }
   if (musteriIdleri.length === 0) {
-    throw new Error("En az bir müvekkil seçilmelidir.");
+    return { hata: "En az bir müvekkil seçilmelidir." };
   }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
   if (!uyusmazlikGrubuId) {
-    throw new Error("Dosya Kümesi seçilmelidir.");
+    return { hata: "Dosya Kümesi seçilmelidir." };
   }
   const bagliOlduguDosyaId = metinYaAlNull(formData, "bagliOlduguDosyaId");
   const hukukiIliskiTuruId = metinYaAlNull(formData, "hukukiIliskiTuruId");
@@ -125,7 +136,11 @@ export async function davaDosyasiOlustur(formData: FormData) {
   redirect(`/kokpit/dava-dosyalari/${dosya.id}`);
 }
 
-export async function davaDosyasiGuncelle(id: string, formData: FormData) {
+export async function davaDosyasiGuncelle(
+  id: string,
+  _oncekiDurum: DavaDosyasiSonucu,
+  formData: FormData,
+): Promise<DavaDosyasiSonucu> {
   const konu = String(formData.get("konu") ?? "").trim();
   const durumId = String(formData.get("durumId") ?? "");
   const turId = String(formData.get("turId") ?? "");
@@ -134,16 +149,16 @@ export async function davaDosyasiGuncelle(id: string, formData: FormData) {
   const musteriIdleri = musteriIdleriniAl(formData);
 
   if (!konu || !durumId || !turId || !acilisTarihi) {
-    throw new Error("Konu, tür, durum ve açılış tarihi alanları zorunludur.");
+    return { hata: "Konu, tür, durum ve açılış tarihi alanları zorunludur." };
   }
   if (musteriIdleri.length === 0) {
-    throw new Error("En az bir müvekkil seçilmelidir.");
+    return { hata: "En az bir müvekkil seçilmelidir." };
   }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const uyusmazlikGrubuId = await uyusmazlikGrubuIdCozumle(formData, musteriIdleri);
   if (!uyusmazlikGrubuId) {
-    throw new Error("Dosya Kümesi seçilmelidir.");
+    return { hata: "Dosya Kümesi seçilmelidir." };
   }
   const bagliOlduguDosyaIdHam = metinYaAlNull(formData, "bagliOlduguDosyaId");
   const bagliOlduguDosyaId = bagliOlduguDosyaIdHam === id ? null : bagliOlduguDosyaIdHam;
