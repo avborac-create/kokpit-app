@@ -382,6 +382,41 @@ const GELISTIRME_TALEPLERI: { anahtar: string; metin: string }[] = [
     metin:
       "Dosyalar listesinden/detayından kayıtları manuel düzenleme ve silme imkanı (not: Düzenle/Sil dosyanın kendi detay sayfasında zaten var, listeden erişim netleştirilmeli).",
   },
+  {
+    anahtar: "borc-tahsilatlari-tasnif-menusu",
+    metin:
+      "\"Borç Tahsilatları\" tasnif menüsü (Dosya Ekonomisi sekmesi altına): borçludan gelen bir tahsilatı resmi masraf/müvekkil payı/vekalet ücreti gibi kalemlere bölme, \"Bloke Paralar\" kalemini tek tuşla Adli Birim cari hesabına aktarma. Üç tasarım seçeneği hazırlandı, hangisinin uygulanacağı kararı bekleniyor.",
+  },
+  {
+    anahtar: "muvekkil-cari-hesap-klasik",
+    metin:
+      "Müvekkil sayfasındaki \"Cari Hesap\" ekranına klasik borç/alacak cari hesap mantığı: her kayıt bir yargı dosyasına bağlı olabilir ya da serbest kayıt olabilir. Kapsam henüz netleşmedi.",
+  },
+  {
+    anahtar: "tinaz-kaucuk-koz-gida-muvekkil-ekonomisi",
+    metin:
+      "Pilot müvekkil \"Tınaz Kauçuk\"un KOZ GIDA ve sonrasındaki TÜM dosyalarının ekonomisi ile Müvekkil Ekonomisi'nin halledilmesi.",
+  },
+  {
+    anahtar: "yavuz-sirin-dosya-muvekkil-ekonomisi",
+    metin:
+      "Pilot müvekkil \"Yavuz Şirin\"in 4 dosyasının (8709, 8717, 8720, 8721) ekonomisi ile Müvekkil Ekonomisi'nin halledilmesi - ham veri kaynağı ve saha eşleştirmesi netleşti, veri girişi bekleniyor.",
+  },
+  {
+    anahtar: "muvekkil-finans-cari-hesap-usulu",
+    metin:
+      "MÜVEKKİL FİNANS modülünü \"cari hesap\" usulüne geçirme: bir müvekkille aramızdaki TÜM para trafiğinin neticesi bu alanda görünmeli - müvekkilin tüm dosyalarının kendi iç ekonomisi, müvekkil seviyesinde TEK, toplu bir sonuca konsolide edilmeli.",
+  },
+  {
+    anahtar: "haciz-raporu-blobsuz-mail",
+    metin:
+      "Haciz Raporu modülünü Vercel Blob'suz (sunucuda kalıcı depolama olmadan) yeniden kurmak: yüklenen belgeler saklanmak yerine doğrudan info@eceshukuk.com'a mail olarak gönderilsin.",
+  },
+  {
+    anahtar: "vercel-den-vps-tasima",
+    metin:
+      "Vercel'den arct.cloud üzerinde bir VPS'e taşınma: cold start/yavaşlık sorununu kalıcı çözer. Veritabanı ve dosya depolama aynı kalır, sadece uygulamanın çalıştığı yer değişir.",
+  },
 ];
 
 async function gelistirmeKutusunuSenkronizeEt() {

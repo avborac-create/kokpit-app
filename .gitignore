@@ -41,6 +41,10 @@ yarn-error.log*
 # yerel ice aktarim kaynagi, ASLA git'e girmemeli
 /PİLOT MÜVEKKİLLER/
 
+# veritabaninin gunluk yerel yedekleri (gercek musteri verisi icerir) -
+# git'e girmemeli, sadece bu bilgisayarda dursun
+/yedekler/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
