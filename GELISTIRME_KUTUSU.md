@@ -20,6 +20,10 @@ işlenir).
   mantığı: her kayıt bir yargı dosyasına bağlı olabilir ya da serbest kayıt
   olabilir (kullanıcı ekran görüntüsüyle işaret etti, kapsam henüz
   netleşmedi).
+- Pilot müvekkil "Tınaz Kauçuk"un KOZ GIDA ve sonrasındaki TÜM dosyalarının
+  ekonomisi ile Müvekkil Ekonomisi'nin (muhtemelen veri girişi ağırlıklı,
+  hızlı) halledilmesi — yavaşlık sorunu çözüldükten hemen sonra ele
+  alınacak.
 
 ## Yapılıyor
 
