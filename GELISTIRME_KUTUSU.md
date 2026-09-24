@@ -29,6 +29,18 @@ işlenir).
   (ör. 1000) dosyasının her birinin kendi iç ekonomisi (masraf/tahsilat/
   bakiye), müvekkil seviyesinde TEK, toplu bir sonuca (cari hesap özeti)
   konsolide edilmeli. Kapsam/tasarım henüz netleşmedi.
+- Haciz Raporu modülünü Vercel Blob'suz (sunucuda kalıcı depolama olmadan)
+  yeniden kurmak: yüklenen belgeler (Haciz Tutanağı, Protokol, Fotoğraflar)
+  saklanmak yerine doğrudan info@eceshukuk.com'a mail olarak gönderilsin.
+  Vercel'den başka bir sunucuya taşınma sürecinin bir parçası olarak,
+  Vercel Blob bağımlılığını tamamen ortadan kaldırmak için.
+- Vercel'den ucuz bir VPS'e (Hetzner/DigitalOcean, ~4-5$/ay) taşınma:
+  cold start sorununu kalıcı ve garantili çözer. Veritabanı (Prisma
+  Postgres) ve dosya depolama aynı kalabilir, sadece uygulamanın çalıştığı
+  yer değişir. Kullanıcının bir sağlayıcıda hesap açması gerekiyor —
+  hesap açılınca sunucu kurulumu (deploy, SSL, otomatik başlatma) Claude
+  tarafından yapılacak. Şu an için bekletiliyor, öncelik dosya/müvekkil
+  ekonomisi işi.
 
 ## Yapılıyor
 
