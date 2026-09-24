@@ -22,11 +22,18 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  // Vercel'in "Prisma Postgres" entegrasyonu DATABASE_URL'i otomatik olusturur
-  // ve havuzlama (pooling) kendi altyapisinda halleder; ayri bir DIRECT_URL
-  // gerekmez.
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // DUZELTME (bkz. kokpit performans arastirmasi): asagidaki eski yorumun
+  // aksine, Vercel entegrasyonunun otomatik olusturdugu varsayilan
+  // DATABASE_URL aslinda HAVUZSUZ/DOGRUDAN baglantiydi (host: db.prisma.io,
+  // "pooled." on eki YOK) - uygulama sunucusuz (Vercel) ortamda her istekte
+  // bu baglantiyi sifirdan kurmak zorunda kaliyordu (~1sn/istek gecikme).
+  // DATABASE_URL simdi Prisma Console'da uretilen HAVUZLU baglantiya
+  // (host: pooled.db.prisma.io) isaret ediyor; DIRECT_URL ise sadece
+  // `prisma migrate`/CLI komutlari icin (bkz. Prisma dokumantasyonu
+  // "Connect to Prisma Postgres without Accelerate" - Pooled TCP yolu).
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================================================

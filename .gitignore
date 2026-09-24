@@ -37,6 +37,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# gercek muvekkil belgeleri (isim/tutar/haciz fotograflari icerir) - sadece
+# yerel ice aktarim kaynagi, ASLA git'e girmemeli
+/PİLOT MÜVEKKİLLER/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

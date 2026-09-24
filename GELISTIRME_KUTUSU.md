@@ -24,6 +24,11 @@ işlenir).
   ekonomisi ile Müvekkil Ekonomisi'nin (muhtemelen veri girişi ağırlıklı,
   hızlı) halledilmesi — yavaşlık sorunu çözüldükten hemen sonra ele
   alınacak.
+- MÜVEKKİL FİNANS modülünü "cari hesap" usulüne geçirme: bir müvekkille
+  aramızdaki TÜM para trafiğinin neticesi bu alanda görünmeli — müvekkilin
+  (ör. 1000) dosyasının her birinin kendi iç ekonomisi (masraf/tahsilat/
+  bakiye), müvekkil seviyesinde TEK, toplu bir sonuca (cari hesap özeti)
+  konsolide edilmeli. Kapsam/tasarım henüz netleşmedi.
 
 ## Yapılıyor
 
