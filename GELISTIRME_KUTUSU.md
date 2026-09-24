@@ -11,6 +11,15 @@ işlenir).
 
 - Dosyalar tablosundaki sütunların admin tarafından manuel olarak yeniden
   sıralanabilmesi (dinamik sütun sırası).
+- "Borç Tahsilatları" tasnif menüsü (Dosya Ekonomisi sekmesi altına):
+  borçludan gelen bir tahsilatı resmi masraf/müvekkil payı/vekalet ücreti
+  gibi kalemlere bölme, "Bloke Paralar" kalemini tek tuşla Adli Birim cari
+  hesabına aktarma. Üç tasarım seçeneği (Tek Ekranda Bölüştürme / Sihirbaz /
+  Liste+Modal) hazırlandı, hangisinin uygulanacağı kararı bekleniyor.
+- Müvekkil sayfasındaki "Cari Hesap" ekranına klasik borç/alacak cari hesap
+  mantığı: her kayıt bir yargı dosyasına bağlı olabilir ya da serbest kayıt
+  olabilir (kullanıcı ekran görüntüsüyle işaret etti, kapsam henüz
+  netleşmedi).
 
 ## Yapılıyor
 

@@ -120,12 +120,18 @@ function KisaMetin({ children, genislik = "10rem" }: { children: React.ReactNode
   );
 }
 
-// Düzenle sayfası bir sunucu bileşeni olduğu için tıklama ile ekranın
-// fiilen değişmesi arasında (veri çekme süresince) fark edilir bir
-// boşluk oluşabiliyor - useTransition'ın isPending'i tam da bu bekleme
-// süresini yansıttığı için (bkz. onayli-buton.tsx'teki aynı desen)
-// tıklanan satırda anında "Açılıyor…" göstererek tepkisiz kalmıyor.
-function DuzenleButonu({ href }: { href: string }) {
+// Hedef sayfa bir sunucu bileşeni olduğu için tıklama ile ekranın fiilen
+// değişmesi arasında (veri çekme süresince) fark edilir bir boşluk
+// oluşabiliyor - useTransition'ın isPending'i tam da bu bekleme süresini
+// yansıttığı için (bkz. onayli-buton.tsx'teki aynı desen) tıklanan satırda
+// anında "Açılıyor…" göstererek tepkisiz kalmıyor.
+//
+// Listeden dogrudan DUZENLEME formuna degil, DOSYA DETAYINA gidilir -
+// duzenleme zaten detay sayfasinin kendi "Duzenle" butonundan yapilir
+// (bkz. dava-dosyalari/[id]/page.tsx). Boylece "Islemler" sutunundaki
+// buton, Kokpit No baglantisiyla ayni hedefe gider ama listede cok daha
+// belirgin/tiklanabilir bir hedef olur (kullanici geri bildirimi).
+function DosyayiAcButonu({ href }: { href: string }) {
   const router = useRouter();
   const [beklemede, baslatTransition] = useTransition();
   return (
@@ -135,7 +141,7 @@ function DuzenleButonu({ href }: { href: string }) {
       disabled={beklemede}
       onClick={() => baslatTransition(() => router.push(href))}
     >
-      {beklemede ? "Açılıyor…" : "Düzenle"}
+      {beklemede ? "Açılıyor…" : "Dosyayı Aç"}
     </Dugme>
   );
 }
@@ -268,7 +274,7 @@ export function DavaDosyalariTablosu({
               ))}
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <DuzenleButonu href={`/kokpit/dava-dosyalari/${dosya.id}/duzenle`} />
+                  <DosyayiAcButonu href={`/kokpit/dava-dosyalari/${dosya.id}`} />
                   {silmeYetkisiVar && <DavaDosyasiSilmeButonu dosyaId={dosya.id} />}
                 </div>
               </td>
