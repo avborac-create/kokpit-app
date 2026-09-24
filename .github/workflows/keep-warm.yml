@@ -1,0 +1,21 @@
+name: Keep Vercel function warm
+
+# Vercel'in ucretsiz planinda fonksiyon bir sure istek almazsa uykuya
+# geciyor (cold start), ilk istek 1-3 saniye gecikiyor. Bu is akisi 5
+# dakikada bir siteye sessizce dokunarak fonksiyonu uyanik tutmaya
+# calisir - resmi bir Vercel ozelligi degil, garantisi yok, ama
+# tamamen ucretsiz. GitHub Actions'in kendi zamanlayicisi (schedule)
+# kullanilir, ekstra servis/hesap gerekmez.
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping ana sayfa ve giris sayfasi
+        run: |
+          curl -sS -o /dev/null -w "kokpit ana sayfa: %{http_code} (%{time_total}s)\n" https://kokpit-app.vercel.app/
+          curl -sS -o /dev/null -w "kokpit giris sayfasi: %{http_code} (%{time_total}s)\n" https://kokpit-app.vercel.app/giris
