@@ -21,7 +21,7 @@ export async function musterileriListele(filtre: MusteriFiltre = {}) {
       sorumluAvukat: true,
       _count: { select: { paraTrafigi: true } },
     },
-    orderBy: { olusturmaTarihi: "desc" },
+    orderBy: { adSoyadUnvan: "asc" },
   });
 }
 

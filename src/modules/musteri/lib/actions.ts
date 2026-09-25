@@ -11,8 +11,17 @@ function metinYaAlNull(formData: FormData, alan: string): string | null {
   return deger === "" ? null : deger;
 }
 
+// Kullanici "yavuz sirin" da yazsa "YAVUZ ŞİRİN" de yazsa fihriste hep
+// buyuk harfle, tutarli gorunsun diye - Turkce'ye ozgu i/İ, ı/I
+// donusumunun dogru calismasi icin (JS'in dil-bagimsiz toUpperCase'i
+// "i"yi "I"ya cevirir, Turkce'de "İ" olmasi gerekir) toLocaleUpperCase
+// ile "tr-TR" locale'i ACIKCA verilir.
+function buyukHarfeCevir(metin: string): string {
+  return metin.toLocaleUpperCase("tr-TR");
+}
+
 export async function musteriOlustur(formData: FormData) {
-  const adSoyadUnvan = String(formData.get("adSoyadUnvan") ?? "").trim();
+  const adSoyadUnvan = buyukHarfeCevir(String(formData.get("adSoyadUnvan") ?? "").trim());
   const tipId = String(formData.get("tipId") ?? "");
   const durumId = String(formData.get("durumId") ?? "");
 
@@ -38,7 +47,7 @@ export async function musteriOlustur(formData: FormData) {
 }
 
 export async function musteriGuncelle(id: string, formData: FormData) {
-  const adSoyadUnvan = String(formData.get("adSoyadUnvan") ?? "").trim();
+  const adSoyadUnvan = buyukHarfeCevir(String(formData.get("adSoyadUnvan") ?? "").trim());
   const tipId = String(formData.get("tipId") ?? "");
   const durumId = String(formData.get("durumId") ?? "");
 
