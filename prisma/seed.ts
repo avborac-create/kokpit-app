@@ -388,11 +388,6 @@ const GELISTIRME_TALEPLERI: { anahtar: string; metin: string }[] = [
       "\"Borç Tahsilatları\" tasnif menüsü (Dosya Ekonomisi sekmesi altına): borçludan gelen bir tahsilatı resmi masraf/müvekkil payı/vekalet ücreti gibi kalemlere bölme, \"Bloke Paralar\" kalemini tek tuşla Adli Birim cari hesabına aktarma. Üç tasarım seçeneği hazırlandı, hangisinin uygulanacağı kararı bekleniyor.",
   },
   {
-    anahtar: "muvekkil-cari-hesap-klasik",
-    metin:
-      "Müvekkil sayfasındaki \"Cari Hesap\" ekranına klasik borç/alacak cari hesap mantığı: her kayıt bir yargı dosyasına bağlı olabilir ya da serbest kayıt olabilir. Kapsam henüz netleşmedi.",
-  },
-  {
     anahtar: "tinaz-kaucuk-koz-gida-muvekkil-ekonomisi",
     metin:
       "Pilot müvekkil \"Tınaz Kauçuk\"un KOZ GIDA ve sonrasındaki TÜM dosyalarının ekonomisi ile Müvekkil Ekonomisi'nin halledilmesi.",
@@ -403,11 +398,6 @@ const GELISTIRME_TALEPLERI: { anahtar: string; metin: string }[] = [
       "Pilot müvekkil \"Yavuz Şirin\"in 4 dosyasının (8709, 8717, 8720, 8721) ekonomisi ile Müvekkil Ekonomisi'nin halledilmesi - ham veri kaynağı ve saha eşleştirmesi netleşti, veri girişi bekleniyor.",
   },
   {
-    anahtar: "muvekkil-finans-cari-hesap-usulu",
-    metin:
-      "MÜVEKKİL FİNANS modülünü \"cari hesap\" usulüne geçirme: bir müvekkille aramızdaki TÜM para trafiğinin neticesi bu alanda görünmeli - müvekkilin tüm dosyalarının kendi iç ekonomisi, müvekkil seviyesinde TEK, toplu bir sonuca konsolide edilmeli.",
-  },
-  {
     anahtar: "haciz-raporu-blobsuz-mail",
     metin:
       "Haciz Raporu modülünü Vercel Blob'suz (sunucuda kalıcı depolama olmadan) yeniden kurmak: yüklenen belgeler saklanmak yerine doğrudan info@eceshukuk.com'a mail olarak gönderilsin.",
@@ -416,6 +406,31 @@ const GELISTIRME_TALEPLERI: { anahtar: string; metin: string }[] = [
     anahtar: "vercel-den-vps-tasima",
     metin:
       "Vercel'den arct.cloud üzerinde bir VPS'e taşınma: cold start/yavaşlık sorununu kalıcı çözer. Veritabanı ve dosya depolama aynı kalır, sadece uygulamanın çalıştığı yer değişir.",
+  },
+  {
+    anahtar: "yargi-dosyalari-icra-dava-ayrimi",
+    metin:
+      "Dosyalar menüsü altına 'Yargı Dosyaları' başlığı eklenip bunun altının İcra Dosyaları ve Dava Dosyaları olarak ikiye ayrılması. Her dosyanın kendi kart görünümü olmalı; karta tıklanınca o dosyayla ilgili kayıtlar (işlemler, evraklar, para trafiği vb.) okunabilmeli.",
+  },
+  {
+    anahtar: "mobil-tablo-satir-yuksekligi",
+    metin:
+      "Mobilde tablo satırları (Kokpit No/Dosya No/Tür/Birim vb.) çok uzun görünüyor - özellikle 'Tür' hücresindeki uzun etiketler satırı gereksiz büyütüyor. Satır yüksekliği en fazla 2 satır metin kadar olacak şekilde revize edilmeli (kırpma/kısaltma, daha kompakt mobil düzen ya da kart görünümü ele alınabilir).",
+  },
+  {
+    anahtar: "dosya-silme-onay-akisi",
+    metin:
+      "Dosya silme iş akışı: (1) Silmek isteyen kişi yetkiliyse şifre girmesi istenir; değilse 2'ye geç. (2) Yöneticiye silme talebi gider. (3) Talep uygun görülürse 1'e dön (şifre sorulup silme tamamlanır).",
+  },
+  {
+    anahtar: "dosya-silme-restore",
+    metin:
+      "Dosya silindiğinde geri getirme (restore) seçeneği mutlaka olmalı - silme işlemi kalıcı olmamalı, silinen dosyalar geri yüklenebilmeli.",
+  },
+  {
+    anahtar: "kokpit-no-format-kn",
+    metin:
+      "Kokpit No formatı 'KP-0006' yerine 'KN-1' şeklinde olsun (baştaki sıfırlar kaldırılsın) ve KN-999'a, gerekirse daha da ileriye kadar gidebilsin.",
   },
 ];
 
@@ -538,6 +553,7 @@ const VARSAYILAN_MENU_SIRASI = [
   "dava-dosyalari",
   "avukat-sapkasi",
   "karar-sonrasi-takip",
+  "haciz-raporlari",
   "muvekkil-finans",
   "cmk-dosyalari",
   "oneriler",
@@ -616,6 +632,40 @@ async function formAlanDuzeniOlustur(formAnahtari: string, alanSirasi: string[])
   }
   if (eklenen > 0) {
     console.log(`✓ Form Düzeni (${formAnahtari}): ${eklenen} yeni alan eklendi.`);
+  }
+}
+
+// Dosyalar tablosundaki, admin'in surukleyerek sirasini/gorunurlugunu
+// degistirebildigi sutunlarin varsayilan sirasi - etiketleri (tek dogru
+// kaynak) src/core/tablo-duzeni/dava-dosyalari-sutunlari.ts icinde.
+// "İşlemler" sutunu burada YOK - o bir veri sutunu degil, tabloda her
+// zaman sabit en sonda durur, bu tabloya hic girmiyor.
+const VARSAYILAN_DAVA_DOSYALARI_SUTUN_SIRASI = [
+  "kayitNo",
+  "dosyaNo",
+  "tur",
+  "birimAdi",
+  "konu",
+  "karsiTaraflar",
+  "muvekkiller",
+  "durum",
+  "sorumluAvukat",
+];
+
+async function tabloSutunDuzeniOlustur() {
+  let eklenen = 0;
+  for (const [index, sutunAnahtari] of VARSAYILAN_DAVA_DOSYALARI_SUTUN_SIRASI.entries()) {
+    const mevcut = await prisma.tabloSutunDuzeni.findUnique({
+      where: { tabloAnahtari_sutunAnahtari: { tabloAnahtari: "dava-dosyalari", sutunAnahtari } },
+    });
+    if (mevcut) continue;
+    await prisma.tabloSutunDuzeni.create({
+      data: { tabloAnahtari: "dava-dosyalari", sutunAnahtari, siraNo: index },
+    });
+    eklenen += 1;
+  }
+  if (eklenen > 0) {
+    console.log(`✓ Sütun Düzeni: ${eklenen} yeni sütun eklendi.`);
   }
 }
 
@@ -707,6 +757,7 @@ async function main() {
   await menuOgeleriniOlustur();
   await formAlanDuzeniOlustur("dava-dosyasi", VARSAYILAN_DAVA_DOSYASI_ALAN_SIRASI);
   await formAlanDuzeniOlustur("musteri", VARSAYILAN_MUSTERI_ALAN_SIRASI);
+  await tabloSutunDuzeniOlustur();
   await kumesizDosyalariBackfillEt();
   await kumesizParaKayitlariniBackfillEt();
   await paraKaydiAciklamasiBackfillEt();

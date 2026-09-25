@@ -2,7 +2,6 @@ import { prisma } from "@/core/db/prisma";
 
 export function kullanicilariListele() {
   return prisma.kullanici.findMany({
-    orderBy: { olusturmaTarihi: "asc" },
     select: {
       id: true,
       adSoyad: true,
@@ -11,5 +10,6 @@ export function kullanicilariListele() {
       aktifMi: true,
       olusturmaTarihi: true,
     },
+    orderBy: { adSoyad: "asc" },
   });
 }

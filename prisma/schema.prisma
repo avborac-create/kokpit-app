@@ -719,6 +719,20 @@ model FormAlanDuzeni {
   @@map("form_alan_duzeni")
 }
 
+// FormAlanDuzeni ile ayni ilke: liste sayfalarindaki tablolarin sutun
+// sirasi/gorunurlugu admin tarafindan degistirilebilir, seed sadece
+// eksik sutunu ekler, mevcut bir satira bir daha asla dokunmaz.
+model TabloSutunDuzeni {
+  id            String  @id @default(cuid())
+  tabloAnahtari String
+  sutunAnahtari String
+  siraNo        Int     @default(0)
+  gizliMi       Boolean @default(false)
+
+  @@unique([tabloAnahtari, sutunAnahtari])
+  @@map("tablo_sutun_duzeni")
+}
+
 // ============================================================
 // MODUL: Muvekkil Finans (V1 - bilerek BASIT)
 // ============================================================

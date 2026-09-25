@@ -113,6 +113,17 @@ export function MuvekkilFinansIkonu(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function HacizRaporlariIkonu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Taban {...props}>
+      <rect x="4.25" y="9.25" width="11.5" height="8" rx="1.5" />
+      <path d="M6.75 9.25V6.5a3.25 3.25 0 0 1 6.5 0v2.75" />
+      <circle cx="10" cy="12.75" r="1" />
+      <path d="M10 13.75v1.5" />
+    </Taban>
+  );
+}
+
 export function OnerilerIkonu(props: SVGProps<SVGSVGElement>) {
   return (
     <Taban {...props}>

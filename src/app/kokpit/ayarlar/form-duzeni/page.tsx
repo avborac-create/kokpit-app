@@ -52,7 +52,7 @@ export default async function FormDuzeniSayfasi() {
       </h2>
       <div className="glass mb-2 flex flex-col gap-1 rounded-2xl p-2">
         <div className="flex items-center justify-between rounded-xl px-4 py-3">
-          <span className="text-sm font-medium text-white">Müvekkil(ler)</span>
+          <span className="text-sm font-medium text-white">Müvekkil</span>
           <span className="text-xs text-white/30">Sabit</span>
         </div>
         <div className="flex items-center justify-between rounded-xl px-4 py-3">
@@ -61,7 +61,7 @@ export default async function FormDuzeniSayfasi() {
         </div>
       </div>
       <p className="mb-3 text-xs text-white/35">
-        Müvekkil(ler) ve Karşı Taraf(lar) her zaman en üstte, bu sırayla kalır — bunlar tekil
+        Müvekkil ve Karşı Taraf(lar) her zaman en üstte, bu sırayla kalır — bunlar tekil
         bir alan değil, kendi ekleme akışı olan seçiciler.
       </p>
 

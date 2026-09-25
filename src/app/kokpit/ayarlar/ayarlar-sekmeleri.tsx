@@ -9,6 +9,7 @@ const SEKMELER = [
   { yol: "/kokpit/ayarlar/secenekler", ad: "Seçenek Listeleri" },
   { yol: "/kokpit/ayarlar/menu", ad: "Menü Düzeni" },
   { yol: "/kokpit/ayarlar/form-duzeni", ad: "Form Düzeni" },
+  { yol: "/kokpit/ayarlar/sutun-duzeni", ad: "Sütun Düzeni" },
 ];
 
 // Geliştirme Kutusu, normal kullanıcının sol menüsünden kaldırıldı (bkz.
@@ -27,7 +28,11 @@ export function AyarlarSekmeleri({
   const yol = usePathname();
   const sekmeler =
     kullaniciRol === "YONETICI"
-      ? [...SEKMELER, { yol: "/kokpit/gelistirme-kutusu", ad: "Geliştirme Kutusu" }]
+      ? [
+          ...SEKMELER,
+          { yol: "/kokpit/ayarlar/kullanicilar", ad: "Kullanıcılar" },
+          { yol: "/kokpit/gelistirme-kutusu", ad: "Geliştirme Kutusu" },
+        ]
       : SEKMELER;
 
   return (
