@@ -98,9 +98,9 @@ export default async function DavaDosyalariSayfasi({
         <Girdi
           type="search"
           name="arama"
-          placeholder="Büro no, dosya no, konu ara…"
+          placeholder="Müvekkil, karşı taraf, büro no, dosya no, birim, konu…"
           defaultValue={params.arama}
-          className="max-w-xs"
+          className="max-w-md"
         />
         <Secim name="durum" defaultValue={params.durum ?? ""} className="max-w-[10rem]">
           <option value="">Tüm durumlar</option>

@@ -7,18 +7,48 @@ export type DavaDosyasiFiltre = {
   musteriId?: string;
 };
 
+// Arama kutusu: bosluklarla ayrilan her sozcuk (AND) listedeki herhangi bir
+// sutunda gecmelidir - ör. "saray 2026" = Saray muvekkilinin 2026 dosyalari.
+// "KP-0014" ya da "14" Kokpit No'ya da eslesir. Turkce I/İ farki icin sozcuk
+// hem yazildigi hem tr-buyuk/kucuk haliyle aranir.
+function aramaKosulu(arama?: string): Prisma.DavaDosyasiWhereInput {
+  const sozcukler = (arama ?? "").trim().split(/\s+/).filter(Boolean);
+  if (sozcukler.length === 0) return {};
+  return {
+    AND: sozcukler.map((sozcuk) => {
+      const varyantlar = [
+        ...new Set([sozcuk, sozcuk.toLocaleUpperCase("tr"), sozcuk.toLocaleLowerCase("tr")]),
+      ];
+      const kayitNoMatch = /^(?:kp-?)?0*(\d{1,9})$/i.exec(sozcuk);
+      const metin = (alan: (v: string) => Prisma.DavaDosyasiWhereInput): Prisma.DavaDosyasiWhereInput[] =>
+        varyantlar.map(alan);
+      const icerir = { contains: "", mode: "insensitive" as const };
+      return {
+        OR: [
+          ...metin((v) => ({ konu: { ...icerir, contains: v } })),
+          ...metin((v) => ({ dosyaNo: { ...icerir, contains: v } })),
+          ...metin((v) => ({ buroNo: { ...icerir, contains: v } })),
+          ...metin((v) => ({ birimAdi: { ...icerir, contains: v } })),
+          ...metin((v) => ({ durum: { etiket: { ...icerir, contains: v } } })),
+          ...metin((v) => ({ tur: { etiket: { ...icerir, contains: v } } })),
+          ...metin((v) => ({ sorumluAvukat: { adSoyad: { ...icerir, contains: v } } })),
+          ...metin((v) => ({
+            muvekkiller: { some: { musteri: { adSoyadUnvan: { ...icerir, contains: v } } } },
+          })),
+          ...metin((v) => ({
+            karsiTaraflar: { some: { karsiTaraf: { ad: { ...icerir, contains: v } } } },
+          })),
+          ...(kayitNoMatch ? [{ kayitNo: Number(kayitNoMatch[1]) }] : []),
+        ],
+      };
+    }),
+  };
+}
+
 export async function davaDosyalariniListele(filtre: DavaDosyasiFiltre = {}) {
   return prisma.davaDosyasi.findMany({
     where: {
-      ...(filtre.arama
-        ? {
-            OR: [
-              { konu: { contains: filtre.arama, mode: "insensitive" } },
-              { dosyaNo: { contains: filtre.arama, mode: "insensitive" } },
-              { buroNo: { contains: filtre.arama, mode: "insensitive" } },
-            ],
-          }
-        : {}),
+      ...aramaKosulu(filtre.arama),
       ...(filtre.durumKod ? { durum: { kod: filtre.durumKod } } : {}),
       ...(filtre.musteriId ? { muvekkiller: { some: { musteriId: filtre.musteriId } } } : {}),
     },
