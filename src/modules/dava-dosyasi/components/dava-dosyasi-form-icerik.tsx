@@ -6,6 +6,7 @@ import { FormKarti } from "@/core/ui/form-karti";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import type { DavaDosyasiSonucu } from "@/modules/dava-dosyasi/lib/actions";
 import { MuvekkilSecici } from "./muvekkil-secici";
+import { UyusmazlikTuruSecici } from "./uyusmazlik-turu-secici";
 import { KarsiTarafEkleyici } from "./karsi-taraf-ekleyici";
 import { TalepSonucuListesi } from "./talep-sonucu-listesi";
 import { DavaDosyasiSekmeleri } from "./dava-dosyasi-sekmeleri";
@@ -75,21 +76,11 @@ export function DavaDosyasiFormIcerik({
 
   const alanRenderHaritasi: Record<string, () => React.ReactNode> = {
     hukukiIliskiTuruId: () => (
-      <Alan>
-        <Etiket htmlFor="hukukiIliskiTuruId">Uyuşmazlık Türü</Etiket>
-        <Secim
-          id="hukukiIliskiTuruId"
-          name="hukukiIliskiTuruId"
-          defaultValue={g?.hukukiIliskiTuruId ?? dosya?.hukukiIliskiTuruId ?? ""}
-        >
-          <option value="">Seçiniz…</option>
-          {hukukiIliskiTurleri.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.etiket}
-            </option>
-          ))}
-        </Secim>
-      </Alan>
+      <UyusmazlikTuruSecici
+        turler={hukukiIliskiTurleri}
+        varsayilanId={g?.hukukiIliskiTuruId ?? dosya?.hukukiIliskiTuruId ?? ""}
+        varsayilanYeniEtiket={g?.yeniHukukiIliskiTuruEtiketi}
+      />
     ),
     davaTuruId: () => (
       <Alan>

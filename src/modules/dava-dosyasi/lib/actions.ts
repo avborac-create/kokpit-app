@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import type { HukukiMudahaleDurumu, DosyaEvresi, AdliBirimHareketYonu, MasrafYansitmaHedefi } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
@@ -62,6 +62,36 @@ async function uyusmazlikGrubuOtomatikCozumle(musteriId: string): Promise<string
 
 function musteriIdleriniAl(formData: FormData): string[] {
   return formData.getAll("musteriIds").map(String).filter(Boolean);
+}
+
+// "Uyuşmazlık Türü" menüsünde "MANUEL GİR" seçilmişse yazılan etiketi
+// (büyük/küçük harf duyarsız) listede arar, yoksa listeye kalıcı ekler.
+async function hukukiIliskiTuruIdCozumle(formData: FormData): Promise<string | null> {
+  const secim = metinYaAlNull(formData, "hukukiIliskiTuruId");
+  if (secim !== "__manuel__") return secim;
+
+  const etiket = metinYaAlNull(formData, "yeniHukukiIliskiTuruEtiketi");
+  if (!etiket) return null;
+
+  const liste = await prisma.secenekListesi.findUnique({ where: { anahtar: "hukuki_iliski_turu" } });
+  if (!liste) return null;
+
+  const mevcut = await prisma.secenekDegeri.findFirst({
+    where: { listeId: liste.id, etiket: { equals: etiket, mode: "insensitive" } },
+  });
+  if (mevcut) return mevcut.id;
+
+  const temelKod = etiket.toLocaleLowerCase("tr").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "deger";
+  let kod = temelKod;
+  for (let sayac = 2; await prisma.secenekDegeri.findUnique({ where: { listeId_kod: { listeId: liste.id, kod } } }); sayac++) {
+    kod = `${temelKod}_${sayac}`;
+  }
+  const enBuyukSira = await prisma.secenekDegeri.aggregate({ where: { listeId: liste.id }, _max: { siraNo: true } });
+  const yeni = await prisma.secenekDegeri.create({
+    data: { listeId: liste.id, kod, etiket, siraNo: (enBuyukSira._max.siraNo ?? -1) + 1 },
+  });
+  updateTag("secenek-listeleri");
+  return yeni.id;
 }
 
 // Karsi taraf secimini cozumler: "karsiTarafIds" (KarsiTarafEkleyici
@@ -173,7 +203,7 @@ export async function davaDosyasiOlustur(
   }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
-  const hukukiIliskiTuruId = metinYaAlNull(formData, "hukukiIliskiTuruId");
+  const hukukiIliskiTuruId = await hukukiIliskiTuruIdCozumle(formData);
   const durusmaTarihiHam = metinYaAlNull(formData, "durusmaTarihi");
 
   const [durumId, turId, davaTuru, uyusmazlikGrubuId] = await Promise.all([
@@ -255,7 +285,7 @@ export async function davaDosyasiGuncelle(
   }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
-  const hukukiIliskiTuruId = metinYaAlNull(formData, "hukukiIliskiTuruId");
+  const hukukiIliskiTuruId = await hukukiIliskiTuruIdCozumle(formData);
   const durusmaTarihiHam = metinYaAlNull(formData, "durusmaTarihi");
   const davaTuru = await prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } });
   const konu = davaTuru?.etiket ?? "";
