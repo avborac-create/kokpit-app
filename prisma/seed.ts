@@ -434,11 +434,6 @@ const GELISTIRME_TALEPLERI: { anahtar: string; metin: string }[] = [
       "Kokpit No formatı 'KP-0006' yerine 'KN-1' şeklinde olsun (baştaki sıfırlar kaldırılsın) ve KN-999'a, gerekirse daha da ileriye kadar gidebilsin.",
   },
   {
-    anahtar: "muvekkil-secici-seffaf-pencere",
-    metin:
-      "Yeni Dosya formunda Müvekkil açılır listesi (checkbox'lı seçim kutusu) \"Karşı Taraf(lar)\" alanının üzerine şeffaf biçimde biniyor; yazılar iç içe geçip okunmuyor. Açılır pencere opak olmalı ve diğer alanların üstünde temiz görünmeli.",
-  },
-  {
     anahtar: "uyusmazlik-turu-duzenle-manuel-gir",
     metin:
       "Yeni Dosya formundaki \"Uyuşmazlık Türü\" menüsü: (1) menünün içine Ayarlar > Seçenek Listeleri'ndeki listeyi düzenlemeye götüren \"Listeyi Düzenle\" butonu; (2) aranan tür listede yoksa \"MANUEL GİR\" seçeneği (seçilince yazı kutusu açılır). Daha hızlı alternatif (önerilen): yazarak ara, bulunamazsa \"…ekle\" ile değeri hem dosyaya hem listeye kalıcı ekle.",

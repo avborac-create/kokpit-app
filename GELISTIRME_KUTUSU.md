@@ -9,11 +9,6 @@ işlenir).
 
 ## Beklemede
 
-- Yeni Dosya formunda Müvekkil açılır listesi (checkbox'lı seçim kutusu)
-  "Karşı Taraf(lar)" alanının ve altındaki içeriğin üzerine şeffaf biçimde
-  biniyor; yazılar iç içe geçip okunmuyor. Açılır pencere opak (arka planı
-  dolu) olmalı, diğer alanların üstünde (z-index) ve temiz görünmeli.
-
 - "Borç Tahsilatları" tasnif menüsü (Dosya Ekonomisi sekmesi altına):
   borçludan gelen bir tahsilatı resmi masraf/müvekkil payı/vekalet ücreti
   gibi kalemlere bölme, "Bloke Paralar" kalemini tek tuşla Adli Birim cari
@@ -53,6 +48,10 @@ işlenir).
   yapabilmek. (Not: "Müvekkil Kümesi" kavramı bilerek kullanılmıyor.)
 
 ## Tamamlandı
+
+- Yeni Dosya formunda Müvekkil açılır listesinin şeffaf biçimde alttaki
+  alanların üstüne binmesi giderildi (liste opak ve sayfanın üstünde
+  çiziliyor, yerel sürümde doğrulandı).
 
 - Uyuşmazlık Türü menüsüne "MANUEL GİR" seçeneği (yazılan tür hem dosyaya
   hem listeye kalıcı eklenir) ve "Listeyi düzenle" bağlantısı (Ayarlar >
