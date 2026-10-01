@@ -9,6 +9,11 @@ işlenir).
 
 ## Beklemede
 
+- Yeni Dosya formunda Müvekkil açılır listesi (checkbox'lı seçim kutusu)
+  "Karşı Taraf(lar)" alanının ve altındaki içeriğin üzerine şeffaf biçimde
+  biniyor; yazılar iç içe geçip okunmuyor. Açılır pencere opak (arka planı
+  dolu) olmalı, diğer alanların üstünde (z-index) ve temiz görünmeli.
+
 - "Borç Tahsilatları" tasnif menüsü (Dosya Ekonomisi sekmesi altına):
   borçludan gelen bir tahsilatı resmi masraf/müvekkil payı/vekalet ücreti
   gibi kalemlere bölme, "Bloke Paralar" kalemini tek tuşla Adli Birim cari
