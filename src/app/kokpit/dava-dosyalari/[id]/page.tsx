@@ -1,7 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { davaDosyasiGetir, dosyaCariHesapOzeti } from "@/modules/dava-dosyasi/lib/queries";
-import { dosyaMasrafiEkle, karsiTarafAlacagiEkle, adliBirimHareketiEkle } from "@/modules/dava-dosyasi/lib/actions";
+import {
+  davaDosyasiGetir,
+  dosyaCariHesapOzeti,
+  netAvansBakiyesi,
+  aktarimHedefAdaylari,
+  dosyaAvansAktarimlari,
+} from "@/modules/dava-dosyasi/lib/queries";
+import {
+  dosyaMasrafiEkle,
+  karsiTarafAlacagiEkle,
+  adliBirimHareketiEkle,
+  avansAktarimiEkle,
+} from "@/modules/dava-dosyasi/lib/actions";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 import { DosyaParaTrafigiListesi } from "@/modules/dava-dosyasi/components/dosya-para-trafigi-listesi";
 import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
@@ -14,6 +25,9 @@ import { KarsiTarafAlacagiListesi } from "@/modules/dava-dosyasi/components/kars
 import { ArtciIslerBlok } from "@/modules/dava-dosyasi/components/artci-isler-blok";
 import { AdliBirimHareketFormu } from "@/modules/dava-dosyasi/components/adli-birim-hareket-formu";
 import { AdliBirimHareketListesi } from "@/modules/dava-dosyasi/components/adli-birim-hareket-listesi";
+import { AvansAktarimFormu } from "@/modules/dava-dosyasi/components/avans-aktarim-formu";
+import { AvansAktarimListesi } from "@/modules/dava-dosyasi/components/avans-aktarim-listesi";
+import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { DavaDosyasiSekmeleri } from "@/modules/dava-dosyasi/components/dava-dosyasi-sekmeleri";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
@@ -40,17 +54,14 @@ function Bilgi({ baslik, children }: { baslik: string; children: React.ReactNode
 // ayri kartlar olarak durmali.
 function CariHesapBolumu({
   baslik,
-  aciklama,
   children,
 }: {
   baslik: string;
-  aciklama?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="mb-8 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-      <h2 className="mb-1 text-lg font-semibold tracking-tight text-white">{baslik}</h2>
-      {aciklama && <p className="mb-4 text-sm text-white/45">{aciklama}</p>}
+      <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">{baslik}</h2>
       {children}
     </div>
   );
@@ -66,12 +77,17 @@ export default async function DavaDosyasiDetaySayfasi({
   const { id } = await params;
   const { sekme } = await searchParams;
   const aktifSekme = sekme === "ekonomi" ? "ekonomi" : "genel";
-  const [dosya, kullanici, cariHesapOzeti] = await Promise.all([
+  const [dosya, kullanici, cariHesapOzeti, aktarimHedefleri, aktarimlar, cariKodlar] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
     dosyaCariHesapOzeti(id),
+    aktarimHedefAdaylari(id),
+    dosyaAvansAktarimlari(id),
+    secenekleriGetir("cari_kod"),
   ]);
   if (!dosya) notFound();
+  const avansBakiyesi = netAvansBakiyesi(cariHesapOzeti);
+  const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
 
@@ -102,6 +118,7 @@ export default async function DavaDosyasiDetaySayfasi({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">
             <span className="text-white/45">KP-{String(dosya.kayitNo).padStart(4, "0")}</span>
+            {dosya.buroNo ? ` · Büro ${dosya.buroNo}` : ""}
             {dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}
             {" — "}
             {dosya.konu}
@@ -125,6 +142,17 @@ export default async function DavaDosyasiDetaySayfasi({
                 {dosya.hukukiIliskiTuru.etiket}
               </span>
             )}
+            <span
+              className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                avansBakiyesi < 0
+                  ? "bg-[#ff7a70]/15 text-[#ff7a70]"
+                  : avansBakiyesi > 0
+                    ? "bg-[#32d74b]/15 text-[#32d74b]"
+                    : "bg-white/[0.06] text-white/60"
+              }`}
+            >
+              Müvekkil Bakiye Avans: {paraFormatlayici.format(avansBakiyesi)}
+            </span>
           </p>
         </div>
         <div className="flex gap-2">
@@ -167,6 +195,7 @@ export default async function DavaDosyasiDetaySayfasi({
               <Bilgi baslik="Uyuşmazlık Türü">{dosya.hukukiIliskiTuru?.etiket ?? "—"}</Bilgi>
               <Bilgi baslik="Dava Türü">{dosya.davaTuru?.etiket ?? "—"}</Bilgi>
               <Bilgi baslik="Birim (Mahkeme/İcra Dairesi)">{dosya.birimAdi ?? "—"}</Bilgi>
+              <Bilgi baslik="Büro No">{dosya.buroNo ?? "—"}</Bilgi>
               <Bilgi baslik="Dosya Numarası">{dosya.dosyaNo ?? "—"}</Bilgi>
             </FormKarti>
 
@@ -210,23 +239,7 @@ export default async function DavaDosyasiDetaySayfasi({
         </>
       ) : (
         <>
-          <CariHesapBolumu
-            baslik="Müvekkil-Büro Cari Hesabı"
-            aciklama={
-              dosya.uyusmazlikGrubu && (
-                <>
-                  Bu sadece bu dosyanın kırılımıdır. Müvekkilden gelen bir avans genelde tüm{" "}
-                  <Link
-                    href={`/kokpit/dava-dosyalari/gruplar/${dosya.uyusmazlikGrubu.id}`}
-                    className="text-[#6db8ff] hover:underline"
-                  >
-                    {dosya.uyusmazlikGrubu.ad}
-                  </Link>{" "}
-                  grubuna aittir — asıl Borç/Alacak durumunu grup sayfasından takip edin.
-                </>
-              )
-            }
-          >
+          <CariHesapBolumu baslik="Müvekkil-Büro Cari Hesabı">
             <div className="mb-8">
               <CariHesapOzeti ozet={cariHesapOzeti} />
             </div>
@@ -234,21 +247,38 @@ export default async function DavaDosyasiDetaySayfasi({
             <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">
               Dosya Bazında Döküm
             </h3>
-            <p className="mb-3 text-sm text-white/45">
-              Bu dosyaya işlenen masraflar ve müvekkilden gelen paranın bu dosyaya ayrılan dağıtım
-              kalemleri, tek bir kronolojik listede.
-            </p>
             <div className="mb-8">
               <DokumTablosu satirlar={dosyaDokumu} dosyaSutunuGoster={false} />
             </div>
 
             <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">Para Trafiği</h3>
-            <p className="mb-3 text-sm text-white/45">
-              Yeni bir kayıt eklemek için ilgili müvekkilin Finans sayfasına gidip &quot;Hangi
-              Uyuşmazlık Dosyası/Dosyalarına İstinaden&quot; alanından bu dosyayı seçin.
-            </p>
             <div className="mb-8">
               <DosyaParaTrafigiListesi baglantilar={dosya.paraTrafigiKayitlari} />
+            </div>
+
+            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">Avans Aktarımı</h3>
+            <div className="mb-4">
+              <AvansAktarimFormu
+                action={avansAktarimiEkle.bind(null, id)}
+                hedefler={aktarimHedefleri.map((h) => ({ ...h }))}
+                cariKodlar={cariKodlar}
+                kaynakBakiye={avansBakiyesi}
+              />
+            </div>
+            <div className="mb-8">
+              <AvansAktarimListesi
+                aktarimlar={aktarimlar.map((a) => ({
+                  id: a.id,
+                  tarih: a.tarih,
+                  tutar: Number(a.tutar),
+                  aciklama: a.aciklama,
+                  cariKodEtiketi: a.cariKod.etiket,
+                  kaynakDosya: a.kaynakDosya,
+                  hedefDosya: a.hedefDosya,
+                }))}
+                dosyaId={id}
+                silmeYetkisiVar={silmeYetkisiVar}
+              />
             </div>
 
             <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">Masraflar</h3>
@@ -262,10 +292,7 @@ export default async function DavaDosyasiDetaySayfasi({
             />
           </CariHesapBolumu>
 
-          <CariHesapBolumu
-            baslik="Büro-Adli Birim Cari Hesabı"
-            aciklama="Büronun mahkeme/icra dairesine yaptığı ödemeler (harç, tebligat gideri vb. — borç) ve oradan büroya gelen tutarlar (iade, aktarılan tahsilat vb. — alacak)."
-          >
+          <CariHesapBolumu baslik="Büro-Adli Birim Cari Hesabı">
             <div className="mb-4">
               <AdliBirimHareketFormu action={adliBirimHareketiEkle.bind(null, id)} />
             </div>
@@ -275,10 +302,7 @@ export default async function DavaDosyasiDetaySayfasi({
             />
           </CariHesapBolumu>
 
-          <CariHesapBolumu
-            baslik="Borçlu-Büro Cari Hesabı"
-            aciklama="Müvekkilin cari hesabıyla (yukarısı) karıştırılmamalı: bu, cebimizden çıkan bir para değil — karşı tarafın (borçlunun) dava/icra sonucu bize/müvekkile ayrıca ödemesi gereken bir alacak (ör. icra vekalet ücreti)."
-          >
+          <CariHesapBolumu baslik="Borçlu-Büro Cari Hesabı">
             <div className="mb-4">
               <KarsiTarafAlacagiFormu action={karsiTarafAlacagiEkle.bind(null, id)} />
             </div>

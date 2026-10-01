@@ -18,12 +18,14 @@ export function OnayliButon({
   eylem,
   mesaj,
   varyant = "tehlike",
+  boyut = "normal",
   className,
   children,
 }: {
   eylem: () => Promise<void>;
   mesaj: string;
   varyant?: "birincil" | "ikincil" | "tehlike";
+  boyut?: "normal" | "kompakt";
   className?: string;
   children: React.ReactNode;
 }) {
@@ -34,6 +36,7 @@ export function OnayliButon({
     <Dugme
       type="button"
       varyant={varyant}
+      boyut={boyut}
       className={className}
       disabled={beklemede}
       onClick={() => {

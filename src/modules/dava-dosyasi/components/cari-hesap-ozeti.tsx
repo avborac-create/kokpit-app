@@ -48,7 +48,7 @@ export function CariHesapOzeti({
         </div>
         <div className="glass rounded-2xl p-4">
           <p className="text-xs text-white/45">
-            {netBakiye < 0 ? "Müvekkilin Bize Borcu" : "Müvekkilin Alacağı/Avansı"}
+            {netBakiye < 0 ? "Müvekkilin Bize Borcu (Eksi Avans)" : "Müvekkil Bakiye Avans Miktarı"}
           </p>
           <p
             className={`mt-1 text-lg font-semibold ${
@@ -83,6 +83,8 @@ export function CariHesapOzeti({
             <tr>
               <th className="px-4 py-3 font-medium">Cari Kod</th>
               <th className="px-4 py-3 font-medium">Tasnif Edilen</th>
+              <th className="px-4 py-3 font-medium">Aktarılan (Giriş)</th>
+              <th className="px-4 py-3 font-medium">Aktarılan (Çıkış)</th>
               <th className="px-4 py-3 font-medium">Masraf Edilen</th>
               <th className="px-4 py-3 font-medium">Bakiye</th>
             </tr>
@@ -97,6 +99,12 @@ export function CariHesapOzeti({
                   )}
                 </td>
                 <td className="px-4 py-3 text-white/70">{paraFormatlayici.format(satir.tasnifToplami)}</td>
+                <td className="px-4 py-3 text-white/70">
+                  {satir.gelenAktarim > 0 ? `+${paraFormatlayici.format(satir.gelenAktarim)}` : "—"}
+                </td>
+                <td className="px-4 py-3 text-white/70">
+                  {satir.gidenAktarim > 0 ? `−${paraFormatlayici.format(satir.gidenAktarim)}` : "—"}
+                </td>
                 <td className="px-4 py-3 text-white/70">{paraFormatlayici.format(satir.masrafToplami)}</td>
                 <td
                   className={`px-4 py-3 font-medium ${
@@ -132,12 +140,14 @@ export function CariHesapOzeti({
             <span className="font-semibold">
               Müvekkilin bu dosyada {paraFormatlayici.format(Math.abs(netBakiye))} borcu var.
             </span>{" "}
-            (Avans/tasnif edilen tutar, yapılan masrafları karşılamıyor; müvekkilden ek tutar talep edilmeli.)
+            (Avans/tasnif edilen tutar, yapılan masrafları karşılamıyor; müvekkilden ek tutar talep edilmeli ya da
+            müvekkilin avansı bulunan başka bir dosyasından avans aktarılmalı.)
           </p>
         )}
         {netBakiye === 0 && <p className="text-white/60">Mutabık — tasnif edilen tutar ile masraflar eşit.</p>}
         <p className="mt-2 text-xs text-white/35">
-          Akdi Vekalet Hesabı büronun kesin/geri dönüşü olmayan geliridir, bu hesaba dahil edilmez.
+          Akdi Vekalet Hesabı büronun kesin/geri dönüşü olmayan geliridir, bu hesaba dahil edilmez. Yalnızca
+          müvekkile yansıtılan masraflar &quot;Masraf Edilen&quot;e girer; büroya/borçluya yansıtılanlar dahil değildir.
         </p>
       </div>
     </div>

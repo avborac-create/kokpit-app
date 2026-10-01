@@ -49,6 +49,7 @@ export default async function MusteriFinansAksiyonSayfasi({
               <thead className="text-white/50">
                 <tr>
                   <th className="px-4 py-3 font-medium">Kokpit No</th>
+                  <th className="px-4 py-3 font-medium">Büro No</th>
                   <th className="px-4 py-3 font-medium">Dosya No</th>
                   <th className="px-4 py-3 font-medium">Tür</th>
                   <th className="px-4 py-3 font-medium">Konu</th>
@@ -68,6 +69,7 @@ export default async function MusteriFinansAksiyonSayfasi({
                         KP-{String(dosya.kayitNo).padStart(4, "0")}
                       </Link>
                     </td>
+                    <td className="px-4 py-3 text-white/60">{dosya.buroNo ?? "—"}</td>
                     <td className="px-4 py-3 text-white/60">{dosya.dosyaNo ?? "—"}</td>
                     <td className="px-4 py-3 text-white/60">{dosya.tur?.etiket ?? "—"}</td>
                     <td className="px-4 py-3 text-white/85">{dosya.konu}</td>

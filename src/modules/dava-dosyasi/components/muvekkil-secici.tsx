@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Girdi } from "@/core/ui/form";
 
 type Musteri = { id: string; adSoyadUnvan: string };
@@ -20,6 +21,26 @@ export function MuvekkilSecici({
   const [secililer, setSecililer] = useState<string[]>(seciliIdler);
   const [acikMi, setAcikMi] = useState(false);
   const [arama, setArama] = useState("");
+  const dugmeRef = useRef<HTMLButtonElement>(null);
+  const [konum, setKonum] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  // Liste .glass kartin icinde kalirsa (transform/isolation -> kendi katmani)
+  // sonraki kartlar ustune biner ve saydam zemin yuzunden alttaki yazilar
+  // gorunur. Bu yuzden body'ye portal + opak zemin + fixed konum kullanilir.
+  useEffect(() => {
+    if (!acikMi) return;
+    function konumla() {
+      const r = dugmeRef.current?.getBoundingClientRect();
+      if (r) setKonum({ top: r.bottom + 4, left: r.left, width: r.width });
+    }
+    konumla();
+    window.addEventListener("resize", konumla);
+    window.addEventListener("scroll", konumla, true);
+    return () => {
+      window.removeEventListener("resize", konumla);
+      window.removeEventListener("scroll", konumla, true);
+    };
+  }, [acikMi]);
 
   const filtrelenmis = useMemo(() => {
     const temiz = arama.trim().toLocaleLowerCase("tr-TR");
@@ -43,6 +64,7 @@ export function MuvekkilSecici({
 
       <div className="relative">
         <button
+          ref={dugmeRef}
           type="button"
           onClick={() => setAcikMi((onceki) => !onceki)}
           className="glass flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-white/85"
@@ -55,16 +77,21 @@ export function MuvekkilSecici({
           <span className="ml-2 shrink-0 text-white/35">▾</span>
         </button>
 
-        {acikMi && (
+        {acikMi &&
+          konum &&
+          createPortal(
           <>
             <div
-              className="fixed inset-0 z-10"
+              className="fixed inset-0 z-[100]"
               onClick={() => {
                 setAcikMi(false);
                 setArama("");
               }}
             />
-            <div className="glass absolute z-20 mt-1 w-full rounded-xl p-2">
+            <div
+              className="fixed z-[101] rounded-xl border border-white/10 bg-[#1b1e28] p-2 shadow-2xl"
+              style={{ top: konum.top, left: konum.left, width: konum.width }}
+            >
               <Girdi
                 type="text"
                 placeholder="Müvekkil ara…"
@@ -95,7 +122,8 @@ export function MuvekkilSecici({
                 ))}
               </div>
             </div>
-          </>
+          </>,
+          document.body,
         )}
       </div>
     </div>

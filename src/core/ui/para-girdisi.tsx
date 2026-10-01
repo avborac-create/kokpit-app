@@ -15,6 +15,7 @@ export function ParaGirdisi({
   id,
   defaultValue,
   required,
+  readOnly,
   className,
   placeholder = "0",
   onDegerDegisti,
@@ -23,6 +24,10 @@ export function ParaGirdisi({
   id?: string;
   defaultValue?: string | number;
   required?: boolean;
+  // orn. "Maktu Tutar Kullan" isaretliyken degeri sabit tutmak icin -
+  // hidden input yine de gonderilir, kullanici sadece gorunen alani
+  // degistiremez.
+  readOnly?: boolean;
   className?: string;
   placeholder?: string;
   // Bilesen kendi ic durumunu tuttugundan (odaklanma/bicimlendirme), dis
@@ -59,8 +64,10 @@ export function ParaGirdisi({
         }}
         placeholder={placeholder}
         required={required}
+        readOnly={readOnly}
         className={
           "glass w-full rounded-xl py-2 pl-7 pr-3 text-sm text-white placeholder-white/35 outline-none transition-colors focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/40" +
+          (readOnly ? " cursor-not-allowed opacity-70" : "") +
           (className ? " " + className : "")
         }
       />

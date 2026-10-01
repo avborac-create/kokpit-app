@@ -13,6 +13,7 @@ import { DavaDosyasiSekmeleri } from "./dava-dosyasi-sekmeleri";
 type Secenek = { id: string; etiket: string };
 
 type DosyaDegerleri = {
+  buroNo: string | null;
   dosyaNo: string | null;
   birimAdi: string | null;
   hukukiIliskiTuruId: string | null;
@@ -26,7 +27,7 @@ type DosyaDegerleri = {
 // kartin kendisi degil (bkz. eski dava-dosyasi-formu.tsx'teki ayni desen,
 // simdi cok daha az alanla).
 const KARTLAR: { baslik: string; alanlar: string[] }[] = [
-  { baslik: "Dosya Bilgileri", alanlar: ["hukukiIliskiTuruId", "davaTuruId", "birimAdi", "dosyaNo"] },
+  { baslik: "Dosya Bilgileri", alanlar: ["hukukiIliskiTuruId", "davaTuruId", "birimAdi", "buroNo", "dosyaNo"] },
   { baslik: "Talep ve Duruşma", alanlar: ["talepSonucu", "durusmaTarihi"] },
 ];
 
@@ -113,6 +114,17 @@ export function DavaDosyasiFormIcerik({
           name="birimAdi"
           placeholder="İstanbul 19. İcra Dairesi vb."
           defaultValue={g?.birimAdi ?? dosya?.birimAdi ?? ""}
+        />
+      </Alan>
+    ),
+    buroNo: () => (
+      <Alan>
+        <Etiket htmlFor="buroNo">Büro No</Etiket>
+        <Girdi
+          id="buroNo"
+          name="buroNo"
+          placeholder="Büronun iç dosya numarası (ör. 8714)"
+          defaultValue={g?.buroNo ?? dosya?.buroNo ?? ""}
         />
       </Alan>
     ),

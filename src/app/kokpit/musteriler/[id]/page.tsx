@@ -38,6 +38,9 @@ export default async function MusteriDetaySayfasi({
           </p>
         </div>
         <div className="flex gap-2">
+          <Link href={`/kokpit/dava-dosyalari?musteri=${id}`}>
+            <Dugme>Dosyaları</Dugme>
+          </Link>
           <Link href={`/kokpit/musteriler/${id}/duzenle`}>
             <Dugme varyant="ikincil">Düzenle</Dugme>
           </Link>

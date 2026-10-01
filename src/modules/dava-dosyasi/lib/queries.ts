@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 
 export type DavaDosyasiFiltre = {
@@ -14,6 +15,7 @@ export async function davaDosyalariniListele(filtre: DavaDosyasiFiltre = {}) {
             OR: [
               { konu: { contains: filtre.arama, mode: "insensitive" } },
               { dosyaNo: { contains: filtre.arama, mode: "insensitive" } },
+              { buroNo: { contains: filtre.arama, mode: "insensitive" } },
             ],
           }
         : {}),
@@ -156,8 +158,13 @@ async function cariHesapOzetiHesapla(
   tasnifWhere: Parameters<typeof prisma.paraTrafigiTasnif.groupBy>[0]["where"],
   masrafWhere: Parameters<typeof prisma.dosyaMasrafi.groupBy>[0]["where"],
   dagitimWhere: Parameters<typeof prisma.paraTrafigiDagitimi.groupBy>[0]["where"],
+  // Avans aktarimlari icin dosya kapsami: kapsamdaki bir dosyadan CIKAN
+  // aktarim bakiyeyi dusurur, kapsama GIREN artirir. Kapsam hem kaynagi hem
+  // hedefi iceriyorsa (musteri/kume seviyesi) ikisi birbirini goturur.
+  aktarimKapsami: Prisma.DavaDosyasiWhereInput,
 ) {
-  const [cariKodlar, tasnifToplamlari, masrafToplamlari, dagitimToplamlari] = await Promise.all([
+  const [cariKodlar, tasnifToplamlari, masrafToplamlari, dagitimToplamlari, gelenAktarimlar, gidenAktarimlar] =
+    await Promise.all([
     prisma.secenekDegeri.findMany({
       where: { liste: { anahtar: "cari_kod" } },
       orderBy: { siraNo: "asc" },
@@ -167,9 +174,11 @@ async function cariHesapOzetiHesapla(
       where: tasnifWhere,
       _sum: { tutar: true },
     }),
+    // Sadece MUVEKKILE yansitilan masraflar muvekkil carisinden duser;
+    // Buro/Borclu'ya yansitilanlar bu hesaba girmez.
     prisma.dosyaMasrafi.groupBy({
       by: ["cariKodId"],
-      where: masrafWhere,
+      where: { AND: [masrafWhere ?? {}, { yansitmaHedefi: "MUVEKKIL" }] },
       _sum: { tutar: true },
     }),
     prisma.paraTrafigiDagitimi.groupBy({
@@ -177,10 +186,22 @@ async function cariHesapOzetiHesapla(
       where: dagitimWhere,
       _sum: { tutar: true },
     }),
+    prisma.dosyaAvansAktarimi.groupBy({
+      by: ["cariKodId"],
+      where: { hedefDosya: aktarimKapsami },
+      _sum: { tutar: true },
+    }),
+    prisma.dosyaAvansAktarimi.groupBy({
+      by: ["cariKodId"],
+      where: { kaynakDosya: aktarimKapsami },
+      _sum: { tutar: true },
+    }),
   ]);
 
   const tasnifMap = new Map(tasnifToplamlari.map((t) => [t.cariKodId, Number(t._sum.tutar ?? 0)]));
   const masrafMap = new Map(masrafToplamlari.map((m) => [m.cariKodId, Number(m._sum.tutar ?? 0)]));
+  const gelenMap = new Map(gelenAktarimlar.map((a) => [a.cariKodId, Number(a._sum.tutar ?? 0)]));
+  const gidenMap = new Map(gidenAktarimlar.map((a) => [a.cariKodId, Number(a._sum.tutar ?? 0)]));
 
   if (dagitimToplamlari.length > 0) {
     const kullanimAmaclari = await prisma.secenekDegeri.findMany({
@@ -200,14 +221,27 @@ async function cariHesapOzetiHesapla(
     .map((kod) => {
       const tasnifToplami = tasnifMap.get(kod.id) ?? 0;
       const masrafToplami = masrafMap.get(kod.id) ?? 0;
+      // Musteri/kume seviyesinde giris ve cikis ayni kapsamda kalir; net
+      // aktarim 0'dir ve satirda gosterilmez (bkz. filtre).
+      const gelenAktarim = gelenMap.get(kod.id) ?? 0;
+      const gidenAktarim = gidenMap.get(kod.id) ?? 0;
+      const netAktarim = gelenAktarim - gidenAktarim;
       return {
         cariKod: kod,
         tasnifToplami,
         masrafToplami,
-        bakiye: tasnifToplami - masrafToplami,
+        gelenAktarim: netAktarim > 0 ? netAktarim : 0,
+        gidenAktarim: netAktarim < 0 ? -netAktarim : 0,
+        bakiye: tasnifToplami + netAktarim - masrafToplami,
       };
     })
-    .filter((satir) => satir.tasnifToplami !== 0 || satir.masrafToplami !== 0);
+    .filter(
+      (satir) =>
+        satir.tasnifToplami !== 0 ||
+        satir.masrafToplami !== 0 ||
+        satir.gelenAktarim !== 0 ||
+        satir.gidenAktarim !== 0,
+    );
 }
 
 export async function dosyaCariHesapOzeti(dosyaId: string) {
@@ -221,6 +255,7 @@ export async function dosyaCariHesapOzeti(dosyaId: string) {
     },
     { dosyaId },
     { dosyaId, paraTrafigi: { durum: { kod: "tahsil_edildi" } } },
+    { id: dosyaId },
   );
 }
 
@@ -250,7 +285,63 @@ export async function uyusmazlikGrubuCariHesapOzeti(uyusmazlikGrubuId: string) {
     },
     { dosya: { uyusmazlikGrubuId } },
     { uyusmazlikGrubuId, paraTrafigi: { durum: { kod: "tahsil_edildi" } } },
+    { uyusmazlikGrubuId },
   );
+}
+
+// Tek bir dosyanin "Muvekkil Bakiye Avans Miktari" - Akdi Vekalet Hesabi
+// haric tum cari kodlardaki (tasnif + gelen aktarim - masraf - giden aktarim)
+// net toplam. Negatifse muvekkilin dosyada borcu vardir.
+export async function dosyaAvansBakiyesi(dosyaId: string): Promise<number> {
+  const ozet = await dosyaCariHesapOzeti(dosyaId);
+  return netAvansBakiyesi(ozet);
+}
+
+const NET_HESABA_DAHIL_OLMAYAN_CARI_KODLAR = ["akdi_vekalet_hesabi"];
+
+export function netAvansBakiyesi(ozet: Awaited<ReturnType<typeof dosyaCariHesapOzeti>>): number {
+  return ozet
+    .filter((satir) => !NET_HESABA_DAHIL_OLMAYAN_CARI_KODLAR.includes(satir.cariKod.kod))
+    .reduce((toplam, satir) => toplam + satir.bakiye, 0);
+}
+
+// Musterinin her dosyasi icin avans bakiyesi (Musteri Ekonomisi tablosu).
+export async function musteriDosyaAvansBakiyeleri(musteriId: string) {
+  const dosyalar = await prisma.davaDosyasi.findMany({
+    where: { muvekkiller: { some: { musteriId } } },
+    select: { id: true, kayitNo: true, buroNo: true, dosyaNo: true, birimAdi: true, konu: true },
+    orderBy: { olusturmaTarihi: "asc" },
+  });
+  return Promise.all(
+    dosyalar.map(async (dosya) => ({ ...dosya, bakiye: await dosyaAvansBakiyesi(dosya.id) })),
+  );
+}
+
+// Aktarim formu icin: kaynak dosyayla AYNI muvekkile bagli diger dosyalar
+// (hedef adaylari) ve bunlarin avans bakiyeleri.
+export async function aktarimHedefAdaylari(dosyaId: string) {
+  const dosya = await prisma.davaDosyasi.findUnique({
+    where: { id: dosyaId },
+    select: { muvekkiller: { select: { musteriId: true } } },
+  });
+  if (!dosya) return [];
+  const adaylar = await prisma.davaDosyasi.findMany({
+    where: {
+      id: { not: dosyaId },
+      muvekkiller: { some: { musteriId: { in: dosya.muvekkiller.map((m) => m.musteriId) } } },
+    },
+    select: { id: true, kayitNo: true, buroNo: true, dosyaNo: true, birimAdi: true },
+    orderBy: { olusturmaTarihi: "asc" },
+  });
+  return Promise.all(adaylar.map(async (a) => ({ ...a, bakiye: await dosyaAvansBakiyesi(a.id) })));
+}
+
+export async function dosyaAvansAktarimlari(dosyaId: string) {
+  return prisma.dosyaAvansAktarimi.findMany({
+    where: { OR: [{ kaynakDosyaId: dosyaId }, { hedefDosyaId: dosyaId }] },
+    include: { kaynakDosya: true, hedefDosya: true, cariKod: true },
+    orderBy: { tarih: "desc" },
+  });
 }
 
 export async function dosyaMasrafiGetir(masrafId: string) {
@@ -273,6 +364,7 @@ export async function musteriCariHesapOzeti(musteriId: string) {
     },
     { dosya: { muvekkiller: { some: { musteriId } } } },
     { paraTrafigi: { musteriId, durum: { kod: "tahsil_edildi" } } },
+    { muvekkiller: { some: { musteriId } } },
   );
 }
 

@@ -7,6 +7,7 @@ import { OnayliButon } from "@/core/ui/onayli-buton";
 export function DavaDosyasiSilmeButonu({
   dosyaId,
   sonrasindaYonlendir,
+  boyut = "normal",
 }: {
   dosyaId: string;
   // Dosyanın kendi detay sayfasından silindiğinde artık var olmayan o
@@ -14,6 +15,7 @@ export function DavaDosyasiSilmeButonu({
   // müvekkil finans sayfası) silindiğinde ise kullanıcı olduğu yerde kalır,
   // satır listeden düşer.
   sonrasindaYonlendir?: string;
+  boyut?: "normal" | "kompakt";
 }) {
   const router = useRouter();
 
@@ -24,6 +26,7 @@ export function DavaDosyasiSilmeButonu({
         if (sonrasindaYonlendir) router.push(sonrasindaYonlendir);
       }}
       mesaj="Bu dava dosyasını silmek istediğinize emin misiniz? Dosyaya bağlı para trafiği kayıtları silinmez, sadece dosya bağlantısı kalkar."
+      boyut={boyut}
     >
       Sil
     </OnayliButon>

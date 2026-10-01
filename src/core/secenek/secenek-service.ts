@@ -23,7 +23,12 @@ export const secenekleriGetir = unstable_cache(
       },
     });
 
-    return liste?.degerler ?? [];
+    // Prisma'nin Decimal degeri client bilesenlerine duz obje olarak
+    // gecmez (bkz. masraf-turu-tutar-alani.tsx) - sayiya cevrilir.
+    return (liste?.degerler ?? []).map((deger) => ({
+      ...deger,
+      maktuTutar: deger.maktuTutar !== null ? Number(deger.maktuTutar) : null,
+    }));
   },
   ["secenekleri-getir"],
   { tags: ["secenek-listeleri"] },

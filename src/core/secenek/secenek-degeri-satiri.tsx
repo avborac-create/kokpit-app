@@ -4,16 +4,22 @@ import { useState, useTransition } from "react";
 import {
   secenekDegeriAktifligiDegistir,
   secenekDegeriEtiketGuncelle,
+  secenekDegeriMaktuTutarGuncelle,
   secenekDegeriSiraDegistir,
 } from "@/core/secenek/admin-actions";
 import { Dugme } from "@/core/ui/button";
 import { Girdi } from "@/core/ui/form";
+
+function maktuTutarBicimlendir(tutar: number): string {
+  return new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(tutar);
+}
 
 type Deger = {
   id: string;
   kod: string;
   etiket: string;
   aktifMi: boolean;
+  maktuTutar: number | null;
 };
 
 export function SecenekDegeriSatiri({
@@ -30,6 +36,10 @@ export function SecenekDegeriSatiri({
   const [kaydetPending, kaydet] = useTransition();
   const [siraPending, siraDegistir] = useTransition();
   const [aktiflikPending, aktifligiDegistir] = useTransition();
+
+  const [maktuDuzenleniyor, setMaktuDuzenleniyor] = useState(false);
+  const [maktuTutar, setMaktuTutar] = useState(deger.maktuTutar?.toString() ?? "");
+  const [maktuKaydetPending, maktuKaydet] = useTransition();
 
   return (
     <tr className={`border-t border-white/[0.06] ${!deger.aktifMi ? "opacity-45" : ""}`}>
@@ -79,6 +89,55 @@ export function SecenekDegeriSatiri({
         )}
       </td>
       <td className="px-4 py-2.5 text-xs text-white/35">{deger.kod}</td>
+      <td className="px-4 py-2.5">
+        {maktuDuzenleniyor ? (
+          <form
+            className="flex items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData();
+              fd.set("maktuTutar", maktuTutar.trim());
+              maktuKaydet(async () => {
+                await secenekDegeriMaktuTutarGuncelle(deger.id, fd);
+                setMaktuDuzenleniyor(false);
+              });
+            }}
+          >
+            <Girdi
+              value={maktuTutar}
+              onChange={(e) => setMaktuTutar(e.target.value.replace(/[^0-9.]/g, ""))}
+              placeholder="Tanımsız"
+              inputMode="decimal"
+              autoFocus
+              className="!w-28 !py-1"
+            />
+            <Dugme type="submit" disabled={maktuKaydetPending} className="!px-3 !py-1 text-xs">
+              Kaydet
+            </Dugme>
+            <Dugme
+              type="button"
+              varyant="ikincil"
+              className="!px-3 !py-1 text-xs"
+              onClick={() => {
+                setMaktuTutar(deger.maktuTutar?.toString() ?? "");
+                setMaktuDuzenleniyor(false);
+              }}
+            >
+              Vazgeç
+            </Dugme>
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setMaktuDuzenleniyor(true)}
+            className="text-left text-white/85 hover:text-[#6db8ff] hover:underline"
+          >
+            {deger.maktuTutar !== null ? `₺${maktuTutarBicimlendir(deger.maktuTutar)}` : (
+              <span className="text-white/35">Tanımsız</span>
+            )}
+          </button>
+        )}
+      </td>
       <td className="px-4 py-2.5">
         <div className="flex gap-1">
           <button

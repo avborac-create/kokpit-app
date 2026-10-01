@@ -19,6 +19,7 @@ export default async function MasrafDuzenlemeSayfasi({
     turId: masraf.turId,
     tutar: Number(masraf.tutar),
     aciklama: masraf.aciklama,
+    yansitmaHedefi: masraf.yansitmaHedefi,
   };
 
   return (

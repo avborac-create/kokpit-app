@@ -2,11 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { HukukiMudahaleDurumu, DosyaEvresi, AdliBirimHareketYonu } from "@prisma/client";
+import type { HukukiMudahaleDurumu, DosyaEvresi, AdliBirimHareketYonu, MasrafYansitmaHedefi } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
+import { dosyaCariHesapOzeti } from "./queries";
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
   const deger = String(formData.get(alan) ?? "").trim();
@@ -188,6 +189,7 @@ export async function davaDosyasiOlustur(
 
   const dosya = await prisma.davaDosyasi.create({
     data: {
+      buroNo: metinYaAlNull(formData, "buroNo"),
       dosyaNo: metinYaAlNull(formData, "dosyaNo"),
       birimAdi: metinYaAlNull(formData, "birimAdi"),
       konu,
@@ -263,7 +265,8 @@ export async function davaDosyasiGuncelle(
     prisma.davaDosyasi.update({
       where: { id },
       data: {
-        dosyaNo: metinYaAlNull(formData, "dosyaNo"),
+        buroNo: metinYaAlNull(formData, "buroNo"),
+      dosyaNo: metinYaAlNull(formData, "dosyaNo"),
         birimAdi: metinYaAlNull(formData, "birimAdi"),
         konu,
         hukukiIliskiTuruId,
@@ -343,6 +346,13 @@ export async function davaDosyasiSil(id: string) {
   revalidatePath("/kokpit/finans/musteri-iliskileri");
 }
 
+const GECERLI_YANSITMA_HEDEFLERI: MasrafYansitmaHedefi[] = ["MUVEKKIL", "BURO", "BORCLU"];
+
+function yansitmaHedefiAl(formData: FormData): MasrafYansitmaHedefi {
+  const ham = String(formData.get("yansitmaHedefi") ?? "MUVEKKIL") as MasrafYansitmaHedefi;
+  return GECERLI_YANSITMA_HEDEFLERI.includes(ham) ? ham : "MUVEKKIL";
+}
+
 export async function dosyaMasrafiEkle(dosyaId: string, formData: FormData) {
   const tarih = String(formData.get("tarih") ?? "");
   const cariKodId = String(formData.get("cariKodId") ?? "");
@@ -362,6 +372,7 @@ export async function dosyaMasrafiEkle(dosyaId: string, formData: FormData) {
       tarih: new Date(tarih),
       aciklama,
       tutar,
+      yansitmaHedefi: yansitmaHedefiAl(formData),
     },
   });
 
@@ -392,11 +403,86 @@ export async function dosyaMasrafiGuncelle(dosyaId: string, masrafId: string, fo
       tarih: new Date(tarih),
       aciklama,
       tutar,
+      yansitmaHedefi: yansitmaHedefiAl(formData),
     },
   });
 
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
   redirect(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+// Listeden tek tikla "kime yansitilsin" degistirme (Muvekkil / Buro / Borclu).
+export async function dosyaMasrafiYansitmaDegistir(id: string, dosyaId: string, hedef: MasrafYansitmaHedefi) {
+  if (!GECERLI_YANSITMA_HEDEFLERI.includes(hedef)) throw new Error("Geçerli bir yansıtma hedefi seçin.");
+  await prisma.dosyaMasrafi.update({ where: { id }, data: { yansitmaHedefi: hedef } });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+  revalidatePath("/kokpit/finans/musteri-iliskileri");
+}
+
+// Ayni muvekkile ait iki dosya arasinda avans aktarimi - bkz.
+// DosyaAvansAktarimi model yorumu. `kaynakDosyaId` URL'den (bind) gelir; form
+// hedef dosya, cari kod, tutar, tarih ve aciklamayi verir. Kaynaktaki
+// mevcut bakiyeden fazlasi aktarilamaz (kaynak eksiye dusmesin).
+export async function avansAktarimiEkle(kaynakDosyaId: string, formData: FormData) {
+  const hedefDosyaId = String(formData.get("hedefDosyaId") ?? "");
+  const cariKodId = String(formData.get("cariKodId") ?? "");
+  const tarih = String(formData.get("tarih") ?? "");
+  const aciklama = String(formData.get("aciklama") ?? "").trim();
+  const tutarHam = String(formData.get("tutar") ?? "").replace(",", ".");
+  const tutar = Number(tutarHam);
+
+  if (!hedefDosyaId || !cariKodId || !tarih || !aciklama || !Number.isFinite(tutar) || tutar <= 0) {
+    throw new Error("Hedef dosya, cari kod, tarih, tutar ve açıklama zorunludur.");
+  }
+  if (hedefDosyaId === kaynakDosyaId) {
+    throw new Error("Kaynak ve hedef dosya aynı olamaz.");
+  }
+
+  const [kaynak, hedef] = await Promise.all([
+    prisma.davaDosyasi.findUnique({ where: { id: kaynakDosyaId }, select: { muvekkiller: true } }),
+    prisma.davaDosyasi.findUnique({ where: { id: hedefDosyaId }, select: { muvekkiller: true } }),
+  ]);
+  if (!kaynak || !hedef) throw new Error("Dosya bulunamadı.");
+  const ortakMuvekkil = kaynak.muvekkiller.some((k) => hedef.muvekkiller.some((h) => h.musteriId === k.musteriId));
+  if (!ortakMuvekkil) {
+    throw new Error("Avans yalnızca aynı müvekkilin dosyaları arasında aktarılabilir.");
+  }
+
+  const ozet = await dosyaCariHesapOzeti(kaynakDosyaId);
+  const satir = ozet.find((o) => o.cariKod.id === cariKodId);
+  const mevcutBakiye = satir?.bakiye ?? 0;
+  if (tutar > mevcutBakiye + 0.005) {
+    throw new Error(
+      `Kaynak dosyada seçilen cari kodda aktarılabilir bakiye yetersiz (mevcut: ${mevcutBakiye.toFixed(2)} TL).`,
+    );
+  }
+
+  await prisma.dosyaAvansAktarimi.create({
+    data: {
+      kaynakDosyaId,
+      hedefDosyaId,
+      cariKodId,
+      tarih: new Date(tarih),
+      tutar: tutar.toFixed(2),
+      aciklama,
+    },
+  });
+
+  revalidatePath(`/kokpit/dava-dosyalari/${kaynakDosyaId}`);
+  revalidatePath(`/kokpit/dava-dosyalari/${hedefDosyaId}`);
+  revalidatePath("/kokpit/finans/musteri-iliskileri");
+}
+
+export async function avansAktarimiSil(id: string, dosyaId: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici || !silebilirMi(kullanici.rol)) {
+    throw new Error("Bu işlem için yetkiniz yok.");
+  }
+  const aktarim = await prisma.dosyaAvansAktarimi.delete({ where: { id } });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+  revalidatePath(`/kokpit/dava-dosyalari/${aktarim.kaynakDosyaId}`);
+  revalidatePath(`/kokpit/dava-dosyalari/${aktarim.hedefDosyaId}`);
+  revalidatePath("/kokpit/finans/musteri-iliskileri");
 }
 
 export async function dosyaMasrafiSil(id: string, dosyaId: string) {

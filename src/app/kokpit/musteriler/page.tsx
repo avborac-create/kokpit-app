@@ -67,6 +67,7 @@ export default async function MusterilerSayfasi({
               <th className="px-4 py-3 font-medium">Durum</th>
               <th className="px-4 py-3 font-medium">Sorumlu Avukat</th>
               <th className="px-4 py-3 font-medium">Telefon</th>
+              <th className="px-4 py-3 font-medium">Dosyalar</th>
             </tr>
           </thead>
           <tbody>
@@ -88,11 +89,18 @@ export default async function MusterilerSayfasi({
                 </td>
                 <td className="px-4 py-3 text-white/60">{musteri.sorumluAvukat?.adSoyad ?? "—"}</td>
                 <td className="px-4 py-3 text-white/60">{musteri.telefon ?? "—"}</td>
+                <td className="px-4 py-3">
+                  <Link href={`/kokpit/dava-dosyalari?musteri=${musteri.id}`}>
+                    <Dugme type="button" varyant="ikincil">
+                      Dosyalar
+                    </Dugme>
+                  </Link>
+                </td>
               </tr>
             ))}
             {musteriler.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={6} className="px-4 py-8 text-center text-white/40">
                   Kayıt bulunamadı.
                 </td>
               </tr>

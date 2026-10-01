@@ -15,6 +15,7 @@
 export const DAVA_DOSYASI_ALAN_ETIKETLERI: Record<string, string> = {
   hukukiIliskiTuruId: "Uyuşmazlık Türü",
   davaTuruId: "Dava Türü",
+  buroNo: "Büro No",
   dosyaNo: "Dosya No",
   birimAdi: "Birim Adı (Mahkeme/İcra Dairesi)",
   talepSonucu: "Talep Sonucu",

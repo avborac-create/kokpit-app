@@ -1,10 +1,8 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { davaDosyalariniListele } from "@/modules/dava-dosyasi/lib/queries";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { Dugme } from "@/core/ui/button";
 import { Girdi, Secim } from "@/core/ui/form";
-import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { tabloSutunDuzeniniGetir } from "@/core/tablo-duzeni/queries";
@@ -15,60 +13,44 @@ import {
 } from "@/core/tablo-duzeni/dava-dosyalari-sutunlari";
 import { SutunDuzeniPaneli } from "@/core/tablo-duzeni/sutun-duzeni-paneli";
 import type { TabloSutunSatiri } from "@/core/tablo-duzeni/tablo-sutun-listesi";
-
-type Dosya = Awaited<ReturnType<typeof davaDosyalariniListele>>[number];
-
-// Sütun anahtarı -> hücre içeriği. Admin (Ayarlar > Sütun Düzeni) hangi
-// sütunun görüneceğini/sırasını değiştirebilir; bu harita her sütunun
-// NASIL render edileceğinin tek kaynağıdır.
-const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
-  kayitNo: (dosya) => (
-    <Link
-      href={`/kokpit/dava-dosyalari/${dosya.id}`}
-      className="font-medium text-white hover:text-[#6db8ff] hover:underline"
-    >
-      KP-{String(dosya.kayitNo).padStart(4, "0")}
-    </Link>
-  ),
-  dosyaNo: (dosya) => dosya.dosyaNo ?? "—",
-  tur: (dosya) => dosya.tur?.etiket ?? "—",
-  birimAdi: (dosya) => dosya.birimAdi ?? "—",
-  konu: (dosya) => dosya.konu,
-  karsiTaraflar: (dosya) =>
-    dosya.karsiTaraflar.length > 0 ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") : "—",
-  muvekkiller: (dosya) => dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—",
-  durum: (dosya) => (
-    <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
-      {dosya.durum.etiket}
-    </span>
-  ),
-  sorumluAvukat: (dosya) => dosya.sorumluAvukat?.adSoyad ?? "—",
-};
+import { musteriGetir } from "@/modules/musteri/lib/queries";
+import { DosyalarTablosu } from "./dosyalar-tablosu";
 
 export default async function DavaDosyalariSayfasi({
   searchParams,
 }: {
-  searchParams: Promise<{ arama?: string; durum?: string }>;
+  searchParams: Promise<{ arama?: string; durum?: string; musteri?: string }>;
 }) {
   const params = await searchParams;
-  const [dosyalar, durumlar, kullanici, sutunDuzeni] = await Promise.all([
-    davaDosyalariniListele({ arama: params.arama, durumKod: params.durum }),
+  const [dosyalar, durumlar, kullanici, sutunDuzeni, filtreMusteri] = await Promise.all([
+    davaDosyalariniListele({ arama: params.arama, durumKod: params.durum, musteriId: params.musteri }),
     secenekleriGetir("dava_dosyasi_durumu"),
     mevcutKullanici(),
     tabloSutunDuzeniniGetir("dava-dosyalari"),
+    params.musteri ? musteriGetir(params.musteri) : null,
   ]);
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
 
   // Admin panelinde henüz seed edilmemiş/eksik bir sütun varsa (ör. yeni
   // deploy sonrası seed henüz koşmadıysa) varsayılan sıraya düşülür - tablo
   // hiçbir zaman bir sütunu sessizce kaybetmez.
+  const kayitliSutunlar = sutunDuzeni.map((s) => s.sutunAnahtari);
+  // Sonradan eklenen sütunlar (ör. Büro No) seed koşana kadar DB'de satır
+  // olarak bulunmaz - eksik olanlar varsayılan konumlarına eklenir.
   const sutunSirasi =
-    sutunDuzeni.length > 0 ? sutunDuzeni.map((s) => s.sutunAnahtari) : DAVA_DOSYALARI_VARSAYILAN_SUTUN_SIRASI;
+    sutunDuzeni.length > 0
+      ? [
+          ...kayitliSutunlar,
+          ...DAVA_DOSYALARI_VARSAYILAN_SUTUN_SIRASI.filter((a) => !kayitliSutunlar.includes(a)),
+        ]
+      : DAVA_DOSYALARI_VARSAYILAN_SUTUN_SIRASI;
   const gizliSutunlar = new Set(sutunDuzeni.filter((s) => s.gizliMi).map((s) => s.sutunAnahtari));
-  const gorunurSutunlar = sutunSirasi.filter((anahtar) => SUTUN_HUCRELERI[anahtar] && !gizliSutunlar.has(anahtar));
+  const gorunurSutunlar = sutunSirasi.filter(
+    (anahtar) => DAVA_DOSYALARI_SUTUN_ETIKETLERI[anahtar] && !gizliSutunlar.has(anahtar),
+  );
 
   const sutunPaneliOgeleri: TabloSutunSatiri[] = sutunSirasi
-    .filter((anahtar) => SUTUN_HUCRELERI[anahtar])
+    .filter((anahtar) => DAVA_DOSYALARI_SUTUN_ETIKETLERI[anahtar])
     .map((anahtar) => ({
       anahtar,
       etiket: DAVA_DOSYALARI_SUTUN_ETIKETLERI[anahtar] ?? anahtar,
@@ -84,17 +66,39 @@ export default async function DavaDosyalariSayfasi({
           {silmeYetkisiVar && (
             <SutunDuzeniPaneli tabloAnahtari="dava-dosyalari" ogeler={sutunPaneliOgeleri} />
           )}
-          <Link href="/kokpit/dava-dosyalari/yeni">
+          <Link href={`/kokpit/dava-dosyalari/yeni${params.musteri ? `?musteriId=${params.musteri}` : ""}`}>
             <Dugme>+ Yeni Dosya</Dugme>
           </Link>
         </div>
       </div>
 
+      {filtreMusteri && (
+        <div className="glass mb-4 flex flex-wrap items-center gap-3 rounded-xl px-4 py-3 text-sm">
+          <span className="text-white/55">Müvekkil:</span>
+          <Link
+            href={`/kokpit/musteriler/${filtreMusteri.id}`}
+            className="font-medium text-white hover:text-[#6db8ff] hover:underline"
+          >
+            {filtreMusteri.adSoyadUnvan}
+          </Link>
+          <Link
+            href={`/kokpit/finans/musteri-iliskileri/${filtreMusteri.id}/cari-hesap`}
+            className="text-[#6db8ff] hover:underline"
+          >
+            Cari Hesap
+          </Link>
+          <Link href="/kokpit/dava-dosyalari" className="ml-auto text-white/50 hover:text-white">
+            Filtreyi kaldır ✕
+          </Link>
+        </div>
+      )}
+
       <form className="mb-6 flex flex-wrap gap-3" method="get">
+        {params.musteri && <input type="hidden" name="musteri" value={params.musteri} />}
         <Girdi
           type="search"
           name="arama"
-          placeholder="Dosya no, konu ara…"
+          placeholder="Büro no, dosya no, konu ara…"
           defaultValue={params.arama}
           className="max-w-xs"
         />
@@ -111,51 +115,12 @@ export default async function DavaDosyalariSayfasi({
         </Dugme>
       </form>
 
-      <div className="glass overflow-x-auto rounded-2xl">
-        <table className="w-full text-left text-sm">
-          <thead className="text-white/50">
-            <tr>
-              {gorunurSutunlar.map((anahtar) => (
-                <th key={anahtar} className="px-4 py-3 font-medium">
-                  {DAVA_DOSYALARI_SUTUN_ETIKETLERI[anahtar] ?? anahtar}
-                </th>
-              ))}
-              <th className="px-4 py-3 font-medium">İşlemler</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dosyalar.map((dosya) => (
-              <tr key={dosya.id} className="border-t border-white/[0.06] hover:bg-white/[0.04]">
-                {gorunurSutunlar.map((anahtar) => (
-                  <td
-                    key={anahtar}
-                    className={`px-4 py-3 ${anahtar === "konu" ? "text-white/85" : "text-white/60"}`}
-                  >
-                    {SUTUN_HUCRELERI[anahtar](dosya)}
-                  </td>
-                ))}
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Link href={`/kokpit/dava-dosyalari/${dosya.id}`}>
-                      <Dugme type="button" varyant="ikincil">
-                        Dosyayı Aç
-                      </Dugme>
-                    </Link>
-                    {silmeYetkisiVar && <DavaDosyasiSilmeButonu dosyaId={dosya.id} />}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {dosyalar.length === 0 && (
-              <tr>
-                <td colSpan={gorunurSutunlar.length + 1} className="px-4 py-8 text-center text-white/40">
-                  Kayıt bulunamadı.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DosyalarTablosu
+        dosyalar={dosyalar}
+        gorunurSutunlar={gorunurSutunlar}
+        sutunEtiketleri={DAVA_DOSYALARI_SUTUN_ETIKETLERI}
+        silmeYetkisiVar={silmeYetkisiVar}
+      />
     </div>
   );
 }

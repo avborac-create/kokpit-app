@@ -219,6 +219,7 @@ const SECENEK_LISTELERI: {
       // somut dava sinifi (ör. "İşçilik Alacağı Davası"). Admin, Ayarlar >
       // Seçenek Listeleri'nden yeni degerler ekleyebilir.
       { kod: "iscilik_alacagi_davasi", etiket: "İşçilik Alacağı Davası" },
+      { kod: "icra_takibi", etiket: "İcra Takibi" },
     ],
   },
   {
@@ -588,6 +589,7 @@ async function menuOgeleriniOlustur() {
 const VARSAYILAN_DAVA_DOSYASI_ALAN_SIRASI = [
   "hukukiIliskiTuruId",
   "turId",
+  "buroNo",
   "dosyaNo",
   "konu",
   "durumId",
@@ -642,6 +644,7 @@ async function formAlanDuzeniOlustur(formAnahtari: string, alanSirasi: string[])
 // zaman sabit en sonda durur, bu tabloya hic girmiyor.
 const VARSAYILAN_DAVA_DOSYALARI_SUTUN_SIRASI = [
   "kayitNo",
+  "buroNo",
   "dosyaNo",
   "tur",
   "birimAdi",

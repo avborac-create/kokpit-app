@@ -80,6 +80,20 @@ export async function secenekDegeriEtiketGuncelle(id: string, formData: FormData
   updateTag("secenek-listeleri");
 }
 
+export async function secenekDegeriMaktuTutarGuncelle(id: string, formData: FormData) {
+  await yetkiKontrolEt();
+
+  const ham = String(formData.get("maktuTutar") ?? "").trim();
+  const maktuTutar = ham === "" ? null : Number(ham);
+  if (maktuTutar !== null && !Number.isFinite(maktuTutar)) {
+    throw new Error("Maktu tutar geçerli bir sayı olmalıdır.");
+  }
+
+  await prisma.secenekDegeri.update({ where: { id }, data: { maktuTutar } });
+  revalidatePath(AYARLAR_YOLU);
+  updateTag("secenek-listeleri");
+}
+
 export async function secenekDegeriAktifligiDegistir(id: string, aktifMi: boolean) {
   await yetkiKontrolEt();
   await prisma.secenekDegeri.update({ where: { id }, data: { aktifMi } });

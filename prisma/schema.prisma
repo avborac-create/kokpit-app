@@ -92,6 +92,12 @@ model SecenekDegeri {
   etiket          String // ekranda gosterilen ad, orn. "Gerçek Kişi"
   siraNo          Int            @default(0)
   aktifMi         Boolean        @default(true)
+  // Bazi listelerde (orn. masraf_turu -> "Basvuru Harci") deger her zaman
+  // ayni sabit tutari tasir (harc, damga vergisi vb. - yilda bir kez
+  // Ayarlar > Seçenek Listeleri'nden guncellenir). Null ise bu deger icin
+  // maktu tutar tanimli degildir, formda "Maktu Tutar Kullan" secenegi
+  // gosterilmez.
+  maktuTutar      Decimal?       @db.Decimal(14, 2)
   olusturmaTarihi DateTime       @default(now())
 
   musterilerTip                 Musteri[]             @relation("MusteriTipi")
@@ -107,6 +113,7 @@ model SecenekDegeri {
   davaDosyalariDavaTuru         DavaDosyasi[]         @relation("DavaDosyasiDavaTuru")
   paraTrafigiTasnifCariKod      ParaTrafigiTasnif[]   @relation("ParaTrafigiTasnifCariKod")
   dosyaMasrafiCariKod           DosyaMasrafi[]        @relation("DosyaMasrafiCariKod")
+  avansAktarimiCariKod          DosyaAvansAktarimi[]  @relation("AvansAktarimiCariKod")
   dosyaMasrafiTuru              DosyaMasrafi[]        @relation("DosyaMasrafiTuru")
   dosyaMasrafiDurum             DosyaMasrafi[]        @relation("DosyaMasrafiDurumu")
   gelistirmeTalepleriDurum      GelistirmeTalebi[]    @relation("GelistirmeTalebiDurumu")
@@ -420,6 +427,9 @@ model DavaDosyasi {
   // girmesi gerekmez, "Kokpit No" olarak gosterilir (ör. "KP-0007").
   kayitNo            Int              @unique @default(autoincrement())
   dosyaNo            String?
+  // Buronun kendi (ic) dosya numarasi (ör. "8714") - icra dairesi esas
+  // no'sundan bagimsiz, buro takip programindaki "Buro No".
+  buroNo             String?
   birimAdi           String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
   konu               String
   // Dosya turu: ihtar/arabuluculuk/muzakere gibi dava/icra oncesi
@@ -501,7 +511,10 @@ model DavaDosyasi {
   hukukiMudahaleler      HukukiMudahale[]
   hacizRaporlari         HacizRaporu[]
   adliBirimHareketleri   AdliBirimHareketi[]
+  gidenAvansAktarimlari  DosyaAvansAktarimi[] @relation("AvansAktarimiKaynak")
+  gelenAvansAktarimlari  DosyaAvansAktarimi[] @relation("AvansAktarimiHedef")
 
+  @@index([buroNo])
   @@index([durumId])
   @@index([sorumluAvukatId])
   @@index([uyusmazlikGrubuId])
@@ -565,6 +578,11 @@ model DosyaMasrafi {
   durumId String?
   durum   SecenekDegeri? @relation("DosyaMasrafiDurumu", fields: [durumId], references: [id])
 
+  // Masrafin KIME yansitildigi: Muvekkil (varsayilan - muvekkil cari
+  // hesabindan duser), Buro (buro ustlenir, muvekkil carisine girmez) ya da
+  // Borclu (karsi taraftan tahsil edilecek, muvekkil carisine girmez).
+  yansitmaHedefi MasrafYansitmaHedefi @default(MUVEKKIL)
+
   olusturmaTarihi DateTime @default(now())
 
   @@index([dosyaId])
@@ -572,6 +590,42 @@ model DosyaMasrafi {
   @@index([turId])
   @@index([durumId])
   @@map("dosya_masraflari")
+}
+
+enum MasrafYansitmaHedefi {
+  MUVEKKIL
+  BURO
+  BORCLU
+}
+
+// Ayni muvekkilin bir dosyasindaki avansin (ör. ayri bir dosyada duran
+// harcanmamis avans) baska bir dosyasina aktarilmasi - ör. avansi yetmeyip
+// eksi bakiyeye dusen bir dosyayi, muvekkilin avansi bulunan baska
+// dosyasindan tamamlamak. Paranin kendisi degismez (muvekkilden gelen toplam
+// ayni kalir) - sadece hangi dosyanin cari hesabinda durdugu degisir:
+// kaynak dosyada "Aktarilan (Cikis)", hedef dosyada "Aktarilan (Giris)"
+// olarak gorunur; muvekkil/kume seviyesinde ikisi birbirini goturur.
+model DosyaAvansAktarimi {
+  id            String      @id @default(cuid())
+  kaynakDosyaId String
+  kaynakDosya   DavaDosyasi @relation("AvansAktarimiKaynak", fields: [kaynakDosyaId], references: [id], onDelete: Cascade)
+  hedefDosyaId  String
+  hedefDosya    DavaDosyasi @relation("AvansAktarimiHedef", fields: [hedefDosyaId], references: [id], onDelete: Cascade)
+
+  // Hangi cari koddaki bakiye tasiniyor (varsayilan Masraf Hesabi).
+  cariKodId String
+  cariKod   SecenekDegeri @relation("AvansAktarimiCariKod", fields: [cariKodId], references: [id])
+
+  tarih    DateTime
+  tutar    Decimal  @db.Decimal(14, 2)
+  aciklama String
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([kaynakDosyaId])
+  @@index([hedefDosyaId])
+  @@index([cariKodId])
+  @@map("dosya_avans_aktarimlari")
 }
 
 // Buro <-> Adli Birim (mahkeme/icra dairesi) arasindaki klasik cari hesap

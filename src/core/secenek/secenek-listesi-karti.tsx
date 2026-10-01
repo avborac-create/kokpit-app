@@ -7,7 +7,14 @@ type Liste = {
   id: string;
   anahtar: string;
   ad: string;
-  degerler: { id: string; kod: string; etiket: string; siraNo: number; aktifMi: boolean }[];
+  degerler: {
+    id: string;
+    kod: string;
+    etiket: string;
+    siraNo: number;
+    aktifMi: boolean;
+    maktuTutar: number | null;
+  }[];
 };
 
 export function SecenekListesiKarti({ liste }: { liste: Liste }) {
@@ -27,6 +34,7 @@ export function SecenekListesiKarti({ liste }: { liste: Liste }) {
               <tr>
                 <th className="px-4 py-2 font-medium">Etiket</th>
                 <th className="px-4 py-2 font-medium">Kod</th>
+                <th className="px-4 py-2 font-medium">Maktu Tutar</th>
                 <th className="px-4 py-2 font-medium">Sıra</th>
                 <th className="px-4 py-2 font-medium">Durum</th>
               </tr>

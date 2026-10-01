@@ -5,6 +5,7 @@
 // bu kumeye dahil edilmez, tabloda her zaman en sonda sabit kalir.
 export const DAVA_DOSYALARI_SUTUN_ETIKETLERI: Record<string, string> = {
   kayitNo: "Kokpit No",
+  buroNo: "Büro No",
   dosyaNo: "Dosya No",
   tur: "Tür",
   birimAdi: "Birim",

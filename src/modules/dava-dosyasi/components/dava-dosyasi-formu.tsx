@@ -25,9 +25,13 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
 
   const seciliIdler =
     dosya?.muvekkiller.map((m) => m.musteriId) ?? (onSecilenMusteriId ? [onSecilenMusteriId] : []);
-  const alanSirasi = alanDuzeni
-    .map((o) => o.alanAnahtari)
-    .filter((a) => a in DAVA_DOSYASI_ALAN_ETIKETLERI);
+  const kayitliAlanlar = alanDuzeni.map((o) => o.alanAnahtari).filter((a) => a in DAVA_DOSYASI_ALAN_ETIKETLERI);
+  // Sonradan eklenen alanlar (ör. Büro No) seed koşana kadar DB'de satır
+  // olarak bulunmaz - eksik olanlar sona eklenir, alan formdan kaybolmaz.
+  const alanSirasi = [
+    ...kayitliAlanlar,
+    ...Object.keys(DAVA_DOSYASI_ALAN_ETIKETLERI).filter((a) => !kayitliAlanlar.includes(a)),
+  ];
 
   return (
     <DavaDosyasiFormIcerik
