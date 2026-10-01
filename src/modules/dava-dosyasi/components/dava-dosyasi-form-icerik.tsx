@@ -83,19 +83,15 @@ export function DavaDosyasiFormIcerik({
       />
     ),
     davaTuruId: () => (
-      <Alan>
-        <Etiket htmlFor="davaTuruId">Dava Türü</Etiket>
-        <Secim id="davaTuruId" name="davaTuruId" required defaultValue={g?.davaTuruId ?? dosya?.davaTuruId ?? ""}>
-          <option value="" disabled>
-            Seçiniz…
-          </option>
-          {davaTurleri.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.etiket}
-            </option>
-          ))}
-        </Secim>
-      </Alan>
+      <UyusmazlikTuruSecici
+        turler={davaTurleri}
+        varsayilanId={g?.davaTuruId ?? dosya?.davaTuruId ?? ""}
+        varsayilanYeniEtiket={g?.yeniDavaTuruEtiketi}
+        alanAdi="davaTuruId"
+        yeniAlanAdi="yeniDavaTuruEtiketi"
+        etiket="Dava Türü"
+        zorunlu
+      />
     ),
     birimAdi: () => (
       <Alan>

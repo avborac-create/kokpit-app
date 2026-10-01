@@ -2,15 +2,22 @@ import { redirect } from "next/navigation";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { tumSecenekListeleriniListele } from "@/core/secenek/admin-queries";
+import { ListeSecici } from "@/core/secenek/liste-secici";
 import { SecenekListesiKarti } from "@/core/secenek/secenek-listesi-karti";
 
-export default async function SecenekListeleriSayfasi() {
+export default async function SecenekListeleriSayfasi({
+  searchParams,
+}: {
+  searchParams: Promise<{ liste?: string }>;
+}) {
+  const { liste: istenenListe } = await searchParams;
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     redirect("/kokpit");
   }
 
   const listeler = await tumSecenekListeleriniListele();
+  const seciliListe = listeler.find((l) => l.anahtar === istenenListe) ?? listeler[0];
 
   return (
     <div>
@@ -22,11 +29,14 @@ export default async function SecenekListeleriSayfasi() {
         geçmiş kayıtlar bozulmasın diye yalnızca pasife alınır ve yeni girişte seçilemez.
       </p>
 
-      <div className="flex flex-col gap-5">
-        {listeler.map((liste) => (
-          <SecenekListesiKarti key={liste.id} liste={liste} />
-        ))}
+      <div className="mb-4">
+        <ListeSecici
+          listeler={listeler.map((l) => ({ anahtar: l.anahtar, ad: l.ad }))}
+          secili={seciliListe?.anahtar ?? ""}
+        />
       </div>
+
+      {seciliListe && <SecenekListesiKarti key={seciliListe.id} liste={seciliListe} />}
     </div>
   );
 }

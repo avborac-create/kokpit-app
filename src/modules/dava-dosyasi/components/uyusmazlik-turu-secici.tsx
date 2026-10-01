@@ -15,10 +15,18 @@ export function UyusmazlikTuruSecici({
   turler,
   varsayilanId,
   varsayilanYeniEtiket,
+  alanAdi = "hukukiIliskiTuruId",
+  yeniAlanAdi = "yeniHukukiIliskiTuruEtiketi",
+  etiket = "Uyuşmazlık Türü",
+  zorunlu = false,
 }: {
   turler: { id: string; etiket: string }[];
   varsayilanId: string;
   varsayilanYeniEtiket?: string;
+  alanAdi?: string;
+  yeniAlanAdi?: string;
+  etiket?: string;
+  zorunlu?: boolean;
 }) {
   const [secim, setSecim] = useState(varsayilanId);
   const manuelMi = secim === MANUEL_UYUSMAZLIK_DEGERI;
@@ -26,9 +34,9 @@ export function UyusmazlikTuruSecici({
   return (
     <Alan>
       <div className="flex items-center justify-between">
-        <Etiket htmlFor="hukukiIliskiTuruId">Uyuşmazlık Türü</Etiket>
+        <Etiket htmlFor={alanAdi}>{etiket}</Etiket>
         <Link
-          href="/kokpit/ayarlar/secenekler"
+          href={`/kokpit/ayarlar/secenekler?liste=${alanAdi === "davaTuruId" ? "dava_turu" : "hukuki_iliski_turu"}`}
           target="_blank"
           className="text-xs text-[#6db8ff] hover:underline"
         >
@@ -36,12 +44,15 @@ export function UyusmazlikTuruSecici({
         </Link>
       </div>
       <Secim
-        id="hukukiIliskiTuruId"
-        name="hukukiIliskiTuruId"
+        id={alanAdi}
+        name={alanAdi}
+        required={zorunlu}
         value={secim}
         onChange={(e) => setSecim(e.target.value)}
       >
-        <option value="">Seçiniz…</option>
+        <option value="" disabled={zorunlu}>
+          Seçiniz…
+        </option>
         <option value={MANUEL_UYUSMAZLIK_DEGERI}>＋ MANUEL GİR (listede yok)</option>
         {turler.map((t) => (
           <option key={t.id} value={t.id}>
@@ -51,9 +62,9 @@ export function UyusmazlikTuruSecici({
       </Secim>
       {manuelMi && (
         <Girdi
-          name="yeniHukukiIliskiTuruEtiketi"
+          name={yeniAlanAdi}
           defaultValue={varsayilanYeniEtiket}
-          placeholder="Uyuşmazlık türünü yazın (listeye de eklenir)"
+          placeholder={`${etiket} yazın (listeye de eklenir)`}
           required
           autoFocus
           className="mt-2"

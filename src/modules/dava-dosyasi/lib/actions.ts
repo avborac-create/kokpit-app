@@ -67,13 +67,22 @@ function musteriIdleriniAl(formData: FormData): string[] {
 // "Uyuşmazlık Türü" menüsünde "MANUEL GİR" seçilmişse yazılan etiketi
 // (büyük/küçük harf duyarsız) listede arar, yoksa listeye kalıcı ekler.
 async function hukukiIliskiTuruIdCozumle(formData: FormData): Promise<string | null> {
-  const secim = metinYaAlNull(formData, "hukukiIliskiTuruId");
+  return manuelSecenekIdCozumle(formData, "hukukiIliskiTuruId", "yeniHukukiIliskiTuruEtiketi", "hukuki_iliski_turu");
+}
+
+async function manuelSecenekIdCozumle(
+  formData: FormData,
+  alan: string,
+  yeniAlan: string,
+  listeAnahtari: string,
+): Promise<string | null> {
+  const secim = metinYaAlNull(formData, alan);
   if (secim !== "__manuel__") return secim;
 
-  const etiket = metinYaAlNull(formData, "yeniHukukiIliskiTuruEtiketi");
+  const etiket = metinYaAlNull(formData, yeniAlan);
   if (!etiket) return null;
 
-  const liste = await prisma.secenekListesi.findUnique({ where: { anahtar: "hukuki_iliski_turu" } });
+  const liste = await prisma.secenekListesi.findUnique({ where: { anahtar: listeAnahtari } });
   if (!liste) return null;
 
   const mevcut = await prisma.secenekDegeri.findFirst({
@@ -172,7 +181,7 @@ export async function davaDosyasiOlustur(
   formData: FormData,
 ): Promise<DavaDosyasiSonucu> {
   const musteriIdleri = musteriIdleriniAl(formData);
-  const davaTuruId = metinYaAlNull(formData, "davaTuruId");
+  const davaTuruId = await manuelSecenekIdCozumle(formData, "davaTuruId", "yeniDavaTuruEtiketi", "dava_turu");
   const talepSonucu = talepSonucuAl(formData);
   const gonderilenAlanlar = formVerileriniAl(formData);
   const gonderilenTalepMaddeleri = formData.getAll("talepMaddeleri").map(String);
@@ -254,7 +263,7 @@ export async function davaDosyasiGuncelle(
   formData: FormData,
 ): Promise<DavaDosyasiSonucu> {
   const musteriIdleri = musteriIdleriniAl(formData);
-  const davaTuruId = metinYaAlNull(formData, "davaTuruId");
+  const davaTuruId = await manuelSecenekIdCozumle(formData, "davaTuruId", "yeniDavaTuruEtiketi", "dava_turu");
   const talepSonucu = talepSonucuAl(formData);
   const gonderilenAlanlar = formVerileriniAl(formData);
   const gonderilenTalepMaddeleri = formData.getAll("talepMaddeleri").map(String);
