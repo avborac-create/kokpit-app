@@ -9,6 +9,12 @@ işlenir).
 
 ## Beklemede
 
+- Yeni Dosya formundaki "Uyuşmazlık Türü" açılır menüsü: (1) menünün içine
+  Ayarlar > Seçenek Listeleri'ndeki ilgili listeyi düzenlemeye götüren bir
+  "Listeyi Düzenle" butonu/bağlantısı; (2) listede aranan tür yoksa
+  "MANUEL GİR" seçeneği — seçilince yazı kutusu açılır. Daha hızlı alternatif
+  (önerilen): menüye yazarak ara + bulunamazsa "‘…’ ekle" ile yazılan değeri
+  hem bu dosyaya hem de listeye kalıcı olarak ekle.
 - Yeni Dosya formunda Müvekkil açılır listesi (checkbox'lı seçim kutusu)
   "Karşı Taraf(lar)" alanının ve altındaki içeriğin üzerine şeffaf biçimde
   biniyor; yazılar iç içe geçip okunmuyor. Açılır pencere opak (arka planı
