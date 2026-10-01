@@ -38,6 +38,9 @@ function aramaKosulu(arama?: string): Prisma.DavaDosyasiWhereInput {
           ...metin((v) => ({
             karsiTaraflar: { some: { karsiTaraf: { ad: { ...icerir, contains: v } } } },
           })),
+          ...metin((v) => ({
+            karsiTaraflar: { some: { karsiTaraf: { tanimlayiciKod: { ...icerir, contains: v } } } },
+          })),
           ...(kayitNoMatch ? [{ kayitNo: Number(kayitNoMatch[1]) }] : []),
         ],
       };

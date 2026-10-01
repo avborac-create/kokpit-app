@@ -75,14 +75,15 @@ function musteriIdleriniAl(formData: FormData): string[] {
 // bir liste hic gosterilmez, tek giris noktasi bu "yaz + Ekle" akisidir.
 async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: string[]): Promise<string[]> {
   const secilenIdler = formData.getAll("karsiTarafIds").map(String).filter(Boolean);
-  const yeniAdlar = formData
-    .getAll("yeniKarsiTarafAdlari")
-    .map(String)
-    .map((ad) => ad.trim())
-    .filter(Boolean);
+  // "yeniKarsiTarafTcleri" her yeni isimle AYNI sirada gelir (bos olabilir).
+  const tamAdlar = formData.getAll("yeniKarsiTarafAdlari").map(String);
+  const tcler = formData.getAll("yeniKarsiTarafTcleri").map(String);
+  const yeniAdlar = tamAdlar
+    .map((ad, i) => ({ ad: ad.trim(), tc: (tcler[i] ?? "").trim() || null }))
+    .filter((k) => k.ad);
 
   const yeniIdler: string[] = [];
-  for (const ad of yeniAdlar) {
+  for (const { ad, tc } of yeniAdlar) {
     // Ayni musteri altinda ayni isimde (buyuk/kucuk harf ve bosluk
     // duyarsiz) zaten bir karsi taraf varsa YENI kayit olusturmak yerine
     // onu kullan - aksi halde ayni "Mata Kauçuk"tan birden fazla, birbirine
@@ -90,9 +91,12 @@ async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: stri
     const mevcut = await prisma.karsiTaraf.findFirst({
       where: { musteriId: musteriIdleri[0], ad: { equals: ad, mode: "insensitive" } },
     });
+    if (mevcut && tc && mevcut.tanimlayiciKod !== tc) {
+      await prisma.karsiTaraf.update({ where: { id: mevcut.id }, data: { tanimlayiciKod: tc } });
+    }
     const id = mevcut
       ? mevcut.id
-      : (await prisma.karsiTaraf.create({ data: { musteriId: musteriIdleri[0], ad } })).id;
+      : (await prisma.karsiTaraf.create({ data: { musteriId: musteriIdleri[0], ad, tanimlayiciKod: tc } })).id;
     yeniIdler.push(id);
   }
 

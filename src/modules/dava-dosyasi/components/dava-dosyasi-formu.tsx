@@ -43,7 +43,7 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
       davaTurleri={davaTurleri}
       dosya={dosya}
       dosyaId={dosya?.id}
-      baslangicKarsiTaraflar={dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad })) ?? []}
+      baslangicKarsiTaraflar={dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad, tc: kt.karsiTaraf.tanimlayiciKod })) ?? []}
       alanSirasi={alanSirasi}
     />
   );

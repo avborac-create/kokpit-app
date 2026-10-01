@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Alan, Etiket, Girdi } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
 
-type KarsiTarafCipi = { id: string; ad: string; mevcutMu: boolean };
+type KarsiTarafCipi = { id: string; ad: string; tc?: string | null; mevcutMu: boolean };
 
 // Eskiden ayri iki bilesendi: "var olan karsi taraflardan sec" (checkbox
 // listesi) + "yeni ekle" (isim yaz + buton). Kullanici checkbox listesinin
@@ -18,18 +18,20 @@ type KarsiTarafCipi = { id: string; ad: string; mevcutMu: boolean };
 export function KarsiTarafEkleyici({
   baslangicKarsiTaraflar = [],
 }: {
-  baslangicKarsiTaraflar?: { id: string; ad: string }[];
+  baslangicKarsiTaraflar?: { id: string; ad: string; tc?: string | null }[];
 }) {
   const [cipler, setCipler] = useState<KarsiTarafCipi[]>(
     baslangicKarsiTaraflar.map((kt) => ({ ...kt, mevcutMu: true })),
   );
   const [girdi, setGirdi] = useState("");
+  const [tcGirdi, setTcGirdi] = useState("");
 
   function ekle() {
     const ad = girdi.trim();
     if (!ad) return;
-    setCipler((liste) => [...liste, { id: ad, ad, mevcutMu: false }]);
+    setCipler((liste) => [...liste, { id: ad, ad, tc: tcGirdi.trim() || null, mevcutMu: false }]);
     setGirdi("");
+    setTcGirdi("");
   }
 
   function kaldir(index: number) {
@@ -52,6 +54,22 @@ export function KarsiTarafEkleyici({
           }}
           placeholder="Koz Gıda"
         />
+        <Girdi
+          id="karsiTarafTcGirdi"
+          value={tcGirdi}
+          onChange={(e) => setTcGirdi(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              ekle();
+            }
+          }}
+          inputMode="numeric"
+          maxLength={11}
+          placeholder="TC / VKN"
+          className="max-w-[10rem]"
+          aria-label="Karşı taraf TC kimlik / vergi kimlik no"
+        />
         <Dugme type="button" varyant="ikincil" onClick={ekle}>
           Ekle
         </Dugme>
@@ -66,9 +84,13 @@ export function KarsiTarafEkleyici({
               {cip.mevcutMu ? (
                 <input type="hidden" name="karsiTarafIds" value={cip.id} />
               ) : (
-                <input type="hidden" name="yeniKarsiTarafAdlari" value={cip.ad} />
+                <>
+                  <input type="hidden" name="yeniKarsiTarafAdlari" value={cip.ad} />
+                  <input type="hidden" name="yeniKarsiTarafTcleri" value={cip.tc ?? ""} />
+                </>
               )}
               {cip.ad}
+              {cip.tc && <span className="text-white/45">· {cip.tc}</span>}
               <button
                 type="button"
                 onClick={() => kaldir(i)}

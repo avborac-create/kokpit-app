@@ -55,7 +55,7 @@ export function DavaDosyasiFormIcerik({
   hukukiIliskiTurleri: Secenek[];
   davaTurleri: Secenek[];
   dosya?: DosyaDegerleri;
-  baslangicKarsiTaraflar: { id: string; ad: string }[];
+  baslangicKarsiTaraflar: { id: string; ad: string; tc?: string | null }[];
   alanSirasi: string[];
 }) {
   const [durum, formAction] = useActionState(action, undefined);
