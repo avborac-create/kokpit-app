@@ -8,6 +8,7 @@ import type { DavaDosyasiSonucu } from "@/modules/dava-dosyasi/lib/actions";
 import { MuvekkilSecici } from "./muvekkil-secici";
 import { UyusmazlikTuruSecici } from "./uyusmazlik-turu-secici";
 import { KarsiTarafEkleyici } from "./karsi-taraf-ekleyici";
+import { DosyaSinifiAlanlari } from "./dosya-sinifi-alanlari";
 import { TalepSonucuListesi } from "./talep-sonucu-listesi";
 import { DavaDosyasiSekmeleri } from "./dava-dosyasi-sekmeleri";
 
@@ -19,6 +20,9 @@ type DosyaDegerleri = {
   birimAdi: string | null;
   hukukiIliskiTuruId: string | null;
   davaTuruId: string | null;
+  turId?: string | null;
+  yargiKoluId?: string | null;
+  muvekkilSifati?: "ALACAKLI" | "BORCLU";
   talepSonucu: string | null;
   durusmaTarihi: Date | null;
 };
@@ -43,6 +47,8 @@ export function DavaDosyasiFormIcerik({
   seciliIdler,
   hukukiIliskiTurleri,
   davaTurleri,
+  dosyaTurleri,
+  yargiKollari,
   dosya,
   dosyaId,
   baslangicKarsiTaraflar,
@@ -55,6 +61,8 @@ export function DavaDosyasiFormIcerik({
   seciliIdler: string[];
   hukukiIliskiTurleri: Secenek[];
   davaTurleri: Secenek[];
+  dosyaTurleri: (Secenek & { kod: string })[];
+  yargiKollari: (Secenek & { kod: string })[];
   dosya?: DosyaDegerleri;
   baslangicKarsiTaraflar: { id: string; ad: string; tc?: string | null }[];
   alanSirasi: string[];
@@ -148,6 +156,20 @@ export function DavaDosyasiFormIcerik({
           <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdlerGuncel} />
         </div>
         <KarsiTarafEkleyici baslangicKarsiTaraflar={baslangicKarsiTaraflar} />
+      </FormKarti>
+
+      <FormKarti baslik="Dosya Sınıfı">
+        <div key={anahtar}>
+          <DosyaSinifiAlanlari
+            turler={dosyaTurleri}
+            yargiKollari={yargiKollari}
+            varsayilanTurId={
+              g?.turId ?? dosya?.turId ?? dosyaTurleri.find((t) => t.kod === "dava_dosyasi")?.id ?? ""
+            }
+            varsayilanYargiKoluId={g?.yargiKoluId ?? dosya?.yargiKoluId ?? ""}
+            varsayilanSifat={(g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "BORCLU" ? "BORCLU" : "ALACAKLI"}
+          />
+        </div>
       </FormKarti>
 
       {KARTLAR.map((kart) => {

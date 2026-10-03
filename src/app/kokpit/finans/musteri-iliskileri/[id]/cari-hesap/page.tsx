@@ -75,9 +75,10 @@ export default async function CariHesapSayfasi({
                 <td className="px-4 py-3">
                   <Link
                     href={`/kokpit/dava-dosyalari/${d.id}?sekme=ekonomi`}
+                    title={d.buroNo ? "OBJEKT BÜRO NO" : undefined}
                     className="font-medium text-white hover:text-[#6db8ff] hover:underline"
                   >
-                    {d.buroNo ? `Büro ${d.buroNo}` : `KP-${String(d.kayitNo).padStart(4, "0")}`}
+                    {d.buroNo ? `BN-${d.buroNo}` : `KP-${String(d.kayitNo).padStart(4, "0")}`}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-white/60">{d.birimAdi ?? "—"}</td>

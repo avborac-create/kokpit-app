@@ -22,8 +22,12 @@ const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
 
 function DosyaBaglantisi({ dosya }: { dosya: DosyaOzeti }) {
   return (
-    <Link href={`/kokpit/dava-dosyalari/${dosya.id}`} className="hover:text-[#6db8ff] hover:underline">
-      {dosya.buroNo ? `Büro ${dosya.buroNo}` : `KP-${String(dosya.kayitNo).padStart(4, "0")}`}
+    <Link
+      href={`/kokpit/dava-dosyalari/${dosya.id}`}
+      title={dosya.buroNo ? "OBJEKT BÜRO NO" : undefined}
+      className="hover:text-[#6db8ff] hover:underline"
+    >
+      {dosya.buroNo ? `BN-${dosya.buroNo}` : `KP-${String(dosya.kayitNo).padStart(4, "0")}`}
       {dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}
     </Link>
   );

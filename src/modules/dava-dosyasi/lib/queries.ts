@@ -19,7 +19,7 @@ function aramaKosulu(arama?: string): Prisma.DavaDosyasiWhereInput {
       const varyantlar = [
         ...new Set([sozcuk, sozcuk.toLocaleUpperCase("tr"), sozcuk.toLocaleLowerCase("tr")]),
       ];
-      const kayitNoMatch = /^(?:kp-?)?0*(\d{1,9})$/i.exec(sozcuk);
+      const kayitNoMatch = /^(?:kp-?)?0*(\d{1,9})(?:\/(\d{1,4}))?$/i.exec(sozcuk);
       const metin = (alan: (v: string) => Prisma.DavaDosyasiWhereInput): Prisma.DavaDosyasiWhereInput[] =>
         varyantlar.map(alan);
       const icerir = { contains: "", mode: "insensitive" as const };
@@ -41,7 +41,13 @@ function aramaKosulu(arama?: string): Prisma.DavaDosyasiWhereInput {
           ...metin((v) => ({
             karsiTaraflar: { some: { karsiTaraf: { tanimlayiciKod: { ...icerir, contains: v } } } },
           })),
-          ...(kayitNoMatch ? [{ kayitNo: Number(kayitNoMatch[1]) }] : []),
+          // "KP-0019/1" tam o alt dosyayi, "KP-0019" ana dosyayi VE alt
+          // dosyalarini bulur (ağaç listede birlikte görünsünler diye).
+          ...(kayitNoMatch
+            ? kayitNoMatch[2]
+              ? [{ anaDosya: { kayitNo: Number(kayitNoMatch[1]) }, altSiraNo: Number(kayitNoMatch[2]) }]
+              : [{ kayitNo: Number(kayitNoMatch[1]) }, { anaDosya: { kayitNo: Number(kayitNoMatch[1]) } }]
+            : []),
         ],
       };
     }),
@@ -63,7 +69,9 @@ export async function davaDosyalariniListele(filtre: DavaDosyasiFiltre = {}) {
       tur: true,
       icraAltTuru: true,
       yargiKolu: true,
+      hukukiIliskiTuru: true,
       sorumluAvukat: true,
+      anaDosya: { select: { id: true, kayitNo: true } },
       karsiTaraflar: { include: { karsiTaraf: true } },
       muvekkiller: { include: { musteri: true } },
     },
@@ -86,6 +94,11 @@ export async function davaDosyasiGetir(id: string) {
       uyusmazlikGrubu: true,
       bagliOlduguDosya: true,
       baglananDosyalar: true,
+      anaDosya: { select: { id: true, kayitNo: true, konu: true, buroNo: true, dosyaNo: true } },
+      altDosyalar: {
+        include: { durum: true, tur: true },
+        orderBy: { altSiraNo: "asc" },
+      },
       muvekkiller: { include: { musteri: true } },
       paraTrafigiKayitlari: {
         include: {
@@ -591,5 +604,29 @@ export async function kararSonrasiTakipListele(filtre: KararSonrasiTakipFiltre =
       sorumluAvukat: true,
     },
     orderBy: [{ sonrakiKontrolTarihi: { sort: "asc", nulls: "last" } }],
+  });
+}
+
+export type AnaDosyaAdayi = { id: string; kayitNo: number; buroNo: string | null; dosyaNo: string | null; konu: string };
+
+// Bir dosyanin "ana dosya" olarak secilebilecek adaylari: kendisi, kendi alt
+// dosyalari ve zaten baska bir dosyanin alt dosyasi olanlar HARIC (tek
+// seviyeli agac). Ayni muvekkile ait dosyalarla sinirlidir - alt dosyalar ana
+// dosyanin cari hesabina toplandigindan farkli muvekkillerin finansi
+// karismasin diye.
+export async function anaDosyaAdaylariniGetir(dosyaId: string): Promise<AnaDosyaAdayi[]> {
+  const dosya = await prisma.davaDosyasi.findUnique({
+    where: { id: dosyaId },
+    select: { muvekkiller: { select: { musteriId: true } }, _count: { select: { altDosyalar: true } } },
+  });
+  if (!dosya || dosya._count.altDosyalar > 0) return [];
+  return prisma.davaDosyasi.findMany({
+    where: {
+      id: { not: dosyaId },
+      anaDosyaId: null,
+      muvekkiller: { some: { musteriId: { in: dosya.muvekkiller.map((m) => m.musteriId) } } },
+    },
+    select: { id: true, kayitNo: true, buroNo: true, dosyaNo: true, konu: true },
+    orderBy: { kayitNo: "desc" },
   });
 }

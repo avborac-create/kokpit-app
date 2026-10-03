@@ -4,6 +4,8 @@ import { useSyncExternalStore, useState } from "react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { davaDosyalariniListele } from "@/modules/dava-dosyasi/lib/queries";
+import { DAVA_DOSYALARI_SUTUN_ACIKLAMALARI } from "@/core/tablo-duzeni/dava-dosyalari-sutunlari";
+import { kokpitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { Dugme } from "@/core/ui/button";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 
@@ -18,19 +20,32 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
       href={`/kokpit/dava-dosyalari/${dosya.id}`}
       className="truncate font-medium text-white hover:text-[#6db8ff] hover:underline"
     >
-      KP-{String(dosya.kayitNo).padStart(4, "0")}
+      {kokpitNoGoster(dosya)}
     </Link>
   ),
-  buroNo: (dosya) => dosya.buroNo ?? "—",
+  buroNo: (dosya) => buroNoGoster(dosya.buroNo),
   dosyaNo: (dosya) => dosya.dosyaNo ?? "—",
-  tur: (dosya) => dosya.tur?.etiket ?? "—",
+  tur: (dosya) => {
+    const tur = dosya.tur?.etiket.replace(/ Dosyası$/, "");
+    const turMetni = [tur, dosya.yargiKolu?.etiket].filter(Boolean).join(" › ");
+    const metin = [turMetni, dosya.hukukiIliskiTuru?.etiket].filter(Boolean).join(" · ") || "—";
+    return (
+      <span className="flex items-center gap-1.5">
+        <span className="truncate">{metin}</span>
+        {dosya.muvekkilSifati === "BORCLU" && (
+          <span className="shrink-0 rounded-full bg-[var(--danger-soft)] px-1.5 py-0.5 text-[11px] text-[#ff7a70]">
+            Borçlu
+          </span>
+        )}
+      </span>
+    );
+  },
   birimAdi: (dosya) => dosya.birimAdi ?? "—",
-  konu: (dosya) => dosya.konu,
   karsiTaraflar: (dosya) =>
     dosya.karsiTaraflar.length > 0 ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") : "—",
   muvekkiller: (dosya) => dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—",
   durum: (dosya) => (
-    <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[11px] text-[#6db8ff]">
+    <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-xs text-[#6db8ff]">
       {dosya.durum.etiket}
     </span>
   ),
@@ -39,10 +54,10 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
 
 const VARSAYILAN_GENISLIK = 130;
 const VARSAYILAN_GENISLIKLER: Record<string, number> = {
-  kayitNo: 84,
+  kayitNo: 150,
   buroNo: 80,
   dosyaNo: 92,
-  tur: 120,
+  tur: 210,
   birimAdi: 128,
   konu: 220,
   karsiTaraflar: 150,
@@ -126,19 +141,21 @@ function Hucre({ children }: { children: ReactNode }) {
 
 function SutunBasligi({
   etiket,
+  aciklama,
   genislik,
   suruklemeBaslat,
 }: {
   etiket: string;
+  aciklama?: string;
   genislik: number;
   suruklemeBaslat: (e: React.MouseEvent) => void;
 }) {
   return (
     <th
-      className="relative select-none whitespace-nowrap px-2 py-1.5 text-left text-xs font-medium"
+      className="relative select-none whitespace-nowrap px-2.5 py-2 text-left text-[13px] font-medium"
       style={{ width: genislik }}
     >
-      <div className="truncate pr-2" title={etiket}>
+      <div className="truncate pr-2" title={aciklama ?? etiket}>
         {etiket}
       </div>
       {/* Sutun kenarindan surukleyerek genislik ayarlama tutamaci - drag&drop
@@ -161,6 +178,34 @@ function SutunBasligi({
   );
 }
 
+type Satir = { dosya: Dosya; seviye: 0 | 1; altSayisi: number };
+
+// Duz listeyi agaca cevirir: alt dosyalar ana dosyasinin hemen altina, altSiraNo
+// sirasiyla girintili dizilir. Ana dosyasi (arama/durum filtresi yuzunden)
+// listede olmayan bir alt dosya tek basina, kendi "KP-0019/1" numarasiyla
+// gorunur. Daraltilmis ana dosyalarin alt satirlari atlanir.
+function agacSatirlari(dosyalar: Dosya[], daraltilmis: Set<string>): Satir[] {
+  const idler = new Set(dosyalar.map((d) => d.id));
+  const altlar = new Map<string, Dosya[]>();
+  for (const d of dosyalar) {
+    if (d.anaDosya && idler.has(d.anaDosya.id)) {
+      const liste = altlar.get(d.anaDosya.id) ?? [];
+      liste.push(d);
+      altlar.set(d.anaDosya.id, liste);
+    }
+  }
+  const satirlar: Satir[] = [];
+  for (const d of dosyalar) {
+    if (d.anaDosya && idler.has(d.anaDosya.id)) continue;
+    const cocuklar = (altlar.get(d.id) ?? []).sort((a, b) => (a.altSiraNo ?? 0) - (b.altSiraNo ?? 0));
+    satirlar.push({ dosya: d, seviye: 0, altSayisi: cocuklar.length });
+    if (!daraltilmis.has(d.id)) {
+      for (const c of cocuklar) satirlar.push({ dosya: c, seviye: 1, altSayisi: 0 });
+    }
+  }
+  return satirlar;
+}
+
 export function DosyalarTablosu({
   dosyalar,
   gorunurSutunlar,
@@ -176,6 +221,15 @@ export function DosyalarTablosu({
   // Surukleme SIRASINDA canli onizleme icin gecici state; birak (mouseup)
   // aninda kalici hale (localStorage) yazilir.
   const [taslakGenislikler, setTaslakGenislikler] = useState<Record<string, number> | null>(null);
+  const [daraltilmis, setDaraltilmis] = useState<Set<string>>(new Set());
+  const satirlar = agacSatirlari(dosyalar, daraltilmis);
+  function agaciDegistir(id: string) {
+    setDaraltilmis((onceki) => {
+      const yeni = new Set(onceki);
+      if (!yeni.delete(id)) yeni.add(id);
+      return yeni;
+    });
+  }
   const genislikler = { ...VARSAYILAN_GENISLIKLER, ...kayitliGenislikler, ...taslakGenislikler };
 
   function genislikSuruklemeBaslat(anahtar: string, baslangicE: React.MouseEvent) {
@@ -201,7 +255,7 @@ export function DosyalarTablosu({
 
   return (
     <div className="glass overflow-x-auto rounded-2xl">
-      <table className="w-full table-fixed text-left text-xs">
+      <table className="w-full table-fixed text-left text-sm">
         <colgroup>
           {gorunurSutunlar.map((anahtar) => (
             <col key={anahtar} style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }} />
@@ -214,6 +268,7 @@ export function DosyalarTablosu({
               <SutunBasligi
                 key={anahtar}
                 etiket={sutunEtiketleri[anahtar] ?? anahtar}
+                aciklama={DAVA_DOSYALARI_SUTUN_ACIKLAMALARI[anahtar]}
                 genislik={genislikler[anahtar] ?? VARSAYILAN_GENISLIK}
                 suruklemeBaslat={(e) => genislikSuruklemeBaslat(anahtar, e)}
               />
@@ -226,17 +281,45 @@ export function DosyalarTablosu({
           </tr>
         </thead>
         <tbody>
-          {dosyalar.map((dosya) => (
-            <tr key={dosya.id} className="border-t border-white/[0.06] hover:bg-white/[0.04]">
-              {gorunurSutunlar.map((anahtar) => (
+          {satirlar.map(({ dosya, seviye, altSayisi }) => (
+            <tr
+              key={dosya.id}
+              className={`border-t border-white/[0.06] hover:bg-white/[0.04] ${seviye === 0 && altSayisi > 0 ? "bg-white/[0.03]" : ""}`}
+            >
+              {gorunurSutunlar.map((anahtar, sutunIndex) => (
                 <td
                   key={anahtar}
-                  className={`px-2 py-1 ${anahtar === "konu" ? "text-white/85" : "text-white/60"}`}
+                  className={`px-2.5 py-1.5 ${anahtar === "konu" ? "text-white/85" : "text-white/60"}`}
                 >
-                  <Hucre>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
+                  {sutunIndex === 0 ? (
+                    <div className="flex items-center gap-1" style={{ paddingLeft: seviye * 18 }}>
+                      {seviye === 1 ? (
+                        <span className="w-4 shrink-0 text-white/35">└</span>
+                      ) : altSayisi > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => agaciDegistir(dosya.id)}
+                          aria-label={daraltilmis.has(dosya.id) ? "Alt dosyaları göster" : "Alt dosyaları gizle"}
+                          className="flex h-4 w-4 shrink-0 items-center justify-center rounded text-white/60 hover:bg-white/10"
+                        >
+                          <span className={`text-[10px] transition-transform ${daraltilmis.has(dosya.id) ? "-rotate-90" : ""}`}>
+                            ▼
+                          </span>
+                        </button>
+                      ) : (
+                        <span className="w-4 shrink-0" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <Hucre>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
+                      </div>
+                      {altSayisi > 0 && <span className="shrink-0 text-[11px] text-white/40">{altSayisi} alt</span>}
+                    </div>
+                  ) : (
+                    <Hucre>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
+                  )}
                 </td>
               ))}
-              <td className="px-2 py-1">
+              <td className="px-2.5 py-1.5">
                 <div className="flex items-center gap-1.5">
                   <Link href={`/kokpit/dava-dosyalari/${dosya.id}`}>
                     <Dugme type="button" varyant="ikincil" boyut="kompakt">

@@ -6,6 +6,7 @@ import {
   netAvansBakiyesi,
   aktarimHedefAdaylari,
   dosyaAvansAktarimlari,
+  anaDosyaAdaylariniGetir,
 } from "@/modules/dava-dosyasi/lib/queries";
 import {
   dosyaMasrafiEkle,
@@ -31,6 +32,8 @@ import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { DavaDosyasiSekmeleri } from "@/modules/dava-dosyasi/components/dava-dosyasi-sekmeleri";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
+import { AnaDosyaSecici } from "@/modules/dava-dosyasi/components/ana-dosya-secici";
+import { kokpitNoGoster, kayitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { Dugme } from "@/core/ui/button";
 import { FormKarti } from "@/core/ui/form-karti";
 
@@ -43,7 +46,7 @@ function Bilgi({ baslik, children }: { baslik: string; children: React.ReactNode
   return (
     <div className="mb-4 text-sm last:mb-0">
       <p className="text-white/45">{baslik}</p>
-      <p className="text-white">{children}</p>
+      <div className="text-white">{children}</div>
     </div>
   );
 }
@@ -77,13 +80,14 @@ export default async function DavaDosyasiDetaySayfasi({
   const { id } = await params;
   const { sekme } = await searchParams;
   const aktifSekme = sekme === "ekonomi" ? "ekonomi" : "genel";
-  const [dosya, kullanici, cariHesapOzeti, aktarimHedefleri, aktarimlar, cariKodlar] = await Promise.all([
+  const [dosya, kullanici, cariHesapOzeti, aktarimHedefleri, aktarimlar, cariKodlar, anaDosyaAdaylari] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
     dosyaCariHesapOzeti(id),
     aktarimHedefAdaylari(id),
     dosyaAvansAktarimlari(id),
     secenekleriGetir("cari_kod"),
+    anaDosyaAdaylariniGetir(id),
   ]);
   if (!dosya) notFound();
   const avansBakiyesi = netAvansBakiyesi(cariHesapOzeti);
@@ -117,8 +121,12 @@ export default async function DavaDosyasiDetaySayfasi({
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">
-            <span className="text-white/45">KP-{String(dosya.kayitNo).padStart(4, "0")}</span>
-            {dosya.buroNo ? ` · Büro ${dosya.buroNo}` : ""}
+            <span className="text-white/45" title={dosya.anaDosya ? `Eski numarası: ${kayitNoGoster(dosya.kayitNo)}` : undefined}>
+              {kokpitNoGoster(dosya)}
+            </span>
+            {dosya.buroNo && (
+              <span title="OBJEKT BÜRO NO"> · {buroNoGoster(dosya.buroNo)}</span>
+            )}
             {dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}
             {" — "}
             {dosya.konu}
@@ -192,10 +200,14 @@ export default async function DavaDosyasiDetaySayfasi({
             </FormKarti>
 
             <FormKarti baslik="Dosya Bilgileri">
+              <Bilgi baslik="Tür">
+                {[dosya.tur?.etiket, dosya.yargiKolu?.etiket].filter(Boolean).join(" › ") || "—"}
+              </Bilgi>
+              <Bilgi baslik="Müvekkil Sıfatı">{dosya.muvekkilSifati === "BORCLU" ? "Borçlu" : "Alacaklı"}</Bilgi>
               <Bilgi baslik="Uyuşmazlık Türü">{dosya.hukukiIliskiTuru?.etiket ?? "—"}</Bilgi>
               <Bilgi baslik="Dava Türü">{dosya.davaTuru?.etiket ?? "—"}</Bilgi>
               <Bilgi baslik="Birim (Mahkeme/İcra Dairesi)">{dosya.birimAdi ?? "—"}</Bilgi>
-              <Bilgi baslik="Büro No">{dosya.buroNo ?? "—"}</Bilgi>
+              <Bilgi baslik="Objekt Büro No (BN)">{buroNoGoster(dosya.buroNo)}</Bilgi>
               <Bilgi baslik="Dosya Numarası">{dosya.dosyaNo ?? "—"}</Bilgi>
             </FormKarti>
 
@@ -214,6 +226,50 @@ export default async function DavaDosyasiDetaySayfasi({
               <Bilgi baslik="Duruşma Tarihi">
                 {dosya.durusmaTarihi ? tarihFormatlayici.format(dosya.durusmaTarihi) : "—"}
               </Bilgi>
+            </FormKarti>
+          </div>
+
+          <div className="mb-8 max-w-2xl">
+            <FormKarti baslik="Dosya Ağacı">
+              {dosya.anaDosya && (
+                <Bilgi baslik="Ana dosya">
+                  <Link
+                    href={`/kokpit/dava-dosyalari/${dosya.anaDosya.id}`}
+                    className="hover:text-[#6db8ff] hover:underline"
+                  >
+                    {kayitNoGoster(dosya.anaDosya.kayitNo)}
+                    {dosya.anaDosya.buroNo ? ` · BN-${dosya.anaDosya.buroNo}` : ""}
+                    {dosya.anaDosya.dosyaNo ? ` · ${dosya.anaDosya.dosyaNo}` : ""} — {dosya.anaDosya.konu}
+                  </Link>
+                  <span className="ml-2 text-xs text-white/45">(eski numarası {kayitNoGoster(dosya.kayitNo)})</span>
+                </Bilgi>
+              )}
+              {dosya.altDosyalar.length > 0 && (
+                <Bilgi baslik={`Alt dosyalar (${dosya.altDosyalar.length})`}>
+                  <span className="mt-1 flex flex-col gap-1.5">
+                    {dosya.altDosyalar.map((alt) => (
+                      <Link
+                        key={alt.id}
+                        href={`/kokpit/dava-dosyalari/${alt.id}`}
+                        className="glass rounded-xl px-3 py-2 text-sm text-white/85 hover:bg-white/[0.06] hover:text-[#6db8ff]"
+                      >
+                        <span className="text-white/55">└ {kokpitNoGoster({ ...alt, anaDosya: dosya })}</span>
+                        {alt.dosyaNo ? ` · ${alt.dosyaNo}` : ""} — {alt.konu}
+                        <span className="ml-2 text-xs text-white/45">
+                          {alt.tur?.etiket ? `${alt.tur.etiket} · ` : ""}
+                          {alt.durum.etiket}
+                        </span>
+                      </Link>
+                    ))}
+                  </span>
+                </Bilgi>
+              )}
+              <AnaDosyaSecici
+                dosyaId={id}
+                mevcutAnaDosyaId={dosya.anaDosyaId}
+                adaylar={anaDosyaAdaylari}
+                altDosyasiVar={dosya.altDosyalar.length > 0}
+              />
             </FormKarti>
           </div>
 

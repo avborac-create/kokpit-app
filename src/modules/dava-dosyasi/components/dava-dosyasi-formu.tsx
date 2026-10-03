@@ -16,9 +16,11 @@ type Props = {
 };
 
 export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSecilenMusteriId }: Props) {
-  const [hukukiIliskiTurleri, davaTurleri, musteriler, alanDuzeni] = await Promise.all([
+  const [hukukiIliskiTurleri, davaTurleri, dosyaTurleri, yargiKollari, musteriler, alanDuzeni] = await Promise.all([
     secenekleriGetir("hukuki_iliski_turu"),
     secenekleriGetir("dava_turu"),
+    secenekleriGetir("dosya_turu"),
+    secenekleriGetir("yargi_kolu"),
     musterileriListele(),
     formAlanDuzeniniGetir("dava-dosyasi"),
   ]);
@@ -41,6 +43,8 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
       seciliIdler={seciliIdler}
       hukukiIliskiTurleri={hukukiIliskiTurleri}
       davaTurleri={davaTurleri}
+      dosyaTurleri={dosyaTurleri.map((t) => ({ id: t.id, etiket: t.etiket, kod: t.kod }))}
+      yargiKollari={yargiKollari.map((y) => ({ id: y.id, etiket: y.etiket, kod: y.kod }))}
       dosya={dosya}
       dosyaId={dosya?.id}
       baslangicKarsiTaraflar={dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad, tc: kt.karsiTaraf.tanimlayiciKod })) ?? []}

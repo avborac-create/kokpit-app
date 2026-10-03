@@ -2,7 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import type { HukukiMudahaleDurumu, DosyaEvresi, AdliBirimHareketYonu, MasrafYansitmaHedefi } from "@prisma/client";
+import type { MuvekkilSifati, HukukiMudahaleDurumu, DosyaEvresi, AdliBirimHareketYonu, MasrafYansitmaHedefi } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
@@ -35,6 +35,16 @@ async function varsayilanDurumIdGetir(): Promise<string> {
   const acik = durumlar.find((d) => d.kod === "acik");
   if (!acik) throw new Error("Varsayılan durum (Açık) bulunamadı.");
   return acik.id;
+}
+
+// Formdaki "Tür" / "Yargı Kolu" / "Müvekkil Sıfatı" alanları. Yargı kolu
+// yalnızca Dava türünde anlamlıdır, başka türde boş bırakılır.
+async function dosyaSinifiniAl(formData: FormData) {
+  const turId = metinYaAlNull(formData, "turId") ?? (await varsayilanTurIdGetir());
+  const tur = await prisma.secenekDegeri.findUnique({ where: { id: turId }, select: { kod: true } });
+  const yargiKoluId = tur?.kod === "dava_dosyasi" ? metinYaAlNull(formData, "yargiKoluId") : null;
+  const muvekkilSifati: MuvekkilSifati = formData.get("muvekkilSifati") === "BORCLU" ? "BORCLU" : "ALACAKLI";
+  return { turId, yargiKoluId, muvekkilSifati };
 }
 
 async function varsayilanTurIdGetir(): Promise<string> {
@@ -215,9 +225,9 @@ export async function davaDosyasiOlustur(
   const hukukiIliskiTuruId = await hukukiIliskiTuruIdCozumle(formData);
   const durusmaTarihiHam = metinYaAlNull(formData, "durusmaTarihi");
 
-  const [durumId, turId, davaTuru, uyusmazlikGrubuId] = await Promise.all([
+  const [durumId, { turId, yargiKoluId, muvekkilSifati }, davaTuru, uyusmazlikGrubuId] = await Promise.all([
     varsayilanDurumIdGetir(),
-    varsayilanTurIdGetir(),
+    dosyaSinifiniAl(formData),
     prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } }),
     uyusmazlikGrubuOtomatikCozumle(musteriIdleri[0]),
   ]);
@@ -237,6 +247,8 @@ export async function davaDosyasiOlustur(
       birimAdi: metinYaAlNull(formData, "birimAdi"),
       konu,
       turId,
+      yargiKoluId,
+      muvekkilSifati,
       hukukiIliskiTuruId,
       davaTuruId,
       talepSonucu,
@@ -298,9 +310,10 @@ export async function davaDosyasiGuncelle(
   const durusmaTarihiHam = metinYaAlNull(formData, "durusmaTarihi");
   const davaTuru = await prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } });
   const konu = davaTuru?.etiket ?? "";
+  const { turId, yargiKoluId, muvekkilSifati } = await dosyaSinifiniAl(formData);
 
-  // DIKKAT: turId/durumId/acilisTarihi/uyusmazlikGrubuId/kapanisTarihi/
-  // sorumluAvukatId/aciklama/icraAltTuruId/yargiKoluId/bagliOlduguDosyaId
+  // DIKKAT: durumId/acilisTarihi/uyusmazlikGrubuId/kapanisTarihi/
+  // sorumluAvukatId/aciklama/icraAltTuruId/bagliOlduguDosyaId
   // BILEREK bu update'e dahil DEGIL - sadelestirilmis formda artik hic
   // toplanmiyorlar, update data'sinda olmayan bir alan Prisma tarafindan
   // DOKUNULMADAN oldugu gibi birakilir (silinmez/sifirlanmaz).
@@ -312,6 +325,9 @@ export async function davaDosyasiGuncelle(
       dosyaNo: metinYaAlNull(formData, "dosyaNo"),
         birimAdi: metinYaAlNull(formData, "birimAdi"),
         konu,
+        turId,
+        yargiKoluId,
+        muvekkilSifati,
         hukukiIliskiTuruId,
         davaTuruId,
         talepSonucu,
@@ -365,11 +381,15 @@ export async function davaDosyasiSil(id: string) {
           paraTrafigiKayitlari: true,
           paraTrafigiDagitimlari: true,
           finansHareketleri: true,
+          altDosyalar: true,
         },
       },
     },
   });
   if (!dosya) return;
+  if (dosya._count.altDosyalar > 0) {
+    throw new Error("Bu dosyanın alt dosyaları var. Önce alt dosyaları ana dosyadan ayırın.");
+  }
   const { masraflar, karsiTarafAlacaklari, paraTrafigiKayitlari, paraTrafigiDagitimlari, finansHareketleri } =
     dosya._count;
   if (
@@ -386,6 +406,54 @@ export async function davaDosyasiSil(id: string) {
 
   await prisma.davaDosyasi.delete({ where: { id } });
   revalidatePath("/kokpit/dava-dosyalari");
+  revalidatePath("/kokpit/finans/musteri-iliskileri");
+}
+
+// Dosya agaci: bir dosyayi baska bir dosyanin ALT dosyasi yapar (ya da
+// anaDosyaId=null ile ayirir). Tek seviye kurali: ana dosya olacak dosya
+// kendisi alt dosya olamaz, alt dosyasi olan bir dosya baskasinin altina
+// alinamaz. Alt sira no ana dosya icinde en buyuk numara + 1 olarak verilir.
+export async function anaDosyaBagla(dosyaId: string, anaDosyaId: string | null) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+
+  const dosya = await prisma.davaDosyasi.findUnique({
+    where: { id: dosyaId },
+    select: { id: true, anaDosyaId: true, _count: { select: { altDosyalar: true } } },
+  });
+  if (!dosya) throw new Error("Dosya bulunamadı.");
+
+  if (anaDosyaId === null) {
+    await prisma.davaDosyasi.update({ where: { id: dosyaId }, data: { anaDosyaId: null, altSiraNo: null } });
+  } else {
+    if (anaDosyaId === dosyaId) throw new Error("Bir dosya kendi ana dosyası olamaz.");
+    if (dosya._count.altDosyalar > 0) {
+      throw new Error("Bu dosyanın kendi alt dosyaları var, başka bir dosyanın altına alınamaz.");
+    }
+    const ana = await prisma.davaDosyasi.findUnique({
+      where: { id: anaDosyaId },
+      select: { id: true, anaDosyaId: true },
+    });
+    if (!ana) throw new Error("Ana dosya bulunamadı.");
+    if (ana.anaDosyaId) throw new Error("Seçilen dosya zaten başka bir dosyanın alt dosyası.");
+    if (dosya.anaDosyaId === anaDosyaId) return;
+
+    await prisma.$transaction(async (tx) => {
+      const enBuyuk = await tx.davaDosyasi.aggregate({
+        where: { anaDosyaId },
+        _max: { altSiraNo: true },
+      });
+      await tx.davaDosyasi.update({
+        where: { id: dosyaId },
+        data: { anaDosyaId, altSiraNo: (enBuyuk._max.altSiraNo ?? 0) + 1 },
+      });
+    });
+  }
+
+  revalidatePath("/kokpit/dava-dosyalari");
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+  if (anaDosyaId) revalidatePath(`/kokpit/dava-dosyalari/${anaDosyaId}`);
+  if (dosya.anaDosyaId) revalidatePath(`/kokpit/dava-dosyalari/${dosya.anaDosyaId}`);
   revalidatePath("/kokpit/finans/musteri-iliskileri");
 }
 

@@ -15,7 +15,7 @@ const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", cur
 
 export function dosyaEtiketi(d: { kayitNo: number; buroNo: string | null; dosyaNo: string | null; birimAdi?: string | null }) {
   const parcalar = [
-    d.buroNo ? `Büro ${d.buroNo}` : `KP-${String(d.kayitNo).padStart(4, "0")}`,
+    d.buroNo ? `BN-${d.buroNo}` : `KP-${String(d.kayitNo).padStart(4, "0")}`,
     d.birimAdi,
     d.dosyaNo,
   ].filter(Boolean);
@@ -65,7 +65,7 @@ export function AvansAktarimFormu({
             Seçiniz…
           </option>
           {hedefler.map((h) => (
-            <option key={h.id} value={h.id}>
+            <option key={h.id} value={h.id} title={h.buroNo ? "BN: OBJEKT BÜRO NO" : undefined}>
               {dosyaEtiketi(h)} — bakiye {paraFormatlayici.format(h.bakiye)}
             </option>
           ))}

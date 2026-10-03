@@ -5,15 +5,20 @@
 // bu kumeye dahil edilmez, tabloda her zaman en sonda sabit kalir.
 export const DAVA_DOSYALARI_SUTUN_ETIKETLERI: Record<string, string> = {
   kayitNo: "Kokpit No",
-  buroNo: "Büro No",
+  buroNo: "BN",
   dosyaNo: "Dosya No",
-  tur: "Tür",
+  tur: "Tür / Konu",
   birimAdi: "Birim",
-  konu: "Konu",
   karsiTaraflar: "Karşı Taraf",
   muvekkiller: "Müvekkil",
   durum: "Durum",
   sorumluAvukat: "Sorumlu Avukat",
+};
+
+// Kisaltilmis etiketlerin imlec uzerine gelince gosterilen tam adi.
+export const DAVA_DOSYALARI_SUTUN_ACIKLAMALARI: Record<string, string> = {
+  buroNo: "OBJEKT BÜRO NO",
+  tur: "Tür (Dava › Hukuk, İcra…) · Konu (Çek, Bono…)",
 };
 
 export const DAVA_DOSYALARI_VARSAYILAN_SUTUN_SIRASI = Object.keys(DAVA_DOSYALARI_SUTUN_ETIKETLERI);

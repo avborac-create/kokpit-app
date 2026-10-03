@@ -476,6 +476,17 @@ model DavaDosyasi {
   bagliOlduguDosyaId String?
   bagliOlduguDosya   DavaDosyasi?     @relation("DosyaBaglantisi", fields: [bagliOlduguDosyaId], references: [id])
   baglananDosyalar   DavaDosyasi[]    @relation("DosyaBaglantisi")
+  // Dosya agaci (ana dosya / alt dosya): ayni uyusmazligin bagimsiz acilmis
+  // dosyalarini (ör. esas icra + karsiliksiz cek davasi) tek ana dosyanin
+  // altinda toplar. TEK seviyedir - alt dosyanin kendi alt dosyasi olmaz.
+  // Alt dosya "KP-0019/1" gibi gosterilir (ana kayitNo + altSiraNo); kendi
+  // kayitNo'su DB'de ve aramada korunur, ana dosyadan ayrilinca eski
+  // numarasina doner. bagliOlduguDosya (talimat baglantisi) ile KARISMAZ.
+  muvekkilSifati     MuvekkilSifati   @default(ALACAKLI)
+  anaDosyaId         String?
+  anaDosya           DavaDosyasi?     @relation("DosyaAgaci", fields: [anaDosyaId], references: [id])
+  altDosyalar        DavaDosyasi[]    @relation("DosyaAgaci")
+  altSiraNo          Int?
   durumId            String
   durum              SecenekDegeri    @relation("DavaDosyasiDurumu", fields: [durumId], references: [id])
   sorumluAvukatId    String?
@@ -525,6 +536,7 @@ model DavaDosyasi {
   @@index([hukukiIliskiTuruId])
   @@index([davaTuruId])
   @@index([dosyaEvresi])
+  @@index([anaDosyaId])
   @@map("dava_dosyalari")
 }
 
@@ -590,6 +602,13 @@ model DosyaMasrafi {
   @@index([turId])
   @@index([durumId])
   @@map("dosya_masraflari")
+}
+
+// Muvekkilin dosyadaki sifati. Buroda alacakli sifati cok baskin oldugundan
+// varsayilan ALACAKLI'dir; listede yalniz BORCLU rozetle vurgulanir.
+enum MuvekkilSifati {
+  ALACAKLI
+  BORCLU
 }
 
 enum MasrafYansitmaHedefi {

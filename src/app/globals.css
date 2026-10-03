@@ -83,6 +83,13 @@ body {
     transform: translateZ(0);
     isolation: isolate;
   }
+  /* Acilir menu / popover'lar icin OPAK yuzey. Yari saydam "glass" arkadaki
+     icerigi gosterdiginden menuler okunmaz oluyordu. */
+  .popover {
+    background: var(--background-2);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
+  }
   .glass-strong {
     background: var(--glass-bg-strong);
     border: 1px solid var(--glass-border);

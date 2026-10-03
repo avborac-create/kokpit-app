@@ -30,6 +30,9 @@ export function SiralanabilirListe({
   const [ogeler, setOgeler] = useState(baslangic);
   const [, startTransition] = useTransition();
   const [suruklenenAnahtar, setSuruklenenAnahtar] = useState<string | null>(null);
+  // Surukleme baslangicindaki sira - birakma sonunda degisip degismedigini
+  // anlamak icin.
+  const baslangicSirasiRef = useRef<string>("");
 
   // Surukleme sirasinda dragEnter cok sik tetiklenip state'i guncelledigi
   // icin, onDrop anindaki en guncel sirayi (React state closure'inin
@@ -52,6 +55,19 @@ export function SiralanabilirListe({
     });
   }
 
+  // Kaydetme onDrop yerine onDragEnd'de yapilir: onDrop yalnizca bir satirin
+  // TAM uzerine birakilinca tetiklenir; satirlar arasindaki bosluga ya da liste
+  // disina birakinca hic kayit olmuyor ve siralama sessizce kayboluyordu.
+  // onDragEnd ise surukleme nerede biterse bitsin her zaman tetiklenir.
+  function suruklemeBitti() {
+    setSuruklenenAnahtar(null);
+    const yeniSira = ogelerRef.current.map((o) => o.anahtar);
+    if (yeniSira.join("|") === baslangicSirasiRef.current) return;
+    startTransition(() => {
+      onSirala(yeniSira);
+    });
+  }
+
   function gorunurlukDegistir(anahtar: string, gizliMi: boolean) {
     setOgeler((onceki) => onceki.map((o) => (o.anahtar === anahtar ? { ...o, gizliMi } : o)));
     startTransition(() => {
@@ -60,21 +76,21 @@ export function SiralanabilirListe({
   }
 
   return (
-    <div className="glass flex flex-col gap-1 rounded-2xl p-2">
+    <div className="glass flex flex-col gap-1 rounded-2xl p-2" onDragOver={(e) => e.preventDefault()}>
       {ogeler.map((oge) => (
         <div
           key={oge.anahtar}
           draggable
-          onDragStart={() => setSuruklenenAnahtar(oge.anahtar)}
+          onDragStart={(e) => {
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", oge.anahtar);
+            baslangicSirasiRef.current = ogelerRef.current.map((o) => o.anahtar).join("|");
+            setSuruklenenAnahtar(oge.anahtar);
+          }}
           onDragEnter={() => uzerineGelince(oge.anahtar)}
           onDragOver={(e) => e.preventDefault()}
-          onDrop={() => {
-            setSuruklenenAnahtar(null);
-            startTransition(() => {
-              onSirala(ogelerRef.current.map((o) => o.anahtar));
-            });
-          }}
-          onDragEnd={() => setSuruklenenAnahtar(null)}
+          onDrop={(e) => e.preventDefault()}
+          onDragEnd={suruklemeBitti}
           className={`flex cursor-grab items-center justify-between rounded-xl px-4 py-3 transition-colors active:cursor-grabbing ${
             suruklenenAnahtar === oge.anahtar ? "opacity-40" : "hover:bg-white/[0.04]"
           }`}
