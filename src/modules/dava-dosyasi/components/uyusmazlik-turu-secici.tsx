@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
+import { SecenekYerindeDuzenle } from "./secenek-yerinde-duzenle";
 
 export const MANUEL_UYUSMAZLIK_DEGERI = "__manuel__";
 
@@ -19,6 +20,7 @@ export function UyusmazlikTuruSecici({
   yeniAlanAdi = "yeniHukukiIliskiTuruEtiketi",
   etiket = "Uyuşmazlık Türü",
   zorunlu = false,
+  yoneticiMi = false,
 }: {
   turler: { id: string; etiket: string }[];
   varsayilanId: string;
@@ -27,21 +29,27 @@ export function UyusmazlikTuruSecici({
   yeniAlanAdi?: string;
   etiket?: string;
   zorunlu?: boolean;
+  // Sadece admin: yerinde ad duzeltme paneli + tam liste yonetimi baglantisi.
+  yoneticiMi?: boolean;
 }) {
   const [secim, setSecim] = useState(varsayilanId);
+  const [etiketDuzeltmeleri, setEtiketDuzeltmeleri] = useState<Record<string, string>>({});
   const manuelMi = secim === MANUEL_UYUSMAZLIK_DEGERI;
+  const guncelTurler = turler.map((t) => ({ ...t, etiket: etiketDuzeltmeleri[t.id] ?? t.etiket }));
 
   return (
     <Alan>
       <div className="flex items-center justify-between">
         <Etiket htmlFor={alanAdi}>{etiket}</Etiket>
-        <Link
-          href={`/kokpit/ayarlar/secenekler?liste=${alanAdi === "davaTuruId" ? "dava_turu" : "hukuki_iliski_turu"}`}
-          target="_blank"
-          className="text-xs text-[#6db8ff] hover:underline"
-        >
-          Listeyi düzenle ↗
-        </Link>
+        {yoneticiMi && (
+          <Link
+            href={`/kokpit/ayarlar/secenekler?liste=${alanAdi === "davaTuruId" ? "dava_turu" : "hukuki_iliski_turu"}`}
+            target="_blank"
+            className="text-xs text-[#6db8ff] hover:underline"
+          >
+            Tüm liste ↗
+          </Link>
+        )}
       </div>
       <Secim
         id={alanAdi}
@@ -54,12 +62,18 @@ export function UyusmazlikTuruSecici({
           Seçiniz…
         </option>
         <option value={MANUEL_UYUSMAZLIK_DEGERI}>＋ MANUEL GİR (listede yok)</option>
-        {turler.map((t) => (
+        {guncelTurler.map((t) => (
           <option key={t.id} value={t.id}>
             {t.etiket}
           </option>
         ))}
       </Secim>
+      {yoneticiMi && (
+        <SecenekYerindeDuzenle
+          secenekler={guncelTurler}
+          etiketDegisti={(id, yeni) => setEtiketDuzeltmeleri((onceki) => ({ ...onceki, [id]: yeni }))}
+        />
+      )}
       {manuelMi && (
         <Girdi
           name={yeniAlanAdi}
