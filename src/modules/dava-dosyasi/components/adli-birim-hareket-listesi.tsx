@@ -1,9 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
+import { OnayliButon } from "@/core/ui/onayli-buton";
 import type { davaDosyasiGetir } from "@/modules/dava-dosyasi/lib/queries";
 import { adliBirimHareketiSil } from "@/modules/dava-dosyasi/lib/actions";
-import { Dugme } from "@/core/ui/button";
 
 type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
 // Prisma'nin Decimal tipi Server->Client Component sinirini gecemez;
@@ -62,7 +61,6 @@ export function AdliBirimHareketListesi({ hareketler, dosyaId }: { hareketler: H
 }
 
 function HareketSatiri({ hareket, dosyaId }: { hareket: Hareket; dosyaId: string }) {
-  const [silmePending, sil] = useTransition();
   const odemeMi = hareket.yon === "ODEME";
 
   return (
@@ -80,18 +78,13 @@ function HareketSatiri({ hareket, dosyaId }: { hareket: Hareket; dosyaId: string
       <td className="px-4 py-3 text-white/85">{hareket.aciklama}</td>
       <td className="px-4 py-3 font-medium text-white">{paraFormatlayici.format(Number(hareket.tutar))}</td>
       <td className="px-4 py-3">
-        <Dugme
-          type="button"
-          varyant="tehlike"
-          disabled={silmePending}
-          onClick={() => {
-            if (window.confirm("Bu hareket silinsin mi?")) {
-              sil(() => adliBirimHareketiSil(hareket.id, dosyaId));
-            }
-          }}
-        >
-          Sil
-        </Dugme>
+        <OnayliButon
+ sifreIste
+ eylem={(sifre) => adliBirimHareketiSil(hareket.id, dosyaId, sifre)}
+ mesaj="Bu hareket silinsin mi?"
+ >
+ Sil
+ </OnayliButon>
       </td>
     </tr>
   );

@@ -651,7 +651,8 @@ export async function avansAktarimiEkle(kaynakDosyaId: string, formData: FormDat
   revalidatePath("/kokpit/finans/musteri-iliskileri");
 }
 
-export async function avansAktarimiSil(id: string, dosyaId: string) {
+export async function avansAktarimiSil(id: string, dosyaId: string, sifre?: string) {
+  await silmeSifresiniDogrula(sifre);
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
@@ -663,7 +664,8 @@ export async function avansAktarimiSil(id: string, dosyaId: string) {
   revalidatePath("/kokpit/finans/musteri-iliskileri");
 }
 
-export async function dosyaMasrafiSil(id: string, dosyaId: string) {
+export async function dosyaMasrafiSil(id: string, dosyaId: string, sifre?: string) {
+  await silmeSifresiniDogrula(sifre);
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
@@ -703,7 +705,8 @@ export async function karsiTarafAlacagiTahsilDurumuDegistir(
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
 
-export async function karsiTarafAlacagiSil(id: string, dosyaId: string) {
+export async function karsiTarafAlacagiSil(id: string, dosyaId: string, sifre?: string) {
+  await silmeSifresiniDogrula(sifre);
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
@@ -991,7 +994,8 @@ export async function adliBirimHareketiEkle(dosyaId: string, formData: FormData)
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
 
-export async function adliBirimHareketiSil(id: string, dosyaId: string) {
+export async function adliBirimHareketiSil(id: string, dosyaId: string, sifre?: string) {
+  await silmeSifresiniDogrula(sifre);
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");

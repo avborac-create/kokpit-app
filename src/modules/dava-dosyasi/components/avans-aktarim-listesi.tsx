@@ -1,11 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
+import { OnayliButon } from "@/core/ui/onayli-buton";
 import Link from "next/link";
+import { dosyaKisaNo } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { avansAktarimiSil } from "@/modules/dava-dosyasi/lib/actions";
-import { Dugme } from "@/core/ui/button";
 
-type DosyaOzeti = { id: string; kayitNo: number; buroNo: string | null; dosyaNo: string | null; birimAdi: string | null };
+type DosyaOzeti = { id: string; kayitNo: number; altSiraNo?: number | null; anaDosya?: { kayitNo: number } | null; buroNo: string | null; dosyaNo: string | null; birimAdi: string | null };
 
 export type AktarimSatiri = {
   id: string;
@@ -27,7 +27,7 @@ function DosyaBaglantisi({ dosya }: { dosya: DosyaOzeti }) {
       title={dosya.buroNo ? "OBJEKT BÜRO NO" : undefined}
       className="hover:text-[#6db8ff] hover:underline"
     >
-      {dosya.buroNo ? `BN-${dosya.buroNo}` : `KP-${String(dosya.kayitNo).padStart(4, "0")}`}
+      {dosyaKisaNo(dosya)}
       {dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}
     </Link>
   );
@@ -79,7 +79,6 @@ function AktarimSatir({
   dosyaId: string;
   silmeYetkisiVar: boolean;
 }) {
-  const [silmePending, sil] = useTransition();
   const cikisMi = aktarim.kaynakDosya.id === dosyaId;
 
   return (
@@ -105,18 +104,13 @@ function AktarimSatir({
       </td>
       {silmeYetkisiVar && (
         <td className="px-4 py-3">
-          <Dugme
-            type="button"
-            varyant="tehlike"
-            disabled={silmePending}
-            onClick={() => {
-              if (window.confirm("Bu aktarım silinsin mi? Bakiyeler eski haline döner.")) {
-                sil(() => avansAktarimiSil(aktarim.id, dosyaId));
-              }
-            }}
-          >
-            Sil
-          </Dugme>
+          <OnayliButon
+ sifreIste
+ eylem={(sifre) => avansAktarimiSil(aktarim.id, dosyaId, sifre)}
+ mesaj="Bu aktarım silinsin mi? Bakiyeler eski haline döner."
+ >
+ Sil
+ </OnayliButon>
         </td>
       )}
     </tr>

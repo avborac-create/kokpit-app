@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { kokpitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { notFound } from "next/navigation";
 import { musteriGetir } from "@/modules/musteri/lib/queries";
 import { irtibatKisisiEkle } from "@/modules/musteri/lib/actions";
@@ -114,7 +115,7 @@ export default async function MusteriDetaySayfasi({
                         href={`/kokpit/dava-dosyalari/${dosya.id}`}
                         className="font-medium text-white hover:text-[#6db8ff] hover:underline"
                       >
-                        KP-{String(dosya.kayitNo).padStart(4, "0")}
+                        {kokpitNoGoster(dosya)}
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-white/60">{dosya.dosyaNo ?? "—"}</td>

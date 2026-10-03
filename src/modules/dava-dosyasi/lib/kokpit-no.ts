@@ -27,3 +27,9 @@ export function buroNoGoster(buroNo: string | null | undefined): string {
   if (!buroNo) return "—";
   return /^\d/.test(buroNo) ? `BN-${buroNo}` : buroNo;
 }
+
+// Finans/secim ekranlarinda bir dosyayi kisaca anan etiket: buro no varsa
+// "BN-8655", yoksa Kokpit No ("KP-0019" ya da alt dosya icin "KP-0019/1").
+export function dosyaKisaNo(dosya: KokpitNoGirdisi & { buroNo?: string | null }): string {
+  return dosya.buroNo ? buroNoGoster(dosya.buroNo) : kokpitNoGoster(dosya);
+}

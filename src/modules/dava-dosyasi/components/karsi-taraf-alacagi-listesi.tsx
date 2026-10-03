@@ -1,5 +1,6 @@
 "use client";
 
+import { OnayliButon } from "@/core/ui/onayli-buton";
 import { useTransition } from "react";
 import {
   karsiTarafAlacagiSil,
@@ -84,7 +85,6 @@ function AlacakSatiri({
   silmeYetkisiVar: boolean;
 }) {
   const [durumPending, durumDegistir] = useTransition();
-  const [silmePending, sil] = useTransition();
 
   return (
     <tr className="border-t border-white/[0.06]">
@@ -116,18 +116,13 @@ function AlacakSatiri({
             {alacak.tahsilEdildiMi ? "Beklemede Yap" : "Tahsil Edildi İşaretle"}
           </Dugme>
           {silmeYetkisiVar && (
-            <Dugme
-              type="button"
-              varyant="tehlike"
-              disabled={silmePending}
-              onClick={() => {
-                if (window.confirm("Bu alacak kaydı silinsin mi?")) {
-                  sil(() => karsiTarafAlacagiSil(alacak.id, dosyaId));
-                }
-              }}
-            >
-              Sil
-            </Dugme>
+            <OnayliButon
+ sifreIste
+ eylem={(sifre) => karsiTarafAlacagiSil(alacak.id, dosyaId, sifre)}
+ mesaj="Bu alacak kaydı silinsin mi?"
+ >
+ Sil
+ </OnayliButon>
           )}
         </div>
       </td>

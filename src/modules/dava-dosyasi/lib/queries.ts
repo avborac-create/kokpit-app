@@ -163,7 +163,7 @@ export async function bagliDosyaAdaylariniAra(arama: string, haricTutulanId?: st
 export async function musterininDosyalari(musteriId: string) {
   return prisma.davaDosyasi.findMany({
     where: { muvekkiller: { some: { musteriId } } },
-    include: { durum: true, tur: true, karsiTaraflar: { include: { karsiTaraf: true } } },
+    include: { durum: true, tur: true, karsiTaraflar: { include: { karsiTaraf: true } }, anaDosya: { select: { kayitNo: true } } },
     orderBy: { olusturmaTarihi: "desc" },
   });
 }
@@ -335,6 +335,24 @@ export async function uyusmazlikGrubuCariHesapOzeti(uyusmazlikGrubuId: string) {
   );
 }
 
+// Dosya agaci (ana dosya + alt dosyalari) toplami: verilen dosyalarin ortak
+// cari hesap ozeti. Agac ICINDEKI avans aktarimlari kapsama hem giris hem
+// cikis olarak girdiginden birbirini goturur (bkz. cariHesapOzetiHesapla).
+export async function dosyaAgaciCariHesapOzeti(dosyaIdleri: string[]) {
+  return cariHesapOzetiHesapla(
+    {
+      paraTrafigi: {
+        durum: { kod: "tahsil_edildi" },
+        dosyalar: { some: { dosyaId: { in: dosyaIdleri } } },
+        dagitimlar: { none: {} },
+      },
+    },
+    { dosyaId: { in: dosyaIdleri } },
+    { dosyaId: { in: dosyaIdleri }, paraTrafigi: { durum: { kod: "tahsil_edildi" } } },
+    { id: { in: dosyaIdleri } },
+  );
+}
+
 // Tek bir dosyanin "Muvekkil Bakiye Avans Miktari" - Akdi Vekalet Hesabi
 // haric tum cari kodlardaki (tasnif + gelen aktarim - masraf - giden aktarim)
 // net toplam. Negatifse muvekkilin dosyada borcu vardir.
@@ -355,7 +373,16 @@ export function netAvansBakiyesi(ozet: Awaited<ReturnType<typeof dosyaCariHesapO
 export async function musteriDosyaAvansBakiyeleri(musteriId: string) {
   const dosyalar = await prisma.davaDosyasi.findMany({
     where: { muvekkiller: { some: { musteriId } } },
-    select: { id: true, kayitNo: true, buroNo: true, dosyaNo: true, birimAdi: true, konu: true },
+    select: {
+      id: true,
+      kayitNo: true,
+      altSiraNo: true,
+      anaDosya: { select: { kayitNo: true } },
+      buroNo: true,
+      dosyaNo: true,
+      birimAdi: true,
+      konu: true,
+    },
     orderBy: { olusturmaTarihi: "asc" },
   });
   return Promise.all(
@@ -376,7 +403,7 @@ export async function aktarimHedefAdaylari(dosyaId: string) {
       id: { not: dosyaId },
       muvekkiller: { some: { musteriId: { in: dosya.muvekkiller.map((m) => m.musteriId) } } },
     },
-    select: { id: true, kayitNo: true, buroNo: true, dosyaNo: true, birimAdi: true },
+    select: { id: true, kayitNo: true, altSiraNo: true, anaDosya: { select: { kayitNo: true } }, buroNo: true, dosyaNo: true, birimAdi: true },
     orderBy: { olusturmaTarihi: "asc" },
   });
   return Promise.all(adaylar.map(async (a) => ({ ...a, bakiye: await dosyaAvansBakiyesi(a.id) })));
@@ -385,7 +412,11 @@ export async function aktarimHedefAdaylari(dosyaId: string) {
 export async function dosyaAvansAktarimlari(dosyaId: string) {
   return prisma.dosyaAvansAktarimi.findMany({
     where: { OR: [{ kaynakDosyaId: dosyaId }, { hedefDosyaId: dosyaId }] },
-    include: { kaynakDosya: true, hedefDosya: true, cariKod: true },
+    include: {
+      kaynakDosya: { include: { anaDosya: { select: { kayitNo: true } } } },
+      hedefDosya: { include: { anaDosya: { select: { kayitNo: true } } } },
+      cariKod: true,
+    },
     orderBy: { tarih: "desc" },
   });
 }
@@ -493,7 +524,12 @@ export async function uyusmazlikGrubuGetir(id: string) {
       durum: true,
       karsiTaraflar: { include: { karsiTaraf: true } },
       dosyalar: {
-        include: { durum: true, karsiTaraflar: { include: { karsiTaraf: true } }, bagliOlduguDosya: true },
+        include: {
+          durum: true,
+          karsiTaraflar: { include: { karsiTaraf: true } },
+          bagliOlduguDosya: true,
+          anaDosya: { select: { kayitNo: true } },
+        },
         orderBy: { olusturmaTarihi: "asc" },
       },
     },
@@ -602,6 +638,7 @@ export async function kararSonrasiTakipListele(filtre: KararSonrasiTakipFiltre =
     include: {
       muvekkiller: { include: { musteri: true } },
       sorumluAvukat: true,
+      anaDosya: { select: { kayitNo: true } },
     },
     orderBy: [{ sonrakiKontrolTarihi: { sort: "asc", nulls: "last" } }],
   });

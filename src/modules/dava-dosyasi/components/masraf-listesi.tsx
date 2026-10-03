@@ -1,10 +1,10 @@
 "use client";
 
+import { OnayliButon } from "@/core/ui/onayli-buton";
 import { useTransition } from "react";
 import Link from "next/link";
 import type { davaDosyasiGetir } from "@/modules/dava-dosyasi/lib/queries";
 import { dosyaMasrafiSil, dosyaMasrafiYansitmaDegistir } from "@/modules/dava-dosyasi/lib/actions";
-import { Dugme } from "@/core/ui/button";
 
 type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
 // Prisma'nin Decimal tipi Server->Client Component sinirini gecemez;
@@ -99,7 +99,6 @@ function MasrafSatiri({
   dosyaId: string;
   silmeYetkisiVar: boolean;
 }) {
-  const [silmePending, sil] = useTransition();
   const [yansitmaPending, yansit] = useTransition();
 
   return (
@@ -142,18 +141,13 @@ function MasrafSatiri({
       </td>
       {silmeYetkisiVar && (
         <td className="px-4 py-3">
-          <Dugme
-            type="button"
-            varyant="tehlike"
-            disabled={silmePending}
-            onClick={() => {
-              if (window.confirm("Bu masraf kaydı silinsin mi?")) {
-                sil(() => dosyaMasrafiSil(masraf.id, dosyaId));
-              }
-            }}
-          >
-            Sil
-          </Dugme>
+          <OnayliButon
+ sifreIste
+ eylem={(sifre) => dosyaMasrafiSil(masraf.id, dosyaId, sifre)}
+ mesaj="Bu masraf kaydı silinsin mi?"
+ >
+ Sil
+ </OnayliButon>
         </td>
       )}
     </tr>

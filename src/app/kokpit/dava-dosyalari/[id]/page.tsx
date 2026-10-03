@@ -7,6 +7,8 @@ import {
   aktarimHedefAdaylari,
   dosyaAvansAktarimlari,
   anaDosyaAdaylariniGetir,
+  dosyaAgaciCariHesapOzeti,
+  dosyaAvansBakiyesi,
 } from "@/modules/dava-dosyasi/lib/queries";
 import {
   dosyaMasrafiEkle,
@@ -113,6 +115,27 @@ export default async function DavaDosyasiDetaySayfasi({
   ]);
   if (!dosya) notFound();
   const avansBakiyesi = netAvansBakiyesi(cariHesapOzeti);
+
+  // Ana dosyaysa: kendisi + alt dosyalarinin toplam cari hesabi ve her birinin
+  // ayri bakiyesi ("KP-0019 ile ilgileniyorum" ya da "/1 ile" ihtiyaci).
+  const agacIdleri = dosya.altDosyalar.length > 0 ? [id, ...dosya.altDosyalar.map((a) => a.id)] : [];
+  const [agacOzeti, agacBakiyeleri] =
+    agacIdleri.length > 0
+      ? await Promise.all([
+          dosyaAgaciCariHesapOzeti(agacIdleri),
+          Promise.all(agacIdleri.map(async (i) => ({ id: i, bakiye: await dosyaAvansBakiyesi(i) }))),
+        ])
+      : [[], []];
+  const agacBakiyesi = netAvansBakiyesi(agacOzeti);
+  const agacSatirlari = agacBakiyeleri.map((b) => {
+    const alt = dosya.altDosyalar.find((a) => a.id === b.id);
+    return {
+      id: b.id,
+      no: alt ? kokpitNoGoster({ ...alt, anaDosya: dosya }) : kokpitNoGoster(dosya),
+      konu: alt ? alt.konu : dosya.konu,
+      bakiye: b.bakiye,
+    };
+  });
   const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
@@ -363,6 +386,11 @@ export default async function DavaDosyasiDetaySayfasi({
             >
               Müvekkil Bakiye Avans: {paraFormatlayici.format(avansBakiyesi)}
             </span>
+            {agacIdleri.length > 0 && (
+              <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-medium text-white/70">
+                Alt dosyalar dahil: {paraFormatlayici.format(agacBakiyesi)}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -446,6 +474,57 @@ export default async function DavaDosyasiDetaySayfasi({
         </>
       ) : (
         <>
+          {agacIdleri.length > 0 && (
+            <CariHesapBolumu baslik="Ana Dosya + Alt Dosyalar Toplamı">
+              <div className="mb-6">
+                <CariHesapOzeti ozet={agacOzeti} />
+              </div>
+              <div className="glass overflow-x-auto rounded-2xl">
+                <table className="w-full text-left text-sm">
+                  <thead className="text-white/50">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Dosya</th>
+                      <th className="px-4 py-3 font-medium">Konu</th>
+                      <th className="px-4 py-3 text-right font-medium">Bakiye Avans</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {agacSatirlari.map((satir) => (
+                      <tr key={satir.id} className="border-t border-white/[0.06]">
+                        <td className="px-4 py-3 font-medium text-white">
+                          {satir.id === id ? (
+                            satir.no
+                          ) : (
+                            <Link
+                              href={`/kokpit/dava-dosyalari/${satir.id}?sekme=ekonomi`}
+                              className="hover:text-[#6db8ff] hover:underline"
+                            >
+                              {satir.no}
+                            </Link>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-white/60">{satir.konu}</td>
+                        <td
+                          className={`px-4 py-3 text-right ${
+                            satir.bakiye < 0 ? "text-[#ff7a70]" : satir.bakiye > 0 ? "text-[#32d74b]" : "text-white/60"
+                          }`}
+                        >
+                          {paraFormatlayici.format(satir.bakiye)}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="border-t border-white/10 font-medium">
+                      <td className="px-4 py-3 text-white" colSpan={2}>
+                        Toplam
+                      </td>
+                      <td className="px-4 py-3 text-right text-white">{paraFormatlayici.format(agacBakiyesi)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CariHesapBolumu>
+          )}
+
           <CariHesapBolumu baslik="Müvekkil-Büro Cari Hesabı">
             <div className="mb-8">
               <CariHesapOzeti ozet={cariHesapOzeti} />

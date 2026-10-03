@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { dosyaKisaNo } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { notFound } from "next/navigation";
 import { musteriGetir } from "@/modules/musteri/lib/queries";
 import { paraTrafigiKaydiEkle } from "@/modules/musteri/lib/actions";
@@ -78,7 +79,7 @@ export default async function CariHesapSayfasi({
                     title={d.buroNo ? "OBJEKT BÜRO NO" : undefined}
                     className="font-medium text-white hover:text-[#6db8ff] hover:underline"
                   >
-                    {d.buroNo ? `BN-${d.buroNo}` : `KP-${String(d.kayitNo).padStart(4, "0")}`}
+                    {dosyaKisaNo(d)}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-white/60">{d.birimAdi ?? "—"}</td>

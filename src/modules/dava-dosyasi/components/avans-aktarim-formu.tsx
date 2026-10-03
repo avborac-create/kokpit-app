@@ -1,3 +1,4 @@
+import { dosyaKisaNo } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
@@ -13,9 +14,9 @@ type Hedef = {
 
 const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 
-export function dosyaEtiketi(d: { kayitNo: number; buroNo: string | null; dosyaNo: string | null; birimAdi?: string | null }) {
+export function dosyaEtiketi(d: { kayitNo: number; altSiraNo?: number | null; anaDosya?: { kayitNo: number } | null; buroNo: string | null; dosyaNo: string | null; birimAdi?: string | null }) {
   const parcalar = [
-    d.buroNo ? `BN-${d.buroNo}` : `KP-${String(d.kayitNo).padStart(4, "0")}`,
+    dosyaKisaNo(d),
     d.birimAdi,
     d.dosyaNo,
   ].filter(Boolean);

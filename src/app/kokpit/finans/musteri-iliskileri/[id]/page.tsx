@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
+import { buroNoGoster, kokpitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { notFound } from "next/navigation";
 import { musteriGetir } from "@/modules/musteri/lib/queries";
 import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
@@ -67,7 +67,7 @@ export default async function MusteriFinansAksiyonSayfasi({
                         href={`/kokpit/dava-dosyalari/${dosya.id}`}
                         className="font-medium text-white hover:text-[#6db8ff] hover:underline"
                       >
-                        KP-{String(dosya.kayitNo).padStart(4, "0")}
+                        {kokpitNoGoster(dosya)}
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-white/60">{buroNoGoster(dosya.buroNo)}</td>

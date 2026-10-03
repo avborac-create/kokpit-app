@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { kokpitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { kararSonrasiTakipListele } from "@/modules/dava-dosyasi/lib/queries";
 import { avukatlariListele } from "@/modules/musteri/lib/queries";
 import { DOSYA_EVRESI_ETIKETLERI } from "@/modules/dava-dosyasi/lib/sabitler";
@@ -90,7 +91,7 @@ export default async function KararSonrasiTakipSayfasi({
                       href={`/kokpit/dava-dosyalari/${dosya.id}`}
                       className="font-medium text-white hover:text-[#6db8ff] hover:underline"
                     >
-                      {dosya.dosyaNo ?? `KP-${String(dosya.kayitNo).padStart(4, "0")}`}
+                      {dosya.dosyaNo ?? kokpitNoGoster(dosya)}
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-white/60">
