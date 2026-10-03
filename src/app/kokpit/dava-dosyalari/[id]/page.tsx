@@ -73,6 +73,20 @@ function CariHesapBolumu({
   );
 }
 
+// Birden fazla kisi/kurum varsa alt alta, sira numarali; tek ise duz metin;
+// hic yoksa "—". Taraflar kartinda kullanilir.
+function SiraliListe({ children }: { children: React.ReactNode[] }) {
+  if (children.length === 0) return <>—</>;
+  if (children.length === 1) return <>{children[0]}</>;
+  return (
+    <ol className="list-decimal space-y-0.5 pl-5">
+      {children.map((c, i) => (
+        <li key={i}>{c}</li>
+      ))}
+    </ol>
+  );
+}
+
 export default async function DavaDosyasiDetaySayfasi({
   params,
   searchParams,
@@ -208,21 +222,27 @@ export default async function DavaDosyasiDetaySayfasi({
       anahtar: "muvekkiller",
       varsayilanEtiket: "Müvekkil(ler)",
       tip: "salt",
-      gosterim: dosya.muvekkiller.map((m, i) => (
-        <span key={m.musteriId}>
-          {i > 0 && ", "}
-          <Link href={`/kokpit/musteriler/${m.musteriId}`} className="hover:text-[#6db8ff] hover:underline">
-            {m.musteri.adSoyadUnvan}
-          </Link>
-        </span>
-      )),
+      gosterim: (
+        <SiraliListe>
+          {dosya.muvekkiller.map((m) => (
+            <Link
+              key={m.musteriId}
+              href={`/kokpit/musteriler/${m.musteriId}`}
+              className="hover:text-[#6db8ff] hover:underline"
+            >
+              {m.musteri.adSoyadUnvan}
+            </Link>
+          ))}
+        </SiraliListe>
+      ),
     },
     {
       anahtar: "karsiTaraflar",
       varsayilanEtiket: "Karşı Taraf(lar)",
       tip: "salt",
-      gosterim:
-        dosya.karsiTaraflar.length > 0 ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") : "—",
+      gosterim: (
+        <SiraliListe>{dosya.karsiTaraflar.map((kt) => <span key={kt.karsiTarafId}>{kt.karsiTaraf.ad}</span>)}</SiraliListe>
+      ),
     },
   ];
   const agacAlanlari: KartAlani[] = [
