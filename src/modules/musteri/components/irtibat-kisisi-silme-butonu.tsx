@@ -12,7 +12,8 @@ export function IrtibatKisisiSilmeButonu({
 }) {
   return (
     <OnayliButon
-      eylem={() => irtibatKisisiSil(musteriId, kisiId)}
+      sifreIste
+      eylem={(sifre) => irtibatKisisiSil(musteriId, kisiId, sifre)}
       mesaj="Bu irtibat kişisini silmek istediğinize emin misiniz?"
       className="px-2 py-1 text-xs"
     >

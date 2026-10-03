@@ -1158,3 +1158,15 @@ model Belge {
   @@index([hacizRaporuId])
   @@map("belgeler")
 }
+
+// "Paneli düzenle" ile degistirilen kart basliklari ve alan etiketleri. Tum
+// kullanicilar icin ortak (kullanici/dosya bazli degil); kayit yoksa kodda
+// tanimli varsayilan metin kullanilir. anahtar: "<sayfa>.<kart>.baslik" ya da
+// "<sayfa>.<kart>.alan.<alanAnahtari>" (bkz. core/arayuz-etiketi).
+model ArayuzEtiketi {
+  anahtar          String   @id
+  metin            String
+  guncellemeTarihi DateTime @updatedAt
+
+  @@map("arayuz_etiketleri")
+}

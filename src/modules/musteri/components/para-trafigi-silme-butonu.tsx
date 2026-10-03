@@ -12,7 +12,8 @@ export function ParaTrafigiSilmeButonu({
 }) {
   return (
     <OnayliButon
-      eylem={() => paraTrafigiKaydiSil(musteriId, kayitId)}
+      sifreIste
+      eylem={(sifre) => paraTrafigiKaydiSil(musteriId, kayitId, sifre)}
       mesaj="Bu para trafiği kaydını silmek istediğinize emin misiniz?"
       className="px-2 py-1 text-xs"
     >

@@ -1,5 +1,6 @@
 "use server";
 
+import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import type { MuvekkilSifati, HukukiMudahaleDurumu, DosyaEvresi, AdliBirimHareketYonu, MasrafYansitmaHedefi } from "@prisma/client";
@@ -361,11 +362,12 @@ export async function davaDosyasiGuncelle(
   redirect(`/kokpit/dava-dosyalari/${id}`);
 }
 
-export async function davaDosyasiSil(id: string) {
+export async function davaDosyasiSil(id: string, sifre?: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
   }
+  await silmeSifresiniDogrula(sifre);
 
   // Finansal kaydi olan bir dosya artik dogrudan silinemez - yanlislikla
   // gercek para hareketi/masraf/alacak kaydini yok etmemek icin. Bunun
@@ -407,6 +409,71 @@ export async function davaDosyasiSil(id: string) {
   await prisma.davaDosyasi.delete({ where: { id } });
   revalidatePath("/kokpit/dava-dosyalari");
   revalidatePath("/kokpit/finans/musteri-iliskileri");
+}
+
+// "Paneli düzenle" ile dosya detayindaki kartlardan yapilan tekil alan
+// guncellemeleri. Yalnizca izin verilen alanlar degistirilebilir; tur
+// Dava degilse yargi kolu temizlenir, Dava Turu degisince Konu (baslik)
+// yeniden uretilir (bkz. davaDosyasiGuncelle ile ayni kural).
+const DETAY_DUZENLENEBILIR_ALANLAR = [
+  "turId", "yargiKoluId", "muvekkilSifati", "hukukiIliskiTuruId", "davaTuruId",
+  "birimAdi", "buroNo", "dosyaNo", "talepSonucu", "durusmaTarihi",
+];
+
+export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<string, string>) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+
+  const data: Record<string, unknown> = {};
+  for (const [alan, ham] of Object.entries(degerler)) {
+    if (!DETAY_DUZENLENEBILIR_ALANLAR.includes(alan)) {
+      throw new Error("Bu alan buradan değiştirilemez.");
+    }
+    const deger = ham.trim();
+    switch (alan) {
+      case "muvekkilSifati":
+        data.muvekkilSifati = deger === "BORCLU" ? "BORCLU" : "ALACAKLI";
+        break;
+      case "turId":
+        if (!deger) throw new Error("Tür boş bırakılamaz.");
+        data.turId = deger;
+        break;
+      case "davaTuruId": {
+        if (!deger) throw new Error("Dava Türü boş bırakılamaz.");
+        const davaTuru = await prisma.secenekDegeri.findUnique({ where: { id: deger } });
+        if (!davaTuru) throw new Error("Dava Türü bulunamadı.");
+        data.davaTuruId = deger;
+        data.konu = davaTuru.etiket;
+        break;
+      }
+      case "yargiKoluId":
+      case "hukukiIliskiTuruId":
+        data[alan] = deger || null;
+        break;
+      case "durusmaTarihi":
+        data.durusmaTarihi = deger ? new Date(deger) : null;
+        break;
+      case "talepSonucu":
+        data.talepSonucu =
+          deger.split("\n").map((m) => m.trim()).filter(Boolean).join("\n") || null;
+        break;
+      default:
+        data[alan] = deger || null;
+    }
+  }
+
+  // Tur Dava degilse yargi kolu anlamsizdir.
+  const turId =
+    (data.turId as string | undefined) ??
+    (await prisma.davaDosyasi.findUnique({ where: { id: dosyaId }, select: { turId: true } }))?.turId;
+  if (turId) {
+    const tur = await prisma.secenekDegeri.findUnique({ where: { id: turId }, select: { kod: true } });
+    if (tur && tur.kod !== "dava_dosyasi") data.yargiKoluId = null;
+  }
+
+  await prisma.davaDosyasi.update({ where: { id: dosyaId }, data });
+  revalidatePath("/kokpit/dava-dosyalari");
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
 
 // Dosya agaci: bir dosyayi baska bir dosyanin ALT dosyasi yapar (ya da

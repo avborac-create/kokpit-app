@@ -13,6 +13,7 @@ import {
   karsiTarafAlacagiEkle,
   adliBirimHareketiEkle,
   avansAktarimiEkle,
+  dosyaAlanlariniGuncelle,
 } from "@/modules/dava-dosyasi/lib/actions";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 import { DosyaParaTrafigiListesi } from "@/modules/dava-dosyasi/components/dosya-para-trafigi-listesi";
@@ -35,6 +36,8 @@ import { silebilirMi } from "@/core/auth/yetki";
 import { AnaDosyaSecici } from "@/modules/dava-dosyasi/components/ana-dosya-secici";
 import { kokpitNoGoster, kayitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { Dugme } from "@/core/ui/button";
+import { DuzenlenebilirKart, type KartAlani } from "@/core/ui/duzenlenebilir-kart";
+import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
 import { FormKarti } from "@/core/ui/form-karti";
 
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
@@ -80,7 +83,7 @@ export default async function DavaDosyasiDetaySayfasi({
   const { id } = await params;
   const { sekme } = await searchParams;
   const aktifSekme = sekme === "ekonomi" ? "ekonomi" : "genel";
-  const [dosya, kullanici, cariHesapOzeti, aktarimHedefleri, aktarimlar, cariKodlar, anaDosyaAdaylari] = await Promise.all([
+  const [dosya, kullanici, cariHesapOzeti, aktarimHedefleri, aktarimlar, cariKodlar, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, davaTurleri] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
     dosyaCariHesapOzeti(id),
@@ -88,12 +91,191 @@ export default async function DavaDosyasiDetaySayfasi({
     dosyaAvansAktarimlari(id),
     secenekleriGetir("cari_kod"),
     anaDosyaAdaylariniGetir(id),
+    etiketleriGetir(),
+    secenekleriGetir("dosya_turu"),
+    secenekleriGetir("yargi_kolu"),
+    secenekleriGetir("hukuki_iliski_turu"),
+    secenekleriGetir("dava_turu"),
   ]);
   if (!dosya) notFound();
   const avansBakiyesi = netAvansBakiyesi(cariHesapOzeti);
   const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
+  // Baslik/etiket degisikligi tum kullanicilari etkiledigi icin yalniz yonetici.
+  const etiketDuzenleyebilir = silmeYetkisiVar;
+  const davaMi = dosya.tur?.kod === "dava_dosyasi";
+  const bosSecenekli = (liste: { id: string; etiket: string }[], bosEtiket: string) => [
+    { value: "", label: bosEtiket },
+    ...liste.map((o) => ({ value: o.id, label: o.etiket })),
+  ];
+  const dosyaBilgileriAlanlari: KartAlani[] = [
+    {
+      anahtar: "turId",
+      varsayilanEtiket: "Tür",
+      tip: "secim",
+      deger: dosya.turId ?? "",
+      gosterim: dosya.tur?.etiket ?? "—",
+      secenekler: dosyaTurleri.map((o) => ({ value: o.id, label: o.etiket })),
+    },
+    ...(davaMi
+      ? [
+          {
+            anahtar: "yargiKoluId",
+            varsayilanEtiket: "Yargı Kolu",
+            tip: "secim" as const,
+            deger: dosya.yargiKoluId ?? "",
+            gosterim: dosya.yargiKolu?.etiket ?? "—",
+            secenekler: bosSecenekli(yargiKollari, "Seçiniz…"),
+          },
+        ]
+      : []),
+    {
+      anahtar: "muvekkilSifati",
+      varsayilanEtiket: "Müvekkil Sıfatı",
+      tip: "secim",
+      deger: dosya.muvekkilSifati,
+      gosterim: dosya.muvekkilSifati === "BORCLU" ? "Borçlu" : "Alacaklı",
+      secenekler: [
+        { value: "ALACAKLI", label: "Alacaklı" },
+        { value: "BORCLU", label: "Borçlu" },
+      ],
+    },
+    {
+      anahtar: "hukukiIliskiTuruId",
+      varsayilanEtiket: "Uyuşmazlık Türü",
+      tip: "secim",
+      deger: dosya.hukukiIliskiTuruId ?? "",
+      gosterim: dosya.hukukiIliskiTuru?.etiket ?? "—",
+      secenekler: bosSecenekli(uyusmazlikTurleri, "—"),
+    },
+    {
+      anahtar: "davaTuruId",
+      varsayilanEtiket: "Dava Türü",
+      tip: "secim",
+      deger: dosya.davaTuruId ?? "",
+      gosterim: dosya.davaTuru?.etiket ?? "—",
+      secenekler: davaTurleri.map((o) => ({ value: o.id, label: o.etiket })),
+    },
+    {
+      anahtar: "birimAdi",
+      varsayilanEtiket: "Birim (Mahkeme/İcra Dairesi)",
+      tip: "metin",
+      deger: dosya.birimAdi ?? "",
+      gosterim: dosya.birimAdi ?? "—",
+    },
+    {
+      anahtar: "buroNo",
+      varsayilanEtiket: "Objekt Büro No (BN)",
+      tip: "metin",
+      deger: dosya.buroNo ?? "",
+      gosterim: buroNoGoster(dosya.buroNo),
+    },
+    {
+      anahtar: "dosyaNo",
+      varsayilanEtiket: "Dosya Numarası",
+      tip: "metin",
+      deger: dosya.dosyaNo ?? "",
+      gosterim: dosya.dosyaNo ?? "—",
+    },
+  ];
+  const talepAlanlari: KartAlani[] = [
+    {
+      anahtar: "talepSonucu",
+      varsayilanEtiket: "Talep Sonucu",
+      tip: "cokSatir",
+      deger: dosya.talepSonucu ?? "",
+      gosterim: dosya.talepSonucu ? (
+        <ol className="list-decimal space-y-0.5 pl-4">
+          {dosya.talepSonucu.split("\n").map((madde, i) => (
+            <li key={i}>{madde}</li>
+          ))}
+        </ol>
+      ) : (
+        "—"
+      ),
+    },
+    {
+      anahtar: "durusmaTarihi",
+      varsayilanEtiket: "Duruşma Tarihi",
+      tip: "tarih",
+      deger: dosya.durusmaTarihi ? dosya.durusmaTarihi.toISOString().slice(0, 10) : "",
+      gosterim: dosya.durusmaTarihi ? tarihFormatlayici.format(dosya.durusmaTarihi) : "—",
+    },
+  ];
+  const taraflarAlanlari: KartAlani[] = [
+    {
+      anahtar: "muvekkiller",
+      varsayilanEtiket: "Müvekkil(ler)",
+      tip: "salt",
+      gosterim: dosya.muvekkiller.map((m, i) => (
+        <span key={m.musteriId}>
+          {i > 0 && ", "}
+          <Link href={`/kokpit/musteriler/${m.musteriId}`} className="hover:text-[#6db8ff] hover:underline">
+            {m.musteri.adSoyadUnvan}
+          </Link>
+        </span>
+      )),
+    },
+    {
+      anahtar: "karsiTaraflar",
+      varsayilanEtiket: "Karşı Taraf(lar)",
+      tip: "salt",
+      gosterim:
+        dosya.karsiTaraflar.length > 0 ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") : "—",
+    },
+  ];
+  const agacAlanlari: KartAlani[] = [
+    ...(dosya.anaDosya
+      ? [
+          {
+            anahtar: "anaDosya",
+            varsayilanEtiket: "Ana dosya",
+            tip: "salt" as const,
+            gosterim: (
+              <>
+                <Link
+                  href={`/kokpit/dava-dosyalari/${dosya.anaDosya.id}`}
+                  className="hover:text-[#6db8ff] hover:underline"
+                >
+                  {kayitNoGoster(dosya.anaDosya.kayitNo)}
+                  {dosya.anaDosya.buroNo ? ` · BN-${dosya.anaDosya.buroNo}` : ""}
+                  {dosya.anaDosya.dosyaNo ? ` · ${dosya.anaDosya.dosyaNo}` : ""} — {dosya.anaDosya.konu}
+                </Link>
+                <span className="ml-2 text-xs text-white/45">(eski numarası {kayitNoGoster(dosya.kayitNo)})</span>
+              </>
+            ),
+          },
+        ]
+      : []),
+    ...(dosya.altDosyalar.length > 0
+      ? [
+          {
+            anahtar: "altDosyalar",
+            varsayilanEtiket: "Alt dosyalar",
+            tip: "salt" as const,
+            gosterim: (
+              <span className="mt-1 flex flex-col gap-1.5">
+                {dosya.altDosyalar.map((alt) => (
+                  <Link
+                    key={alt.id}
+                    href={`/kokpit/dava-dosyalari/${alt.id}`}
+                    className="glass rounded-xl px-3 py-2 text-sm text-white/85 hover:bg-white/[0.06] hover:text-[#6db8ff]"
+                  >
+                    <span className="text-white/55">└ {kokpitNoGoster({ ...alt, anaDosya: dosya })}</span>
+                    {alt.dosyaNo ? ` · ${alt.dosyaNo}` : ""} — {alt.konu}
+                    <span className="ml-2 text-xs text-white/45">
+                      {alt.tur?.etiket ? `${alt.tur.etiket} · ` : ""}
+                      {alt.durum.etiket}
+                    </span>
+                  </Link>
+                ))}
+              </span>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   const dosyaDokumu: DokumSatiri[] = [
     ...dosya.masraflar.map((m) => ({
@@ -178,99 +360,48 @@ export default async function DavaDosyasiDetaySayfasi({
       {aktifSekme === "genel" ? (
         <>
           <div className="mb-8 max-w-2xl">
-            <FormKarti baslik="Taraflar">
-              <Bilgi baslik="Müvekkil(ler)">
-                {dosya.muvekkiller.map((m, i) => (
-                  <span key={m.musteriId}>
-                    {i > 0 && ", "}
-                    <Link
-                      href={`/kokpit/musteriler/${m.musteriId}`}
-                      className="hover:text-[#6db8ff] hover:underline"
-                    >
-                      {m.musteri.adSoyadUnvan}
-                    </Link>
-                  </span>
-                ))}
-              </Bilgi>
-              <Bilgi baslik="Karşı Taraf(lar)">
-                {dosya.karsiTaraflar.length > 0
-                  ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ")
-                  : "—"}
-              </Bilgi>
-            </FormKarti>
+            <DuzenlenebilirKart
+              etiketOnEki="dosya-detay.taraflar"
+              varsayilanBaslik="Taraflar"
+              etiketler={etiketler}
+              alanlar={taraflarAlanlari}
+              etiketDuzenleyebilir={etiketDuzenleyebilir}
+            />
 
-            <FormKarti baslik="Dosya Bilgileri">
-              <Bilgi baslik="Tür">
-                {[dosya.tur?.etiket, dosya.yargiKolu?.etiket].filter(Boolean).join(" › ") || "—"}
-              </Bilgi>
-              <Bilgi baslik="Müvekkil Sıfatı">{dosya.muvekkilSifati === "BORCLU" ? "Borçlu" : "Alacaklı"}</Bilgi>
-              <Bilgi baslik="Uyuşmazlık Türü">{dosya.hukukiIliskiTuru?.etiket ?? "—"}</Bilgi>
-              <Bilgi baslik="Dava Türü">{dosya.davaTuru?.etiket ?? "—"}</Bilgi>
-              <Bilgi baslik="Birim (Mahkeme/İcra Dairesi)">{dosya.birimAdi ?? "—"}</Bilgi>
-              <Bilgi baslik="Objekt Büro No (BN)">{buroNoGoster(dosya.buroNo)}</Bilgi>
-              <Bilgi baslik="Dosya Numarası">{dosya.dosyaNo ?? "—"}</Bilgi>
-            </FormKarti>
+            <DuzenlenebilirKart
+              etiketOnEki="dosya-detay.dosya-bilgileri"
+              varsayilanBaslik="Dosya Bilgileri"
+              etiketler={etiketler}
+              alanlar={dosyaBilgileriAlanlari}
+              etiketDuzenleyebilir={etiketDuzenleyebilir}
+              onKaydet={dosyaAlanlariniGuncelle.bind(null, id)}
+            />
 
-            <FormKarti baslik="Talep ve Duruşma">
-              <Bilgi baslik="Talep Sonucu">
-                {dosya.talepSonucu ? (
-                  <ol className="list-decimal space-y-0.5 pl-4">
-                    {dosya.talepSonucu.split("\n").map((madde, i) => (
-                      <li key={i}>{madde}</li>
-                    ))}
-                  </ol>
-                ) : (
-                  "—"
-                )}
-              </Bilgi>
-              <Bilgi baslik="Duruşma Tarihi">
-                {dosya.durusmaTarihi ? tarihFormatlayici.format(dosya.durusmaTarihi) : "—"}
-              </Bilgi>
-            </FormKarti>
+            <DuzenlenebilirKart
+              etiketOnEki="dosya-detay.talep-durusma"
+              varsayilanBaslik="Talep ve Duruşma"
+              etiketler={etiketler}
+              alanlar={talepAlanlari}
+              etiketDuzenleyebilir={etiketDuzenleyebilir}
+              onKaydet={dosyaAlanlariniGuncelle.bind(null, id)}
+            />
           </div>
 
           <div className="mb-8 max-w-2xl">
-            <FormKarti baslik="Dosya Ağacı">
-              {dosya.anaDosya && (
-                <Bilgi baslik="Ana dosya">
-                  <Link
-                    href={`/kokpit/dava-dosyalari/${dosya.anaDosya.id}`}
-                    className="hover:text-[#6db8ff] hover:underline"
-                  >
-                    {kayitNoGoster(dosya.anaDosya.kayitNo)}
-                    {dosya.anaDosya.buroNo ? ` · BN-${dosya.anaDosya.buroNo}` : ""}
-                    {dosya.anaDosya.dosyaNo ? ` · ${dosya.anaDosya.dosyaNo}` : ""} — {dosya.anaDosya.konu}
-                  </Link>
-                  <span className="ml-2 text-xs text-white/45">(eski numarası {kayitNoGoster(dosya.kayitNo)})</span>
-                </Bilgi>
-              )}
-              {dosya.altDosyalar.length > 0 && (
-                <Bilgi baslik={`Alt dosyalar (${dosya.altDosyalar.length})`}>
-                  <span className="mt-1 flex flex-col gap-1.5">
-                    {dosya.altDosyalar.map((alt) => (
-                      <Link
-                        key={alt.id}
-                        href={`/kokpit/dava-dosyalari/${alt.id}`}
-                        className="glass rounded-xl px-3 py-2 text-sm text-white/85 hover:bg-white/[0.06] hover:text-[#6db8ff]"
-                      >
-                        <span className="text-white/55">└ {kokpitNoGoster({ ...alt, anaDosya: dosya })}</span>
-                        {alt.dosyaNo ? ` · ${alt.dosyaNo}` : ""} — {alt.konu}
-                        <span className="ml-2 text-xs text-white/45">
-                          {alt.tur?.etiket ? `${alt.tur.etiket} · ` : ""}
-                          {alt.durum.etiket}
-                        </span>
-                      </Link>
-                    ))}
-                  </span>
-                </Bilgi>
-              )}
+            <DuzenlenebilirKart
+              etiketOnEki="dosya-detay.dosya-agaci"
+              varsayilanBaslik="Dosya Ağacı"
+              etiketler={etiketler}
+              alanlar={agacAlanlari}
+              etiketDuzenleyebilir={etiketDuzenleyebilir}
+            >
               <AnaDosyaSecici
                 dosyaId={id}
                 mevcutAnaDosyaId={dosya.anaDosyaId}
                 adaylar={anaDosyaAdaylari}
                 altDosyasiVar={dosya.altDosyalar.length > 0}
               />
-            </FormKarti>
+            </DuzenlenebilirKart>
           </div>
 
           {dosya.baglananDosyalar.length > 0 && (

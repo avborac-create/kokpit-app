@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { davaDosyalariniListele } from "@/modules/dava-dosyasi/lib/queries";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { Dugme } from "@/core/ui/button";
@@ -15,13 +17,26 @@ import { SutunDuzeniPaneli } from "@/core/tablo-duzeni/sutun-duzeni-paneli";
 import type { TabloSutunSatiri } from "@/core/tablo-duzeni/tablo-sutun-listesi";
 import { musteriGetir } from "@/modules/musteri/lib/queries";
 import { DosyalarTablosu } from "./dosyalar-tablosu";
+import { FiltreKaydedici } from "./filtre-kaydedici";
+import { DOSYA_FILTRE_COOKIE } from "./filtre-sabitleri";
 
 export default async function DavaDosyalariSayfasi({
   searchParams,
 }: {
-  searchParams: Promise<{ arama?: string; durum?: string; musteri?: string }>;
+  searchParams: Promise<{ arama?: string; durum?: string; musteri?: string; temizle?: string }>;
 }) {
   const params = await searchParams;
+
+  // Kullanici kendisi temizlemedikce kayitli filtre geri gelir (bkz.
+  // filtre-kaydedici.tsx). URL'de hic filtre/temizle yoksa kayitli olana gider.
+  // Bos gonderilen form (?arama=&durum=) de "kullanici filtreyi kaldirdi"
+  // anlamina gelir - deger bos olsa bile anahtarin varligi sayilir.
+  const urldeFiltreVar = [params.arama, params.durum, params.musteri, params.temizle].some((d) => d !== undefined);
+  if (!urldeFiltreVar) {
+    const kayitli = (await cookies()).get(DOSYA_FILTRE_COOKIE)?.value;
+    if (kayitli) redirect(`/kokpit/dava-dosyalari?${decodeURIComponent(kayitli)}`);
+  }
+  const filtreAktif = Boolean(params.arama || params.durum || params.musteri);
   const [dosyalar, durumlar, kullanici, sutunDuzeni, filtreMusteri] = await Promise.all([
     davaDosyalariniListele({ arama: params.arama, durumKod: params.durum, musteriId: params.musteri }),
     secenekleriGetir("dava_dosyasi_durumu"),
@@ -60,6 +75,7 @@ export default async function DavaDosyalariSayfasi({
 
   return (
     <div className="pt-3">
+      <FiltreKaydedici />
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight text-white">Dosyalar</h1>
         <div className="flex items-center gap-2">
@@ -87,7 +103,7 @@ export default async function DavaDosyalariSayfasi({
           >
             Cari Hesap
           </Link>
-          <Link href="/kokpit/dava-dosyalari" className="ml-auto text-white/50 hover:text-white">
+          <Link href="/kokpit/dava-dosyalari?temizle=1" className="ml-auto text-white/50 hover:text-white">
             Filtreyi kaldır ✕
           </Link>
         </div>
@@ -113,6 +129,13 @@ export default async function DavaDosyalariSayfasi({
         <Dugme type="submit" varyant="ikincil">
           Filtrele
         </Dugme>
+        {filtreAktif && (
+          <Link href="/kokpit/dava-dosyalari?temizle=1">
+            <Dugme type="button" varyant="ikincil">
+              Filtreyi temizle ✕
+            </Dugme>
+          </Link>
+        )}
       </form>
 
       <DosyalarTablosu

@@ -9,8 +9,9 @@ export function HacizRaporuSilmeButonu({ raporId }: { raporId: string }) {
 
   return (
     <OnayliButon
-      eylem={async () => {
-        await hacizRaporuSil(raporId);
+      sifreIste
+      eylem={async (sifre) => {
+        await hacizRaporuSil(raporId, sifre);
         router.push("/kokpit/haciz-artcilari");
       }}
       mesaj="Bu haciz raporunu ve yüklenen tüm belgeleri silmek istediğinize emin misiniz? Bu işlem geri alınamaz."

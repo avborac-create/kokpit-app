@@ -223,6 +223,15 @@ export function DosyalarTablosu({
   const [taslakGenislikler, setTaslakGenislikler] = useState<Record<string, number> | null>(null);
   const [daraltilmis, setDaraltilmis] = useState<Set<string>>(new Set());
   const satirlar = agacSatirlari(dosyalar, daraltilmis);
+  const anaDosyaIdleri = satirlar.filter((s) => s.altSayisi > 0).map((s) => s.dosya.id);
+  // Daraltilmis ana dosyalarin da listesi (satirlar daraltilinca alt satirlari
+  // icermez ama ana satirin kendisi hep vardir).
+  function tumunuGenislet() {
+    setDaraltilmis(new Set());
+  }
+  function tumunuDaralt() {
+    setDaraltilmis(new Set(anaDosyaIdleri));
+  }
   function agaciDegistir(id: string) {
     setDaraltilmis((onceki) => {
       const yeni = new Set(onceki);
@@ -254,6 +263,27 @@ export function DosyalarTablosu({
   }
 
   return (
+    <>
+      {anaDosyaIdleri.length > 0 && (
+        <div className="mb-2 flex justify-end gap-2 text-xs">
+          <button
+            type="button"
+            onClick={tumunuGenislet}
+            disabled={daraltilmis.size === 0}
+            className="rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            Tümünü genişlet
+          </button>
+          <button
+            type="button"
+            onClick={tumunuDaralt}
+            disabled={daraltilmis.size >= anaDosyaIdleri.length}
+            className="rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            Tümünü daralt
+          </button>
+        </div>
+      )}
     <div className="glass overflow-x-auto rounded-2xl">
       <table className="w-full table-fixed text-left text-sm">
         <colgroup>
@@ -341,5 +371,6 @@ export function DosyalarTablosu({
         </tbody>
       </table>
     </div>
+    </>
   );
 }

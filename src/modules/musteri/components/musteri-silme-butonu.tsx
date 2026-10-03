@@ -6,7 +6,8 @@ import { OnayliButon } from "@/core/ui/onayli-buton";
 export function MusteriSilmeButonu({ musteriId }: { musteriId: string }) {
   return (
     <OnayliButon
-      eylem={() => musteriSil(musteriId)}
+      sifreIste
+      eylem={(sifre) => musteriSil(musteriId, sifre)}
       mesaj="Bu müvekkili, tüm para trafiği kayıtlarını ve Müvekkil Finans hareketlerini silmek istediğinize emin misiniz?"
     >
       Sil

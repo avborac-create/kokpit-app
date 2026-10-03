@@ -1,5 +1,6 @@
 "use server";
 
+import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/core/db/prisma";
@@ -74,11 +75,12 @@ export async function musteriGuncelle(id: string, formData: FormData) {
   redirect(`/kokpit/musteriler/${id}`);
 }
 
-export async function musteriSil(id: string) {
+export async function musteriSil(id: string, sifre?: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
   }
+  await silmeSifresiniDogrula(sifre);
 
   await prisma.musteri.delete({ where: { id } });
   revalidatePath("/kokpit/musteriler");
@@ -276,11 +278,12 @@ export async function paraTrafigiKaydiGuncelle(musteriId: string, kayitId: strin
   redirect(`/kokpit/finans/musteri-iliskileri/${musteriId}/cari-hesap`);
 }
 
-export async function paraTrafigiKaydiSil(musteriId: string, kayitId: string) {
+export async function paraTrafigiKaydiSil(musteriId: string, kayitId: string, sifre?: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
   }
+  await silmeSifresiniDogrula(sifre);
 
   await prisma.musteriParaTrafigi.delete({ where: { id: kayitId } });
   revalidatePath(`/kokpit/musteriler/${musteriId}`);
@@ -319,11 +322,12 @@ export async function irtibatKisisiEkle(musteriId: string, formData: FormData) {
   revalidatePath(`/kokpit/musteriler/${musteriId}`);
 }
 
-export async function irtibatKisisiSil(musteriId: string, kisiId: string) {
+export async function irtibatKisisiSil(musteriId: string, kisiId: string, sifre?: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
   }
+  await silmeSifresiniDogrula(sifre);
 
   await prisma.irtibatKisisi.delete({ where: { id: kisiId } });
   revalidatePath(`/kokpit/musteriler/${musteriId}`);

@@ -1,5 +1,6 @@
 "use server";
 
+import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { BelgeTuru, HacizIslemDurumu, TeminatMuvafakatDurumu } from "@prisma/client";
@@ -137,11 +138,12 @@ export async function hacizRaporuOlustur(formData: FormData) {
   redirect(`/kokpit/haciz-artcilari/${rapor.id}`);
 }
 
-export async function hacizRaporuSil(id: string) {
+export async function hacizRaporuSil(id: string, sifre?: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !hacizAvukatiMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
   }
+  await silmeSifresiniDogrula(sifre);
 
   const rapor = await prisma.hacizRaporu.findUnique({ where: { id }, include: { belgeler: true } });
   if (!rapor) return;
