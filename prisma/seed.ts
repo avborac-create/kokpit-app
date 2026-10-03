@@ -231,6 +231,42 @@ const SECENEK_LISTELERI: {
       { kod: "akdi_vekalet_hesabi", etiket: "Akdi Vekalet Hesabı" },
       { kod: "ticari_hesap", etiket: "Ticari Hesap" },
       { kod: "emanet_hesabi", etiket: "Emanet Hesabı" },
+      // Dosya ekonomisi semasindan (bkz. masraf_grubu): karsi vekalet ucreti
+      // ve harc hesabi ayri cari hesaplardir.
+      { kod: "karsi_vekalet", etiket: "Karşı Vekalet" },
+      { kod: "harc_hesabi", etiket: "Harç Hesabı" },
+    ],
+  },
+  {
+    // Masrafin ZAMANA gore grubu (Dosya Ekonomisi semasi): asama gruptan
+    // turer - Hazirlik/Dosya Acilis = Acilis Oncesi, Dosya Islem/Bloke Tip =
+    // Derdest Donem, Tahsil Harci/Cezaevi Harci = Kapanis.
+    anahtar: "masraf_grubu",
+    ad: "Masraf Grubu",
+    degerler: [
+      { kod: "hazirlik", etiket: "Hazırlık Masrafları" },
+      { kod: "dosya_acilis", etiket: "Dosya Açılış Masrafları" },
+      { kod: "dosya_islem", etiket: "Dosya İşlem Masrafları" },
+      { kod: "bloke_tip", etiket: "Bloke Tip Masraflar" },
+      { kod: "tahsil_harci", etiket: "Tahsil Harcı" },
+      { kod: "cezaevi_harci", etiket: "Cezaevi Harcı" },
+    ],
+  },
+  {
+    anahtar: "masraf_kalemi",
+    ad: "Masraf Kalemi",
+    degerler: [
+      // Dosya Islem Masraflari
+      { kod: "ilk_tebligat", etiket: "İlk Tebligat" },
+      { kod: "bila_sebebiyle_tebligat", etiket: "Bila Sebebiyle Tebligat" },
+      { kod: "haciz_89_1_banka", etiket: "89/1 Banka" },
+      { kod: "haciz_89_1_diger_kurum", etiket: "89/1 Diğer Kurum" },
+      { kod: "maas_haciz_muzekkeresi", etiket: "Maaş Haciz Müzekkeresi" },
+      { kod: "fiili_haciz", etiket: "Fiili Haciz" },
+      // Bloke Tip Masraflar (sonradan islem masrafina donusebilir)
+      { kod: "pesin_yediemin_ucreti", etiket: "Peşin Yediemin Ücreti" },
+      { kod: "satis_avansi", etiket: "Satış Avansı (Süre Kesmeye Yönelik)" },
+      { kod: "yakalama_avansi", etiket: "Yakalama Avansı" },
     ],
   },
   {

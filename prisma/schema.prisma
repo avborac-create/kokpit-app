@@ -115,6 +115,8 @@ model SecenekDegeri {
   dosyaMasrafiCariKod           DosyaMasrafi[]        @relation("DosyaMasrafiCariKod")
   avansAktarimiCariKod          DosyaAvansAktarimi[]  @relation("AvansAktarimiCariKod")
   dosyaMasrafiTuru              DosyaMasrafi[]        @relation("DosyaMasrafiTuru")
+  dosyaMasrafiGrubu             DosyaMasrafi[]        @relation("DosyaMasrafiGrubu")
+  dosyaMasrafiKalemi            DosyaMasrafi[]        @relation("DosyaMasrafiKalemi")
   dosyaMasrafiDurum             DosyaMasrafi[]        @relation("DosyaMasrafiDurumu")
   gelistirmeTalepleriDurum      GelistirmeTalebi[]    @relation("GelistirmeTalebiDurumu")
   uyusmazlikGrubuDurum          UyusmazlikGrubu[]     @relation("UyusmazlikGrubuDurumu")
@@ -579,6 +581,15 @@ model DosyaMasrafi {
   turId     String
   tur       SecenekDegeri @relation("DosyaMasrafiTuru", fields: [turId], references: [id])
 
+  // Dosya Ekonomisi semasindaki zaman gruplamasi (Hazirlik / Dosya Acilis /
+  // Dosya Islem / Bloke Tip / Tahsil Harci / Cezaevi Harci) ve ince kalem
+  // (ilk tebligat, 89/1 banka, yakalama avansi...). Ikisi de opsiyonel:
+  // eski kayitlar bos kalir, Excel aktariminda tahmin edilip onaylanir.
+  grupId String?
+  grup   SecenekDegeri? @relation("DosyaMasrafiGrubu", fields: [grupId], references: [id])
+  kalemId String?
+  kalem   SecenekDegeri? @relation("DosyaMasrafiKalemi", fields: [kalemId], references: [id])
+
   tarih    DateTime
   aciklama String
   tutar    Decimal  @db.Decimal(14, 2)
@@ -601,6 +612,7 @@ model DosyaMasrafi {
   @@index([cariKodId])
   @@index([turId])
   @@index([durumId])
+  @@index([grupId])
   @@map("dosya_masraflari")
 }
 
@@ -1169,4 +1181,22 @@ model ArayuzEtiketi {
   guncellemeTarihi DateTime @updatedAt
 
   @@map("arayuz_etiketleri")
+}
+
+// Excel'den masraf aktariminda kullanicinin onayladigi tasnif kararlari:
+// bir sonraki aktarimda ayni "Tur + Cari Kod" metinleri geldiginde sistem
+// tahmin eder ve tekrar sormaz. anahtar = normalize("<excel turu>|<excel cari
+// kod>"). Bkz. src/modules/dava-dosyasi/lib/masraf-tasnif.ts.
+model MasrafTasnifKurali {
+  id               String   @id @default(cuid())
+  anahtar          String   @unique
+  turId            String?
+  cariKodId        String?
+  grupId           String?
+  kalemId          String?
+  yansitmaHedefi   MasrafYansitmaHedefi @default(MUVEKKIL)
+  kullanimSayisi   Int      @default(1)
+  guncellemeTarihi DateTime @updatedAt
+
+  @@map("masraf_tasnif_kurallari")
 }

@@ -525,6 +525,12 @@ export default async function DavaDosyasiDetaySayfasi({
             </CariHesapBolumu>
           )}
 
+          <div className="mb-4 flex justify-end">
+            <Link href={`/kokpit/dava-dosyalari/${id}/masraf-aktar`}>
+              <Dugme varyant="ikincil">Excel'den masraf aktar</Dugme>
+            </Link>
+          </div>
+
           <CariHesapBolumu baslik="Müvekkil-Büro Cari Hesabı">
             <div className="mb-8">
               <CariHesapOzeti ozet={cariHesapOzeti} />
