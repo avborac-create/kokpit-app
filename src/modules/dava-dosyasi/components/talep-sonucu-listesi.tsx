@@ -12,7 +12,13 @@ import { Dugme } from "@/core/ui/button";
 // serbestce yeniden yazilabilir). Sunucu tarafinda tum maddeler "\n" ile
 // birlestirilip mevcut `talepSonucu` sutununa yazilir (bkz. actions.ts) -
 // ayri bir tablo/migration gerektirmez.
-export function TalepSonucuListesi({ baslangicMaddeler = [] }: { baslangicMaddeler?: string[] }) {
+export function TalepSonucuListesi({
+  baslangicMaddeler = [],
+  etiket = "Talep Sonucu",
+}: {
+  baslangicMaddeler?: string[];
+  etiket?: string;
+}) {
   const [maddeler, setMaddeler] = useState<string[]>(
     baslangicMaddeler.length > 0 ? baslangicMaddeler : [""],
   );
@@ -31,7 +37,7 @@ export function TalepSonucuListesi({ baslangicMaddeler = [] }: { baslangicMaddel
 
   return (
     <div className="mb-4">
-      <Etiket>Talep Sonucu</Etiket>
+      <Etiket>{etiket}</Etiket>
       <div className="flex flex-col gap-2">
         {maddeler.map((madde, index) => (
           <div key={index} className="flex items-center gap-2">

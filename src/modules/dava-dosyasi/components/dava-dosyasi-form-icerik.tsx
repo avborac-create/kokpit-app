@@ -53,6 +53,7 @@ export function DavaDosyasiFormIcerik({
   dosyaId,
   baslangicKarsiTaraflar,
   alanSirasi,
+  etiketler,
 }: {
   action: (oncekiDurum: DavaDosyasiSonucu, formData: FormData) => Promise<DavaDosyasiSonucu>;
   gonderButonuMetni: string;
@@ -66,7 +67,14 @@ export function DavaDosyasiFormIcerik({
   dosya?: DosyaDegerleri;
   baslangicKarsiTaraflar: { id: string; ad: string; tc?: string | null }[];
   alanSirasi: string[];
+  // "Paneli düzenle" ile degistirilmis baslik/etiketler (dosya detayindaki
+  // kartlarla ayni anahtarlar, boylece bir yerde degisen ad formda da degisir).
+  etiketler: Record<string, string>;
 }) {
+  const bilgi = (alan: string, varsayilan: string) =>
+    etiketler[`dosya-detay.dosya-bilgileri.alan.${alan}`] ?? varsayilan;
+  const talep = (alan: string, varsayilan: string) =>
+    etiketler[`dosya-detay.talep-durusma.alan.${alan}`] ?? varsayilan;
   const [durum, formAction] = useActionState(action, undefined);
 
   // React, action tamamlaninca (hata donse de - throw etmedigi surece)
@@ -85,6 +93,7 @@ export function DavaDosyasiFormIcerik({
   const alanRenderHaritasi: Record<string, () => React.ReactNode> = {
     hukukiIliskiTuruId: () => (
       <UyusmazlikTuruSecici
+        etiket={bilgi("hukukiIliskiTuruId", "Uyuşmazlık Türü")}
         turler={hukukiIliskiTurleri}
         varsayilanId={g?.hukukiIliskiTuruId ?? dosya?.hukukiIliskiTuruId ?? ""}
         varsayilanYeniEtiket={g?.yeniHukukiIliskiTuruEtiketi}
@@ -97,13 +106,13 @@ export function DavaDosyasiFormIcerik({
         varsayilanYeniEtiket={g?.yeniDavaTuruEtiketi}
         alanAdi="davaTuruId"
         yeniAlanAdi="yeniDavaTuruEtiketi"
-        etiket="Dava Türü"
+        etiket={bilgi("davaTuruId", "Dava Türü")}
         zorunlu
       />
     ),
     birimAdi: () => (
       <Alan>
-        <Etiket htmlFor="birimAdi">Birim Adı (Mahkeme/İcra Dairesi)</Etiket>
+        <Etiket htmlFor="birimAdi">{bilgi("birimAdi", "Birim Adı (Mahkeme/İcra Dairesi)")}</Etiket>
         <Girdi
           id="birimAdi"
           name="birimAdi"
@@ -114,7 +123,7 @@ export function DavaDosyasiFormIcerik({
     ),
     buroNo: () => (
       <Alan>
-        <Etiket htmlFor="buroNo">Büro No</Etiket>
+        <Etiket htmlFor="buroNo">{bilgi("buroNo", "Objekt Büro No (BN)")}</Etiket>
         <Girdi
           id="buroNo"
           name="buroNo"
@@ -125,7 +134,7 @@ export function DavaDosyasiFormIcerik({
     ),
     dosyaNo: () => (
       <Alan>
-        <Etiket htmlFor="dosyaNo">Dosya Numarası</Etiket>
+        <Etiket htmlFor="dosyaNo">{bilgi("dosyaNo", "Dosya Numarası")}</Etiket>
         <Girdi
           id="dosyaNo"
           name="dosyaNo"
@@ -134,10 +143,10 @@ export function DavaDosyasiFormIcerik({
         />
       </Alan>
     ),
-    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} />,
+    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} etiket={talep("talepSonucu", "Talep Sonucu")} />,
     durusmaTarihi: () => (
       <Alan>
-        <Etiket htmlFor="durusmaTarihi">Duruşma Tarihi</Etiket>
+        <Etiket htmlFor="durusmaTarihi">{talep("durusmaTarihi", "Duruşma Tarihi")}</Etiket>
         <Girdi
           id="durusmaTarihi"
           name="durusmaTarihi"
@@ -151,7 +160,7 @@ export function DavaDosyasiFormIcerik({
   return (
     <form action={formAction} className="max-w-2xl" autoComplete="off">
       <DavaDosyasiSekmeleri dosyaId={dosyaId} aktif="genel" />
-      <FormKarti baslik="Taraflar">
+      <FormKarti baslik={etiketler["dosya-detay.taraflar.baslik"] ?? "Taraflar"}>
         <div key={anahtar}>
           <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdlerGuncel} />
         </div>
@@ -175,7 +184,13 @@ export function DavaDosyasiFormIcerik({
       {KARTLAR.map((kart) => {
         const kartAlanlari = alanSirasi.filter((a) => kart.alanlar.includes(a));
         return (
-          <FormKarti key={kart.baslik} baslik={kart.baslik}>
+          <FormKarti
+            key={kart.baslik}
+            baslik={
+              etiketler[`dosya-detay.${kart.baslik === "Dosya Bilgileri" ? "dosya-bilgileri" : "talep-durusma"}.baslik`] ??
+              kart.baslik
+            }
+          >
             <div key={anahtar}>
               {kartAlanlari.map((a) => (
                 <div key={a}>{alanRenderHaritasi[a]?.()}</div>

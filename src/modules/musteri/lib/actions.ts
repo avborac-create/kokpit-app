@@ -75,6 +75,25 @@ export async function musteriGuncelle(id: string, formData: FormData) {
   redirect(`/kokpit/musteriler/${id}`);
 }
 
+// "Paneli düzenle" ile müvekkil detayındaki karttan yapılan tekil alan
+// güncellemeleri (yalnızca izin verilen alanlar).
+const MUSTERI_DUZENLENEBILIR_ALANLAR = ["telefon", "eposta", "adres", "sorumluAvukatId", "notlar"];
+
+export async function musteriAlanlariniGuncelle(id: string, degerler: Record<string, string>) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+
+  const data: Record<string, string | null> = {};
+  for (const [alan, ham] of Object.entries(degerler)) {
+    if (!MUSTERI_DUZENLENEBILIR_ALANLAR.includes(alan)) throw new Error("Bu alan buradan değiştirilemez.");
+    data[alan] = ham.trim() === "" ? null : ham.trim();
+  }
+
+  await prisma.musteri.update({ where: { id }, data });
+  revalidatePath("/kokpit/musteriler");
+  revalidatePath(`/kokpit/musteriler/${id}`);
+}
+
 export async function musteriSil(id: string, sifre?: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {

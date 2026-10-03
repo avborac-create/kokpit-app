@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync } from "fs";
+import { writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync, copyFileSync, existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -12,6 +12,10 @@ import { fileURLToPath } from "url";
 // yeniden yazilabilir.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const YEDEK_KLASORU = path.join(__dirname, "..", "yedekler");
+// Ikinci kopya: proje klasorunden BAGIMSIZ, D: surucusunde ayri bir klasor.
+// Proje klasoru silinse/bozulsa bile yedekler kalsin diye. Surucu yoksa
+// (ör. harici disk takili degil) sessizce atlanir, ana yedek yine alinir.
+const IKINCI_KOPYA_KLASORU = process.env.KOKPIT_YEDEK_IKINCI_KLASOR ?? "D:/KOKPIT-YEDEKLERI";
 const SAKLAMA_GUNU = 30; // 30 gunden eski yedekler otomatik silinir
 
 const prisma = new PrismaClient();
@@ -43,15 +47,30 @@ async function main() {
 
   console.log(`Yedek alindi: ${dosyaAdi} (${modelAnahtarlari.length} tablo, ${toplamKayit} kayit)`);
 
+  try {
+    if (existsSync(path.parse(IKINCI_KOPYA_KLASORU).root)) {
+      mkdirSync(IKINCI_KOPYA_KLASORU, { recursive: true });
+      copyFileSync(tamYol, path.join(IKINCI_KOPYA_KLASORU, dosyaAdi));
+      console.log(`Ikinci kopya yazildi: ${IKINCI_KOPYA_KLASORU}`);
+    } else {
+      console.warn(`Ikinci kopya atlandi (surucu yok): ${IKINCI_KOPYA_KLASORU}`);
+    }
+  } catch (e) {
+    console.warn("Ikinci kopya yazilamadi:", e.message);
+  }
+
   // Eski yedekleri temizle (diskin dolmamasi icin)
   const simdi = Date.now();
-  for (const dosya of readdirSync(YEDEK_KLASORU)) {
-    if (!dosya.startsWith("kokpit-yedek-")) continue;
-    const dosyaYolu = path.join(YEDEK_KLASORU, dosya);
-    const yasGun = (simdi - statSync(dosyaYolu).mtimeMs) / (1000 * 60 * 60 * 24);
-    if (yasGun > SAKLAMA_GUNU) {
-      unlinkSync(dosyaYolu);
-      console.log(`Eski yedek silindi: ${dosya}`);
+  for (const klasor of [YEDEK_KLASORU, IKINCI_KOPYA_KLASORU]) {
+    if (!existsSync(klasor)) continue;
+    for (const dosya of readdirSync(klasor)) {
+      if (!dosya.startsWith("kokpit-yedek-")) continue;
+      const dosyaYolu = path.join(klasor, dosya);
+      const yasGun = (simdi - statSync(dosyaYolu).mtimeMs) / (1000 * 60 * 60 * 24);
+      if (yasGun > SAKLAMA_GUNU) {
+        unlinkSync(dosyaYolu);
+        console.log(`Eski yedek silindi: ${dosyaYolu}`);
+      }
     }
   }
 }

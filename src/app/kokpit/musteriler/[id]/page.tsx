@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { kokpitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { notFound } from "next/navigation";
-import { musteriGetir } from "@/modules/musteri/lib/queries";
-import { irtibatKisisiEkle } from "@/modules/musteri/lib/actions";
+import { musteriGetir, avukatlariListele } from "@/modules/musteri/lib/queries";
+import { irtibatKisisiEkle, musteriAlanlariniGuncelle } from "@/modules/musteri/lib/actions";
 import { MusteriSilmeButonu } from "@/modules/musteri/components/musteri-silme-butonu";
 import { IrtibatKisisiFormu } from "@/modules/musteri/components/irtibat-kisisi-formu";
 import { IrtibatKisileriListesi } from "@/modules/musteri/components/irtibat-kisileri-listesi";
@@ -10,6 +10,8 @@ import { musterininDosyalari } from "@/modules/dava-dosyasi/lib/queries";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { Dugme } from "@/core/ui/button";
+import { DuzenlenebilirKart, type KartAlani } from "@/core/ui/duzenlenebilir-kart";
+import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
 
 export default async function MusteriDetaySayfasi({
   params,
@@ -17,14 +19,36 @@ export default async function MusteriDetaySayfasi({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [musteri, kullanici, dosyalar] = await Promise.all([
+  const [musteri, kullanici, dosyalar, avukatlar, etiketler] = await Promise.all([
     musteriGetir(id),
     mevcutKullanici(),
     musterininDosyalari(id),
+    avukatlariListele(),
+    etiketleriGetir(),
   ]);
   if (!musteri) notFound();
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
+  const bilgiAlanlari: KartAlani[] = [
+    { anahtar: "telefon", varsayilanEtiket: "Genel Telefon", tip: "metin", deger: musteri.telefon ?? "", gosterim: musteri.telefon ?? "—" },
+    { anahtar: "eposta", varsayilanEtiket: "Genel E-posta", tip: "metin", deger: musteri.eposta ?? "", gosterim: musteri.eposta ?? "—" },
+    {
+      anahtar: "sorumluAvukatId",
+      varsayilanEtiket: "Sorumlu Avukat",
+      tip: "secim",
+      deger: musteri.sorumluAvukatId ?? "",
+      gosterim: musteri.sorumluAvukat?.adSoyad ?? "—",
+      secenekler: [{ value: "", label: "—" }, ...avukatlar.map((a) => ({ value: a.id, label: a.adSoyad }))],
+    },
+    { anahtar: "adres", varsayilanEtiket: "Adres", tip: "cokSatir", deger: musteri.adres ?? "", gosterim: musteri.adres ?? "—" },
+    {
+      anahtar: "notlar",
+      varsayilanEtiket: "Notlar",
+      tip: "cokSatir",
+      deger: musteri.notlar ?? "",
+      gosterim: musteri.notlar ? <span className="whitespace-pre-wrap">{musteri.notlar}</span> : "—",
+    },
+  ];
 
   return (
     <div className="pt-3">
@@ -49,29 +73,15 @@ export default async function MusteriDetaySayfasi({
         </div>
       </div>
 
-      <div className="glass mb-8 grid grid-cols-2 gap-4 rounded-2xl p-5 text-sm md:grid-cols-4">
-        <div>
-          <p className="text-white/45">Genel Telefon</p>
-          <p className="text-white">{musteri.telefon ?? "—"}</p>
-        </div>
-        <div>
-          <p className="text-white/45">Genel E-posta</p>
-          <p className="text-white">{musteri.eposta ?? "—"}</p>
-        </div>
-        <div>
-          <p className="text-white/45">Sorumlu Avukat</p>
-          <p className="text-white">{musteri.sorumluAvukat?.adSoyad ?? "—"}</p>
-        </div>
-        <div>
-          <p className="text-white/45">Adres</p>
-          <p className="text-white">{musteri.adres ?? "—"}</p>
-        </div>
-        {musteri.notlar && (
-          <div className="col-span-2 md:col-span-4">
-            <p className="text-white/45">Notlar</p>
-            <p className="whitespace-pre-wrap text-white">{musteri.notlar}</p>
-          </div>
-        )}
+      <div className="mb-8 max-w-2xl">
+        <DuzenlenebilirKart
+          etiketOnEki="musteri-detay.genel-bilgiler"
+          varsayilanBaslik="Genel Bilgiler"
+          etiketler={etiketler}
+          alanlar={bilgiAlanlari}
+          etiketDuzenleyebilir={silmeYetkisiVar}
+          onKaydet={musteriAlanlariniGuncelle.bind(null, id)}
+        />
       </div>
 
       <div className="mb-8">

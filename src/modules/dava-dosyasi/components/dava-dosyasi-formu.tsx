@@ -1,4 +1,5 @@
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
+import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
 import { musterileriListele } from "@/modules/musteri/lib/queries";
 import type { davaDosyasiGetir } from "@/modules/dava-dosyasi/lib/queries";
 import type { DavaDosyasiSonucu } from "@/modules/dava-dosyasi/lib/actions";
@@ -16,13 +17,14 @@ type Props = {
 };
 
 export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSecilenMusteriId }: Props) {
-  const [hukukiIliskiTurleri, davaTurleri, dosyaTurleri, yargiKollari, musteriler, alanDuzeni] = await Promise.all([
+  const [hukukiIliskiTurleri, davaTurleri, dosyaTurleri, yargiKollari, musteriler, alanDuzeni, etiketler] = await Promise.all([
     secenekleriGetir("hukuki_iliski_turu"),
     secenekleriGetir("dava_turu"),
     secenekleriGetir("dosya_turu"),
     secenekleriGetir("yargi_kolu"),
     musterileriListele(),
     formAlanDuzeniniGetir("dava-dosyasi"),
+    etiketleriGetir(),
   ]);
 
   const seciliIdler =
@@ -49,6 +51,7 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
       dosyaId={dosya?.id}
       baslangicKarsiTaraflar={dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad, tc: kt.karsiTaraf.tanimlayiciKod })) ?? []}
       alanSirasi={alanSirasi}
+      etiketler={etiketler}
     />
   );
 }
