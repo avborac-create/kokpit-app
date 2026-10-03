@@ -148,7 +148,7 @@ function SutunBasligi({
   etiket: string;
   aciklama?: string;
   genislik: number;
-  suruklemeBaslat: (e: React.MouseEvent) => void;
+  suruklemeBaslat: (e: React.PointerEvent) => void;
 }) {
   return (
     <th
@@ -159,21 +159,27 @@ function SutunBasligi({
         {etiket}
       </div>
       {/* Sutun kenarindan surukleyerek genislik ayarlama tutamaci - drag&drop
-          (HTML5 draggable) ile karismasin diye ayri bir mousedown temelli
-          surukleme kullanir; draggable={false} native surukleme baslatmasini
-          bu tutamac uzerinde bastirir. */}
+          (HTML5 draggable) ile karismasin diye ayri bir pointer temelli
+          surukleme kullanir (fare + dokunmatik); draggable={false} native
+          surukleme baslatmasini bu tutamac uzerinde bastirir. touch-none
+          tarayicinin yatay kaydirma/zoom jestini tutamac uzerinde engeller.
+          Mobilde parmakla tutulabilsin diye daha genis (w-5), ince imlecli
+          cihazlarda (md+) ince (w-2). Gorunur ince cizgi sutun sinirini gosterir. */}
       <div
         role="separator"
         aria-orientation="vertical"
+        aria-label={`${etiket} sütun genişliği`}
         draggable={false}
         onDragStart={(e) => e.preventDefault()}
-        onMouseDown={(e) => {
+        onPointerDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
           suruklemeBaslat(e);
         }}
-        className="absolute right-0 top-0 h-full w-2 cursor-col-resize touch-none hover:bg-white/20 active:bg-[var(--accent)]/50"
-      />
+        className="group absolute right-0 top-0 flex h-full w-5 cursor-col-resize touch-none justify-end md:w-2"
+      >
+        <span className="h-full w-0.5 bg-white/25 group-hover:bg-white/40 group-active:bg-[var(--accent)] md:bg-transparent" />
+      </div>
     </th>
   );
 }
@@ -241,25 +247,27 @@ export function DosyalarTablosu({
   }
   const genislikler = { ...VARSAYILAN_GENISLIKLER, ...kayitliGenislikler, ...taslakGenislikler };
 
-  function genislikSuruklemeBaslat(anahtar: string, baslangicE: React.MouseEvent) {
+  function genislikSuruklemeBaslat(anahtar: string, baslangicE: React.PointerEvent) {
     const baslangicX = baslangicE.clientX;
     const baslangicGenislik = genislikler[anahtar] ?? VARSAYILAN_GENISLIK;
     const temel = { ...VARSAYILAN_GENISLIKLER, ...kayitliGenislikler };
 
-    function hareket(e: MouseEvent) {
+    function hareket(e: PointerEvent) {
       const yeni = Math.max(MIN_GENISLIK, baslangicGenislik + (e.clientX - baslangicX));
       setTaslakGenislikler((onceki) => ({ ...(onceki ?? temel), [anahtar]: yeni }));
     }
     function birak() {
-      window.removeEventListener("mousemove", hareket);
-      window.removeEventListener("mouseup", birak);
+      window.removeEventListener("pointermove", hareket);
+      window.removeEventListener("pointerup", birak);
+      window.removeEventListener("pointercancel", birak);
       setTaslakGenislikler((guncel) => {
         if (guncel) genislikleriYaz({ ...temel, ...guncel });
         return null;
       });
     }
-    window.addEventListener("mousemove", hareket);
-    window.addEventListener("mouseup", birak);
+    window.addEventListener("pointermove", hareket);
+    window.addEventListener("pointerup", birak);
+    window.addEventListener("pointercancel", birak);
   }
 
   return (
