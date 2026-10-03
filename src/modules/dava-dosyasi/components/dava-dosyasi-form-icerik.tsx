@@ -106,7 +106,7 @@ export function DavaDosyasiFormIcerik({
         varsayilanYeniEtiket={g?.yeniDavaTuruEtiketi}
         alanAdi="davaTuruId"
         yeniAlanAdi="yeniDavaTuruEtiketi"
-        etiket={bilgi("davaTuruId", "Dava Türü")}
+        etiket={bilgi("davaTuruId", "Tür")}
         zorunlu
       />
     ),

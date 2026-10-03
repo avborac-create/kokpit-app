@@ -188,7 +188,7 @@ export default async function DavaDosyasiDetaySayfasi({
     },
     {
       anahtar: "davaTuruId",
-      varsayilanEtiket: "Dava Türü",
+      varsayilanEtiket: "Tür",
       tip: "secim",
       deger: dosya.davaTuruId ?? "",
       gosterim: dosya.davaTuru?.etiket ?? "—",
