@@ -19,7 +19,7 @@ export function DosyaSinifiAlanlari({
   yargiKollari: Secenek[];
   varsayilanTurId: string;
   varsayilanYargiKoluId: string;
-  varsayilanSifat: "ALACAKLI" | "BORCLU";
+  varsayilanSifat: "ALACAKLI" | "BORCLU" | "DIGER";
 }) {
   const [turId, setTurId] = useState(varsayilanTurId);
   const davaMi = turler.find((t) => t.id === turId)?.kod === "dava_dosyasi";
@@ -54,6 +54,7 @@ export function DosyaSinifiAlanlari({
         <Secim id="muvekkilSifati" name="muvekkilSifati" defaultValue={varsayilanSifat}>
           <option value="ALACAKLI">Alacaklı</option>
           <option value="BORCLU">Borçlu</option>
+          <option value="DIGER">Diğer</option>
         </Secim>
       </Alan>
     </>

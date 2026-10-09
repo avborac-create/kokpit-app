@@ -22,18 +22,26 @@ type DosyaDegerleri = {
   davaTuruId: string | null;
   turId?: string | null;
   yargiKoluId?: string | null;
-  muvekkilSifati?: "ALACAKLI" | "BORCLU";
+  muvekkilSifati?: "ALACAKLI" | "BORCLU" | "DIGER";
   talepSonucu: string | null;
   durusmaTarihi: Date | null;
+  surum?: number;
 };
 
 // Hangi alanin hangi kartta gorunecegini sabitler - admin panelinden
 // (Ayarlar > Form Duzeni) degisen sadece bir kart ICINDEKI goreceli sira,
 // kartin kendisi degil (bkz. eski dava-dosyasi-formu.tsx'teki ayni desen,
 // simdi cok daha az alanla).
-const KARTLAR: { baslik: string; alanlar: string[] }[] = [
-  { baslik: "Dosya Bilgileri", alanlar: ["hukukiIliskiTuruId", "davaTuruId", "birimAdi", "buroNo", "dosyaNo"] },
-  { baslik: "Talep ve Duruşma", alanlar: ["talepSonucu", "durusmaTarihi"] },
+// Acilista yalniz muvekkil, karsi taraf, dosya sinifi, birim ve dosya no
+// istenir; gerisi "Ek bilgiler" altinda opsiyoneldir (dosya detayindan da
+// sonradan girilebilir).
+const KARTLAR: { baslik: string; alanlar: string[]; ekBilgi?: boolean }[] = [
+  { baslik: "Dosya Bilgileri", alanlar: ["birimAdi", "dosyaNo"] },
+  {
+    baslik: "Ek Bilgiler (isteğe bağlı)",
+    alanlar: ["hukukiIliskiTuruId", "davaTuruId", "buroNo", "talepSonucu", "durusmaTarihi"],
+    ekBilgi: true,
+  },
 ];
 
 // DavaDosyasiFormu (sunucu bileseni) veriyi ceker, gerceklestirmeyi
@@ -107,7 +115,6 @@ export function DavaDosyasiFormIcerik({
         alanAdi="davaTuruId"
         yeniAlanAdi="yeniDavaTuruEtiketi"
         etiket={bilgi("davaTuruId", "Dava Türü")}
-        zorunlu
       />
     ),
     birimAdi: () => (
@@ -159,6 +166,13 @@ export function DavaDosyasiFormIcerik({
 
   return (
     <form action={formAction} className="max-w-2xl" autoComplete="off">
+      {/* Iyimser kilitleme: sunucu, form acildigindaki surumle karsilastirir
+          (bkz. davaDosyasiGuncelle). Cakisma sonrasi guncel surum gelir,
+          boylece kullanici bilerek ustune yazabilir. Controlled hidden input
+          oldugu icin React'in form sifirlamasindan etkilenmez. */}
+      {dosya?.surum !== undefined && (
+        <input type="hidden" name="surum" value={durum?.guncelSurum ?? dosya.surum} readOnly />
+      )}
       <DavaDosyasiSekmeleri dosyaId={dosyaId} aktif="genel" />
       <FormKarti baslik={etiketler["dosya-detay.taraflar.baslik"] ?? "Taraflar"}>
         <div key={anahtar}>
@@ -167,6 +181,11 @@ export function DavaDosyasiFormIcerik({
         <KarsiTarafEkleyici baslangicKarsiTaraflar={baslangicKarsiTaraflar} />
       </FormKarti>
 
+      {alanSirasi.map((a) => (
+        <input key={a} type="hidden" name="gorunenAlanlar" value={a} />
+      ))}
+
+      {alanSirasi.includes("dosyaSinifi") && (
       <FormKarti baslik="Dosya Sınıfı">
         <div key={anahtar}>
           <DosyaSinifiAlanlari
@@ -176,26 +195,39 @@ export function DavaDosyasiFormIcerik({
               g?.turId ?? dosya?.turId ?? dosyaTurleri.find((t) => t.kod === "dava_dosyasi")?.id ?? ""
             }
             varsayilanYargiKoluId={g?.yargiKoluId ?? dosya?.yargiKoluId ?? ""}
-            varsayilanSifat={(g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "BORCLU" ? "BORCLU" : "ALACAKLI"}
+            varsayilanSifat={
+              ((g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "BORCLU" || (g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "DIGER"
+                ? (g?.muvekkilSifati ?? dosya?.muvekkilSifati)
+                : "ALACAKLI") as "ALACAKLI" | "BORCLU" | "DIGER"
+            }
           />
         </div>
       </FormKarti>
+      )}
 
       {KARTLAR.map((kart) => {
         const kartAlanlari = alanSirasi.filter((a) => kart.alanlar.includes(a));
+        const icerik = (
+          <div key={anahtar}>
+            {kartAlanlari.map((a) => (
+              <div key={a}>{alanRenderHaritasi[a]?.()}</div>
+            ))}
+          </div>
+        );
+        if (kartAlanlari.length === 0) return null;
+        if (kart.ekBilgi) {
+          // Duzenlemede dolu alan varsa ya da hata sonrasi acik kalir.
+          const doluMu = Boolean(dosya?.davaTuruId || dosya?.talepSonucu || dosya?.hukukiIliskiTuruId || dosya?.buroNo || dosya?.durusmaTarihi);
+          return (
+            <details key={kart.baslik} open={doluMu || Boolean(durum?.hata)} className="glass mb-6 rounded-2xl p-5">
+              <summary className="cursor-pointer text-sm font-medium text-white/80">{kart.baslik}</summary>
+              <div className="mt-4">{icerik}</div>
+            </details>
+          );
+        }
         return (
-          <FormKarti
-            key={kart.baslik}
-            baslik={
-              etiketler[`dosya-detay.${kart.baslik === "Dosya Bilgileri" ? "dosya-bilgileri" : "talep-durusma"}.baslik`] ??
-              kart.baslik
-            }
-          >
-            <div key={anahtar}>
-              {kartAlanlari.map((a) => (
-                <div key={a}>{alanRenderHaritasi[a]?.()}</div>
-              ))}
-            </div>
+          <FormKarti key={kart.baslik} baslik={etiketler["dosya-detay.dosya-bilgileri.baslik"] ?? kart.baslik}>
+            {icerik}
           </FormKarti>
         );
       })}

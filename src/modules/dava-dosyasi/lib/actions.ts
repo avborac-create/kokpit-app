@@ -44,8 +44,17 @@ async function dosyaSinifiniAl(formData: FormData) {
   const turId = metinYaAlNull(formData, "turId") ?? (await varsayilanTurIdGetir());
   const tur = await prisma.secenekDegeri.findUnique({ where: { id: turId }, select: { kod: true } });
   const yargiKoluId = tur?.kod === "dava_dosyasi" ? metinYaAlNull(formData, "yargiKoluId") : null;
-  const muvekkilSifati: MuvekkilSifati = formData.get("muvekkilSifati") === "BORCLU" ? "BORCLU" : "ALACAKLI";
+  const muvekkilSifati = muvekkilSifatiAl(formData.get("muvekkilSifati"));
   return { turId, yargiKoluId, muvekkilSifati };
+}
+
+function muvekkilSifatiAl(deger: FormDataEntryValue | string | null): MuvekkilSifati {
+  return deger === "BORCLU" || deger === "DIGER" ? deger : "ALACAKLI";
+}
+
+async function dosyaTuruEtiketi(turId: string): Promise<string> {
+  const tur = await prisma.secenekDegeri.findUnique({ where: { id: turId }, select: { etiket: true } });
+  return tur?.etiket ?? "Dosya";
 }
 
 async function varsayilanTurIdGetir(): Promise<string> {
@@ -178,6 +187,9 @@ export type DavaDosyasiSonucu =
       gonderilenAlanlar: Record<string, string>;
       gonderilenMusteriIdleri: string[];
       gonderilenTalepMaddeleri: string[];
+      // Kayit sirasinda dosyanin surumu degismisse (baska biri kaydetmis)
+      // dolu gelir: formun bir sonraki gonderimde kullanacagi GUNCEL surum.
+      guncelSurum?: number;
     }
   | undefined;
 
@@ -205,22 +217,6 @@ export async function davaDosyasiOlustur(
       gonderilenTalepMaddeleri,
     };
   }
-  if (!davaTuruId) {
-    return {
-      hata: "Dava türü seçilmelidir.",
-      gonderilenAlanlar,
-      gonderilenMusteriIdleri: musteriIdleri,
-      gonderilenTalepMaddeleri,
-    };
-  }
-  if (!talepSonucu) {
-    return {
-      hata: "Talep sonucu zorunludur.",
-      gonderilenAlanlar,
-      gonderilenMusteriIdleri: musteriIdleri,
-      gonderilenTalepMaddeleri,
-    };
-  }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const hukukiIliskiTuruId = await hukukiIliskiTuruIdCozumle(formData);
@@ -229,7 +225,7 @@ export async function davaDosyasiOlustur(
   const [durumId, { turId, yargiKoluId, muvekkilSifati }, davaTuru, uyusmazlikGrubuId] = await Promise.all([
     varsayilanDurumIdGetir(),
     dosyaSinifiniAl(formData),
-    prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } }),
+    davaTuruId ? prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } }) : null,
     uyusmazlikGrubuOtomatikCozumle(musteriIdleri[0]),
   ]);
   // Konu artik ayrica sorulmuyor - Dava Turu'nden otomatik uretilir
@@ -239,7 +235,8 @@ export async function davaDosyasiOlustur(
   // talep-sonucu-listesi.tsx), Konu'ya eklenirse baslik devasa buyur ve
   // zaten kendi kartinda ayrica gosterildigi icin ayni bilgi iki yerde
   // tekrar eder (bkz. kullanici geri bildirimi).
-  const konu = davaTuru?.etiket ?? "";
+  // Dava turu girilmediyse konu dosya turunden turetilir.
+  const konu = davaTuru?.etiket ?? (await dosyaTuruEtiketi(turId));
 
   const dosya = await prisma.davaDosyasi.create({
     data: {
@@ -289,73 +286,92 @@ export async function davaDosyasiGuncelle(
       gonderilenTalepMaddeleri,
     };
   }
-  if (!davaTuruId) {
-    return {
-      hata: "Dava türü seçilmelidir.",
-      gonderilenAlanlar,
-      gonderilenMusteriIdleri: musteriIdleri,
-      gonderilenTalepMaddeleri,
-    };
-  }
-  if (!talepSonucu) {
-    return {
-      hata: "Talep sonucu zorunludur.",
-      gonderilenAlanlar,
-      gonderilenMusteriIdleri: musteriIdleri,
-      gonderilenTalepMaddeleri,
-    };
-  }
 
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const hukukiIliskiTuruId = await hukukiIliskiTuruIdCozumle(formData);
   const durusmaTarihiHam = metinYaAlNull(formData, "durusmaTarihi");
-  const davaTuru = await prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } });
-  const konu = davaTuru?.etiket ?? "";
-  const { turId, yargiKoluId, muvekkilSifati } = await dosyaSinifiniAl(formData);
+  // Form Duzeni'nde gizlenen alanlar formda hic render edilmez; bunlarin
+  // mevcut degerleri update'te DOKUNULMADAN korunur (bkz. "gorunenAlanlar").
+  const gorunen = new Set(formData.getAll("gorunenAlanlar").map(String));
+  const g = (alan: string) => gorunen.has(alan);
+  const davaTuru = davaTuruId ? await prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } }) : null;
+  const sinif = g("dosyaSinifi") ? await dosyaSinifiniAl(formData) : null;
+  const mevcut = await prisma.davaDosyasi.findUniqueOrThrow({
+    where: { id },
+    select: { turId: true, konu: true },
+  });
+  const konu = g("davaTuruId")
+    ? (davaTuru?.etiket ?? (await dosyaTuruEtiketi(sinif?.turId ?? mevcut.turId ?? (await varsayilanTurIdGetir()))))
+    : mevcut.konu;
+
+  // Iyimser kilitleme: form acildiginda gorulen surum. Alan yoksa/bozuksa
+  // (eski sekme, elle gonderim) kontrol atlanmaz, cakisma sayilir.
+  const gonderilenSurum = Number(formData.get("surum"));
 
   // DIKKAT: durumId/acilisTarihi/uyusmazlikGrubuId/kapanisTarihi/
   // sorumluAvukatId/aciklama/icraAltTuruId/bagliOlduguDosyaId
   // BILEREK bu update'e dahil DEGIL - sadelestirilmis formda artik hic
   // toplanmiyorlar, update data'sinda olmayan bir alan Prisma tarafindan
   // DOKUNULMADAN oldugu gibi birakilir (silinmez/sifirlanmaz).
-  await prisma.$transaction([
-    prisma.davaDosyasi.update({
-      where: { id },
+  const cakismaSurumu = await prisma.$transaction(async (tx) => {
+    // Kontrol ve yazma TEK sorguda (where'deki surum) - arada baska bir
+    // kayit araya giremez. count 0 ise surum degismistir, hicbir sey yazilmaz.
+    const guncellenen = await tx.davaDosyasi.updateMany({
+      where: { id, surum: Number.isInteger(gonderilenSurum) ? gonderilenSurum : -1 },
       data: {
-        buroNo: metinYaAlNull(formData, "buroNo"),
-      dosyaNo: metinYaAlNull(formData, "dosyaNo"),
-        birimAdi: metinYaAlNull(formData, "birimAdi"),
+        ...(g("buroNo") && { buroNo: metinYaAlNull(formData, "buroNo") }),
+        ...(g("dosyaNo") && { dosyaNo: metinYaAlNull(formData, "dosyaNo") }),
+        ...(g("birimAdi") && { birimAdi: metinYaAlNull(formData, "birimAdi") }),
         konu,
-        turId,
-        yargiKoluId,
-        muvekkilSifati,
-        hukukiIliskiTuruId,
-        davaTuruId,
-        talepSonucu,
-        durusmaTarihi: durusmaTarihiHam ? new Date(durusmaTarihiHam) : null,
+        ...(sinif && {
+          turId: sinif.turId,
+          yargiKoluId: sinif.yargiKoluId,
+          muvekkilSifati: sinif.muvekkilSifati,
+        }),
+        ...(g("hukukiIliskiTuruId") && { hukukiIliskiTuruId }),
+        ...(g("davaTuruId") && { davaTuruId }),
+        ...(g("talepSonucu") && { talepSonucu }),
+        ...(g("durusmaTarihi") && { durusmaTarihi: durusmaTarihiHam ? new Date(durusmaTarihiHam) : null }),
+        surum: { increment: 1 },
       },
-    }),
-    prisma.dosyaMuvekkili.deleteMany({
-      where: { dosyaId: id, musteriId: { notIn: musteriIdleri } },
-    }),
-    ...musteriIdleri.map((musteriId) =>
-      prisma.dosyaMuvekkili.upsert({
+    });
+    if (guncellenen.count === 0) {
+      const mevcut = await tx.davaDosyasi.findUnique({ where: { id }, select: { surum: true } });
+      if (!mevcut) throw new Error("Dosya bulunamadı (silinmiş olabilir).");
+      return mevcut.surum;
+    }
+
+    await tx.dosyaMuvekkili.deleteMany({ where: { dosyaId: id, musteriId: { notIn: musteriIdleri } } });
+    for (const musteriId of musteriIdleri) {
+      await tx.dosyaMuvekkili.upsert({
         where: { dosyaId_musteriId: { dosyaId: id, musteriId } },
         update: {},
         create: { dosyaId: id, musteriId },
-      }),
-    ),
-    prisma.dosyaKarsiTarafi.deleteMany({
-      where: { dosyaId: id, karsiTarafId: { notIn: karsiTarafIdleri } },
-    }),
-    ...karsiTarafIdleri.map((karsiTarafId) =>
-      prisma.dosyaKarsiTarafi.upsert({
+      });
+    }
+    await tx.dosyaKarsiTarafi.deleteMany({ where: { dosyaId: id, karsiTarafId: { notIn: karsiTarafIdleri } } });
+    for (const karsiTarafId of karsiTarafIdleri) {
+      await tx.dosyaKarsiTarafi.upsert({
         where: { dosyaId_karsiTarafId: { dosyaId: id, karsiTarafId } },
         update: {},
         create: { dosyaId: id, karsiTarafId },
-      }),
-    ),
-  ]);
+      });
+    }
+    return null;
+  });
+
+  if (cakismaSurumu !== null) {
+    return {
+      hata:
+        "Bu dosya siz düzenlerken başka biri tarafından değiştirildi. Yazdıklarınız korundu ama kaydedilmedi. " +
+        "Dosyayı yeni sekmede açıp güncel halini kontrol edin; yine de sizin değerlerinizle kaydetmek " +
+        "isterseniz Kaydet'e tekrar basın (diğer kişinin değişikliklerinin üzerine yazılır).",
+      gonderilenAlanlar,
+      gonderilenMusteriIdleri: musteriIdleri,
+      gonderilenTalepMaddeleri,
+      guncelSurum: cakismaSurumu,
+    };
+  }
 
   revalidatePath("/kokpit/dava-dosyalari");
   revalidatePath(`/kokpit/dava-dosyalari/${id}`);
@@ -432,7 +448,7 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
     const deger = ham.trim();
     switch (alan) {
       case "muvekkilSifati":
-        data.muvekkilSifati = deger === "BORCLU" ? "BORCLU" : "ALACAKLI";
+        data.muvekkilSifati = muvekkilSifatiAl(deger);
         break;
       case "turId":
         if (!deger) throw new Error("Tür boş bırakılamaz.");
@@ -471,7 +487,9 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
     if (tur && tur.kod !== "dava_dosyasi") data.yargiKoluId = null;
   }
 
-  await prisma.davaDosyasi.update({ where: { id: dosyaId }, data });
+  // surum artar: ayni anda ana formu acik tutan biri kaydederken bu
+  // degisikligi sessizce ezmesin, cakisma uyarisi alsin.
+  await prisma.davaDosyasi.update({ where: { id: dosyaId }, data: { ...data, surum: { increment: 1 } } });
   revalidatePath("/kokpit/dava-dosyalari");
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
@@ -506,6 +524,10 @@ export async function anaDosyaBagla(dosyaId: string, anaDosyaId: string | null) 
     if (dosya.anaDosyaId === anaDosyaId) return;
 
     await prisma.$transaction(async (tx) => {
+      // Ayni ana dosyaya ayni anda iki alt dosya baglanirsa ikisi de ayni
+      // "en buyuk + 1" degerini okuyup ayni sira no'yu alirdi - ana dosya
+      // basina serilestir (kilit transaction bitince kendiliginden kalkar).
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"alt-sira:" + anaDosyaId}))`;
       const enBuyuk = await tx.davaDosyasi.aggregate({
         where: { anaDosyaId },
         _max: { altSiraNo: true },
@@ -626,24 +648,33 @@ export async function avansAktarimiEkle(kaynakDosyaId: string, formData: FormDat
     throw new Error("Avans yalnızca aynı müvekkilin dosyaları arasında aktarılabilir.");
   }
 
-  const ozet = await dosyaCariHesapOzeti(kaynakDosyaId);
-  const satir = ozet.find((o) => o.cariKod.id === cariKodId);
-  const mevcutBakiye = satir?.bakiye ?? 0;
-  if (tutar > mevcutBakiye + 0.005) {
-    throw new Error(
-      `Kaynak dosyada seçilen cari kodda aktarılabilir bakiye yetersiz (mevcut: ${mevcutBakiye.toFixed(2)} TL).`,
-    );
-  }
+  // Bakiye kontrolu ile kayit ARASINDA baska bir aktarim araya girmesin diye
+  // kaynak dosya basina serilestirilir: kilit transaction bitene kadar
+  // tutulur, ikinci aktarim ilkinin yazdigi kaydi gorerek bakiyeyi hesaplar.
+  // (Bakiye okumasi kilidi tutan transaction'in disindaki baglantidan yapilir;
+  // onceki aktarimlar kilit birakilmadan commit edildigi icin gorunurler.)
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"avans:" + kaynakDosyaId}))`;
 
-  await prisma.dosyaAvansAktarimi.create({
-    data: {
-      kaynakDosyaId,
-      hedefDosyaId,
-      cariKodId,
-      tarih: new Date(tarih),
-      tutar: tutar.toFixed(2),
-      aciklama,
-    },
+    const ozet = await dosyaCariHesapOzeti(kaynakDosyaId);
+    const satir = ozet.find((o) => o.cariKod.id === cariKodId);
+    const mevcutBakiye = satir?.bakiye ?? 0;
+    if (tutar > mevcutBakiye + 0.005) {
+      throw new Error(
+        `Kaynak dosyada seçilen cari kodda aktarılabilir bakiye yetersiz (mevcut: ${mevcutBakiye.toFixed(2)} TL).`,
+      );
+    }
+
+    await tx.dosyaAvansAktarimi.create({
+      data: {
+        kaynakDosyaId,
+        hedefDosyaId,
+        cariKodId,
+        tarih: new Date(tarih),
+        tutar: tutar.toFixed(2),
+        aciklama,
+      },
+    });
   });
 
   revalidatePath(`/kokpit/dava-dosyalari/${kaynakDosyaId}`);

@@ -21,9 +21,14 @@ const YANSITMA_SECENEKLERI = [
 export async function MasrafFormu({
   action,
   duzenlemeVerisi,
+  turDuzenleyici,
+  varsayilanCariKod,
 }: {
   action: (formData: FormData) => void;
   duzenlemeVerisi?: MasrafDuzenlemeVerisi;
+  turDuzenleyici?: React.ReactNode;
+  // Yeni masrafta on secili gelecek cari kodun `kod` degeri (ör. masraf_hesabi).
+  varsayilanCariKod?: string;
 }) {
   const [cariKodlar, turler] = await Promise.all([
     secenekleriGetir("cari_kod"),
@@ -40,7 +45,7 @@ export async function MasrafFormu({
       </Alan>
       <Alan>
         <Etiket htmlFor="cariKodId">Cari Kod</Etiket>
-        <Secim id="cariKodId" name="cariKodId" required defaultValue={duzenlemeVerisi?.cariKodId ?? ""}>
+        <Secim id="cariKodId" name="cariKodId" required defaultValue={duzenlemeVerisi?.cariKodId ?? cariKodlar.find((k) => k.kod === varsayilanCariKod)?.id ?? ""}>
           <option value="" disabled>
             Seçiniz…
           </option>
@@ -55,6 +60,7 @@ export async function MasrafFormu({
         turler={turler}
         defaultTurId={duzenlemeVerisi?.turId}
         defaultTutar={duzenlemeVerisi?.tutar}
+        turDuzenleyici={turDuzenleyici}
       />
       <div className="col-span-1 sm:col-span-2 md:col-span-4">
         <Etiket>Masraf Kime Yansıtılsın?</Etiket>

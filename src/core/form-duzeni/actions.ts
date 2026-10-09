@@ -37,9 +37,10 @@ export async function formAlanlariniYenidenSirala(formAnahtari: string, alanAnah
 
   await prisma.$transaction(
     alanAnahtarSirasi.map((alanAnahtari, index) =>
-      prisma.formAlanDuzeni.update({
+      prisma.formAlanDuzeni.upsert({
         where: { formAnahtari_alanAnahtari: { formAnahtari, alanAnahtari } },
-        data: { siraNo: index },
+        update: { siraNo: index },
+        create: { formAnahtari, alanAnahtari, siraNo: index },
       }),
     ),
   );
@@ -54,9 +55,11 @@ export async function formAlanGorunurlukDegistir(formAnahtari: string, alanAnaht
   await yetkiKontrolEt();
   if (GIZLENEMEZ_ALANLAR[formAnahtari]?.includes(alanAnahtari)) return;
 
-  await prisma.formAlanDuzeni.update({
+  const sonSira = await prisma.formAlanDuzeni.aggregate({ where: { formAnahtari }, _max: { siraNo: true } });
+  await prisma.formAlanDuzeni.upsert({
     where: { formAnahtari_alanAnahtari: { formAnahtari, alanAnahtari } },
-    data: { gizliMi },
+    update: { gizliMi },
+    create: { formAnahtari, alanAnahtari, gizliMi, siraNo: (sonSira._max.siraNo ?? -1) + 1 },
   });
 
   revalidatePath("/kokpit/ayarlar/form-duzeni");

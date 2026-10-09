@@ -1,36 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  davaDosyasiGetir,
-  dosyaCariHesapOzeti,
-  netAvansBakiyesi,
-  aktarimHedefAdaylari,
-  dosyaAvansAktarimlari,
-  anaDosyaAdaylariniGetir,
-  dosyaAgaciCariHesapOzeti,
-  dosyaAvansBakiyesi,
-} from "@/modules/dava-dosyasi/lib/queries";
-import {
-  dosyaMasrafiEkle,
-  karsiTarafAlacagiEkle,
-  adliBirimHareketiEkle,
-  avansAktarimiEkle,
-  dosyaAlanlariniGuncelle,
-} from "@/modules/dava-dosyasi/lib/actions";
+import { davaDosyasiGetir, anaDosyaAdaylariniGetir } from "@/modules/dava-dosyasi/lib/queries";
+import { dosyaAlanlariniGuncelle } from "@/modules/dava-dosyasi/lib/actions";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
-import { DosyaParaTrafigiListesi } from "@/modules/dava-dosyasi/components/dosya-para-trafigi-listesi";
-import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
-import { MasrafListesi } from "@/modules/dava-dosyasi/components/masraf-listesi";
-import { CariHesapOzeti } from "@/modules/dava-dosyasi/components/cari-hesap-ozeti";
-import { DokumTablosu } from "@/modules/dava-dosyasi/components/dokum-tablosu";
-import type { DokumSatiri } from "@/modules/dava-dosyasi/lib/queries";
-import { KarsiTarafAlacagiFormu } from "@/modules/dava-dosyasi/components/karsi-taraf-alacagi-formu";
-import { KarsiTarafAlacagiListesi } from "@/modules/dava-dosyasi/components/karsi-taraf-alacagi-listesi";
-import { ArtciIslerBlok } from "@/modules/dava-dosyasi/components/artci-isler-blok";
-import { AdliBirimHareketFormu } from "@/modules/dava-dosyasi/components/adli-birim-hareket-formu";
-import { AdliBirimHareketListesi } from "@/modules/dava-dosyasi/components/adli-birim-hareket-listesi";
-import { AvansAktarimFormu } from "@/modules/dava-dosyasi/components/avans-aktarim-formu";
-import { AvansAktarimListesi } from "@/modules/dava-dosyasi/components/avans-aktarim-listesi";
+import { EkonomiPaneli } from "@/modules/dava-dosyasi/components/ekonomi/ekonomi-paneli";
+import { ekonomiHesapla } from "@/modules/dava-dosyasi/lib/dosya-ekonomisi";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { DavaDosyasiSekmeleri } from "@/modules/dava-dosyasi/components/dava-dosyasi-sekmeleri";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
@@ -56,25 +30,6 @@ function Bilgi({ baslik, children }: { baslik: string; children: React.ReactNode
   );
 }
 
-// Dosya Ekonomisi sekmesindeki 3 cari hesap iliskisini (Müvekkil-Büro,
-// Büro-Adli Birim, Borçlu-Büro) birbirinden GORSEL OLARAK NET AYIRMAK
-// icin - kullanici geri bildirimi: bunlar art arda akan basliklar degil,
-// ayri kartlar olarak durmali.
-function CariHesapBolumu({
-  baslik,
-  children,
-}: {
-  baslik: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="mb-8 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-      <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">{baslik}</h2>
-      {children}
-    </div>
-  );
-}
-
 // Birden fazla kisi/kurum varsa alt alta, sira numarali; tek ise duz metin;
 // hic yoksa "—". Taraflar kartinda kullanilir.
 function SiraliListe({ children }: { children: React.ReactNode[] }) {
@@ -94,18 +49,14 @@ export default async function DavaDosyasiDetaySayfasi({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ sekme?: string }>;
+  searchParams: Promise<{ sekme?: string; alt?: string }>;
 }) {
   const { id } = await params;
-  const { sekme } = await searchParams;
+  const { sekme, alt } = await searchParams;
   const aktifSekme = sekme === "ekonomi" ? "ekonomi" : "genel";
-  const [dosya, kullanici, cariHesapOzeti, aktarimHedefleri, aktarimlar, cariKodlar, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, davaTurleri] = await Promise.all([
+  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, davaTurleri] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
-    dosyaCariHesapOzeti(id),
-    aktarimHedefAdaylari(id),
-    dosyaAvansAktarimlari(id),
-    secenekleriGetir("cari_kod"),
     anaDosyaAdaylariniGetir(id),
     etiketleriGetir(),
     secenekleriGetir("dosya_turu"),
@@ -114,28 +65,25 @@ export default async function DavaDosyasiDetaySayfasi({
     secenekleriGetir("dava_turu"),
   ]);
   if (!dosya) notFound();
-  const avansBakiyesi = netAvansBakiyesi(cariHesapOzeti);
 
-  // Ana dosyaysa: kendisi + alt dosyalarinin toplam cari hesabi ve her birinin
-  // ayri bakiyesi ("KP-0019 ile ilgileniyorum" ya da "/1 ile" ihtiyaci).
-  const agacIdleri = dosya.altDosyalar.length > 0 ? [id, ...dosya.altDosyalar.map((a) => a.id)] : [];
-  const [agacOzeti, agacBakiyeleri] =
-    agacIdleri.length > 0
-      ? await Promise.all([
-          dosyaAgaciCariHesapOzeti(agacIdleri),
-          Promise.all(agacIdleri.map(async (i) => ({ id: i, bakiye: await dosyaAvansBakiyesi(i) }))),
-        ])
-      : [[], []];
-  const agacBakiyesi = netAvansBakiyesi(agacOzeti);
-  const agacSatirlari = agacBakiyeleri.map((b) => {
-    const alt = dosya.altDosyalar.find((a) => a.id === b.id);
-    return {
-      id: b.id,
-      no: alt ? kokpitNoGoster({ ...alt, anaDosya: dosya }) : kokpitNoGoster(dosya),
-      konu: alt ? alt.konu : dosya.konu,
-      bakiye: b.bakiye,
-    };
-  });
+  // Ana dosyaysa: kendisi + alt dosyalari (Dosya Ekonomisi > Ozet sekmesinde
+  // her birinin net durumu ve toplami gosterilir).
+  const agacDosyalari =
+    dosya.altDosyalar.length > 0
+      ? [
+          { id, no: kokpitNoGoster(dosya), konu: dosya.konu },
+          ...dosya.altDosyalar.map((a) => ({
+            id: a.id,
+            no: kokpitNoGoster({ ...a, anaDosya: dosya }),
+            konu: a.konu,
+          })),
+        ]
+      : [];
+  const agacIdleri = agacDosyalari.map((d) => d.id);
+  const [dosyaEkonomisi, agacEkonomisi] = await Promise.all([
+    ekonomiHesapla([id]),
+    agacIdleri.length > 0 ? ekonomiHesapla(agacIdleri) : Promise.resolve(null),
+  ]);
   const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
@@ -172,10 +120,11 @@ export default async function DavaDosyasiDetaySayfasi({
       varsayilanEtiket: "Müvekkil Sıfatı",
       tip: "secim",
       deger: dosya.muvekkilSifati,
-      gosterim: dosya.muvekkilSifati === "BORCLU" ? "Borçlu" : "Alacaklı",
+      gosterim: { ALACAKLI: "Alacaklı", BORCLU: "Borçlu", DIGER: "Diğer" }[dosya.muvekkilSifati],
       secenekler: [
         { value: "ALACAKLI", label: "Alacaklı" },
         { value: "BORCLU", label: "Borçlu" },
+        { value: "DIGER", label: "Diğer" },
       ],
     },
     {
@@ -320,27 +269,6 @@ export default async function DavaDosyasiDetaySayfasi({
       : []),
   ];
 
-  const dosyaDokumu: DokumSatiri[] = [
-    ...dosya.masraflar.map((m) => ({
-      id: `masraf-${m.id}`,
-      tarih: m.tarih,
-      kaynak: "masraf" as const,
-      tutar: Number(m.tutar),
-      dosyaId: id,
-      dosyaKonu: dosya.konu,
-      aciklama: `${m.tur.etiket} — ${m.aciklama}`,
-    })),
-    ...dosya.paraTrafigiDagitimlari.map((d) => ({
-      id: `dagitim-${d.id}`,
-      tarih: d.olusturmaTarihi,
-      kaynak: "dagitim" as const,
-      tutar: Number(d.tutar),
-      dosyaId: id,
-      dosyaKonu: dosya.konu,
-      aciklama: d.kullanimAmaci.etiket,
-    })),
-  ].sort((a, b) => b.tarih.getTime() - a.tarih.getTime());
-
   return (
     <div className="pt-3">
       <div className="mb-6 flex items-start justify-between">
@@ -377,18 +305,27 @@ export default async function DavaDosyasiDetaySayfasi({
             )}
             <span
               className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                avansBakiyesi < 0
+                dosyaEkonomisi.net > 0
                   ? "bg-[#ff7a70]/15 text-[#ff7a70]"
-                  : avansBakiyesi > 0
+                  : dosyaEkonomisi.net < 0
                     ? "bg-[#32d74b]/15 text-[#32d74b]"
                     : "bg-white/[0.06] text-white/60"
               }`}
             >
-              Müvekkil Bakiye Avans: {paraFormatlayici.format(avansBakiyesi)}
+              {dosyaEkonomisi.net > 0
+                ? `Müvekkil Borcu: ${paraFormatlayici.format(dosyaEkonomisi.net)}`
+                : dosyaEkonomisi.net < 0
+                  ? `Müvekkil Lehine Fazla: ${paraFormatlayici.format(-dosyaEkonomisi.net)}`
+                  : "Bakiye yok"}
             </span>
-            {agacIdleri.length > 0 && (
+            {dosyaEkonomisi.havuzKalan > 0 && (
+              <span className="whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2.5 py-0.5 text-xs font-medium text-[#6db8ff]">
+                Havuzda bekleyen: {paraFormatlayici.format(dosyaEkonomisi.havuzKalan)}
+              </span>
+            )}
+            {agacEkonomisi && (
               <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-medium text-white/70">
-                Alt dosyalar dahil: {paraFormatlayici.format(agacBakiyesi)}
+                Alt dosyalar dahil net: {paraFormatlayici.format(agacEkonomisi.net)}
               </span>
             )}
           </p>
@@ -473,144 +410,12 @@ export default async function DavaDosyasiDetaySayfasi({
           )}
         </>
       ) : (
-        <>
-          {agacIdleri.length > 0 && (
-            <CariHesapBolumu baslik="Ana Dosya + Alt Dosyalar Toplamı">
-              <div className="mb-6">
-                <CariHesapOzeti ozet={agacOzeti} />
-              </div>
-              <div className="glass overflow-x-auto rounded-2xl">
-                <table className="w-full text-left text-sm">
-                  <thead className="text-white/50">
-                    <tr>
-                      <th className="px-4 py-3 font-medium">Dosya</th>
-                      <th className="px-4 py-3 font-medium">Konu</th>
-                      <th className="px-4 py-3 text-right font-medium">Bakiye Avans</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {agacSatirlari.map((satir) => (
-                      <tr key={satir.id} className="border-t border-white/[0.06]">
-                        <td className="px-4 py-3 font-medium text-white">
-                          {satir.id === id ? (
-                            satir.no
-                          ) : (
-                            <Link
-                              href={`/kokpit/dava-dosyalari/${satir.id}?sekme=ekonomi`}
-                              className="hover:text-[#6db8ff] hover:underline"
-                            >
-                              {satir.no}
-                            </Link>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-white/60">{satir.konu}</td>
-                        <td
-                          className={`px-4 py-3 text-right ${
-                            satir.bakiye < 0 ? "text-[#ff7a70]" : satir.bakiye > 0 ? "text-[#32d74b]" : "text-white/60"
-                          }`}
-                        >
-                          {paraFormatlayici.format(satir.bakiye)}
-                        </td>
-                      </tr>
-                    ))}
-                    <tr className="border-t border-white/10 font-medium">
-                      <td className="px-4 py-3 text-white" colSpan={2}>
-                        Toplam
-                      </td>
-                      <td className="px-4 py-3 text-right text-white">{paraFormatlayici.format(agacBakiyesi)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </CariHesapBolumu>
-          )}
-
-          <div className="mb-4 flex justify-end">
-            <Link href={`/kokpit/dava-dosyalari/${id}/masraf-aktar`}>
-              <Dugme varyant="ikincil">Excel'den masraf aktar</Dugme>
-            </Link>
-          </div>
-
-          <CariHesapBolumu baslik="Müvekkil-Büro Cari Hesabı">
-            <div className="mb-8">
-              <CariHesapOzeti ozet={cariHesapOzeti} />
-            </div>
-
-            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">
-              Dosya Bazında Döküm
-            </h3>
-            <div className="mb-8">
-              <DokumTablosu satirlar={dosyaDokumu} dosyaSutunuGoster={false} />
-            </div>
-
-            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">Para Trafiği</h3>
-            <div className="mb-8">
-              <DosyaParaTrafigiListesi baglantilar={dosya.paraTrafigiKayitlari} />
-            </div>
-
-            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">Avans Aktarımı</h3>
-            <div className="mb-4">
-              <AvansAktarimFormu
-                action={avansAktarimiEkle.bind(null, id)}
-                hedefler={aktarimHedefleri.map((h) => ({ ...h }))}
-                cariKodlar={cariKodlar}
-                kaynakBakiye={avansBakiyesi}
-              />
-            </div>
-            <div className="mb-8">
-              <AvansAktarimListesi
-                aktarimlar={aktarimlar.map((a) => ({
-                  id: a.id,
-                  tarih: a.tarih,
-                  tutar: Number(a.tutar),
-                  aciklama: a.aciklama,
-                  cariKodEtiketi: a.cariKod.etiket,
-                  kaynakDosya: a.kaynakDosya,
-                  hedefDosya: a.hedefDosya,
-                }))}
-                dosyaId={id}
-                silmeYetkisiVar={silmeYetkisiVar}
-              />
-            </div>
-
-            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">Masraflar</h3>
-            <div className="mb-4">
-              <MasrafFormu action={dosyaMasrafiEkle.bind(null, id)} />
-            </div>
-            <MasrafListesi
-              masraflar={dosya.masraflar.map((m) => ({ ...m, tutar: Number(m.tutar) }))}
-              dosyaId={id}
-              silmeYetkisiVar={silmeYetkisiVar}
-            />
-          </CariHesapBolumu>
-
-          <CariHesapBolumu baslik="Büro-Adli Birim Cari Hesabı">
-            <div className="mb-4">
-              <AdliBirimHareketFormu action={adliBirimHareketiEkle.bind(null, id)} />
-            </div>
-            <AdliBirimHareketListesi
-              hareketler={dosya.adliBirimHareketleri.map((h) => ({ ...h, tutar: Number(h.tutar) }))}
-              dosyaId={id}
-            />
-          </CariHesapBolumu>
-
-          <CariHesapBolumu baslik="Borçlu-Büro Cari Hesabı">
-            <div className="mb-4">
-              <KarsiTarafAlacagiFormu action={karsiTarafAlacagiEkle.bind(null, id)} />
-            </div>
-            <div className="mb-6">
-              <KarsiTarafAlacagiListesi
-                alacaklar={dosya.karsiTarafAlacaklari.map((a) => ({ ...a, tutar: Number(a.tutar) }))}
-                dosyaId={id}
-                silmeYetkisiVar={silmeYetkisiVar}
-              />
-            </div>
-            <ArtciIslerBlok
-              karsiTarafAlacaklari={dosya.karsiTarafAlacaklari.map((a) => ({ ...a, tutar: Number(a.tutar) }))}
-              finansHareketleri={dosya.finansHareketleri.map((h) => ({ ...h, tutar: Number(h.tutar) }))}
-            />
-          </CariHesapBolumu>
-        </>
+        <EkonomiPaneli
+          dosyaId={id}
+          alt={alt ?? "ozet"}
+          silmeYetkisiVar={silmeYetkisiVar}
+          agacDosyalari={agacDosyalari}
+        />
       )}
     </div>
   );

@@ -23,14 +23,21 @@ export default async function FormDuzeniSayfasi() {
   // formda hic gorunmez oldu (bkz. dava-dosyasi-alanlari.ts) ama eski
   // form_alan_duzeni satirlari DB'de kalmis olabilir - bu ekranda hicbir
   // seye karsilik gelmeyen "hayalet" satirlar gostermemek icin filtrelenir.
-  const ogeler: FormAlanSatiri[] = davaDosyasiKayitlari
-    .filter((k) => k.alanAnahtari in DAVA_DOSYASI_ALAN_ETIKETLERI)
-    .map((k) => ({
-      anahtar: k.alanAnahtari,
-      etiket: DAVA_DOSYASI_ALAN_ETIKETLERI[k.alanAnahtari] ?? k.alanAnahtari,
-      gizliMi: k.gizliMi,
-      gizlenebilirMi: !DAVA_DOSYASI_GIZLENEMEZ_ALANLAR.includes(k.alanAnahtari),
-    }));
+  const kayitliDavaAlanlari = davaDosyasiKayitlari.filter((k) => k.alanAnahtari in DAVA_DOSYASI_ALAN_ETIKETLERI);
+  // Sonradan eklenen alanlar (ör. Dosya Sınıfı) DB'de satır olmasa da burada
+  // listelenir; ilk değişiklikte satır oluşturulur.
+  const davaAlanKayitlari = [
+    ...kayitliDavaAlanlari.map((k) => ({ anahtar: k.alanAnahtari, gizliMi: k.gizliMi })),
+    ...Object.keys(DAVA_DOSYASI_ALAN_ETIKETLERI)
+      .filter((a) => !kayitliDavaAlanlari.some((k) => k.alanAnahtari === a))
+      .map((a) => ({ anahtar: a, gizliMi: false })),
+  ];
+  const ogeler: FormAlanSatiri[] = davaAlanKayitlari.map((k) => ({
+    anahtar: k.anahtar,
+    etiket: DAVA_DOSYASI_ALAN_ETIKETLERI[k.anahtar] ?? k.anahtar,
+    gizliMi: k.gizliMi,
+    gizlenebilirMi: !DAVA_DOSYASI_GIZLENEMEZ_ALANLAR.includes(k.anahtar),
+  }));
   const musteriOgeleri: FormAlanSatiri[] = musteriKayitlari.map((k) => ({
     anahtar: k.alanAnahtari,
     etiket: MUSTERI_ALAN_ETIKETLERI[k.alanAnahtari] ?? k.alanAnahtari,
@@ -43,8 +50,8 @@ export default async function FormDuzeniSayfasi() {
       <h1 className="mb-1 text-2xl font-semibold tracking-tight text-white">Form Düzeni</h1>
       <p className="mb-6 max-w-2xl text-sm text-white/50">
         Formlardaki alanların sırasını sürükleyerek değiştirin, ihtiyacınız olmayanları
-        &quot;Gizli&quot; yapın. &quot;Zorunlu&quot; rozetli alanlar (kaydetmek için gerekli
-        oldukları için) gizlenemez, sadece sırası değişebilir.
+        &quot;Gizli&quot; yapın. Gizlenen alanlar yeni kayıt formunda görünmez; dosya
+        detayından sonradan girilebilir ve mevcut değerleri korunur.
       </p>
 
       <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">

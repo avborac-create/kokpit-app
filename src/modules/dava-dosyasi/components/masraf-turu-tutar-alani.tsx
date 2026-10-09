@@ -14,10 +14,13 @@ export function MasrafTuruTutarAlani({
   turler,
   defaultTurId,
   defaultTutar,
+  turDuzenleyici,
 }: {
   turler: Tur[];
   defaultTurId?: string;
   defaultTutar?: number;
+  // Yoneticiye ozel "Listeyi duzenle" baglantisi (Tur acilir menusunun yaninda).
+  turDuzenleyici?: React.ReactNode;
 }) {
   const [turId, setTurId] = useState(defaultTurId ?? "");
   const [maktuKullan, setMaktuKullan] = useState(false);
@@ -28,7 +31,10 @@ export function MasrafTuruTutarAlani({
   return (
     <>
       <Alan>
-        <Etiket htmlFor="turId">Tür</Etiket>
+        <div className="flex items-center justify-between gap-2">
+          <Etiket htmlFor="turId">Tür</Etiket>
+          {turDuzenleyici}
+        </div>
         <Secim
           id="turId"
           name="turId"

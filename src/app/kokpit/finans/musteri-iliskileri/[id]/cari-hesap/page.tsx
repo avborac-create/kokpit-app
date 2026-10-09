@@ -6,6 +6,7 @@ import { paraTrafigiKaydiEkle } from "@/modules/musteri/lib/actions";
 import { musteriCariHesapOzeti, dagitilmamisParaToplami, musteriDosyaAvansBakiyeleri } from "@/modules/dava-dosyasi/lib/queries";
 import { ParaTrafigiFormu } from "@/modules/musteri/components/para-trafigi-formu";
 import { ParaTrafigiListesi } from "@/modules/musteri/components/para-trafigi-listesi";
+import { MuvekkilEkonomiTablosu } from "@/modules/dava-dosyasi/components/ekonomi/muvekkil-ekonomi-tablosu";
 import { CariHesapOzeti } from "@/modules/dava-dosyasi/components/cari-hesap-ozeti";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
@@ -47,6 +48,12 @@ export default async function CariHesapSayfasi({
         </div>
       </div>
 
+      <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Dosya Ekonomisi — Cari Kod Bazında Toplam</h2>
+      <div className="mb-8">
+        <MuvekkilEkonomiTablosu musteriId={id} />
+      </div>
+
+      <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Eski Cari Hesap Özeti</h2>
       <p className="mb-3 text-sm text-white/45">
         Bu müvekkilin tüm uyuşmazlık/dosyalarındaki toplam durumu — dosya veya küme bazında ayrıntı
         için ilgili dosya/küme sayfasına bakın.

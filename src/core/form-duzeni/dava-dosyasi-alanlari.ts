@@ -20,10 +20,10 @@ export const DAVA_DOSYASI_ALAN_ETIKETLERI: Record<string, string> = {
   birimAdi: "Birim Adı (Mahkeme/İcra Dairesi)",
   talepSonucu: "Talep Sonucu",
   durusmaTarihi: "Duruşma Tarihi",
+  dosyaSinifi: "Dosya Sınıfı (Tür / Yargı Kolu / Müvekkil Sıfatı)",
 };
 
-// Bunlar artik formun TAMAMI - sadelestirme sonrasi geriye kalanlarin
-// hepsi cekirdek kabul edilip gizlenemez yapildi (sadece sirasi
-// degisebilir). Dava Turu ayrica Konu'nun otomatik uretiminde
-// kullanildigi icin (bkz. actions.ts) zorunlu tutuluyor.
-export const DAVA_DOSYASI_GIZLENEMEZ_ALANLAR = Object.keys(DAVA_DOSYASI_ALAN_ETIKETLERI);
+// Muvekkil ve Karsi Taraf secicileri disinda her alan gizlenebilir: gizlenen
+// alanlar yeni dosya formunda gorunmez (dosya detayindan sonradan girilebilir)
+// ve duzenlemede mevcut degerleri korunur (bkz. actions.ts "gorunenAlanlar").
+export const DAVA_DOSYASI_GIZLENEMEZ_ALANLAR: string[] = [];

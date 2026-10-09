@@ -114,6 +114,8 @@ model SecenekDegeri {
   paraTrafigiTasnifCariKod      ParaTrafigiTasnif[]   @relation("ParaTrafigiTasnifCariKod")
   dosyaMasrafiCariKod           DosyaMasrafi[]        @relation("DosyaMasrafiCariKod")
   avansAktarimiCariKod          DosyaAvansAktarimi[]  @relation("AvansAktarimiCariKod")
+  cariTahakkukCariKod           DosyaCariTahakkuku[]  @relation("CariTahakkukCariKod")
+  cariDagitimCariKod            DosyaCariDagitimi[]   @relation("CariDagitimCariKod")
   dosyaMasrafiTuru              DosyaMasrafi[]        @relation("DosyaMasrafiTuru")
   dosyaMasrafiGrubu             DosyaMasrafi[]        @relation("DosyaMasrafiGrubu")
   dosyaMasrafiKalemi            DosyaMasrafi[]        @relation("DosyaMasrafiKalemi")
@@ -498,6 +500,12 @@ model DavaDosyasi {
   aciklama           String?
   olusturmaTarihi    DateTime         @default(now())
   guncellemeTarihi   DateTime         @updatedAt
+  // Iyimser kilitleme (optimistic locking): dosya duzenleme formu acildiginda
+  // gordugu surumu kaydederken geri gonderir; arada baska biri kaydettiyse
+  // surum artmis olur ve kayit, sessizce ezmek yerine cakisma olarak
+  // bildirilir (bkz. davaDosyasiGuncelle). Formda duzenlenebilen alanlari
+  // degistiren her yazma `surum`u 1 artirmalidir.
+  surum              Int              @default(0)
 
   // ============================================================
   // Karar Sonrasi Takip (bkz. ARCHITECTURE.md "Dava Dosyasi Yasam
@@ -518,6 +526,9 @@ model DavaDosyasi {
   karsiTaraflar          DosyaKarsiTarafi[]
   paraTrafigiKayitlari   ParaTrafigiDosyasi[]
   masraflar              DosyaMasrafi[]
+  paraGirisleri          DosyaParaGirisi[]
+  cariTahakkuklari       DosyaCariTahakkuku[]
+  cariDagitimlari        DosyaCariDagitimi[]
   karsiTarafAlacaklari   KarsiTarafAlacagi[]
   paraTrafigiDagitimlari ParaTrafigiDagitimi[]
   finansHareketleri      MusteriFinansHareketi[]
@@ -621,6 +632,7 @@ model DosyaMasrafi {
 enum MuvekkilSifati {
   ALACAKLI
   BORCLU
+  DIGER // ör. müdahil, katılan, üçüncü kişi, arabulucu sıfatı
 }
 
 enum MasrafYansitmaHedefi {
@@ -1199,4 +1211,72 @@ model MasrafTasnifKurali {
   guncellemeTarihi DateTime @updatedAt
 
   @@map("masraf_tasnif_kurallari")
+}
+
+// ============================================================
+// Dosya Ekonomisi - tek panel, cari kod bazli Borc/Alacak (on muhasebe mantigi)
+// ============================================================
+
+// Muvekkilden dosya icin gelen para; GELDIGINDE hicbir cari koda ait degildir
+// ("Havuz" - dagitim bekleyen para). Havuzdaki kalan = tutar - Σ dagitim.
+model DosyaParaGirisi {
+  id      String      @id @default(cuid())
+  dosyaId String
+  dosya   DavaDosyasi @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+
+  tarih    DateTime
+  tutar    Decimal  @db.Decimal(14, 2)
+  aciklama String?
+
+  dagitimlar DosyaCariDagitimi[]
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([dosyaId])
+  @@map("dosya_para_girisleri")
+}
+
+// Cari kodun BORC hanesi (muvekkilin o koda odemesi gereken tutar): or. Akdi
+// Vekalet = dosyanin hizmet bedeli. Harcamalar kodunun borcu ise DosyaMasrafi
+// kayitlarindan (Masraflar menusu) gelir; burada tutulmaz.
+model DosyaCariTahakkuku {
+  id        String        @id @default(cuid())
+  dosyaId   String
+  dosya     DavaDosyasi   @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+  cariKodId String
+  cariKod   SecenekDegeri @relation("CariTahakkukCariKod", fields: [cariKodId], references: [id])
+
+  tarih   DateTime
+  tutar   Decimal  @db.Decimal(14, 2)
+  // "Neye istinaden" (or. "Dosyanin hizmet bedeli").
+  dayanak String
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([dosyaId])
+  @@index([cariKodId])
+  @@map("dosya_cari_tahakkuklari")
+}
+
+// Cari kodun ALACAK hanesi: havuzdaki bir para girisinden (kismen de olabilir)
+// bir cari koda aktarilan tutar.
+model DosyaCariDagitimi {
+  id           String          @id @default(cuid())
+  paraGirisiId String
+  paraGirisi   DosyaParaGirisi @relation(fields: [paraGirisiId], references: [id], onDelete: Restrict)
+  dosyaId      String
+  dosya        DavaDosyasi     @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+  cariKodId    String
+  cariKod      SecenekDegeri   @relation("CariDagitimCariKod", fields: [cariKodId], references: [id])
+
+  tarih    DateTime
+  tutar    Decimal  @db.Decimal(14, 2)
+  aciklama String?
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([paraGirisiId])
+  @@index([dosyaId])
+  @@index([cariKodId])
+  @@map("dosya_cari_dagitimlari")
 }

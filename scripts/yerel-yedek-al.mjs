@@ -34,9 +34,22 @@ async function main() {
   );
 
   const veri = {};
+  const atlananlar = [];
   let toplamKayit = 0;
   for (const anahtar of modelAnahtarlari) {
-    const kayitlar = await prisma[anahtar].findMany();
+    // Sema yeni bir tablo eklemis ama migration henuz uygulanmamissa (P2021)
+    // tek bir tablo yuzunden TUM yedek cokmesin: o tablo atlanir, digerleri alinir.
+    let kayitlar;
+    try {
+      kayitlar = await prisma[anahtar].findMany();
+    } catch (e) {
+      if (e?.code === "P2021") {
+        console.warn(`Tablo veritabaninda yok, atlandi: ${anahtar}`);
+        atlananlar.push(anahtar);
+        continue;
+      }
+      throw e;
+    }
     veri[anahtar] = kayitlar;
     toplamKayit += kayitlar.length;
   }
