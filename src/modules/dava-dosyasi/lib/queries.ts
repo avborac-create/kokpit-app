@@ -644,7 +644,16 @@ export async function kararSonrasiTakipListele(filtre: KararSonrasiTakipFiltre =
   });
 }
 
-export type AnaDosyaAdayi = { id: string; kayitNo: number; buroNo: string | null; dosyaNo: string | null; konu: string };
+export type AnaDosyaAdayi = {
+  id: string;
+  kayitNo: number;
+  buroNo: string | null;
+  dosyaNo: string | null;
+  konu: string;
+  birimAdi: string | null;
+  muvekkiller: string[];
+  karsiTaraflar: string[];
+};
 
 // Bir dosyanin "ana dosya" olarak secilebilecek adaylari: kendisi, kendi alt
 // dosyalari ve zaten baska bir dosyanin alt dosyasi olanlar HARIC (tek
@@ -657,13 +666,27 @@ export async function anaDosyaAdaylariniGetir(dosyaId: string): Promise<AnaDosya
     select: { muvekkiller: { select: { musteriId: true } }, _count: { select: { altDosyalar: true } } },
   });
   if (!dosya || dosya._count.altDosyalar > 0) return [];
-  return prisma.davaDosyasi.findMany({
+  const adaylar = await prisma.davaDosyasi.findMany({
     where: {
       id: { not: dosyaId },
       anaDosyaId: null,
       muvekkiller: { some: { musteriId: { in: dosya.muvekkiller.map((m) => m.musteriId) } } },
     },
-    select: { id: true, kayitNo: true, buroNo: true, dosyaNo: true, konu: true },
+    select: {
+      id: true,
+      kayitNo: true,
+      buroNo: true,
+      dosyaNo: true,
+      konu: true,
+      birimAdi: true,
+      muvekkiller: { select: { musteri: { select: { adSoyadUnvan: true } } } },
+      karsiTaraflar: { select: { karsiTaraf: { select: { ad: true } } } },
+    },
     orderBy: { kayitNo: "desc" },
   });
+  return adaylar.map(({ muvekkiller, karsiTaraflar, ...d }) => ({
+    ...d,
+    muvekkiller: muvekkiller.map((m) => m.musteri.adSoyadUnvan),
+    karsiTaraflar: karsiTaraflar.map((k) => k.karsiTaraf.ad),
+  }));
 }

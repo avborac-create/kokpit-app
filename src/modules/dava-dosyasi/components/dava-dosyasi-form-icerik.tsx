@@ -62,7 +62,9 @@ export function DavaDosyasiFormIcerik({
   baslangicKarsiTaraflar,
   alanSirasi,
   etiketler,
+  yoneticiMi,
 }: {
+  yoneticiMi: boolean;
   action: (oncekiDurum: DavaDosyasiSonucu, formData: FormData) => Promise<DavaDosyasiSonucu>;
   gonderButonuMetni: string;
   dosyaId?: string;
@@ -105,6 +107,7 @@ export function DavaDosyasiFormIcerik({
         turler={hukukiIliskiTurleri}
         varsayilanId={g?.hukukiIliskiTuruId ?? dosya?.hukukiIliskiTuruId ?? ""}
         varsayilanYeniEtiket={g?.yeniHukukiIliskiTuruEtiketi}
+        yoneticiMi={yoneticiMi}
       />
     ),
     davaTuruId: () => (
@@ -114,7 +117,9 @@ export function DavaDosyasiFormIcerik({
         varsayilanYeniEtiket={g?.yeniDavaTuruEtiketi}
         alanAdi="davaTuruId"
         yeniAlanAdi="yeniDavaTuruEtiketi"
-        etiket={bilgi("davaTuruId", "Dava Türü")}
+        etiket={bilgi("davaTuruId", "Tür")}
+        zorunlu
+        yoneticiMi={yoneticiMi}
       />
     ),
     birimAdi: () => (
