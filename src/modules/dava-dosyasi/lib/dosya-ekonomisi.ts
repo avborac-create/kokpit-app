@@ -179,6 +179,7 @@ export async function kodDefteri(dosyaId: string, kodId: string, kod: string): P
       borc: sayi(t.tutar),
       alacak: 0,
       silme: { tip: "tahakkuk", id: t.id },
+      duzenleHref: `/kokpit/dava-dosyalari/${dosyaId}/borclar/${t.id}/duzenle`,
     });
   }
   for (const m of masraflar) {
@@ -261,6 +262,7 @@ export async function havuzDefteri(dosyaId: string, kodlar: KodOzeti[]): Promise
       borc: 0,
       alacak: sayi(g.tutar),
       silme: { tip: "paraGirisi", id: g.id },
+      duzenleHref: `/kokpit/dava-dosyalari/${dosyaId}/para-girisleri/${g.id}/duzenle`,
     });
   }
   for (const d of dagitimlar) {

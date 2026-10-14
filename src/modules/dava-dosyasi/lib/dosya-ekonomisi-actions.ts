@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
@@ -38,6 +39,30 @@ export async function paraGirisiEkle(dosyaId: string, formData: FormData) {
   const aciklama = String(formData.get("aciklama") ?? "").trim() || null;
   await prisma.dosyaParaGirisi.create({ data: { dosyaId, tarih, tutar, aciklama } });
   yenile(dosyaId);
+}
+
+// Para girisinin tarih/tutar/aciklamasi sonradan duzeltilebilir. Tutar,
+// cari kodlara halihazirda dagitilmis toplamin altina indirilemez.
+export async function paraGirisiGuncelle(id: string, dosyaId: string, formData: FormData) {
+  const tutar = tutarAl(formData);
+  const tarih = tarihAl(formData);
+  const aciklama = String(formData.get("aciklama") ?? "").trim() || null;
+  await prisma.$transaction(async (tx) => {
+    const giris = await tx.dosyaParaGirisi.findUnique({
+      where: { id },
+      include: { dagitimlar: { select: { tutar: true } } },
+    });
+    if (!giris || giris.dosyaId !== dosyaId) throw new Error("Para girişi bulunamadı.");
+    const dagitilan = giris.dagitimlar.reduce((t, x) => t + Number(x.tutar), 0);
+    if (tutar < dagitilan - 0.001) {
+      throw new Error(
+        `Bu girişten ${dagitilan.toLocaleString("tr-TR")} TL cari kodlara aktarılmış; tutar bunun altına indirilemez. Önce virmanları silin.`,
+      );
+    }
+    await tx.dosyaParaGirisi.update({ where: { id }, data: { tarih, tutar, aciklama } });
+  });
+  yenile(dosyaId);
+  redirect(`/kokpit/dava-dosyalari/${dosyaId}?sekme=ekonomi&alt=havuz`);
 }
 
 export async function paraGirisiSil(id: string, dosyaId: string, sifre?: string) {
@@ -91,6 +116,19 @@ export async function cariTahakkukEkle(dosyaId: string, formData: FormData) {
     data: { dosyaId, cariKodId, tarih: tarihAl(formData), tutar: tutarAl(formData), dayanak },
   });
   yenile(dosyaId);
+}
+
+export async function cariTahakkukGuncelle(id: string, dosyaId: string, formData: FormData) {
+  const dayanak = String(formData.get("dayanak") ?? "").trim();
+  if (!dayanak) throw new Error("Neye istinaden alanı zorunludur.");
+  const mevcut = await prisma.dosyaCariTahakkuku.findUnique({ where: { id }, include: { cariKod: true } });
+  if (!mevcut || mevcut.dosyaId !== dosyaId) throw new Error("Borç kaydı bulunamadı.");
+  await prisma.dosyaCariTahakkuku.update({
+    where: { id },
+    data: { tarih: tarihAl(formData), tutar: tutarAl(formData), dayanak },
+  });
+  yenile(dosyaId);
+  redirect(`/kokpit/dava-dosyalari/${dosyaId}?sekme=ekonomi&alt=${mevcut.cariKod.kod}`);
 }
 
 export async function cariTahakkukSil(id: string, dosyaId: string, sifre?: string) {
