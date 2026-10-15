@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alan, Etiket, Secim } from "@/core/ui/form";
+import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
 
 type Secenek = { id: string; etiket: string; kod: string };
 
@@ -14,14 +14,17 @@ export function DosyaSinifiAlanlari({
   varsayilanTurId,
   varsayilanYargiKoluId,
   varsayilanSifat,
+  varsayilanSifatDiger,
 }: {
   turler: Secenek[];
   yargiKollari: Secenek[];
   varsayilanTurId: string;
   varsayilanYargiKoluId: string;
   varsayilanSifat: "ALACAKLI" | "BORCLU" | "DIGER";
+  varsayilanSifatDiger?: string;
 }) {
   const [turId, setTurId] = useState(varsayilanTurId);
+  const [sifat, setSifat] = useState(varsayilanSifat);
   const davaMi = turler.find((t) => t.id === turId)?.kod === "dava_dosyasi";
 
   return (
@@ -51,11 +54,25 @@ export function DosyaSinifiAlanlari({
       )}
       <Alan>
         <Etiket htmlFor="muvekkilSifati">Müvekkil Sıfatı</Etiket>
-        <Secim id="muvekkilSifati" name="muvekkilSifati" defaultValue={varsayilanSifat}>
+        <Secim
+          id="muvekkilSifati"
+          name="muvekkilSifati"
+          value={sifat}
+          onChange={(e) => setSifat(e.target.value as "ALACAKLI" | "BORCLU" | "DIGER")}
+        >
           <option value="ALACAKLI">Alacaklı</option>
           <option value="BORCLU">Borçlu</option>
           <option value="DIGER">Diğer</option>
         </Secim>
+        {sifat === "DIGER" && (
+          <Girdi
+            name="muvekkilSifatiDiger"
+            placeholder="Sıfatı yazın (ör. müdahil, katılan, arabulucu)"
+            defaultValue={varsayilanSifatDiger ?? ""}
+            className="mt-2"
+            maxLength={80}
+          />
+        )}
       </Alan>
     </>
   );

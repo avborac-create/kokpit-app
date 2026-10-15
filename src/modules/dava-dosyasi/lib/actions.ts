@@ -45,7 +45,9 @@ async function dosyaSinifiniAl(formData: FormData) {
   const tur = await prisma.secenekDegeri.findUnique({ where: { id: turId }, select: { kod: true } });
   const yargiKoluId = tur?.kod === "dava_dosyasi" ? metinYaAlNull(formData, "yargiKoluId") : null;
   const muvekkilSifati = muvekkilSifatiAl(formData.get("muvekkilSifati"));
-  return { turId, yargiKoluId, muvekkilSifati };
+  const muvekkilSifatiDiger =
+    muvekkilSifati === "DIGER" ? (metinYaAlNull(formData, "muvekkilSifatiDiger") ?? "").slice(0, 80) || null : null;
+  return { turId, yargiKoluId, muvekkilSifati, muvekkilSifatiDiger };
 }
 
 function muvekkilSifatiAl(deger: FormDataEntryValue | string | null): MuvekkilSifati {
@@ -222,7 +224,7 @@ export async function davaDosyasiOlustur(
   const hukukiIliskiTuruId = await hukukiIliskiTuruIdCozumle(formData);
   const durusmaTarihiHam = metinYaAlNull(formData, "durusmaTarihi");
 
-  const [durumId, { turId, yargiKoluId, muvekkilSifati }, davaTuru, uyusmazlikGrubuId] = await Promise.all([
+  const [durumId, { turId, yargiKoluId, muvekkilSifati, muvekkilSifatiDiger }, davaTuru, uyusmazlikGrubuId] = await Promise.all([
     varsayilanDurumIdGetir(),
     dosyaSinifiniAl(formData),
     davaTuruId ? prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } }) : null,
@@ -247,6 +249,7 @@ export async function davaDosyasiOlustur(
       turId,
       yargiKoluId,
       muvekkilSifati,
+      muvekkilSifatiDiger,
       hukukiIliskiTuruId,
       davaTuruId,
       talepSonucu,
@@ -327,6 +330,7 @@ export async function davaDosyasiGuncelle(
           turId: sinif.turId,
           yargiKoluId: sinif.yargiKoluId,
           muvekkilSifati: sinif.muvekkilSifati,
+          muvekkilSifatiDiger: sinif.muvekkilSifatiDiger,
         }),
         ...(g("hukukiIliskiTuruId") && { hukukiIliskiTuruId }),
         ...(g("davaTuruId") && { davaTuruId }),
@@ -432,7 +436,7 @@ export async function davaDosyasiSil(id: string, sifre?: string) {
 // Dava degilse yargi kolu temizlenir, Dava Turu degisince Konu (baslik)
 // yeniden uretilir (bkz. davaDosyasiGuncelle ile ayni kural).
 const DETAY_DUZENLENEBILIR_ALANLAR = [
-  "turId", "yargiKoluId", "muvekkilSifati", "hukukiIliskiTuruId", "davaTuruId",
+  "turId", "yargiKoluId", "muvekkilSifati", "muvekkilSifatiDiger", "hukukiIliskiTuruId", "davaTuruId",
   "birimAdi", "buroNo", "dosyaNo", "talepSonucu", "durusmaTarihi",
 ];
 
@@ -449,6 +453,11 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
     switch (alan) {
       case "muvekkilSifati":
         data.muvekkilSifati = muvekkilSifatiAl(deger);
+        // Diger disinda bir sifata gecilirse serbest metin temizlenir.
+        if (data.muvekkilSifati !== "DIGER") data.muvekkilSifatiDiger = null;
+        break;
+      case "muvekkilSifatiDiger":
+        data.muvekkilSifatiDiger = deger.slice(0, 80) || null;
         break;
       case "turId":
         if (!deger) throw new Error("Tür boş bırakılamaz.");

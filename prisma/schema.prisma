@@ -487,6 +487,8 @@ model DavaDosyasi {
   // kayitNo'su DB'de ve aramada korunur, ana dosyadan ayrilinca eski
   // numarasina doner. bagliOlduguDosya (talimat baglantisi) ile KARISMAZ.
   muvekkilSifati     MuvekkilSifati   @default(ALACAKLI)
+  // Sifat "Diger" secildiginde serbest metin (ör. müdahil, katılan, arabulucu).
+  muvekkilSifatiDiger String?
   anaDosyaId         String?
   anaDosya           DavaDosyasi?     @relation("DosyaAgaci", fields: [anaDosyaId], references: [id])
   altDosyalar        DavaDosyasi[]    @relation("DosyaAgaci")

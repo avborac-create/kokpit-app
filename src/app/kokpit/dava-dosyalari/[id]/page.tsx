@@ -120,13 +120,27 @@ export default async function DavaDosyasiDetaySayfasi({
       varsayilanEtiket: "Müvekkil Sıfatı",
       tip: "secim",
       deger: dosya.muvekkilSifati,
-      gosterim: { ALACAKLI: "Alacaklı", BORCLU: "Borçlu", DIGER: "Diğer" }[dosya.muvekkilSifati],
+      gosterim:
+        dosya.muvekkilSifati === "DIGER"
+          ? `Diğer${dosya.muvekkilSifatiDiger ? ` — ${dosya.muvekkilSifatiDiger}` : ""}`
+          : { ALACAKLI: "Alacaklı", BORCLU: "Borçlu" }[dosya.muvekkilSifati],
       secenekler: [
         { value: "ALACAKLI", label: "Alacaklı" },
         { value: "BORCLU", label: "Borçlu" },
         { value: "DIGER", label: "Diğer" },
       ],
     },
+    ...(dosya.muvekkilSifati === "DIGER"
+      ? [
+          {
+            anahtar: "muvekkilSifatiDiger",
+            varsayilanEtiket: "Sıfat (serbest metin)",
+            tip: "metin" as const,
+            deger: dosya.muvekkilSifatiDiger ?? "",
+            gosterim: dosya.muvekkilSifatiDiger ?? "—",
+          },
+        ]
+      : []),
     {
       anahtar: "hukukiIliskiTuruId",
       varsayilanEtiket: "Uyuşmazlık Türü",

@@ -23,6 +23,7 @@ type DosyaDegerleri = {
   turId?: string | null;
   yargiKoluId?: string | null;
   muvekkilSifati?: "ALACAKLI" | "BORCLU" | "DIGER";
+  muvekkilSifatiDiger?: string | null;
   talepSonucu: string | null;
   durusmaTarihi: Date | null;
   surum?: number;
@@ -200,6 +201,7 @@ export function DavaDosyasiFormIcerik({
               g?.turId ?? dosya?.turId ?? dosyaTurleri.find((t) => t.kod === "dava_dosyasi")?.id ?? ""
             }
             varsayilanYargiKoluId={g?.yargiKoluId ?? dosya?.yargiKoluId ?? ""}
+            varsayilanSifatDiger={g?.muvekkilSifatiDiger ?? dosya?.muvekkilSifatiDiger ?? ""}
             varsayilanSifat={
               ((g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "BORCLU" || (g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "DIGER"
                 ? (g?.muvekkilSifati ?? dosya?.muvekkilSifati)
