@@ -7,7 +7,6 @@ import {
   adliBirimHareketiSil,
   karsiTarafAlacagiSil,
 } from "@/modules/dava-dosyasi/lib/actions";
-import { paraDagitimiSil, cariTahakkukSil, paraGirisiSil } from "@/modules/dava-dosyasi/lib/dosya-ekonomisi-actions";
 import { TahsilDegistirButonu } from "@/modules/dava-dosyasi/components/tahsil-degistir-butonu";
 
 const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
@@ -15,32 +14,6 @@ const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
 
 function SilButonu({ silme, dosyaId }: { silme: SilmeKaynagi; dosyaId: string }) {
   switch (silme.tip) {
-    case "tahakkuk":
-      return (
-        <OnayliButon sifreIste eylem={cariTahakkukSil.bind(null, silme.id, dosyaId)} mesaj="Bu borç kaydı silinsin mi?">
-          Sil
-        </OnayliButon>
-      );
-    case "paraGirisi":
-      return (
-        <OnayliButon
-          sifreIste
-          eylem={paraGirisiSil.bind(null, silme.id, dosyaId)}
-          mesaj="Bu para girişi silinsin mi? (Virmanı varsa önce virmanlar silinmelidir.)"
-        >
-          Sil
-        </OnayliButon>
-      );
-    case "dagitim":
-      return (
-        <OnayliButon
-          sifreIste
-          eylem={paraDagitimiSil.bind(null, silme.id, dosyaId)}
-          mesaj="Bu dağıtım silinsin mi? Tutar havuza geri döner."
-        >
-          Sil
-        </OnayliButon>
-      );
     case "masraf":
       return (
         <OnayliButon sifreIste eylem={dosyaMasrafiSil.bind(null, silme.id, dosyaId)} mesaj="Bu masraf kaydı silinsin mi?">

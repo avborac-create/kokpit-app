@@ -6,17 +6,28 @@ import { paraTrafigiKaydiEkle } from "@/modules/musteri/lib/actions";
 import { musteriCariHesapOzeti, dagitilmamisParaToplami, musteriDosyaAvansBakiyeleri } from "@/modules/dava-dosyasi/lib/queries";
 import { ParaTrafigiFormu } from "@/modules/musteri/components/para-trafigi-formu";
 import { ParaTrafigiListesi } from "@/modules/musteri/components/para-trafigi-listesi";
-import { MuvekkilEkonomiTablosu } from "@/modules/dava-dosyasi/components/ekonomi/muvekkil-ekonomi-tablosu";
+import { EkonomiPaneli } from "@/modules/dava-dosyasi/components/ekonomi/ekonomi-paneli";
+import { muvekkilDosyalari } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { CariHesapOzeti } from "@/modules/dava-dosyasi/components/cari-hesap-ozeti";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 
 export default async function CariHesapSayfasi({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ sayfa?: string; alt?: string }>;
 }) {
   const { id } = await params;
+  const { sayfa, alt } = await searchParams;
+  const dosyalar = await muvekkilDosyalari(id);
+  const aktifSayfa = dosyalar.some((x) => x.id === sayfa) ? (sayfa as string) : "genel";
+  const sayfaSekmeleri = [
+    { anahtar: "genel", etiket: "MÜVEKKİL ANA EKONOMİ" },
+    ...dosyalar.map((x) => ({ anahtar: x.id, etiket: x.etiket, baslik: x.konu })),
+  ];
+  const kapsam = aktifSayfa === "genel" ? { musteriId: id } : { musteriId: id, dosyaId: aktifSayfa };
   const [musteri, kullanici, ozet, dagitimBekleyen, dosyaBakiyeleri] = await Promise.all([
     musteriGetir(id),
     mevcutKullanici(),
@@ -48,11 +59,22 @@ export default async function CariHesapSayfasi({
         </div>
       </div>
 
-      <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Dosya Ekonomisi — Cari Kod Bazında Toplam</h2>
       <div className="mb-8">
-        <MuvekkilEkonomiTablosu musteriId={id} />
+        <EkonomiPaneli
+          kapsam={kapsam}
+          alt={alt ?? "ozet"}
+          aktifSayfa={aktifSayfa}
+          sayfaSekmeleri={sayfaSekmeleri}
+          silmeYetkisiVar={silmeYetkisiVar}
+          hrefYaz={({ sayfa: s2, alt: a2 }) =>
+            `/kokpit/finans/musteri-iliskileri/${id}/cari-hesap?sayfa=${s2 ?? aktifSayfa}&alt=${a2 ?? (s2 ? "ozet" : (alt ?? "ozet"))}`
+          }
+        />
       </div>
 
+      <details className="mt-8 rounded-2xl border border-white/10 p-4">
+        <summary className="cursor-pointer text-sm text-white/60">Eski cari hesap kayıtları (önceki sistem)</summary>
+        <div className="mt-4">
       <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Eski Cari Hesap Özeti</h2>
       <p className="mb-3 text-sm text-white/45">
         Bu müvekkilin tüm uyuşmazlık/dosyalarındaki toplam durumu — dosya veya küme bazında ayrıntı
@@ -116,6 +138,8 @@ export default async function CariHesapSayfasi({
         <ParaTrafigiFormu action={paraTrafigiKaydiEkle.bind(null, id)} musteriId={id} />
       </div>
       <ParaTrafigiListesi kayitlar={musteri.paraTrafigi} silmeYetkisiVar={silmeYetkisiVar} />
+        </div>
+      </details>
     </div>
   );
 }

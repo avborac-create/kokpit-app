@@ -10,9 +10,6 @@ import { dosyaKisaNo } from "@/modules/dava-dosyasi/lib/kokpit-no";
 export type SilmeKaynagi =
   | { tip: "masraf"; id: string }
   | { tip: "avansAktarimi"; id: string }
-  | { tip: "tahakkuk"; id: string }
-  | { tip: "dagitim"; id: string }
-  | { tip: "paraGirisi"; id: string }
   | { tip: "adliBirim"; id: string }
   | { tip: "karsiTarafAlacagi"; id: string };
 

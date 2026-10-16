@@ -160,6 +160,7 @@ model Musteri {
   uyusmazlikGruplari UyusmazlikGrubu[]
   finansHareketleri  MusteriFinansHareketi[]
   cmkDosyalari       CMKDosyasi[]
+  cariHareketleri    CariHareketi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -531,6 +532,7 @@ model DavaDosyasi {
   paraGirisleri          DosyaParaGirisi[]
   cariTahakkuklari       DosyaCariTahakkuku[]
   cariDagitimlari        DosyaCariDagitimi[]
+  cariHareketleri        CariHareketi[]
   karsiTarafAlacaklari   KarsiTarafAlacagi[]
   paraTrafigiDagitimlari ParaTrafigiDagitimi[]
   finansHareketleri      MusteriFinansHareketi[]
@@ -1281,4 +1283,65 @@ model DosyaCariDagitimi {
   @@index([dosyaId])
   @@index([cariKodId])
   @@map("dosya_cari_dagitimlari")
+}
+
+// ============================================================
+// Muvekkil + Dosya Ekonomisi (cari hesaplar)
+// ============================================================
+
+// Muhasebe cari hesabi: 100 Para Trafigi, 101 Akdi Vekalet, 102 Harcama...
+// Admin yeni hesap ekleyebilir / kaydi olmayani silebilir. Hem muvekkil hem
+// dosya duzeyinde AYNI hesaplar kullanilir.
+model CariHesap {
+  id              String   @id @default(cuid())
+  no              Int      @unique
+  ad              String
+  // Para Trafigi hesabi: gelen paralar ALACAK, virmanlar BORC; bakiye = Alacak - Borc.
+  paraHesabiMi    Boolean  @default(false)
+  // Harcama hesabi: borc satirlari DosyaMasrafi kayitlarindan (Masraflar) gelir.
+  masrafHesabiMi  Boolean  @default(false)
+  // Eski cari_kod listesindeki karsiligi (DosyaMasrafi.cariKod ile eslestirme).
+  eskiKod         String?  @unique
+  aktifMi         Boolean  @default(true)
+  olusturmaTarihi DateTime @default(now())
+
+  hareketler CariHareketi[]
+
+  @@map("cari_hesaplar")
+}
+
+enum CariYon {
+  BORC
+  ALACAK
+}
+
+// Tek tip cari kayit: muvekkile, istege bagli dosyaya ve bir hesaba bagli.
+// Dosya duzeyinde girilen kayit muvekkil duzeyinde de gorunur (ayni satir).
+// Virman: ayni virmanId'li iki satir (Para Trafigi'nde BORC + hedef hesapta ALACAK).
+model CariHareketi {
+  id        String       @id @default(cuid())
+  musteriId String
+  musteri   Musteri      @relation(fields: [musteriId], references: [id], onDelete: Restrict)
+  dosyaId   String?
+  dosya     DavaDosyasi? @relation(fields: [dosyaId], references: [id], onDelete: Restrict)
+  hesapId   String
+  hesap     CariHesap    @relation(fields: [hesapId], references: [id], onDelete: Restrict)
+
+  yon      CariYon
+  tarih    DateTime
+  tutar    Decimal  @db.Decimal(14, 2)
+  aciklama String?
+
+  virmanId String?
+  // Muvekkil duzeyinden (havuzdan) yapilan virman: dosya gorunumunde Para
+  // Trafigi'ne "havuzdan aktarim" ALACAGI turetilir.
+  havuzKaynakli Boolean @default(false)
+
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([musteriId])
+  @@index([dosyaId])
+  @@index([hesapId])
+  @@index([virmanId])
+  @@map("cari_hareketleri")
 }

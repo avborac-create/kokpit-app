@@ -23,12 +23,15 @@ export async function MasrafFormu({
   duzenlemeVerisi,
   turDuzenleyici,
   varsayilanCariKod,
+  dosyaSecimi,
 }: {
   action: (formData: FormData) => void;
   duzenlemeVerisi?: MasrafDuzenlemeVerisi;
   turDuzenleyici?: React.ReactNode;
   // Yeni masrafta on secili gelecek cari kodun `kod` degeri (ör. masraf_hesabi).
   varsayilanCariKod?: string;
+  // Muvekkil ekraninda masrafin hangi dosyaya ait oldugu secilir; dosya ekraninda sabit.
+  dosyaSecimi?: { sabitDosyaId?: string; dosyalar?: { id: string; etiket: string }[] };
 }) {
   const [cariKodlar, turler] = await Promise.all([
     secenekleriGetir("cari_kod"),
@@ -39,6 +42,22 @@ export async function MasrafFormu({
 
   return (
     <form action={action} className="glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-2 md:grid-cols-4">
+      {dosyaSecimi?.sabitDosyaId && <input type="hidden" name="dosyaId" value={dosyaSecimi.sabitDosyaId} />}
+      {dosyaSecimi && !dosyaSecimi.sabitDosyaId && (
+        <Alan>
+          <Etiket htmlFor="dosyaId">Dosya</Etiket>
+          <Secim id="dosyaId" name="dosyaId" required defaultValue="">
+            <option value="" disabled>
+              Seçiniz…
+            </option>
+            {(dosyaSecimi.dosyalar ?? []).map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.etiket}
+              </option>
+            ))}
+          </Secim>
+        </Alan>
+      )}
       <Alan>
         <Etiket htmlFor="tarih">Tarih</Etiket>
         <Girdi id="tarih" name="tarih" type="date" required defaultValue={duzenlemeVerisi?.tarih ?? bugun} />

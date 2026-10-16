@@ -4,7 +4,7 @@ import { davaDosyasiGetir, anaDosyaAdaylariniGetir } from "@/modules/dava-dosyas
 import { dosyaAlanlariniGuncelle } from "@/modules/dava-dosyasi/lib/actions";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 import { EkonomiPaneli } from "@/modules/dava-dosyasi/components/ekonomi/ekonomi-paneli";
-import { ekonomiHesapla } from "@/modules/dava-dosyasi/lib/dosya-ekonomisi";
+import { kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { DavaDosyasiSekmeleri } from "@/modules/dava-dosyasi/components/dava-dosyasi-sekmeleri";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
@@ -80,10 +80,14 @@ export default async function DavaDosyasiDetaySayfasi({
         ]
       : [];
   const agacIdleri = agacDosyalari.map((d) => d.id);
-  const [dosyaEkonomisi, agacEkonomisi] = await Promise.all([
-    ekonomiHesapla([id]),
-    agacIdleri.length > 0 ? ekonomiHesapla(agacIdleri) : Promise.resolve(null),
-  ]);
+  const musteriId = dosya.muvekkiller[0]?.musteriId ?? null;
+  const dosyaEkonomisi = musteriId
+    ? await kapsamOzeti({ musteriId, dosyaId: id })
+    : { paraBakiyesi: 0, digerBorclar: 0, net: 0, hesaplar: [] };
+  const agacNet =
+    musteriId && agacIdleri.length > 0
+      ? (await Promise.all(agacIdleri.map((i) => kapsamOzeti({ musteriId, dosyaId: i })))).reduce((t, o) => t + o.net, 0)
+      : null;
   const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
@@ -332,14 +336,14 @@ export default async function DavaDosyasiDetaySayfasi({
                   ? `Müvekkil Lehine Fazla: ${paraFormatlayici.format(-dosyaEkonomisi.net)}`
                   : "Bakiye yok"}
             </span>
-            {dosyaEkonomisi.havuzKalan > 0 && (
+            {dosyaEkonomisi.paraBakiyesi > 0 && (
               <span className="whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2.5 py-0.5 text-xs font-medium text-[#6db8ff]">
-                Havuzda bekleyen: {paraFormatlayici.format(dosyaEkonomisi.havuzKalan)}
+                Para trafiğinde bekleyen: {paraFormatlayici.format(dosyaEkonomisi.paraBakiyesi)}
               </span>
             )}
-            {agacEkonomisi && (
+            {agacNet !== null && (
               <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-medium text-white/70">
-                Alt dosyalar dahil net: {paraFormatlayici.format(agacEkonomisi.net)}
+                Alt dosyalar dahil net: {paraFormatlayici.format(agacNet)}
               </span>
             )}
           </p>
@@ -424,12 +428,16 @@ export default async function DavaDosyasiDetaySayfasi({
           )}
         </>
       ) : (
-        <EkonomiPaneli
-          dosyaId={id}
-          alt={alt ?? "ozet"}
-          silmeYetkisiVar={silmeYetkisiVar}
-          agacDosyalari={agacDosyalari}
-        />
+        musteriId ? (
+          <EkonomiPaneli
+            kapsam={{ musteriId, dosyaId: id }}
+            alt={alt ?? "ozet"}
+            hrefYaz={({ alt: a }) => `/kokpit/dava-dosyalari/${id}?sekme=ekonomi&alt=${a ?? "ozet"}`}
+            silmeYetkisiVar={silmeYetkisiVar}
+          />
+        ) : (
+          <p className="text-sm text-white/55">Ekonomi için dosyaya bir müvekkil bağlanmalıdır.</p>
+        )
       )}
     </div>
   );
