@@ -112,6 +112,7 @@ export function VirmanFormu({
   dosyalar,
   sabitDosyaId,
   mevcutBakiye,
+  kaynakSecimi,
 }: {
   action: (formData: FormData) => void;
   hedefler: { id: string; etiket: string }[];
@@ -119,7 +120,10 @@ export function VirmanFormu({
   dosyalar: DosyaSecenegi[];
   sabitDosyaId?: string;
   mevcutBakiye: number;
+  // Dosya ekraninda: para muvekkil havuzundan mi, dosyanin kendi bakiyesinden mi aktarilsin.
+  kaynakSecimi?: { havuz: number; dosya: number };
 }) {
+  const tl = (n: number) => new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(n);
   return (
     <form action={action} className={kutu}>
       {sabitHedefId ? (
@@ -139,6 +143,15 @@ export function VirmanFormu({
           </Secim>
         </Alan>
       )}
+      {kaynakSecimi && (
+        <Alan>
+          <Etiket htmlFor="vf-kaynak">Para Nereden</Etiket>
+          <Secim id="vf-kaynak" name="kaynak" defaultValue={kaynakSecimi.havuz > 0 ? "havuz" : "dosya"}>
+            <option value="havuz">Müvekkil havuzu ({tl(kaynakSecimi.havuz)})</option>
+            <option value="dosya">Bu dosyanın para trafiği ({tl(kaynakSecimi.dosya)})</option>
+          </Secim>
+        </Alan>
+      )}
       <DosyaAlani id="vf-dosya" dosyalar={dosyalar} sabitDosyaId={sabitDosyaId} />
       <Alan>
         <Etiket htmlFor="vf-tarih">Tarih</Etiket>
@@ -147,9 +160,7 @@ export function VirmanFormu({
       <Alan>
         <Etiket htmlFor="vf-tutar">
           Tutar{" "}
-          <span className="text-xs text-white/40">
-            (aktarılabilir: {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(mevcutBakiye)})
-          </span>
+          {!kaynakSecimi && <span className="text-xs text-white/40">(aktarılabilir: {tl(mevcutBakiye)})</span>}
         </Etiket>
         <ParaGirdisi id="vf-tutar" name="tutar" required />
       </Alan>

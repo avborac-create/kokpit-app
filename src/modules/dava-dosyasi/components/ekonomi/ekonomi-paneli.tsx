@@ -49,9 +49,13 @@ const Bakiye = ({ b }: { b: number }) => <span className={bakiyeRenk(b)}>{para.f
 function DurumSeridi({
   ozet,
   hrefYaz,
+  havuzBakiyesi,
+  paraHesapNo,
 }: {
   ozet: Awaited<ReturnType<typeof kapsamOzeti>>;
   hrefYaz: (p: { sayfa?: string; alt?: string }) => string;
+  havuzBakiyesi?: number;
+  paraHesapNo?: number;
 }) {
   const gosterilecek = ozet.hesaplar.filter((h) => !h.paraHesabiMi && (h.borc !== 0 || h.alacak !== 0 || h.no <= 102));
   const para = ozet.hesaplar.find((h) => h.paraHesabiMi);
@@ -85,6 +89,15 @@ function DurumSeridi({
           {paraYaz.format(ozet.paraBakiyesi)}).
         </p>
       </div>
+      {havuzBakiyesi !== undefined && havuzBakiyesi > 0 && (
+        <Link
+          href={hrefYaz({ alt: String(paraHesapNo ?? 100) })}
+          className="mb-3 block rounded-xl border border-[#6db8ff]/40 bg-[#6db8ff]/[0.07] px-4 py-3 text-sm text-white/85 hover:bg-[#6db8ff]/[0.12]"
+        >
+          Müvekkilin havuzunda dosyaya aktarılmamış <b className="text-[#6db8ff]">{paraYaz.format(havuzBakiyesi)}</b> bekleyen para var.
+          Bu dosyaya aktarmak için <u>{paraHesapNo ?? 100} Para Trafiği</u> sekmesinden virman yapın →
+        </Link>
+      )}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         {gosterilecek.map((h) => (
           <Link
@@ -150,6 +163,8 @@ export async function EkonomiPaneli({
     kapsamOzeti(kapsam),
     muvekkilDosyalari(kapsam.musteriId),
   ]);
+  // Dosya ekraninda: muvekkilin henuz dosyalara aktarilmamis havuz parasi
+  const havuzBakiyesi = kapsam.dosyaId ? (await kapsamOzeti({ musteriId: kapsam.musteriId })).paraBakiyesi : undefined;
   const aktifHesaplar = hesaplar.filter((h) => h.aktifMi);
   const seciliHesap = aktifHesaplar.find((h) => String(h.no) === alt);
   const aktif = seciliHesap
@@ -192,7 +207,7 @@ export async function EkonomiPaneli({
         </div>
       </div>
 
-      <DurumSeridi ozet={ozet} hrefYaz={hrefYaz} />
+      <DurumSeridi ozet={ozet} hrefYaz={hrefYaz} havuzBakiyesi={havuzBakiyesi} paraHesapNo={aktifHesaplar.find((h) => h.paraHesabiMi)?.no} />
 
       <div className="mb-5 flex flex-wrap gap-1.5 border-b border-white/[0.08] pb-3">
         {hesapSekmeleri.map((s) => (
@@ -219,6 +234,7 @@ export async function EkonomiPaneli({
           aktifHesaplar={aktifHesaplar}
           dosyalar={dosyaSecenekleri}
           paraBakiyesi={ozet.paraBakiyesi}
+          havuzBakiyesi={havuzBakiyesi}
           silmeYetkisiVar={silmeYetkisiVar}
         />
       )}
@@ -356,6 +372,7 @@ async function HesapSekmesi({
   aktifHesaplar,
   dosyalar,
   paraBakiyesi,
+  havuzBakiyesi,
   silmeYetkisiVar,
 }: {
   kapsam: Kapsam;
@@ -363,8 +380,10 @@ async function HesapSekmesi({
   aktifHesaplar: Awaited<ReturnType<typeof hesaplariGetir>>;
   dosyalar: DosyaSecenegi[];
   paraBakiyesi: number;
+  havuzBakiyesi?: number;
   silmeYetkisiVar: boolean;
 }) {
+  const kaynakSecimi = kapsam.dosyaId ? { havuz: havuzBakiyesi ?? 0, dosya: paraBakiyesi } : undefined;
   const satirlar = await hesapDefteri(kapsam, hesap);
   const musteriDuzeyi = !kapsam.dosyaId;
   const kapsamDosyaId = kapsam.dosyaId ?? "";
@@ -406,6 +425,7 @@ async function HesapSekmesi({
             dosyalar={dosyalar}
             sabitDosyaId={kapsam.dosyaId}
             mevcutBakiye={paraBakiyesi}
+            kaynakSecimi={kaynakSecimi}
           />
         </>
       ) : (
@@ -448,6 +468,7 @@ async function HesapSekmesi({
             dosyalar={dosyalar}
             sabitDosyaId={kapsam.dosyaId}
             mevcutBakiye={paraBakiyesi}
+            kaynakSecimi={kaynakSecimi}
           />
         </>
       )}

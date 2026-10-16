@@ -119,6 +119,9 @@ export async function virmanYap(musteriId: string, kapsamDosyaId: string, formDa
   const hedefHesapId = metin(formData, "hedefHesapId");
   const dosyaId = kapsamDosyaId || metin(formData, "dosyaId");
   if (!hedefHesapId || !dosyaId) throw new Error("Hedef hesap ve dosya seçilmelidir.");
+  // Muvekkil ekranindan her zaman havuzdan; dosya ekranindan "kaynak" secimine gore
+  // (muvekkil havuzu ya da dosyanin kendi para trafigi bakiyesi).
+  const havuzdan = !kapsamDosyaId || metin(formData, "kaynak") === "havuz";
   await dosyaMuvekkilinMi(musteriId, dosyaId);
   const tutar = tutarAl(formData);
   const tarih = tarihAl(formData);
@@ -129,17 +132,17 @@ export async function virmanYap(musteriId: string, kapsamDosyaId: string, formDa
       tx.cariHesap.findUnique({ where: { id: hedefHesapId } }),
     ]);
     if (!para || !hedef || hedef.paraHesabiMi) throw new Error("Geçerli bir hedef hesap seçin.");
-    const kaynak = await paraBakiyesi(tx, musteriId, kapsamDosyaId || undefined);
+    const kaynak = await paraBakiyesi(tx, musteriId, havuzdan ? undefined : kapsamDosyaId);
     if (tutar > kaynak + 0.001) {
       throw new Error(
-        `${kapsamDosyaId ? "Bu dosyanın" : "Müvekkil"} Para Trafiği bakiyesi ${kaynak.toLocaleString("tr-TR")} TL; daha fazlası aktarılamaz.`,
+        `${havuzdan ? "Müvekkil havuzunda" : "Bu dosyanın para trafiğinde"} ${kaynak.toLocaleString("tr-TR")} TL var; daha fazlası aktarılamaz.`,
       );
     }
     const virmanId = randomUUID();
     await tx.cariHareketi.create({
       data: {
         musteriId, dosyaId, hesapId: para.id, yon: "BORC", tarih, tutar, virmanId,
-        havuzKaynakli: !kapsamDosyaId,
+        havuzKaynakli: havuzdan,
         aciklama: `${hedef.no}-${hedef.ad.toLocaleUpperCase("tr-TR")} VİRMAN`,
       },
     });
