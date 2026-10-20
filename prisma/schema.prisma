@@ -113,6 +113,8 @@ model SecenekDegeri {
   davaDosyalariDavaTuru         DavaDosyasi[]         @relation("DavaDosyasiDavaTuru")
   davaDosyalariMuvekkilSifati   DavaDosyasi[]         @relation("DavaDosyasiMuvekkilSifati")
   cariHareketiOdemeYontemi      CariHareketi[]        @relation("CariHareketiOdemeYontemi")
+  anlasmaOdemeSekli             MuvekkilAnlasma[]     @relation("AnlasmaOdemeSekli")
+  anlasmaMasrafSorumlusu        MuvekkilAnlasma[]     @relation("AnlasmaMasrafSorumlusu")
   paraTrafigiTasnifCariKod      ParaTrafigiTasnif[]   @relation("ParaTrafigiTasnifCariKod")
   dosyaMasrafiCariKod           DosyaMasrafi[]        @relation("DosyaMasrafiCariKod")
   avansAktarimiCariKod          DosyaAvansAktarimi[]  @relation("AvansAktarimiCariKod")
@@ -163,6 +165,7 @@ model Musteri {
   finansHareketleri  MusteriFinansHareketi[]
   cmkDosyalari       CMKDosyasi[]
   cariHareketleri    CariHareketi[]
+  anlasmalar         MuvekkilAnlasma[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -545,6 +548,7 @@ model DavaDosyasi {
   cariTahakkuklari       DosyaCariTahakkuku[]
   cariDagitimlari        DosyaCariDagitimi[]
   cariHareketleri        CariHareketi[]
+  anlasmalar             MuvekkilAnlasma[]
   karsiTarafAlacaklari   KarsiTarafAlacagi[]
   paraTrafigiDagitimlari ParaTrafigiDagitimi[]
   finansHareketleri      MusteriFinansHareketi[]
@@ -1347,6 +1351,8 @@ model CariHareketi {
 
   // Odeme sekli (Nakit / Banka / ...): sadece Para Trafigi'ne gelen odemelerde dolu.
   // Parcali odeme, her yontem icin ayri bir satir olarak kaydedilir.
+  // Para borcludan (karsi taraftan) mi geldi? (muvekkilden gelen avansla karismasin diye isaretlenir)
+  borcludanMi    Boolean       @default(false)
   odemeYontemiId String?
   odemeYontemi   SecenekDegeri? @relation("CariHareketiOdemeYontemi", fields: [odemeYontemiId], references: [id])
 
@@ -1363,4 +1369,40 @@ model CariHareketi {
   @@index([virmanId])
   @@index([odemeYontemiId])
   @@map("cari_hareketleri")
+}
+
+// Muvekkil ile buro arasindaki ucret anlasmasi. dosyaId BOS ise muvekkil GENELI
+// (dosyalar icin varsayilan), DOLU ise o dosyaya OZEL anlasma (genelin yerine gecer).
+model MuvekkilAnlasma {
+  id        String       @id @default(cuid())
+  musteriId String
+  musteri   Musteri      @relation(fields: [musteriId], references: [id], onDelete: Cascade)
+  dosyaId   String?
+  dosya     DavaDosyasi? @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+
+  hizmetBedeli Decimal?  @db.Decimal(14, 2)
+  // true: bedel KDV dahil, false: KDV haric (ustune eklenir), null: belirtilmedi
+  kdvDahilMi   Boolean?
+  kdvOrani     Decimal   @default(20) @db.Decimal(5, 2)
+
+  odemeSekliId String?
+  odemeSekli   SecenekDegeri? @relation("AnlasmaOdemeSekli", fields: [odemeSekliId], references: [id])
+  // Taksitler, vadeler vb. serbest metin
+  odemePlani   String?
+  // Basari primi / yuzde (serbest metin: "%10", "50.000 TL" vb.)
+  basariPrimi  String?
+
+  masrafSorumlusuId String?
+  masrafSorumlusu   SecenekDegeri? @relation("AnlasmaMasrafSorumlusu", fields: [masrafSorumlusuId], references: [id])
+
+  anlasmaTarihi  DateTime?
+  belgeReferansi String?
+  notlar         String?
+
+  olusturmaTarihi  DateTime @default(now())
+  guncellemeTarihi DateTime @updatedAt
+
+  @@index([musteriId])
+  @@index([dosyaId])
+  @@map("muvekkil_anlasmalari")
 }

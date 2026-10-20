@@ -9,6 +9,7 @@ import { silebilirMi } from "@/core/auth/yetki";
 import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { dosyaMasrafiEkle } from "@/modules/dava-dosyasi/lib/actions";
 import { havuzTuretilenAlacak, kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
+import { MUVEKKILE_ODEME } from "@/modules/dava-dosyasi/lib/tasnif-sabitleri";
 
 function yenile() {
   revalidatePath("/kokpit", "layout");
@@ -89,6 +90,7 @@ export async function odemeEkle(musteriId: string, formData: FormData) {
       tutar: Math.round(t * 100) / 100,
       aciklama,
       odemeYontemiId: yontemler[i] || null,
+      borcludanMi: metin(formData, "paraKaynagi") === "borclu",
     })),
   });
   yenile();
@@ -312,5 +314,69 @@ export async function dosyaEkonomiDurumuDegistir(dosyaId: string, disi: boolean)
   const kullanici = await mevcutKullanici();
   if (!kullanici) throw new Error("Bu işlem için oturum açmalısınız.");
   await prisma.davaDosyasi.update({ where: { id: dosyaId }, data: { ekonomiDisi: disi } });
+  yenile();
+}
+
+// TOPLU TASNIF: para trafigindeki bir parayi tek seferde birden fazla dosya ve hesaba boler.
+// Her satir: hedef hesap (virman) ya da "Muvekkile Odeme" (para buroyu terk eder) + dosya + tutar.
+// ör. borcludan gelen 50.000 TL -> 36.000 masraf iadesi (Harcama), 14.000 vekalet ucreti
+// (Akdi Vekalet); veya muvekkilden gelen 330.000 TL'nin dosyalara/hesaplara ayristirilmasi.
+export async function topluTasnif(musteriId: string, kapsamDosyaId: string, formData: FormData) {
+  const hedefler = formData.getAll("hedefHesapId").map(String);
+  const dosyalar = formData.getAll("dosyaId").map(String);
+  const tutarlar = formData.getAll("tutar").map((t) => Number(String(t).replace(",", ".")));
+  const aciklamalar = formData.getAll("satirAciklama").map(String);
+  const tarih = tarihAl(formData);
+  const satirSayisi = hedefler.length;
+  if (satirSayisi === 0 || dosyalar.length !== satirSayisi || tutarlar.length !== satirSayisi) {
+    throw new Error("En az bir tasnif satırı girmelisiniz.");
+  }
+  if (tutarlar.some((t) => !Number.isFinite(t) || t <= 0)) throw new Error("Her satırın tutarı sıfırdan büyük olmalıdır.");
+  const havuzdan = !kapsamDosyaId || metin(formData, "kaynak") === "havuz";
+
+  await prisma.$transaction(async (tx) => {
+    const para = await tx.cariHesap.findFirst({ where: { paraHesabiMi: true } });
+    if (!para) throw new Error("Para Trafiği hesabı bulunamadı.");
+    const toplam = Math.round(tutarlar.reduce((t, x) => t + x, 0) * 100) / 100;
+    const mevcut = await paraBakiyesi(tx, musteriId, havuzdan ? undefined : kapsamDosyaId);
+    if (toplam > mevcut + 0.001) {
+      throw new Error(
+        `Tasnif toplamı ${toplam.toLocaleString("tr-TR")} TL; ${havuzdan ? "müvekkil havuzunda" : "bu dosyanın para trafiğinde"} yalnızca ${mevcut.toLocaleString("tr-TR")} TL var.`,
+      );
+    }
+    for (let i = 0; i < satirSayisi; i++) {
+      const dosyaId = kapsamDosyaId || dosyalar[i];
+      if (!dosyaId) throw new Error(`${i + 1}. satır için dosya seçilmelidir.`);
+      const sayac = await tx.dosyaMuvekkili.count({ where: { dosyaId, musteriId } });
+      if (sayac === 0) throw new Error(`${i + 1}. satırdaki dosya bu müvekkile ait değil.`);
+      const tutar = Math.round(tutarlar[i] * 100) / 100;
+      const not = aciklamalar[i]?.trim();
+
+      if (hedefler[i] === MUVEKKILE_ODEME) {
+        await tx.cariHareketi.create({
+          data: {
+            musteriId, dosyaId, hesapId: para.id, yon: "BORC", tarih, tutar, havuzKaynakli: havuzdan,
+            aciklama: `MÜVEKKİLE ÖDENDİ${not ? ` — ${not}` : ""}`,
+          },
+        });
+        continue;
+      }
+      const hedef = await tx.cariHesap.findUnique({ where: { id: hedefler[i] } });
+      if (!hedef || hedef.paraHesabiMi) throw new Error(`${i + 1}. satırda geçerli bir hedef hesap seçin.`);
+      const virmanId = randomUUID();
+      await tx.cariHareketi.create({
+        data: {
+          musteriId, dosyaId, hesapId: para.id, yon: "BORC", tarih, tutar, virmanId, havuzKaynakli: havuzdan,
+          aciklama: `${hedef.no}-${hedef.ad.toLocaleUpperCase("tr-TR")} VİRMAN${not ? ` — ${not}` : ""}`,
+        },
+      });
+      await tx.cariHareketi.create({
+        data: {
+          musteriId, dosyaId, hesapId: hedef.id, yon: "ALACAK", tarih, tutar, virmanId,
+          aciklama: `${para.no}-${para.ad.toLocaleUpperCase("tr-TR")} VİRMAN${not ? ` — ${not}` : ""}`,
+        },
+      });
+    }
+  });
   yenile();
 }

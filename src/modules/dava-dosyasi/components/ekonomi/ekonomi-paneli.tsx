@@ -33,13 +33,16 @@ import {
   dosyaEkonomiDurumuDegistir,
   masrafEkle,
   odemeEkle,
+  topluTasnif,
   virmanYap,
 } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
 import { adliBirimHareketiEkle, karsiTarafAlacagiEkle } from "@/modules/dava-dosyasi/lib/actions";
 import { prisma } from "@/core/db/prisma";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { OdemeFormu } from "@/modules/dava-dosyasi/components/ekonomi/odeme-formu";
+import { TopluTasnifFormu } from "@/modules/dava-dosyasi/components/ekonomi/toplu-tasnif-formu";
 import { DosyaSecimi } from "@/modules/dava-dosyasi/components/ekonomi/dosya-secimi";
+import { AnlasmaSekmesi } from "@/modules/dava-dosyasi/components/ekonomi/anlasma-sekmesi";
 
 const para = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 const paraYaz = para;
@@ -179,7 +182,9 @@ export async function EkonomiPaneli({
   const seciliHesap = aktifHesaplar.find((h) => String(h.no) === alt);
   const aktif = seciliHesap
     ? String(seciliHesap.no)
-    : alt === "dosyalar" && musteriDuzeyi
+    : alt === "anlasma"
+      ? "anlasma"
+      : alt === "dosyalar" && musteriDuzeyi
       ? "dosyalar"
       : alt === "yonet" && silmeYetkisiVar
         ? "yonet"
@@ -197,6 +202,7 @@ export async function EkonomiPaneli({
     }),
     { anahtar: "borclu", etiket: "200 - Borçlu", rozet: undefined },
     { anahtar: "adliye", etiket: "300 - Adliye", rozet: undefined },
+    { anahtar: "anlasma", etiket: "🤝 Anlaşma", rozet: undefined },
     ...(musteriDuzeyi
       ? [{ anahtar: "dosyalar", etiket: "📂 Dosyaları Seç", rozet: disindakiSayisi > 0 ? `${disindakiSayisi} dışında` : undefined }]
       : []),
@@ -272,6 +278,9 @@ export async function EkonomiPaneli({
         <p className="text-sm text-white/55">
           200 - Borçlu ve 300 - Adliye hesapları dosya bazındadır. Aşağıdaki sayfa sekmelerinden bir dosya seçin.
         </p>
+      )}
+      {aktif === "anlasma" && (
+        <AnlasmaSekmesi musteriId={kapsam.musteriId} dosyaId={kapsam.dosyaId} silmeYetkisiVar={silmeYetkisiVar} />
       )}
       {aktif === "dosyalar" && musteriDuzeyi && <DosyaSecimi musteriId={kapsam.musteriId} />}
       {aktif === "yonet" && <HesapYonetimi hesaplar={hesaplar} />}
@@ -439,6 +448,9 @@ async function HesapSekmesi({
     ? (await secenekleriGetir("odeme_yontemi")).map((y) => ({ id: y.id, etiket: y.etiket }))
     : [];
   const yontemListesi = hesap.paraHesabiMi && silmeYetkisiVar ? await secenekListesiTumDegerlerle("odeme_yontemi") : null;
+  const borcludanToplam = hesap.paraHesabiMi
+    ? satirlar.filter((x) => x.borcludan && x.alacak > 0).reduce((t, x) => t + x.alacak, 0)
+    : 0;
   const yontemToplamlari = new Map<string, number>();
   if (hesap.paraHesabiMi) {
     for (const x of satirlar) {
@@ -466,6 +478,13 @@ async function HesapSekmesi({
 
   return (
     <div>
+      {borcludanToplam > 0 && (
+        <div className="mb-3">
+          <span className="rounded-full border border-[#ffb340]/30 bg-[#ffb340]/[0.07] px-3 py-1 text-xs text-white/80">
+            Borçludan gelen: <b className="text-[#ffb340]">{para.format(borcludanToplam)}</b>
+          </span>
+        </div>
+      )}
       {yontemToplamlari.size > 0 && (
         <div className="mb-3 flex flex-wrap gap-2">
           {[...yontemToplamlari.entries()].map(([yontem, tutar]) => (
@@ -503,6 +522,26 @@ async function HesapSekmesi({
             sabitDosyaId={kapsam.dosyaId}
             mevcutBakiye={paraBakiyesi}
             kaynaklar={kaynaklar}
+          />
+          <h3 className="mb-1 mt-6 text-sm font-semibold text-white">⇉ Toplu Tasnif: Bir Parayı Birden Fazla Dosya / Hesaba Böl</h3>
+          <p className="mb-2 text-xs text-white/45">
+            Örn. borçludan gelen 50.000 TL: 36.000 masraf iadesi (Harcama), 14.000 vekalet ücreti kesintisi (Akdi Vekalet);
+            ya da kalanı müvekkile ödeme. Her satıra &quot;neye mahsup edildiğini&quot; yazın.
+          </p>
+          <TopluTasnifFormu
+            action={topluTasnif.bind(null, kapsam.musteriId, kapsamDosyaId)}
+            hedefler={hedefler}
+            dosyalar={dosyalar}
+            sabitDosyaId={kapsam.dosyaId}
+            mevcutBakiye={paraBakiyesi}
+            kaynaklar={
+              kapsam.dosyaId
+                ? [
+                    { deger: "havuz", etiket: "Müvekkil havuzu", bakiye: havuzBakiyesi ?? 0 },
+                    { deger: "dosya", etiket: "Bu dosyanın para trafiği", bakiye: paraBakiyesi },
+                  ]
+                : undefined
+            }
           />
         </>
       ) : (

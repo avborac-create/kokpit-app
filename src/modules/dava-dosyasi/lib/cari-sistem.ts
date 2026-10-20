@@ -36,6 +36,8 @@ export type DefterSatiri = {
   silme?: SilmeKaynagi;
   // Para Trafigi'ne gelen odemenin sekli (Nakit / Banka / ...)
   odemeYontemi?: string;
+  // Para borcludan (karsi taraftan) gelmisse
+  borcludan?: boolean;
   duzenleHref?: string;
   turetilmis?: boolean;
 };
@@ -279,6 +281,7 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
       dosyaEtiketi: etiket(h.dosya),
       aciklama: h.aciklama ?? "",
       odemeYontemi: h.odemeYontemi?.etiket,
+      borcludan: h.borcludanMi,
       borc: h.yon === "BORC" ? sayi(h.tutar) : 0,
       alacak: h.yon === "ALACAK" ? sayi(h.tutar) : 0,
       silme: virmanMi ? { tip: "virman", id: h.virmanId! } : { tip: "hareket", id: h.id },

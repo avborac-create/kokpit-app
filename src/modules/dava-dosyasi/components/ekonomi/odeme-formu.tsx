@@ -82,6 +82,13 @@ export function OdemeFormu({
         </Secim>
       </Alan>
       <Alan>
+        <Etiket htmlFor="od-kaynak">Para Kimden Geldi</Etiket>
+        <Secim id="od-kaynak" name="paraKaynagi" defaultValue="muvekkil">
+          <option value="muvekkil">Müvekkilden</option>
+          <option value="borclu">Borçludan (karşı taraftan tahsilat)</option>
+        </Secim>
+      </Alan>
+      <Alan>
         <Etiket htmlFor="od-aciklama">Açıklama</Etiket>
         <Girdi id="od-aciklama" name="aciklama" defaultValue="GELEN ÖDEME" />
       </Alan>

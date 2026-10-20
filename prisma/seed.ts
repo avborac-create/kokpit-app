@@ -233,6 +233,28 @@ const SECENEK_LISTELERI: {
     ],
   },
   {
+    // Muvekkil anlasmasi: odeme sekli (admin yerinde duzenleyebilir / yenisini ekleyebilir)
+    anahtar: "anlasma_odeme_sekli",
+    ad: "Anlaşma Ödeme Şekli",
+    degerler: [
+      { kod: "pesin", etiket: "Peşin" },
+      { kod: "taksitli", etiket: "Taksitli" },
+      { kod: "basariya_bagli", etiket: "Başarıya bağlı" },
+      { kod: "karma", etiket: "Karma (peşin + başarı primi)" },
+    ],
+  },
+  {
+    // Muvekkil anlasmasi: masraflari kim ustlenir
+    anahtar: "anlasma_masraf_sorumlusu",
+    ad: "Anlaşma Masraf Sorumlusu",
+    degerler: [
+      { kod: "muvekkil", etiket: "Müvekkil" },
+      { kod: "buro", etiket: "Büro" },
+      { kod: "karsi_taraftan", etiket: "Karşı taraftan tahsil edilecek" },
+      { kod: "paylasimli", etiket: "Paylaşımlı" },
+    ],
+  },
+  {
     anahtar: "dava_turu",
     ad: "Dava Türü",
     degerler: [
