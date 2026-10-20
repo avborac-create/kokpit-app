@@ -253,6 +253,7 @@ export async function davaDosyasiOlustur(
       buroNo: metinYaAlNull(formData, "buroNo"),
       dosyaNo: metinYaAlNull(formData, "dosyaNo"),
       birimAdi: metinYaAlNull(formData, "birimAdi"),
+      davaKonusu: metinYaAlNull(formData, "davaKonusu"),
       konu,
       turId,
       yargiKoluId,
@@ -334,6 +335,7 @@ export async function davaDosyasiGuncelle(
         ...(g("buroNo") && { buroNo: metinYaAlNull(formData, "buroNo") }),
         ...(g("dosyaNo") && { dosyaNo: metinYaAlNull(formData, "dosyaNo") }),
         ...(g("birimAdi") && { birimAdi: metinYaAlNull(formData, "birimAdi") }),
+        ...(g("davaKonusu") && { davaKonusu: metinYaAlNull(formData, "davaKonusu") }),
         konu,
         ...(sinif && {
           turId: sinif.turId,
@@ -447,7 +449,7 @@ export async function davaDosyasiSil(id: string, sifre?: string) {
 // yeniden uretilir (bkz. davaDosyasiGuncelle ile ayni kural).
 const DETAY_DUZENLENEBILIR_ALANLAR = [
   "turId", "yargiKoluId", "muvekkilSifatiId", "hukukiIliskiTuruId", "davaTuruId",
-  "birimAdi", "buroNo", "dosyaNo", "talepSonucu", "durusmaTarihi",
+  "birimAdi", "davaKonusu", "buroNo", "dosyaNo", "talepSonucu", "durusmaTarihi",
 ];
 
 export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<string, string>) {

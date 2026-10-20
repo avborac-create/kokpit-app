@@ -438,6 +438,8 @@ model DavaDosyasi {
   // no'sundan bagimsiz, buro takip programindaki "Buro No".
   buroNo             String?
   birimAdi           String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
+  // Davanin / takibin konusu (serbest metin): "SIGORTALILIK BASLANGIC TESPITI", "CEK - ORNEK NO 10" vb.
+  davaKonusu         String?
   konu               String
   // Dosya turu: ihtar/arabuluculuk/muzakere gibi dava/icra oncesi
   // asamalari da, icra/ihtiyati haciz/dava gibi resmi dosyalari da kapsayan

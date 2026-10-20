@@ -18,6 +18,7 @@ type DosyaDegerleri = {
   buroNo: string | null;
   dosyaNo: string | null;
   birimAdi: string | null;
+  davaKonusu?: string | null;
   hukukiIliskiTuruId: string | null;
   davaTuruId: string | null;
   turId?: string | null;
@@ -38,7 +39,7 @@ type DosyaDegerleri = {
 // istenir; gerisi "Ek bilgiler" altinda opsiyoneldir (dosya detayindan da
 // sonradan girilebilir).
 const KARTLAR: { baslik: string; alanlar: string[]; ekBilgi?: boolean }[] = [
-  { baslik: "Dosya Bilgileri", alanlar: ["birimAdi", "dosyaNo"] },
+  { baslik: "Dosya Bilgileri", alanlar: ["birimAdi", "dosyaNo", "davaKonusu"] },
   {
     baslik: "Ek Bilgiler (isteğe bağlı)",
     alanlar: ["hukukiIliskiTuruId", "davaTuruId", "buroNo", "talepSonucu", "durusmaTarihi"],
@@ -137,6 +138,17 @@ export function DavaDosyasiFormIcerik({
         />
       </Alan>
     ),
+    davaKonusu: () => (
+      <Alan>
+        <Etiket htmlFor="davaKonusu">{bilgi("davaKonusu", "Davanın / Takibin Konusu")}</Etiket>
+        <Girdi
+          id="davaKonusu"
+          name="davaKonusu"
+          placeholder="ör. SİGORTALILIK BAŞLANGIÇ TESPİTİ · ÇEK - ÖRNEK NO 10"
+          defaultValue={g?.davaKonusu ?? dosya?.davaKonusu ?? ""}
+        />
+      </Alan>
+    ),
     buroNo: () => (
       <Alan>
         <Etiket htmlFor="buroNo">{bilgi("buroNo", "Objekt Büro No (BN)")}</Etiket>
@@ -199,7 +211,7 @@ export function DavaDosyasiFormIcerik({
     </div>
   );
 
-  const yeniAlanlar = alanSirasi.filter((a) => a === "birimAdi" || a === "dosyaNo");
+  const yeniAlanlar = alanSirasi.filter((a) => a === "birimAdi" || a === "dosyaNo" || a === "davaKonusu");
   const ekAlanlar = alanSirasi.filter((a) => KARTLAR[1].alanlar.includes(a));
   const ekDoluMu = Boolean(
     dosya?.davaTuruId || dosya?.talepSonucu || dosya?.hukukiIliskiTuruId || dosya?.buroNo || dosya?.durusmaTarihi,

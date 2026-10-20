@@ -152,6 +152,13 @@ export default async function DavaDosyasiDetaySayfasi({
       gosterim: dosya.birimAdi ?? "—",
     },
     {
+      anahtar: "davaKonusu",
+      varsayilanEtiket: "Davanın / Takibin Konusu",
+      tip: "metin",
+      deger: dosya.davaKonusu ?? "",
+      gosterim: dosya.davaKonusu ?? "—",
+    },
+    {
       anahtar: "buroNo",
       varsayilanEtiket: "Objekt Büro No (BN)",
       tip: "metin",
@@ -281,9 +288,11 @@ export default async function DavaDosyasiDetaySayfasi({
             {dosya.buroNo && (
               <span title="OBJEKT BÜRO NO"> · {buroNoGoster(dosya.buroNo)}</span>
             )}
-            {dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}
+            {dosya.birimAdi || dosya.dosyaNo
+              ? ` · ${[dosya.birimAdi, dosya.dosyaNo].filter(Boolean).join(" ")}`
+              : ""}
             {" — "}
-            {dosya.konu}
+            {dosya.davaKonusu || dosya.konu}
           </h1>
           <p className="mt-1 flex flex-wrap gap-2 text-sm text-white/55">
             <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">

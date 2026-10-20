@@ -26,6 +26,7 @@ function aramaKosulu(arama?: string): Prisma.DavaDosyasiWhereInput {
       return {
         OR: [
           ...metin((v) => ({ konu: { ...icerir, contains: v } })),
+          ...metin((v) => ({ davaKonusu: { ...icerir, contains: v } })),
           ...metin((v) => ({ dosyaNo: { ...icerir, contains: v } })),
           ...metin((v) => ({ buroNo: { ...icerir, contains: v } })),
           ...metin((v) => ({ birimAdi: { ...icerir, contains: v } })),
