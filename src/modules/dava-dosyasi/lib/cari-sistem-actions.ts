@@ -8,6 +8,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { dosyaMasrafiEkle } from "@/modules/dava-dosyasi/lib/actions";
+import { kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
 
 function yenile() {
   revalidatePath("/kokpit", "layout");
@@ -119,9 +120,11 @@ export async function virmanYap(musteriId: string, kapsamDosyaId: string, formDa
   const hedefHesapId = metin(formData, "hedefHesapId");
   const dosyaId = kapsamDosyaId || metin(formData, "dosyaId");
   if (!hedefHesapId || !dosyaId) throw new Error("Hedef hesap ve dosya seçilmelidir.");
-  // Muvekkil ekranindan her zaman havuzdan; dosya ekranindan "kaynak" secimine gore
-  // (muvekkil havuzu ya da dosyanin kendi para trafigi bakiyesi).
-  const havuzdan = !kapsamDosyaId || metin(formData, "kaynak") === "havuz";
+  // Kaynak: "havuz" (muvekkil para trafigi), "dosya" (dosyanin para trafigi) ya da
+  // "hesap:<id>" (baska bir cari hesaptaki fazla odeme - hesaplar arasi virman).
+  const kaynakDeger = metin(formData, "kaynak") || "havuz";
+  const hesapKaynakId = kaynakDeger.startsWith("hesap:") ? kaynakDeger.slice(6) : null;
+  const havuzdan = !hesapKaynakId && (!kapsamDosyaId || kaynakDeger === "havuz");
   await dosyaMuvekkilinMi(musteriId, dosyaId);
   const tutar = tutarAl(formData);
   const tarih = tarihAl(formData);
@@ -132,6 +135,35 @@ export async function virmanYap(musteriId: string, kapsamDosyaId: string, formDa
       tx.cariHesap.findUnique({ where: { id: hedefHesapId } }),
     ]);
     if (!para || !hedef || hedef.paraHesabiMi) throw new Error("Geçerli bir hedef hesap seçin.");
+
+    // Hesaplar arasi virman: kaynak hesapta (bu dosyada) fazla odeme olmali; kaynakta BORC, hedefte ALACAK.
+    if (hesapKaynakId) {
+      const kaynakHesap = await tx.cariHesap.findUnique({ where: { id: hesapKaynakId } });
+      if (!kaynakHesap || kaynakHesap.paraHesabiMi) throw new Error("Geçerli bir kaynak hesap seçin.");
+      if (kaynakHesap.id === hedef.id) throw new Error("Kaynak ve hedef hesap aynı olamaz.");
+      const ozet = await kapsamOzeti({ musteriId, dosyaId });
+      const mevcut = Math.max(0, -(ozet.hesaplar.find((h) => h.hesapId === kaynakHesap.id)?.bakiye ?? 0));
+      if (tutar > mevcut + 0.001) {
+        throw new Error(
+          `${kaynakHesap.no} ${kaynakHesap.ad} hesabında bu dosyada aktarılabilir fazla ödeme ${mevcut.toLocaleString("tr-TR")} TL; daha fazlası aktarılamaz.`,
+        );
+      }
+      const virmanId = randomUUID();
+      await tx.cariHareketi.create({
+        data: {
+          musteriId, dosyaId, hesapId: kaynakHesap.id, yon: "BORC", tarih, tutar, virmanId,
+          aciklama: `${hedef.no}-${hedef.ad.toLocaleUpperCase("tr-TR")} VİRMAN`,
+        },
+      });
+      await tx.cariHareketi.create({
+        data: {
+          musteriId, dosyaId, hesapId: hedef.id, yon: "ALACAK", tarih, tutar, virmanId,
+          aciklama: `${kaynakHesap.no}-${kaynakHesap.ad.toLocaleUpperCase("tr-TR")} VİRMAN`,
+        },
+      });
+      return;
+    }
+
     const kaynak = await paraBakiyesi(tx, musteriId, havuzdan ? undefined : kapsamDosyaId);
     if (tutar > kaynak + 0.001) {
       throw new Error(

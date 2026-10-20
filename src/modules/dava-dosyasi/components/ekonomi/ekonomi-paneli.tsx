@@ -261,6 +261,7 @@ export async function EkonomiPaneli({
           dosyalar={dosyaSecenekleri}
           paraBakiyesi={ozet.paraBakiyesi}
           havuzBakiyesi={havuzBakiyesi}
+          ozetHesaplar={ozet.hesaplar}
           silmeYetkisiVar={silmeYetkisiVar}
         />
       )}
@@ -400,6 +401,7 @@ async function HesapSekmesi({
   dosyalar,
   paraBakiyesi,
   havuzBakiyesi,
+  ozetHesaplar,
   silmeYetkisiVar,
 }: {
   kapsam: Kapsam;
@@ -408,9 +410,28 @@ async function HesapSekmesi({
   dosyalar: DosyaSecenegi[];
   paraBakiyesi: number;
   havuzBakiyesi?: number;
+  ozetHesaplar: Awaited<ReturnType<typeof kapsamOzeti>>["hesaplar"];
   silmeYetkisiVar: boolean;
 }) {
-  const kaynakSecimi = kapsam.dosyaId ? { havuz: havuzBakiyesi ?? 0, dosya: paraBakiyesi } : undefined;
+  // Virman kaynaklari: para trafigi (havuz / dosya) ve baska hesaplardaki fazla odemeler.
+  const digerKaynaklar = aktifHesaplar
+    .filter((h) => !h.paraHesabiMi && h.id !== hesap.id)
+    .map((h) => {
+      const fazla = Math.max(0, -(ozetHesaplar.find((o) => o.hesapId === h.id)?.bakiye ?? 0));
+      return {
+        deger: `hesap:${h.id}`,
+        etiket: kapsam.dosyaId ? `${h.no} ${h.ad} — fazla ödeme ${para.format(fazla)}` : `${h.no} ${h.ad} — seçilen dosyadaki fazla ödeme`,
+      };
+    });
+  const kaynaklar = kapsam.dosyaId
+    ? [
+        { deger: "havuz", etiket: `Para Trafiği — müvekkil havuzu (${para.format(havuzBakiyesi ?? 0)})` },
+        { deger: "dosya", etiket: `Para Trafiği — bu dosya (${para.format(paraBakiyesi)})` },
+        ...digerKaynaklar,
+      ]
+    : digerKaynaklar.length > 0
+      ? [{ deger: "havuz", etiket: `Para Trafiği — müvekkil havuzu (${para.format(paraBakiyesi)})` }, ...digerKaynaklar]
+      : undefined;
   const satirlar = await hesapDefteri(kapsam, hesap);
   const musteriDuzeyi = !kapsam.dosyaId;
   const kapsamDosyaId = kapsam.dosyaId ?? "";
@@ -445,14 +466,14 @@ async function HesapSekmesi({
             + Ödeme Geldi{musteriDuzeyi ? " (dosya seçerseniz o dosyaya da işlenir)" : " (müvekkil ekonomisinde de görünür)"}
           </h3>
           <OdemeFormu action={odemeEkle.bind(null, kapsam.musteriId)} dosyalar={dosyalar} sabitDosyaId={kapsam.dosyaId} />
-          <h3 className="mb-2 mt-6 text-sm font-semibold text-white">⇄ Virman: Para Trafiğinden Hesaba Aktar</h3>
+          <h3 className="mb-2 mt-6 text-sm font-semibold text-white">⇄ Virman: Para Trafiğinden / Hesaplar Arası Aktar</h3>
           <VirmanFormu
             action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
             hedefler={hedefler}
             dosyalar={dosyalar}
             sabitDosyaId={kapsam.dosyaId}
             mevcutBakiye={paraBakiyesi}
-            kaynakSecimi={kaynakSecimi}
+            kaynaklar={kaynaklar}
           />
         </>
       ) : (
@@ -487,7 +508,7 @@ async function HesapSekmesi({
               aciklamaIpucu={hesap.no === 101 ? "ör. dosyanın hizmet bedeli" : undefined}
             />
           )}
-          <h3 className="mb-2 mt-6 text-sm font-semibold text-white">⇄ Para Trafiğinden Bu Hesaba Virman (Alacak)</h3>
+          <h3 className="mb-2 mt-6 text-sm font-semibold text-white">⇄ Bu Hesaba Virman (Para Trafiğinden ya da Başka Hesaptan)</h3>
           <VirmanFormu
             action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
             hedefler={hedefler}
@@ -495,7 +516,7 @@ async function HesapSekmesi({
             dosyalar={dosyalar}
             sabitDosyaId={kapsam.dosyaId}
             mevcutBakiye={paraBakiyesi}
-            kaynakSecimi={kaynakSecimi}
+            kaynaklar={kaynaklar}
           />
         </>
       )}
