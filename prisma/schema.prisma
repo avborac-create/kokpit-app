@@ -1317,6 +1317,12 @@ model CariHesap {
   paraHesabiMi    Boolean  @default(false)
   // Harcama hesabi: borc satirlari DosyaMasrafi kayitlarindan (Masraflar) gelir.
   masrafHesabiMi  Boolean  @default(false)
+  // Hesap plani grubu: MUVEKKIL 100-199, BORCLU 200-299, ADLIYE 300-399
+  grup            CariGrup @default(MUVEKKIL)
+  // Ucuncu kisi/kurumda TUTULAN para hesabi (ör. adliyeye yatirilan harcama ya da teminat):
+  // bakiye = Alacak - Borc (orada duran tutar); muvekkilin borcu sayilmaz, netten dusulmez,
+  // ayri gosterilir. Iade edilebilir olan (teminat) borc satiriyla geri doner.
+  tutulanHesapMi  Boolean  @default(false)
   // Eski cari_kod listesindeki karsiligi (DosyaMasrafi.cariKod ile eslestirme).
   eskiKod         String?  @unique
   aktifMi         Boolean  @default(true)
@@ -1325,6 +1331,12 @@ model CariHesap {
   hareketler CariHareketi[]
 
   @@map("cari_hesaplar")
+}
+
+enum CariGrup {
+  MUVEKKIL
+  BORCLU
+  ADLIYE
 }
 
 enum CariYon {

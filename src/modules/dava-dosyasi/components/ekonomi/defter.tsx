@@ -51,19 +51,23 @@ function SilButonu({ satir }: { satir: DefterSatiri }) {
 export function Defter({
   satirlar,
   paraHesabiMi,
+  tutulanHesapMi = false,
   dosyaSutunu,
   silmeYetkisiVar,
   bosMesaj,
 }: {
   satirlar: DefterSatiri[];
   paraHesabiMi: boolean;
+  // Adliyede vb. tutulan para: bakiye = Alacak - Borc (orada duran tutar)
+  tutulanHesapMi?: boolean;
   dosyaSutunu: boolean;
   silmeYetkisiVar: boolean;
   bosMesaj: string;
 }) {
   if (satirlar.length === 0) return <p className="text-sm text-white/40">{bosMesaj}</p>;
 
-  const isaret = paraHesabiMi ? -1 : 1;
+  const tersBakiye = paraHesabiMi || tutulanHesapMi;
+  const isaret = tersBakiye ? -1 : 1;
   const hesaplanan = satirlar.map((s, i) => ({
     ...s,
     bakiye: isaret * satirlar.slice(0, i + 1).reduce((t, x) => t + x.borc - x.alacak, 0) || 0,
@@ -72,7 +76,7 @@ export function Defter({
   const toplamBorc = satirlar.reduce((t, s) => t + s.borc, 0);
   const toplamAlacak = satirlar.reduce((t, s) => t + s.alacak, 0);
   const renk = (b: number) =>
-    paraHesabiMi ? (b > 0 ? "text-[#6db8ff]" : "text-white/60") : b > 0 ? "text-[#ff7a70]" : b < 0 ? "text-[#32d74b]" : "text-white/60";
+    tersBakiye ? (b > 0 ? "text-[#6db8ff]" : "text-white/60") : b > 0 ? "text-[#ff7a70]" : b < 0 ? "text-[#32d74b]" : "text-white/60";
 
   return (
     <div>
@@ -145,7 +149,9 @@ export function Defter({
         </table>
       </div>
       <p className="mt-2 text-xs text-white/35">
-        {paraHesabiMi
+        {tutulanHesapMi
+          ? "Bakiye = Alacak − Borç (bu hesapta/adliyede şu an duran tutar; iade edilince Borç olarak düşer)."
+          : paraHesabiMi
           ? "Bakiye = Alacak − Borç (müvekkilin henüz dağıtılmamış parası)."
           : "Bakiye = Borç − Alacak (müvekkilin bu hesaptaki kalan borcu; eksi ise fazla ödeme)."}
       </p>

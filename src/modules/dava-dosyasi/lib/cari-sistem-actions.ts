@@ -157,10 +157,12 @@ export async function virmanYap(musteriId: string, kapsamDosyaId: string, formDa
       if (!kaynakHesap || kaynakHesap.paraHesabiMi) throw new Error("Geçerli bir kaynak hesap seçin.");
       if (kaynakHesap.id === hedef.id) throw new Error("Kaynak ve hedef hesap aynı olamaz.");
       const ozet = await kapsamOzeti({ musteriId, dosyaId });
-      const mevcut = Math.max(0, -(ozet.hesaplar.find((h) => h.hesapId === kaynakHesap.id)?.bakiye ?? 0));
+      const kaynakBakiye = ozet.hesaplar.find((h) => h.hesapId === kaynakHesap.id)?.bakiye ?? 0;
+      // Normal hesap: fazla odeme (= -bakiye). Tutulan hesap (adliye): orada duran tutar (= +bakiye).
+      const mevcut = Math.max(0, kaynakHesap.tutulanHesapMi ? kaynakBakiye : -kaynakBakiye);
       if (tutar > mevcut + 0.001) {
         throw new Error(
-          `${kaynakHesap.no} - ${kaynakHesap.ad} hesabında bu dosyada aktarılabilir fazla ödeme ${mevcut.toLocaleString("tr-TR")} TL; daha fazlası aktarılamaz.`,
+          `${kaynakHesap.no} - ${kaynakHesap.ad} hesabında bu dosyada aktarılabilir tutar ${mevcut.toLocaleString("tr-TR")} TL; daha fazlası aktarılamaz.`,
         );
       }
       const virmanId = randomUUID();
@@ -267,10 +269,14 @@ export async function hesapEkle(formData: FormData) {
   const no = Number(metin(formData, "no"));
   const ad = metin(formData, "ad");
   if (!Number.isInteger(no) || no <= 0 || !ad) throw new Error("Geçerli bir hesap kodu ve adı girin.");
-  // Hesap plani: 100'ler muvekkil, 200'ler borclu, 300'ler adliye hesaplarina ayrilmistir.
-  if (no < 100 || no > 199) throw new Error("Müvekkil hesapları 100–199 aralığında olmalıdır (200'ler borçlu, 300'ler adliye için ayrılmıştır).");
+  // Hesap plani: 100'ler muvekkil, 200'ler borclu, 300'ler adliye hesaplari.
+  if (no < 100 || no > 399) throw new Error("Hesap kodu 100–399 aralığında olmalıdır (100'ler müvekkil, 200'ler borçlu, 300'ler adliye).");
+  const grup = no >= 300 ? "ADLIYE" : no >= 200 ? "BORCLU" : "MUVEKKIL";
+  // Adliye hesaplari varsayilan olarak "tutulan" (adliyede duran para) hesabidir.
+  const tur = metin(formData, "tur");
+  const tutulan = tur ? tur === "tutulan" : grup === "ADLIYE";
   if (await prisma.cariHesap.findUnique({ where: { no } })) throw new Error(`${no} kodlu bir hesap zaten var.`);
-  await prisma.cariHesap.create({ data: { no, ad } });
+  await prisma.cariHesap.create({ data: { no, ad, grup, tutulanHesapMi: tutulan } });
   yenile();
 }
 

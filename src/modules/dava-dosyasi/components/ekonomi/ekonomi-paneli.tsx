@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Dugme } from "@/core/ui/button";
 import { OnayliButon } from "@/core/ui/onayli-buton";
-import { Girdi } from "@/core/ui/form";
+import { Girdi, Secim } from "@/core/ui/form";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { SecenekDuzenleyiciPenceresi } from "@/core/secenek/secenek-duzenleyici-penceresi";
 import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
@@ -63,7 +63,8 @@ function DurumSeridi({
   havuzBakiyesi?: number;
   paraHesapNo?: number;
 }) {
-  const gosterilecek = ozet.hesaplar.filter((h) => !h.paraHesabiMi && (h.borc !== 0 || h.alacak !== 0 || h.no <= 102));
+  const gosterilecek = ozet.hesaplar.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi && h.grup === "MUVEKKIL" && (h.borc !== 0 || h.alacak !== 0 || h.no <= 102));
+  const tutulanlar = ozet.hesaplar.filter((h) => h.tutulanHesapMi && (h.borc !== 0 || h.alacak !== 0));
   const para = ozet.hesaplar.find((h) => h.paraHesabiMi);
   return (
     <div className="mb-5">
@@ -122,6 +123,19 @@ function DurumSeridi({
             <p className="text-[11px] text-white/45">
               {h.bakiye > 0 ? "Müvekkil bize borçlu" : h.bakiye < 0 ? "Müvekkil bizden alacaklı" : "Borç / alacak yok"}
             </p>
+          </Link>
+        ))}
+        {tutulanlar.map((h) => (
+          <Link
+            key={h.hesapId}
+            href={hrefYaz({ alt: String(h.no) })}
+            className="rounded-xl border border-[#ffb340]/30 p-3 transition-colors hover:bg-white/[0.05]"
+          >
+            <p className="text-xs text-white/50">
+              {h.no} - {h.ad}
+            </p>
+            <p className="mt-0.5 text-base font-semibold text-[#ffb340]">{paraYaz.format(h.bakiye)}</p>
+            <p className="text-[11px] text-white/45">Adliyede/üçüncü kişide tutulan</p>
           </Link>
         ))}
         {para && (
@@ -194,19 +208,31 @@ export async function EkonomiPaneli({
   const ozetOf = (hesapId: string) => ozet.hesaplar.find((o) => o.hesapId === hesapId);
   const dosyaSecenekleri: DosyaSecenegi[] = dosyalar.map((d) => ({ id: d.id, etiket: d.etiket }));
 
-  const hesapSekmeleri = [
-    { anahtar: "ozet", etiket: "Özet", rozet: undefined as string | undefined },
-    ...aktifHesaplar.map((h) => {
-      const o = ozetOf(h.id);
-      return { anahtar: String(h.no), etiket: `${h.no} - ${h.ad}`, rozet: o && o.bakiye !== 0 ? para.format(Math.abs(o.bakiye)) : undefined };
-    }),
-    { anahtar: "borclu", etiket: "200 - Borçlu", rozet: undefined },
-    { anahtar: "adliye", etiket: "300 - Adliye", rozet: undefined },
-    { anahtar: "anlasma", etiket: "🤝 Anlaşma", rozet: undefined },
+  type Sekme = { anahtar: string; etiket: string; rozet?: string };
+  const hesapSekmesi = (h: (typeof aktifHesaplar)[number]): Sekme => {
+    const o = ozetOf(h.id);
+    return { anahtar: String(h.no), etiket: `${h.no} - ${h.ad}`, rozet: o && o.bakiye !== 0 ? para.format(Math.abs(o.bakiye)) : undefined };
+  };
+  // Katlar: genel / muvekkil (100'ler) / borclu (200'ler) / adliye (300'ler)
+  const genelKat: Sekme[] = [
+    { anahtar: "ozet", etiket: "Özet" },
+    { anahtar: "anlasma", etiket: "🤝 Anlaşma" },
     ...(musteriDuzeyi
       ? [{ anahtar: "dosyalar", etiket: "📂 Dosyaları Seç", rozet: disindakiSayisi > 0 ? `${disindakiSayisi} dışında` : undefined }]
       : []),
-    ...(silmeYetkisiVar ? [{ anahtar: "yonet", etiket: "⚙ Hesapları Yönet", rozet: undefined }] : []),
+    ...(silmeYetkisiVar ? [{ anahtar: "yonet", etiket: "⚙ Hesapları Yönet" }] : []),
+  ];
+  const katlar: { baslik: string; sekmeler: Sekme[] }[] = [
+    { baslik: "", sekmeler: genelKat },
+    { baslik: "MÜVEKKİL (100)", sekmeler: aktifHesaplar.filter((h) => h.grup === "MUVEKKIL").map(hesapSekmesi) },
+    {
+      baslik: "BORÇLU (200)",
+      sekmeler: [{ anahtar: "borclu", etiket: "200 - Borçlu" }, ...aktifHesaplar.filter((h) => h.grup === "BORCLU").map(hesapSekmesi)],
+    },
+    {
+      baslik: "ADLİYE (300)",
+      sekmeler: [{ anahtar: "adliye", etiket: "300 - Adliye (eski hareketler)" }, ...aktifHesaplar.filter((h) => h.grup === "ADLIYE").map(hesapSekmesi)],
+    },
   ];
 
   return (
@@ -242,20 +268,27 @@ export async function EkonomiPaneli({
       )}
       <DurumSeridi ozet={ozet} hrefYaz={hrefYaz} havuzBakiyesi={havuzBakiyesi} paraHesapNo={aktifHesaplar.find((h) => h.paraHesabiMi)?.no} />
 
-      <div className="mb-5 flex flex-wrap gap-1.5 border-b border-white/[0.08] pb-3">
-        {hesapSekmeleri.map((s) => (
-          <Link
-            key={s.anahtar}
-            href={hrefYaz({ alt: s.anahtar })}
-            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
-              s.anahtar === aktif
-                ? "border-[var(--accent)] bg-[var(--accent-soft)] text-white"
-                : "border-white/10 text-white/60 hover:bg-white/[0.06] hover:text-white"
-            }`}
-          >
-            {s.etiket}
-            {s.rozet && <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-white/70">{s.rozet}</span>}
-          </Link>
+      <div className="mb-5 space-y-2 border-b border-white/[0.08] pb-4">
+        {katlar.map((kat, i) => (
+          <div key={i} className="flex flex-wrap items-center gap-1.5">
+            {kat.baslik && (
+              <span className="mr-1 w-32 shrink-0 text-[11px] font-semibold tracking-wide text-white/35">{kat.baslik}</span>
+            )}
+            {kat.sekmeler.map((sk) => (
+              <Link
+                key={sk.anahtar}
+                href={hrefYaz({ alt: sk.anahtar })}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                  sk.anahtar === aktif
+                    ? "border-[var(--accent)] bg-[var(--accent-soft)] text-white"
+                    : "border-white/10 text-white/60 hover:bg-white/[0.06] hover:text-white"
+                }`}
+              >
+                {sk.etiket}
+                {sk.rozet && <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-white/70">{sk.rozet}</span>}
+              </Link>
+            ))}
+          </div>
         ))}
       </div>
 
@@ -321,7 +354,7 @@ async function OzetSekmesi({
         dosyalar.map(async (d) => ({ ...d, ozet: await kapsamOzeti({ musteriId: kapsam.musteriId, dosyaId: d.id }) })),
       )
     : [];
-  const digerHesaplar = ozet.hesaplar.filter((h) => !h.paraHesabiMi);
+  const digerHesaplar = ozet.hesaplar.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi);
 
   return (
     <div>
@@ -344,7 +377,7 @@ async function OzetSekmesi({
                 <td className="px-4 py-3 text-right text-white/85">{h.borc ? para.format(h.borc) : "—"}</td>
                 <td className="px-4 py-3 text-right text-white/85">{h.alacak ? para.format(h.alacak) : "—"}</td>
                 <td className="px-4 py-3 text-right font-medium">
-                  {h.paraHesabiMi ? <span className="text-[#6db8ff]">{para.format(h.bakiye)}</span> : <Bakiye b={h.bakiye} />}
+                  {h.paraHesabiMi || h.tutulanHesapMi ? <span className="text-[#6db8ff]">{para.format(h.bakiye)}</span> : <Bakiye b={h.bakiye} />}
                 </td>
               </tr>
             ))}
@@ -373,6 +406,7 @@ async function OzetSekmesi({
                     </th>
                   ))}
                   <th className="px-4 py-3 text-right font-medium">Para Trafiği</th>
+                  <th className="px-4 py-3 text-right font-medium">Adliyede Tutulan</th>
                   <th className="px-4 py-3 text-right font-medium">Net</th>
                 </tr>
               </thead>
@@ -386,6 +420,7 @@ async function OzetSekmesi({
                       </td>
                     ))}
                     <td className="px-4 py-3 text-right text-[#6db8ff]">{para.format(d.ozet.paraBakiyesi)}</td>
+                    <td className="px-4 py-3 text-right text-[#ffb340]">{d.ozet.tutulanToplam ? para.format(d.ozet.tutulanToplam) : "—"}</td>
                     <td className="px-4 py-3 text-right font-medium">
                       <Bakiye b={d.ozet.net} />
                     </td>
@@ -427,10 +462,12 @@ async function HesapSekmesi({
   const digerKaynaklar = aktifHesaplar
     .filter((h) => !h.paraHesabiMi && h.id !== hesap.id)
     .map((h) => {
-      const fazla = Math.max(0, -(ozetHesaplar.find((o) => o.hesapId === h.id)?.bakiye ?? 0));
+      const bakiye = ozetHesaplar.find((o) => o.hesapId === h.id)?.bakiye ?? 0;
+      const tutar = Math.max(0, h.tutulanHesapMi ? bakiye : -bakiye);
+      const tur = h.tutulanHesapMi ? "orada duran tutar" : "fazla ödeme";
       return {
         deger: `hesap:${h.id}`,
-        etiket: kapsam.dosyaId ? `${h.no} - ${h.ad} — fazla ödeme ${para.format(fazla)}` : `${h.no} - ${h.ad} — seçilen dosyadaki fazla ödeme`,
+        etiket: kapsam.dosyaId ? `${h.no} - ${h.ad} — ${tur} ${para.format(tutar)}` : `${h.no} - ${h.ad} — seçilen dosyadaki ${tur}`,
       };
     });
   const kaynaklar = kapsam.dosyaId
@@ -462,6 +499,9 @@ async function HesapSekmesi({
   const musteriDuzeyi = !kapsam.dosyaId;
   const kapsamDosyaId = kapsam.dosyaId ?? "";
   const hedefler = aktifHesaplar.filter((h) => !h.paraHesabiMi).map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` }));
+  const adliyeHesaplari = aktifHesaplar
+    .filter((h) => h.grup === "ADLIYE")
+    .map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` }));
 
   const turListesi = hesap.masrafHesabiMi && silmeYetkisiVar ? await secenekListesiTumDegerlerle("masraf_turu") : null;
   const tumMasraflar = hesap.masrafHesabiMi
@@ -497,6 +537,7 @@ async function HesapSekmesi({
       <Defter
         satirlar={satirlar}
         paraHesabiMi={hesap.paraHesabiMi}
+        tutulanHesapMi={hesap.tutulanHesapMi}
         dosyaSutunu={musteriDuzeyi}
         silmeYetkisiVar={silmeYetkisiVar}
         bosMesaj={`${hesap.no} - ${hesap.ad} hesabında henüz hareket yok.`}
@@ -546,8 +587,57 @@ async function HesapSekmesi({
         </>
       ) : (
         <>
-          <h3 className="mb-2 mt-6 text-sm font-semibold text-white">{hesap.masrafHesabiMi ? "+ Masraf Ekle" : "+ Borç Ekle"}</h3>
-          {hesap.masrafHesabiMi ? (
+          {hesap.no === 103 && adliyeHesaplari.length > 0 && (
+            <>
+              <h3 className="mb-1 mt-6 text-sm font-semibold text-white">🏛 Adliyeye Aktar (bloke paranın tamamını ya da bir kısmını 300 serisi hesaba)</h3>
+              <p className="mb-2 text-xs text-white/45">
+                Müvekkilden alınan bloke parayı adli birime yatırdığınızda burada kayda geçirin: harcama olarak yatırılan (geri
+                dönmeyen) için 301, teminat olarak yatırılan (sonradan geri alınabilen) için 302 hesabını seçin.
+              </p>
+              <VirmanFormu
+                action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
+                hedefler={adliyeHesaplari}
+                dosyalar={dosyalar}
+                sabitDosyaId={kapsam.dosyaId}
+                mevcutBakiye={paraBakiyesi}
+                kaynaklar={[
+                  {
+                    deger: `hesap:${hesap.id}`,
+                    etiket: kapsam.dosyaId
+                      ? `${hesap.no} - ${hesap.ad} — aktarılabilir ${para.format(Math.max(0, -(ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0)))}`
+                      : `${hesap.no} - ${hesap.ad} — seçilen dosyadaki fazla ödeme`,
+                  },
+                ]}
+              />
+            </>
+          )}
+          {hesap.tutulanHesapMi && (
+            <>
+              <h3 className="mb-1 mt-6 text-sm font-semibold text-white">↩ Geri Alındı / İade: Bu Hesaptaki Parayı Başka Hesaba Aktar</h3>
+              <p className="mb-2 text-xs text-white/45">
+                Adliyeden geri gelen teminat gibi tutarları, ilgili hesaba (ör. 103 - Bloke Para) geri aktarın; bu hesaptan Borç olarak düşer.
+              </p>
+              <VirmanFormu
+                action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
+                hedefler={aktifHesaplar.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi).map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` }))}
+                dosyalar={dosyalar}
+                sabitDosyaId={kapsam.dosyaId}
+                mevcutBakiye={paraBakiyesi}
+                kaynaklar={[
+                  {
+                    deger: `hesap:${hesap.id}`,
+                    etiket: kapsam.dosyaId
+                      ? `${hesap.no} - ${hesap.ad} — orada duran ${para.format(Math.max(0, ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0))}`
+                      : `${hesap.no} - ${hesap.ad} — seçilen dosyadaki tutar`,
+                  },
+                ]}
+              />
+            </>
+          )}
+          {!hesap.tutulanHesapMi && (
+            <h3 className="mb-2 mt-6 text-sm font-semibold text-white">{hesap.masrafHesabiMi ? "+ Masraf Ekle" : "+ Borç Ekle"}</h3>
+          )}
+          {hesap.tutulanHesapMi ? null : hesap.masrafHesabiMi ? (
             <>
               <MasrafFormu
                 action={masrafEkle.bind(null, kapsam.musteriId)}
@@ -607,15 +697,14 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
   return (
     <div>
       <p className="mb-3 text-sm text-white/55">
-        Cari hesap planı: müvekkil ile büro arasındaki hesaplar 100–199, borçlu ile olanlar 200–299, adliye ile olanlar 300–399 aralığındadır. Aşağıdakiler 100&apos;lü (müvekkil) hesaplardır; hem müvekkil hem tüm dosyalarda geçerlidir. Yeni hesap ekleyince her yerde kendiliğinden görünür.
-        Kaydı olan hesap silinemez, pasife alınabilir.
-      </p>
+        Cari hesap planı: müvekkil ile büro arasındaki hesaplar 100–199, borçlu ile olanlar 200–299, adliye ile olanlar 300–399 aralığındadır. Yeni hesap eklerken kod aralığı hesabın grubunu belirler. &quot;Tutulan&quot; hesaplar, üçüncü kişide/adliyede duran parayı gösterir (ör. 301 harcama, 302 teminat); müvekkilin borcu sayılmaz. Kaydı olan hesap silinemez, pasife alınabilir.</p>
       <div className="glass mb-4 overflow-x-auto rounded-2xl">
         <table className="w-full text-left text-sm">
           <thead className="text-white/50">
             <tr>
               <th className="px-4 py-3 font-medium">Kod</th>
               <th className="px-4 py-3 font-medium">Ad</th>
+              <th className="px-4 py-3 font-medium">Grup / Tür</th>
               <th className="px-4 py-3 font-medium">Durum</th>
               <th className="px-4 py-3" />
             </tr>
@@ -632,6 +721,10 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
                     </GonderButonu>
                     {h.paraHesabiMi && <span className="text-xs text-white/40">para hesabı</span>}
                   </form>
+                </td>
+                <td className="px-4 py-3 text-white/60">
+                  {h.grup === "ADLIYE" ? "Adliye" : h.grup === "BORCLU" ? "Borçlu" : "Müvekkil"}
+                  {h.tutulanHesapMi ? " · tutulan" : h.paraHesabiMi ? " · para" : ""}
                 </td>
                 <td className="px-4 py-3 text-white/60">{h.aktifMi ? "Aktif" : "Pasif"}</td>
                 <td className="px-4 py-3">
@@ -653,18 +746,28 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
           </tbody>
         </table>
       </div>
-      <form action={hesapEkle} className="glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-3">
+      <form action={hesapEkle} className="glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-white/70" htmlFor="yeni-kod">
             Yeni Hesap Kodu
           </label>
-          <Girdi id="yeni-kod" name="no" type="number" min={1} placeholder="108 (100–199)" required />
+          <Girdi id="yeni-kod" name="no" type="number" min={1} placeholder="108 / 201 / 303" required />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-white/70" htmlFor="yeni-ad">
             Hesap Adı
           </label>
           <Girdi id="yeni-ad" name="ad" placeholder="ör. Bilirkişi" required />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-white/70" htmlFor="yeni-tur">
+            Hesap Türü
+          </label>
+          <Secim id="yeni-tur" name="tur" defaultValue="">
+            <option value="">Otomatik (300 serisi tutulan, diğerleri normal)</option>
+            <option value="normal">Normal (müvekkilin borcu)</option>
+            <option value="tutulan">Tutulan (üçüncü kişide duran para)</option>
+          </Secim>
         </div>
         <div className="flex items-end">
           <GonderButonu>+ Hesap Ekle</GonderButonu>
