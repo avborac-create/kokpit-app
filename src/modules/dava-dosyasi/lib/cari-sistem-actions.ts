@@ -67,16 +67,25 @@ export async function odemeEkle(musteriId: string, formData: FormData) {
   if (dosyaId) await dosyaMuvekkilinMi(musteriId, dosyaId);
   const para = await prisma.cariHesap.findFirst({ where: { paraHesabiMi: true } });
   if (!para) throw new Error("Para Trafiği hesabı bulunamadı.");
-  await prisma.cariHareketi.create({
-    data: {
+  const tarih = tarihAl(formData);
+  const aciklama = metin(formData, "aciklama") || "GELEN ÖDEME";
+  // Tek yontem ya da parcali odeme: her satir (yontem + tutar) ayri bir kayit olarak yazilir.
+  const yontemler = formData.getAll("yontemId").map(String);
+  const tutarlar = formData.getAll("tutar").map((t) => Number(String(t).replace(",", ".")));
+  if (tutarlar.length === 0 || tutarlar.some((t) => !Number.isFinite(t) || t <= 0)) {
+    throw new Error("Her satırın tutarı sıfırdan büyük bir sayı olmalıdır.");
+  }
+  await prisma.cariHareketi.createMany({
+    data: tutarlar.map((t, i) => ({
       musteriId,
       dosyaId,
       hesapId: para.id,
-      yon: "ALACAK",
-      tarih: tarihAl(formData),
-      tutar: tutarAl(formData),
-      aciklama: metin(formData, "aciklama") || "GELEN ÖDEME",
-    },
+      yon: "ALACAK" as const,
+      tarih,
+      tutar: Math.round(t * 100) / 100,
+      aciklama,
+      odemeYontemiId: yontemler[i] || null,
+    })),
   });
   yenile();
 }
@@ -227,11 +236,15 @@ export async function hareketGuncelle(id: string, formData: FormData) {
   const tutar = tutarAl(formData);
   const tarih = tarihAl(formData);
   const aciklama = metin(formData, "aciklama") || null;
+  const yontemId = formData.has("yontemId") ? metin(formData, "yontemId") || null : undefined;
   const donus = await prisma.$transaction(async (tx) => {
     const h = await tx.cariHareketi.findUnique({ where: { id }, include: { hesap: true } });
     if (!h) throw new Error("Kayıt bulunamadı.");
     if (h.virmanId) throw new Error("Virman kayıtları düzenlenemez; silip yeniden yapın.");
-    await tx.cariHareketi.update({ where: { id }, data: { tarih, tutar, aciklama } });
+    await tx.cariHareketi.update({
+      where: { id },
+      data: { tarih, tutar, aciklama, ...(yontemId !== undefined ? { odemeYontemiId: yontemId } : {}) },
+    });
     await eksiyeDusmeKontrolu(tx, h.musteriId, h.dosyaId);
     return { musteriId: h.musteriId, dosyaId: h.dosyaId, hesapNo: h.hesap.no };
   });

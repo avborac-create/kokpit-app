@@ -34,6 +34,8 @@ export type DefterSatiri = {
   borc: number;
   alacak: number;
   silme?: SilmeKaynagi;
+  // Para Trafigi'ne gelen odemenin sekli (Nakit / Banka / ...)
+  odemeYontemi?: string;
   duzenleHref?: string;
   turetilmis?: boolean;
 };
@@ -181,7 +183,7 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
   const musteriBazli = !kapsam.dosyaId;
 
   const [hareketler, masraflar, eskiTasnif, eskiDagitim, gelenler, gidenler] = await Promise.all([
-    prisma.cariHareketi.findMany({ where: hareketKosulu, include: { dosya: dosyaSecimi } }),
+    prisma.cariHareketi.findMany({ where: hareketKosulu, include: { dosya: dosyaSecimi, odemeYontemi: true } }),
     hesap.eskiKod
       ? prisma.dosyaMasrafi.findMany({
           where: { dosyaId: { in: dosyaIdleri }, yansitmaHedefi: "MUVEKKIL", cariKod: { kod: hesap.eskiKod } },
@@ -245,6 +247,7 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
       dosyaId: h.dosyaId,
       dosyaEtiketi: etiket(h.dosya),
       aciklama: h.aciklama ?? "",
+      odemeYontemi: h.odemeYontemi?.etiket,
       borc: h.yon === "BORC" ? sayi(h.tutar) : 0,
       alacak: h.yon === "ALACAK" ? sayi(h.tutar) : 0,
       silme: virmanMi ? { tip: "virman", id: h.virmanId! } : { tip: "hareket", id: h.id },

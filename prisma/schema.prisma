@@ -112,6 +112,7 @@ model SecenekDegeri {
   davaDosyalariHukukiIliskiTuru DavaDosyasi[]         @relation("DavaDosyasiHukukiIliskiTuru")
   davaDosyalariDavaTuru         DavaDosyasi[]         @relation("DavaDosyasiDavaTuru")
   davaDosyalariMuvekkilSifati   DavaDosyasi[]         @relation("DavaDosyasiMuvekkilSifati")
+  cariHareketiOdemeYontemi      CariHareketi[]        @relation("CariHareketiOdemeYontemi")
   paraTrafigiTasnifCariKod      ParaTrafigiTasnif[]   @relation("ParaTrafigiTasnifCariKod")
   dosyaMasrafiCariKod           DosyaMasrafi[]        @relation("DosyaMasrafiCariKod")
   avansAktarimiCariKod          DosyaAvansAktarimi[]  @relation("AvansAktarimiCariKod")
@@ -1342,6 +1343,11 @@ model CariHareketi {
   tutar    Decimal  @db.Decimal(14, 2)
   aciklama String?
 
+  // Odeme sekli (Nakit / Banka / ...): sadece Para Trafigi'ne gelen odemelerde dolu.
+  // Parcali odeme, her yontem icin ayri bir satir olarak kaydedilir.
+  odemeYontemiId String?
+  odemeYontemi   SecenekDegeri? @relation("CariHareketiOdemeYontemi", fields: [odemeYontemiId], references: [id])
+
   virmanId String?
   // Muvekkil duzeyinden (havuzdan) yapilan virman: dosya gorunumunde Para
   // Trafigi'ne "havuzdan aktarim" ALACAGI turetilir.
@@ -1353,5 +1359,6 @@ model CariHareketi {
   @@index([dosyaId])
   @@index([hesapId])
   @@index([virmanId])
+  @@index([odemeYontemiId])
   @@map("cari_hareketleri")
 }

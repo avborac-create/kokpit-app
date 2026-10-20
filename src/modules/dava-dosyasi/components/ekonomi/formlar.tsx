@@ -35,38 +35,6 @@ function DosyaAlani({
   );
 }
 
-// Para geldi: Para Trafigi'ne ALACAK. Muvekkil ekraninda dosya bos birakilabilir (havuz).
-export function OdemeFormu({
-  action,
-  dosyalar,
-  sabitDosyaId,
-}: {
-  action: (formData: FormData) => void;
-  dosyalar: DosyaSecenegi[];
-  sabitDosyaId?: string;
-}) {
-  return (
-    <form action={action} className={kutu}>
-      <DosyaAlani id="od-dosya" dosyalar={dosyalar} sabitDosyaId={sabitDosyaId} bosSecenek="Dosyasız (müvekkil havuzu)" />
-      <Alan>
-        <Etiket htmlFor="od-tarih">Tarih</Etiket>
-        <Girdi id="od-tarih" name="tarih" type="date" required defaultValue={bugun()} />
-      </Alan>
-      <Alan>
-        <Etiket htmlFor="od-tutar">Tutar</Etiket>
-        <ParaGirdisi id="od-tutar" name="tutar" required />
-      </Alan>
-      <Alan>
-        <Etiket htmlFor="od-aciklama">Açıklama</Etiket>
-        <Girdi id="od-aciklama" name="aciklama" defaultValue="GELEN ÖDEME" />
-      </Alan>
-      <div className="flex items-end">
-        <GonderButonu>Ödemeyi Ekle</GonderButonu>
-      </div>
-    </form>
-  );
-}
-
 // Para hesabi disindaki bir hesaba BORC (Akdi Vekalet vb.): dosyaya bagli.
 export function BorcFormu({
   action,
@@ -178,9 +146,12 @@ export function VirmanFormu({
 export function HareketDuzenlemeFormu({
   action,
   veri,
+  yontemler,
 }: {
   action: (formData: FormData) => void;
-  veri: { tarih: string; tutar: number; aciklama: string };
+  veri: { tarih: string; tutar: number; aciklama: string; yontemId?: string };
+  // Para Trafigi odemelerinde odeme sekli de degistirilebilir.
+  yontemler?: { id: string; etiket: string }[];
 }) {
   return (
     <form action={action} className={kutu}>
@@ -196,6 +167,19 @@ export function HareketDuzenlemeFormu({
         <Etiket htmlFor="hd-aciklama">Açıklama</Etiket>
         <Girdi id="hd-aciklama" name="aciklama" defaultValue={veri.aciklama} />
       </Alan>
+      {yontemler && (
+        <Alan>
+          <Etiket htmlFor="hd-yontem">Ödeme Şekli</Etiket>
+          <Secim id="hd-yontem" name="yontemId" defaultValue={veri.yontemId ?? ""}>
+            <option value="">Belirtilmedi</option>
+            {yontemler.map((y) => (
+              <option key={y.id} value={y.id}>
+                {y.etiket}
+              </option>
+            ))}
+          </Secim>
+        </Alan>
+      )}
       <div className="flex items-end">
         <GonderButonu>Kaydet</GonderButonu>
       </div>

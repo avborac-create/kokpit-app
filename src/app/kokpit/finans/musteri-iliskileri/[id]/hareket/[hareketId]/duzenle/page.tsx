@@ -15,6 +15,14 @@ export default async function HareketDuzenlemeSayfasi({
     include: { hesap: true, dosya: { select: { dosyaNo: true, konu: true } } },
   });
   if (!hareket || hareket.musteriId !== id || hareket.virmanId) notFound();
+  // Para Trafigi odemelerinde odeme sekli de degistirilebilir.
+  const yontemler = hareket.hesap.paraHesabiMi
+    ? (await prisma.secenekDegeri.findMany({
+        where: { liste: { anahtar: "odeme_yontemi" }, aktifMi: true },
+        orderBy: { siraNo: "asc" },
+        select: { id: true, etiket: true },
+      }))
+    : undefined;
 
   return (
     <div className="pt-3">
@@ -37,7 +45,9 @@ export default async function HareketDuzenlemeSayfasi({
           tarih: hareket.tarih.toISOString().slice(0, 10),
           tutar: Number(hareket.tutar),
           aciklama: hareket.aciklama ?? "",
+          yontemId: hareket.odemeYontemiId ?? undefined,
         }}
+        yontemler={yontemler}
       />
     </div>
   );

@@ -224,6 +224,15 @@ const SECENEK_LISTELERI: {
     ],
   },
   {
+    // Para Trafigi'ne gelen odemenin sekli (admin yerinde yeni yontem ekleyebilir: Cek, Kredi Karti vb.).
+    anahtar: "odeme_yontemi",
+    ad: "Ödeme Yöntemi",
+    degerler: [
+      { kod: "nakit", etiket: "Nakit" },
+      { kod: "banka", etiket: "Banka" },
+    ],
+  },
+  {
     anahtar: "dava_turu",
     ad: "Dava Türü",
     degerler: [

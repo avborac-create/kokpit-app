@@ -104,7 +104,14 @@ export function Defter({
                     )}
                   </td>
                 )}
-                <td className="whitespace-pre-line px-4 py-3 text-white/85">{s.aciklama}</td>
+                <td className="whitespace-pre-line px-4 py-3 text-white/85">
+                  {s.aciklama}
+                  {s.odemeYontemi && (
+                    <span className="ml-2 whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2 py-0.5 text-[11px] text-[#6db8ff]">
+                      {s.odemeYontemi}
+                    </span>
+                  )}
+                </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right text-white/85">{s.borc > 0 ? para.format(s.borc) : "—"}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right text-white/85">{s.alacak > 0 ? para.format(s.alacak) : "—"}</td>
                 <td className={`whitespace-nowrap px-4 py-3 text-right font-medium ${renk(s.bakiye)}`}>{para.format(s.bakiye)}</td>

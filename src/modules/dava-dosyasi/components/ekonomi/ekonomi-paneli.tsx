@@ -12,7 +12,6 @@ import { KarsiTarafAlacagiFormu } from "@/modules/dava-dosyasi/components/karsi-
 import { Defter } from "@/modules/dava-dosyasi/components/ekonomi/defter";
 import {
   BorcFormu,
-  OdemeFormu,
   VirmanFormu,
   type DosyaSecenegi,
 } from "@/modules/dava-dosyasi/components/ekonomi/formlar";
@@ -38,6 +37,8 @@ import {
 } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
 import { adliBirimHareketiEkle, karsiTarafAlacagiEkle } from "@/modules/dava-dosyasi/lib/actions";
 import { prisma } from "@/core/db/prisma";
+import { secenekleriGetir } from "@/core/secenek/secenek-service";
+import { OdemeFormu } from "@/modules/dava-dosyasi/components/ekonomi/odeme-formu";
 import { DosyaSecimi } from "@/modules/dava-dosyasi/components/ekonomi/dosya-secimi";
 
 const para = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
@@ -433,6 +434,19 @@ async function HesapSekmesi({
       ? [{ deger: "havuz", etiket: `Para Trafiği — müvekkil havuzu (${para.format(paraBakiyesi)})` }, ...digerKaynaklar]
       : undefined;
   const satirlar = await hesapDefteri(kapsam, hesap);
+  // Para Trafigi: odeme yontemleri (Nakit / Banka / ...), yoneticiye yerinde duzenleme penceresi
+  const yontemler = hesap.paraHesabiMi
+    ? (await secenekleriGetir("odeme_yontemi")).map((y) => ({ id: y.id, etiket: y.etiket }))
+    : [];
+  const yontemListesi = hesap.paraHesabiMi && silmeYetkisiVar ? await secenekListesiTumDegerlerle("odeme_yontemi") : null;
+  const yontemToplamlari = new Map<string, number>();
+  if (hesap.paraHesabiMi) {
+    for (const x of satirlar) {
+      if (x.alacak > 0 && !x.turetilmis && x.odemeYontemi) {
+        yontemToplamlari.set(x.odemeYontemi, (yontemToplamlari.get(x.odemeYontemi) ?? 0) + x.alacak);
+      }
+    }
+  }
   const musteriDuzeyi = !kapsam.dosyaId;
   const kapsamDosyaId = kapsam.dosyaId ?? "";
   const hedefler = aktifHesaplar.filter((h) => !h.paraHesabiMi).map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` }));
@@ -452,6 +466,15 @@ async function HesapSekmesi({
 
   return (
     <div>
+      {yontemToplamlari.size > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {[...yontemToplamlari.entries()].map(([yontem, tutar]) => (
+            <span key={yontem} className="rounded-full border border-[#6db8ff]/30 bg-[#6db8ff]/[0.07] px-3 py-1 text-xs text-white/80">
+              Alınan ({yontem}): <b className="text-[#6db8ff]">{para.format(tutar)}</b>
+            </span>
+          ))}
+        </div>
+      )}
       <Defter
         satirlar={satirlar}
         paraHesabiMi={hesap.paraHesabiMi}
@@ -465,7 +488,13 @@ async function HesapSekmesi({
           <h3 className="mb-2 mt-6 text-sm font-semibold text-white">
             + Ödeme Geldi{musteriDuzeyi ? " (dosya seçerseniz o dosyaya da işlenir)" : " (müvekkil ekonomisinde de görünür)"}
           </h3>
-          <OdemeFormu action={odemeEkle.bind(null, kapsam.musteriId)} dosyalar={dosyalar} sabitDosyaId={kapsam.dosyaId} />
+          <OdemeFormu
+            action={odemeEkle.bind(null, kapsam.musteriId)}
+            dosyalar={dosyalar}
+            sabitDosyaId={kapsam.dosyaId}
+            yontemler={yontemler}
+            yontemListesi={yontemListesi ?? undefined}
+          />
           <h3 className="mb-2 mt-6 text-sm font-semibold text-white">⇄ Virman: Para Trafiğinden / Hesaplar Arası Aktar</h3>
           <VirmanFormu
             action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
