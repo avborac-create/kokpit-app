@@ -539,7 +539,7 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
   return (
     <div>
       <p className="mb-3 text-sm text-white/55">
-        Cari hesap planı: müvekkil ile büro arasındaki hesaplar 100–199, borçlu ile olanlar 200–299, adliye ile olanlar 300–399 aralığındadır. Aşağıdakiler 100'lü (müvekkil) hesaplardır; hem müvekkil hem tüm dosyalarda geçerlidir. Yeni hesap ekleyince her yerde kendiliğinden görünür.
+        Cari hesap planı: müvekkil ile büro arasındaki hesaplar 100–199, borçlu ile olanlar 200–299, adliye ile olanlar 300–399 aralığındadır. Aşağıdakiler 100&apos;lü (müvekkil) hesaplardır; hem müvekkil hem tüm dosyalarda geçerlidir. Yeni hesap ekleyince her yerde kendiliğinden görünür.
         Kaydı olan hesap silinemez, pasife alınabilir.
       </p>
       <div className="glass mb-4 overflow-x-auto rounded-2xl">
