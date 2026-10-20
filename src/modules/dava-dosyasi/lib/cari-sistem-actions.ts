@@ -8,7 +8,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { dosyaMasrafiEkle } from "@/modules/dava-dosyasi/lib/actions";
-import { kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
+import { havuzTuretilenAlacak, kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
 
 function yenile() {
   revalidatePath("/kokpit", "layout");
@@ -51,12 +51,16 @@ async function paraBakiyesi(tx: Pick<typeof prisma, "cariHareketi" | "cariHesap"
   if (!para) throw new Error("Para Trafiği hesabı bulunamadı.");
   const where = { musteriId, hesapId: para.id, ...(dosyaId ? { dosyaId } : {}) };
   const gruplar = await tx.cariHareketi.groupBy({ by: ["yon", "havuzKaynakli"], where, _sum: { tutar: true } });
-  let bakiye = 0;
+  let alacak = 0;
+  let borcHavuzsuz = 0;
+  let borcHavuz = 0;
   for (const g of gruplar) {
     const t = Number(g._sum.tutar ?? 0);
-    bakiye += g.yon === "ALACAK" ? t : -t;
-    if (dosyaId && g.yon === "BORC" && g.havuzKaynakli) bakiye += t;
+    if (g.yon === "ALACAK") alacak += t;
+    else if (g.havuzKaynakli) borcHavuz += t;
+    else borcHavuzsuz += t;
   }
+  const bakiye = alacak - borcHavuzsuz - borcHavuz + (dosyaId ? havuzTuretilenAlacak({ alacak, borcHavuzsuz, borcHavuz }) : 0);
   return Math.round(bakiye * 100) / 100;
 }
 

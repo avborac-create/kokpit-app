@@ -61,6 +61,37 @@ export type KapsamOzeti = {
 
 const sayi = (v: unknown) => Number(v ?? 0);
 
+// Dosya gorunumunde Para Trafigi'ne "muvekkil havuzundan aktarim" ALACAGI turetilir. Ancak
+// dosyanin KENDI etiketli odemesi (Alacak - havuzsuz Borc) varsa havuz borcunun once o
+// karsilar; yalniz karsilanmayan kismi havuzdan gelmis sayilir. Aksi halde ayni para hem
+// dosyaya etiketli odeme hem havuz aktarimi olarak iki kere sayilirdi.
+export function havuzTuretilenAlacak(t: { alacak: number; borcHavuzsuz: number; borcHavuz: number }) {
+  const kendi = Math.max(0, t.alacak - t.borcHavuzsuz);
+  return Math.max(0, Math.round((t.borcHavuz - kendi) * 100) / 100);
+}
+
+// Ayni hesabin tek tek havuz kaynakli BORC satirlari icin turetilen alacak (defter gorunumu).
+export function havuzTuretimleri(
+  hareketler: { id: string; tarih: Date; yon: string; tutar: unknown; havuzKaynakli: boolean }[],
+) {
+  let kendi = 0;
+  for (const h of hareketler) {
+    if (h.yon === "ALACAK") kendi += sayi(h.tutar);
+    else if (!h.havuzKaynakli) kendi -= sayi(h.tutar);
+  }
+  kendi = Math.max(0, kendi);
+  const sonuc = new Map<string, number>();
+  const havuzlu = hareketler.filter((h) => h.yon === "BORC" && h.havuzKaynakli).sort((a, b) => a.tarih.getTime() - b.tarih.getTime());
+  for (const h of havuzlu) {
+    const tutar = sayi(h.tutar);
+    const karsilanan = Math.min(kendi, tutar);
+    kendi -= karsilanan;
+    const kalan = Math.round((tutar - karsilanan) * 100) / 100;
+    if (kalan > 0.001) sonuc.set(h.id, kalan);
+  }
+  return sonuc;
+}
+
 // Eski ParaTrafigiDagitimi kullanim amaclarinin karsilik geldigi eski cari kod.
 const ESKI_DAGITIM_AMACI_KODU: Record<string, string> = {
   gecmis_masraf: "masraf_hesabi",
@@ -107,17 +138,9 @@ export async function kapsamOzeti(kapsam: Kapsam): Promise<KapsamOzeti> {
       ? { dosyaId: kapsam.dosyaId }
       : { OR: [{ dosyaId: null }, { dosya: { ekonomiDisi: false } }] }),
   };
-  const [hesaplar, hareketler, havuzdanAktarim, masraflar, eskiOzet] = await Promise.all([
+  const [hesaplar, hareketler, masraflar, eskiOzet] = await Promise.all([
     hesaplariGetir(),
-    prisma.cariHareketi.groupBy({ by: ["hesapId", "yon"], where: hareketKosulu, _sum: { tutar: true } }),
-    // Dosya gorunumunde, muvekkil havuzundan yapilan virmanlar Para Trafigi'ne ALACAK olarak turetilir.
-    kapsam.dosyaId
-      ? prisma.cariHareketi.groupBy({
-          by: ["hesapId"],
-          where: { ...hareketKosulu, yon: "BORC", havuzKaynakli: true },
-          _sum: { tutar: true },
-        })
-      : Promise.resolve([]),
+    prisma.cariHareketi.groupBy({ by: ["hesapId", "yon", "havuzKaynakli"], where: hareketKosulu, _sum: { tutar: true } }),
     prisma.dosyaMasrafi.groupBy({
       by: ["cariKodId"],
       where: { dosyaId: { in: dosyaIdleri }, yansitmaHedefi: "MUVEKKIL" },
@@ -146,8 +169,14 @@ export async function kapsamOzeti(kapsam: Kapsam): Promise<KapsamOzeti> {
       if (x.yon === "BORC") borc += sayi(x._sum.tutar);
       else alacak += sayi(x._sum.tutar);
     }
-    if (h.paraHesabiMi) {
-      alacak += havuzdanAktarim.reduce((t, x) => t + (x.hesapId === h.id ? sayi(x._sum.tutar) : 0), 0);
+    if (h.paraHesabiMi && kapsam.dosyaId) {
+      // Dosya gorunumu: havuzdan yapilan virmanlar (dosyanin kendi odemesiyle karsilanmayan kisim) ALACAK turetilir.
+      const topla = (havuzMu: boolean, yon: string) =>
+        hareketler.reduce(
+          (t, x) => t + (x.hesapId === h.id && x.yon === yon && x.havuzKaynakli === havuzMu ? sayi(x._sum.tutar) : 0),
+          0,
+        );
+      alacak += havuzTuretilenAlacak({ alacak: topla(false, "ALACAK"), borcHavuzsuz: topla(false, "BORC"), borcHavuz: topla(true, "BORC") });
     }
     if (h.eskiKod) {
       borc += (masrafByKod.get(h.eskiKod) ?? 0) + (eskiByKod.get(h.eskiKod)?.gidenAktarim ?? 0);
@@ -224,12 +253,14 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
   ]);
 
   const satirlar: DefterSatiri[] = [];
+  const turetilenler = kapsam.dosyaId && hesap.paraHesabiMi ? havuzTuretimleri(hareketler) : new Map<string, number>();
   const etiket = (d: Parameters<typeof dosyaEtiketiYaz>[0] | null | undefined) => (d ? dosyaEtiketiYaz(d) : null);
 
   for (const h of hareketler) {
     const virmanMi = Boolean(h.virmanId);
     // Havuzdan aktarim ALACAGI, ayni tarihli BORC virman satirindan once gelir (bakiye eksiye dusmesin).
-    if (kapsam.dosyaId && hesap.paraHesabiMi && h.yon === "BORC" && h.havuzKaynakli) {
+    const turetilen = turetilenler.get(h.id);
+    if (turetilen) {
       satirlar.push({
         id: `turetilmis-${h.id}`,
         tarih: h.tarih,
@@ -237,7 +268,7 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
         dosyaEtiketi: etiket(h.dosya),
         aciklama: "MÜVEKKİL HAVUZUNDAN AKTARIM",
         borc: 0,
-        alacak: sayi(h.tutar),
+        alacak: turetilen,
         turetilmis: true,
       });
     }
