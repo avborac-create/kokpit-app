@@ -90,7 +90,7 @@ export async function hesaplariGetir(hepsi = false) {
 export async function kapsamDosyaIdleri(kapsam: Kapsam): Promise<string[]> {
   if (kapsam.dosyaId) return [kapsam.dosyaId];
   const dosyalar = await prisma.davaDosyasi.findMany({
-    where: { muvekkiller: { some: { musteriId: kapsam.musteriId } } },
+    where: { muvekkiller: { some: { musteriId: kapsam.musteriId } }, ekonomiDisi: false },
     select: { id: true },
   });
   return dosyalar.map((d) => d.id);
@@ -101,7 +101,9 @@ export async function kapsamOzeti(kapsam: Kapsam): Promise<KapsamOzeti> {
   const dosyaIdleri = await kapsamDosyaIdleri(kapsam);
   const hareketKosulu = {
     musteriId: kapsam.musteriId,
-    ...(kapsam.dosyaId ? { dosyaId: kapsam.dosyaId } : {}),
+    ...(kapsam.dosyaId
+      ? { dosyaId: kapsam.dosyaId }
+      : { OR: [{ dosyaId: null }, { dosya: { ekonomiDisi: false } }] }),
   };
   const [hesaplar, hareketler, havuzdanAktarim, masraflar, eskiOzet] = await Promise.all([
     hesaplariGetir(),
@@ -172,7 +174,9 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
   const hareketKosulu = {
     musteriId: kapsam.musteriId,
     hesapId: hesap.id,
-    ...(kapsam.dosyaId ? { dosyaId: kapsam.dosyaId } : {}),
+    ...(kapsam.dosyaId
+      ? { dosyaId: kapsam.dosyaId }
+      : { OR: [{ dosyaId: null }, { dosya: { ekonomiDisi: false } }] }),
   };
   const musteriBazli = !kapsam.dosyaId;
 
@@ -314,11 +318,34 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
 // Muvekkilin dosyalari (sayfa sekmeleri ve secim kutulari icin).
 export async function muvekkilDosyalari(musteriId: string) {
   const dosyalar = await prisma.davaDosyasi.findMany({
-    where: { muvekkiller: { some: { musteriId } } },
+    where: { muvekkiller: { some: { musteriId } }, ekonomiDisi: false },
     select: { ...dosyaSecimi.select, konu: true, birimAdi: true },
     orderBy: { olusturmaTarihi: "asc" },
   });
   return dosyalar.map((d) => ({ id: d.id, etiket: dosyaEtiketiYaz(d), konu: d.konu, birimAdi: d.birimAdi }));
+}
+
+// Ekonomiye dahil / ekonomi disi secimi icin: muvekkilin TUM dosyalari (+ kayit sayilari).
+export async function muvekkilTumDosyalariSecim(musteriId: string) {
+  const dosyalar = await prisma.davaDosyasi.findMany({
+    where: { muvekkiller: { some: { musteriId } } },
+    select: {
+      ...dosyaSecimi.select,
+      konu: true,
+      birimAdi: true,
+      ekonomiDisi: true,
+      _count: { select: { cariHareketleri: true, masraflar: true } },
+    },
+    orderBy: { olusturmaTarihi: "asc" },
+  });
+  return dosyalar.map((x) => ({
+    id: x.id,
+    etiket: dosyaEtiketiYaz(x),
+    konu: x.konu,
+    birimAdi: x.birimAdi,
+    ekonomiDisi: x.ekonomiDisi,
+    kayitSayisi: x._count.cariHareketleri + x._count.masraflar,
+  }));
 }
 
 export async function secenekListesiTumDegerlerle(anahtar: string) {

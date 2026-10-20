@@ -31,12 +31,14 @@ import {
   hesapAktifligiDegistir,
   hesapEkle,
   hesapSil,
+  dosyaEkonomiDurumuDegistir,
   masrafEkle,
   odemeEkle,
   virmanYap,
 } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
 import { adliBirimHareketiEkle, karsiTarafAlacagiEkle } from "@/modules/dava-dosyasi/lib/actions";
 import { prisma } from "@/core/db/prisma";
+import { DosyaSecimi } from "@/modules/dava-dosyasi/components/ekonomi/dosya-secimi";
 
 const para = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 const paraYaz = para;
@@ -165,15 +167,24 @@ export async function EkonomiPaneli({
   ]);
   // Dosya ekraninda: muvekkilin henuz dosyalara aktarilmamis havuz parasi
   const havuzBakiyesi = kapsam.dosyaId ? (await kapsamOzeti({ musteriId: kapsam.musteriId })).paraBakiyesi : undefined;
+  // Ekonomi disi tutulan dosyalar: dosya ekraninda uyari, muvekkil ekraninda sayac
+  const dosyaDisiMi = kapsam.dosyaId
+    ? ((await prisma.davaDosyasi.findUnique({ where: { id: kapsam.dosyaId }, select: { ekonomiDisi: true } }))?.ekonomiDisi ?? false)
+    : false;
+  const disindakiSayisi = musteriDuzeyi
+    ? await prisma.davaDosyasi.count({ where: { muvekkiller: { some: { musteriId: kapsam.musteriId } }, ekonomiDisi: true } })
+    : 0;
   const aktifHesaplar = hesaplar.filter((h) => h.aktifMi);
   const seciliHesap = aktifHesaplar.find((h) => String(h.no) === alt);
   const aktif = seciliHesap
     ? String(seciliHesap.no)
-    : alt === "yonet" && silmeYetkisiVar
-      ? "yonet"
-      : ["adliye", "borclu"].includes(alt)
-        ? alt
-        : "ozet";
+    : alt === "dosyalar" && musteriDuzeyi
+      ? "dosyalar"
+      : alt === "yonet" && silmeYetkisiVar
+        ? "yonet"
+        : ["adliye", "borclu"].includes(alt)
+          ? alt
+          : "ozet";
   const ozetOf = (hesapId: string) => ozet.hesaplar.find((o) => o.hesapId === hesapId);
   const dosyaSecenekleri: DosyaSecenegi[] = dosyalar.map((d) => ({ id: d.id, etiket: d.etiket }));
 
@@ -185,6 +196,9 @@ export async function EkonomiPaneli({
     }),
     { anahtar: "adliye", etiket: "Adliye", rozet: undefined },
     { anahtar: "borclu", etiket: "Borçlu", rozet: undefined },
+    ...(musteriDuzeyi
+      ? [{ anahtar: "dosyalar", etiket: "📂 Dosyaları Seç", rozet: disindakiSayisi > 0 ? `${disindakiSayisi} dışında` : undefined }]
+      : []),
     ...(silmeYetkisiVar ? [{ anahtar: "yonet", etiket: "⚙ Hesapları Yönet", rozet: undefined }] : []),
   ];
 
@@ -207,6 +221,18 @@ export async function EkonomiPaneli({
         </div>
       </div>
 
+      {dosyaDisiMi && kapsam.dosyaId && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-sm text-white/80">
+          <span>
+            Bu dosya <b>ekonomi dışında</b> tutuluyor: müvekkil toplamlarına ve müvekkil ekranındaki sayfa sekmelerine girmez.
+          </span>
+          <form action={dosyaEkonomiDurumuDegistir.bind(null, kapsam.dosyaId, false)}>
+            <GonderButonu varyant="ikincil" boyut="kompakt" bekleyenMetin="…">
+              Ekonomiye Dahil Et
+            </GonderButonu>
+          </form>
+        </div>
+      )}
       <DurumSeridi ozet={ozet} hrefYaz={hrefYaz} havuzBakiyesi={havuzBakiyesi} paraHesapNo={aktifHesaplar.find((h) => h.paraHesabiMi)?.no} />
 
       <div className="mb-5 flex flex-wrap gap-1.5 border-b border-white/[0.08] pb-3">
@@ -245,6 +271,7 @@ export async function EkonomiPaneli({
           Adliye ve Borçlu hesapları dosya bazındadır. Aşağıdaki sayfa sekmelerinden bir dosya seçin.
         </p>
       )}
+      {aktif === "dosyalar" && musteriDuzeyi && <DosyaSecimi musteriId={kapsam.musteriId} />}
       {aktif === "yonet" && <HesapYonetimi hesaplar={hesaplar} />}
 
       {sayfaSekmeleri && sayfaSekmeleri.length > 0 && (

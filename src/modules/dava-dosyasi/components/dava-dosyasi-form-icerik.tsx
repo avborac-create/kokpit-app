@@ -170,75 +170,68 @@ export function DavaDosyasiFormIcerik({
     ),
   };
 
+  // Yeni dosya acilisinda tek kart ve en az alan: muvekkil, karsi taraf,
+  // tur/sifat, birim, dosya no. Digerleri dosya detayindan girilir.
+  const yeniMi = !dosyaId;
+
+  const dosyaSinifiBlogu = alanSirasi.includes("dosyaSinifi") && (
+    <div key={anahtar}>
+      <DosyaSinifiAlanlari
+        turler={dosyaTurleri}
+        yargiKollari={yargiKollari}
+        varsayilanTurId={
+          g?.turId ?? dosya?.turId ?? dosyaTurleri.find((t) => t.kod === "dava_dosyasi")?.id ?? ""
+        }
+        varsayilanYargiKoluId={g?.yargiKoluId ?? dosya?.yargiKoluId ?? ""}
+        varsayilanSifat={
+          ((g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "BORCLU" || (g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "DIGER"
+            ? (g?.muvekkilSifati ?? dosya?.muvekkilSifati)
+            : "ALACAKLI") as "ALACAKLI" | "BORCLU" | "DIGER"
+        }
+      />
+    </div>
+  );
+
+  const yeniAlanlar = alanSirasi.filter((a) => a === "birimAdi" || a === "dosyaNo");
+  const ekAlanlar = alanSirasi.filter((a) => KARTLAR[1].alanlar.includes(a));
+  const ekDoluMu = Boolean(
+    dosya?.davaTuruId || dosya?.talepSonucu || dosya?.hukukiIliskiTuruId || dosya?.buroNo || dosya?.durusmaTarihi,
+  );
+
   return (
     <form action={formAction} className="max-w-2xl" autoComplete="off">
       {/* Iyimser kilitleme: sunucu, form acildigindaki surumle karsilastirir
-          (bkz. davaDosyasiGuncelle). Cakisma sonrasi guncel surum gelir,
-          boylece kullanici bilerek ustune yazabilir. Controlled hidden input
-          oldugu icin React'in form sifirlamasindan etkilenmez. */}
+          (bkz. davaDosyasiGuncelle). Controlled hidden input oldugu icin
+          React'in form sifirlamasindan etkilenmez. */}
       {dosya?.surum !== undefined && (
         <input type="hidden" name="surum" value={durum?.guncelSurum ?? dosya.surum} readOnly />
       )}
-      <DavaDosyasiSekmeleri dosyaId={dosyaId} aktif="genel" />
-      <FormKarti baslik={etiketler["dosya-detay.taraflar.baslik"] ?? "Taraflar"}>
+      {!yeniMi && <DavaDosyasiSekmeleri dosyaId={dosyaId} aktif="genel" />}
+      {alanSirasi.map((a) => (
+        <input key={a} type="hidden" name="gorunenAlanlar" value={a} />
+      ))}
+      <FormKarti baslik={yeniMi ? "Yeni Dosya" : "Dosya"}>
         <div key={anahtar}>
           <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdlerGuncel} />
         </div>
         <KarsiTarafEkleyici baslangicKarsiTaraflar={baslangicKarsiTaraflar} />
-      </FormKarti>
-
-      {alanSirasi.map((a) => (
-        <input key={a} type="hidden" name="gorunenAlanlar" value={a} />
-      ))}
-
-      {alanSirasi.includes("dosyaSinifi") && (
-      <FormKarti baslik="Dosya Sınıfı">
-        <div key={anahtar}>
-          <DosyaSinifiAlanlari
-            turler={dosyaTurleri}
-            yargiKollari={yargiKollari}
-            varsayilanTurId={
-              g?.turId ?? dosya?.turId ?? dosyaTurleri.find((t) => t.kod === "dava_dosyasi")?.id ?? ""
-            }
-            varsayilanYargiKoluId={g?.yargiKoluId ?? dosya?.yargiKoluId ?? ""}
-            varsayilanSifatDiger={g?.muvekkilSifatiDiger ?? dosya?.muvekkilSifatiDiger ?? ""}
-            varsayilanSifat={
-              ((g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "BORCLU" || (g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "DIGER"
-                ? (g?.muvekkilSifati ?? dosya?.muvekkilSifati)
-                : "ALACAKLI") as "ALACAKLI" | "BORCLU" | "DIGER"
-            }
-          />
+        {dosyaSinifiBlogu}
+        <div key={`${anahtar}-b`}>
+          {yeniAlanlar.map((a) => (
+            <div key={a}>{alanRenderHaritasi[a]?.()}</div>
+          ))}
         </div>
+        {!yeniMi && ekAlanlar.length > 0 && (
+          <details open={ekDoluMu || Boolean(durum?.hata)} className="mt-2">
+            <summary className="cursor-pointer text-sm font-medium text-white/80">Ek Bilgiler (isteğe bağlı)</summary>
+            <div key={`${anahtar}-e`} className="mt-4">
+              {ekAlanlar.map((a) => (
+                <div key={a}>{alanRenderHaritasi[a]?.()}</div>
+              ))}
+            </div>
+          </details>
+        )}
       </FormKarti>
-      )}
-
-      {KARTLAR.map((kart) => {
-        const kartAlanlari = alanSirasi.filter((a) => kart.alanlar.includes(a));
-        const icerik = (
-          <div key={anahtar}>
-            {kartAlanlari.map((a) => (
-              <div key={a}>{alanRenderHaritasi[a]?.()}</div>
-            ))}
-          </div>
-        );
-        if (kartAlanlari.length === 0) return null;
-        if (kart.ekBilgi) {
-          // Duzenlemede dolu alan varsa ya da hata sonrasi acik kalir.
-          const doluMu = Boolean(dosya?.davaTuruId || dosya?.talepSonucu || dosya?.hukukiIliskiTuruId || dosya?.buroNo || dosya?.durusmaTarihi);
-          return (
-            <details key={kart.baslik} open={doluMu || Boolean(durum?.hata)} className="glass mb-6 rounded-2xl p-5">
-              <summary className="cursor-pointer text-sm font-medium text-white/80">{kart.baslik}</summary>
-              <div className="mt-4">{icerik}</div>
-            </details>
-          );
-        }
-        return (
-          <FormKarti key={kart.baslik} baslik={etiketler["dosya-detay.dosya-bilgileri.baslik"] ?? kart.baslik}>
-            {icerik}
-          </FormKarti>
-        );
-      })}
-
       {durum?.hata && <p className="mb-4 text-sm text-[#ff7a70]">{durum.hata}</p>}
       <GonderButonu>{gonderButonuMetni}</GonderButonu>
     </form>

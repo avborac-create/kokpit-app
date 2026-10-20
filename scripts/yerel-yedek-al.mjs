@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync, copyFileSync, existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -48,7 +48,17 @@ async function main() {
         atlananlar.push(anahtar);
         continue;
       }
-      throw e;
+      // Sema yeni bir SUTUN eklemis ama migration henuz uygulanmamissa (P2022) tablo
+      // vardir: Prisma modeli yerine ham SELECT * ile o tablonun mevcut verisi alinir.
+      if (e?.code === "P2022") {
+        const model = Prisma.dmmf.datamodel.models.find((m) => m.name.charAt(0).toLowerCase() + m.name.slice(1) === anahtar);
+        const tablo = model?.dbName ?? model?.name;
+        if (!tablo) throw e;
+        console.warn(`Sutun farki: ${anahtar} ham SELECT ile yedeklendi.`);
+        kayitlar = await prisma.$queryRawUnsafe(`SELECT * FROM "${tablo}"`);
+      } else {
+        throw e;
+      }
     }
     veri[anahtar] = kayitlar;
     toplamKayit += kayitlar.length;

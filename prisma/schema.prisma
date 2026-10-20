@@ -490,6 +490,10 @@ model DavaDosyasi {
   muvekkilSifati     MuvekkilSifati   @default(ALACAKLI)
   // Sifat "Diger" secildiginde serbest metin (ör. müdahil, katılan, arabulucu).
   muvekkilSifatiDiger String?
+  // Ekonomi (cari hesap) disinda tutulan dosya: muvekkil toplamlarina, sayfa
+  // sekmelerine ve secim kutularina girmez; kayitlari SILINMEZ (ör. muvekkilin
+  // alacakli oldugu, ayri takip edilen icra dosyalari).
+  ekonomiDisi         Boolean          @default(false)
   anaDosyaId         String?
   anaDosya           DavaDosyasi?     @relation("DosyaAgaci", fields: [anaDosyaId], references: [id])
   altDosyalar        DavaDosyasi[]    @relation("DosyaAgaci")

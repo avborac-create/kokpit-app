@@ -254,3 +254,12 @@ export async function hesapSil(id: string, sifre?: string) {
   await prisma.cariHesap.delete({ where: { id } });
   yenile();
 }
+
+// Dosyayi muvekkil ekonomisinin DISINDA tut / tekrar dahil et. Kayitlar silinmez;
+// dosya muvekkil toplamlarina, sayfa sekmelerine ve secim kutularina girmez.
+export async function dosyaEkonomiDurumuDegistir(dosyaId: string, disi: boolean) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için oturum açmalısınız.");
+  await prisma.davaDosyasi.update({ where: { id: dosyaId }, data: { ekonomiDisi: disi } });
+  yenile();
+}
