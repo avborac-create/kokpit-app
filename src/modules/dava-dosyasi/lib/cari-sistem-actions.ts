@@ -145,7 +145,7 @@ export async function virmanYap(musteriId: string, kapsamDosyaId: string, formDa
       const mevcut = Math.max(0, -(ozet.hesaplar.find((h) => h.hesapId === kaynakHesap.id)?.bakiye ?? 0));
       if (tutar > mevcut + 0.001) {
         throw new Error(
-          `${kaynakHesap.no} ${kaynakHesap.ad} hesabında bu dosyada aktarılabilir fazla ödeme ${mevcut.toLocaleString("tr-TR")} TL; daha fazlası aktarılamaz.`,
+          `${kaynakHesap.no} - ${kaynakHesap.ad} hesabında bu dosyada aktarılabilir fazla ödeme ${mevcut.toLocaleString("tr-TR")} TL; daha fazlası aktarılamaz.`,
         );
       }
       const virmanId = randomUUID();
@@ -248,6 +248,8 @@ export async function hesapEkle(formData: FormData) {
   const no = Number(metin(formData, "no"));
   const ad = metin(formData, "ad");
   if (!Number.isInteger(no) || no <= 0 || !ad) throw new Error("Geçerli bir hesap kodu ve adı girin.");
+  // Hesap plani: 100'ler muvekkil, 200'ler borclu, 300'ler adliye hesaplarina ayrilmistir.
+  if (no < 100 || no > 199) throw new Error("Müvekkil hesapları 100–199 aralığında olmalıdır (200'ler borçlu, 300'ler adliye için ayrılmıştır).");
   if (await prisma.cariHesap.findUnique({ where: { no } })) throw new Error(`${no} kodlu bir hesap zaten var.`);
   await prisma.cariHesap.create({ data: { no, ad } });
   yenile();
