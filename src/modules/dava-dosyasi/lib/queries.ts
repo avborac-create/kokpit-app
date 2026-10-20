@@ -89,6 +89,7 @@ export async function davaDosyasiGetir(id: string) {
       yargiKolu: true,
       hukukiIliskiTuru: true,
       davaTuru: true,
+      muvekkilSifatiDegeri: true,
       sorumluAvukat: true,
       karsiTaraflar: { include: { karsiTaraf: true } },
       uyusmazlikGrubu: true,

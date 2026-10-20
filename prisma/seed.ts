@@ -212,6 +212,18 @@ const SECENEK_LISTELERI: {
     ],
   },
   {
+    // Muvekkilin dosyadaki sifati: admin dosya formundan yerinde yeni deger ekleyebilir/duzenleyebilir.
+    anahtar: "muvekkil_sifati",
+    ad: "Müvekkil Sıfatı",
+    degerler: [
+      { kod: "alacakli", etiket: "Alacaklı" },
+      { kod: "borclu", etiket: "Borçlu" },
+      { kod: "davaci", etiket: "Davacı" },
+      { kod: "davali", etiket: "Davalı" },
+      { kod: "3_kisi", etiket: "3. kişi" },
+    ],
+  },
+  {
     anahtar: "dava_turu",
     ad: "Dava Türü",
     degerler: [

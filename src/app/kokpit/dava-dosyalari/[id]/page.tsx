@@ -54,7 +54,7 @@ export default async function DavaDosyasiDetaySayfasi({
   const { id } = await params;
   const { sekme, alt } = await searchParams;
   const aktifSekme = sekme === "ekonomi" ? "ekonomi" : "genel";
-  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, davaTurleri] = await Promise.all([
+  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, davaTurleri, muvekkilSifatlari] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
     anaDosyaAdaylariniGetir(id),
@@ -63,6 +63,7 @@ export default async function DavaDosyasiDetaySayfasi({
     secenekleriGetir("yargi_kolu"),
     secenekleriGetir("hukuki_iliski_turu"),
     secenekleriGetir("dava_turu"),
+    secenekleriGetir("muvekkil_sifati"),
   ]);
   if (!dosya) notFound();
 
@@ -120,31 +121,13 @@ export default async function DavaDosyasiDetaySayfasi({
         ]
       : []),
     {
-      anahtar: "muvekkilSifati",
+      anahtar: "muvekkilSifatiId",
       varsayilanEtiket: "Müvekkil Sıfatı",
       tip: "secim",
-      deger: dosya.muvekkilSifati,
-      gosterim:
-        dosya.muvekkilSifati === "DIGER"
-          ? `Diğer${dosya.muvekkilSifatiDiger ? ` — ${dosya.muvekkilSifatiDiger}` : ""}`
-          : { ALACAKLI: "Alacaklı", BORCLU: "Borçlu" }[dosya.muvekkilSifati],
-      secenekler: [
-        { value: "ALACAKLI", label: "Alacaklı" },
-        { value: "BORCLU", label: "Borçlu" },
-        { value: "DIGER", label: "Diğer" },
-      ],
+      deger: dosya.muvekkilSifatiId ?? "",
+      gosterim: dosya.muvekkilSifatiDegeri?.etiket ?? { ALACAKLI: "Alacaklı", BORCLU: "Borçlu", DIGER: "3. kişi" }[dosya.muvekkilSifati],
+      secenekler: muvekkilSifatlari.map((o) => ({ value: o.id, label: o.etiket })),
     },
-    ...(dosya.muvekkilSifati === "DIGER"
-      ? [
-          {
-            anahtar: "muvekkilSifatiDiger",
-            varsayilanEtiket: "Sıfat (serbest metin)",
-            tip: "metin" as const,
-            deger: dosya.muvekkilSifatiDiger ?? "",
-            gosterim: dosya.muvekkilSifatiDiger ?? "—",
-          },
-        ]
-      : []),
     {
       anahtar: "hukukiIliskiTuruId",
       varsayilanEtiket: "Uyuşmazlık Türü",

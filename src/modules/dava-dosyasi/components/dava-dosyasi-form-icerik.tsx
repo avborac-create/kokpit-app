@@ -24,6 +24,7 @@ type DosyaDegerleri = {
   yargiKoluId?: string | null;
   muvekkilSifati?: "ALACAKLI" | "BORCLU" | "DIGER";
   muvekkilSifatiDiger?: string | null;
+  muvekkilSifatiId?: string | null;
   talepSonucu: string | null;
   durusmaTarihi: Date | null;
   surum?: number;
@@ -55,6 +56,7 @@ export function DavaDosyasiFormIcerik({
   musteriler,
   seciliIdler,
   hukukiIliskiTurleri,
+  muvekkilSifatlari,
   davaTurleri,
   dosyaTurleri,
   yargiKollari,
@@ -72,6 +74,7 @@ export function DavaDosyasiFormIcerik({
   musteriler: { id: string; adSoyadUnvan: string }[];
   seciliIdler: string[];
   hukukiIliskiTurleri: Secenek[];
+  muvekkilSifatlari: { id: string; etiket: string; kod: string }[];
   davaTurleri: Secenek[];
   dosyaTurleri: (Secenek & { kod: string })[];
   yargiKollari: (Secenek & { kod: string })[];
@@ -183,11 +186,15 @@ export function DavaDosyasiFormIcerik({
           g?.turId ?? dosya?.turId ?? dosyaTurleri.find((t) => t.kod === "dava_dosyasi")?.id ?? ""
         }
         varsayilanYargiKoluId={g?.yargiKoluId ?? dosya?.yargiKoluId ?? ""}
-        varsayilanSifat={
-          ((g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "BORCLU" || (g?.muvekkilSifati ?? dosya?.muvekkilSifati) === "DIGER"
-            ? (g?.muvekkilSifati ?? dosya?.muvekkilSifati)
-            : "ALACAKLI") as "ALACAKLI" | "BORCLU" | "DIGER"
+        sifatlar={muvekkilSifatlari}
+        varsayilanSifatId={
+          g?.muvekkilSifatiId ??
+          dosya?.muvekkilSifatiId ??
+          muvekkilSifatlari.find((x) => x.kod === "alacakli")?.id ??
+          ""
         }
+        varsayilanYeniSifatEtiketi={g?.yeniMuvekkilSifatiEtiketi}
+        yoneticiMi={yoneticiMi}
       />
     </div>
   );

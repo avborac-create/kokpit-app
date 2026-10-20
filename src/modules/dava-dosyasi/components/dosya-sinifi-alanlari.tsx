@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
+import { Alan, Etiket, Secim } from "@/core/ui/form";
+import { UyusmazlikTuruSecici } from "./uyusmazlik-turu-secici";
 
 type Secenek = { id: string; etiket: string; kod: string };
 
@@ -13,18 +14,22 @@ export function DosyaSinifiAlanlari({
   yargiKollari,
   varsayilanTurId,
   varsayilanYargiKoluId,
-  varsayilanSifat,
-  varsayilanSifatDiger,
+  sifatlar,
+  varsayilanSifatId,
+  varsayilanYeniSifatEtiketi,
+  yoneticiMi,
 }: {
   turler: Secenek[];
   yargiKollari: Secenek[];
   varsayilanTurId: string;
   varsayilanYargiKoluId: string;
-  varsayilanSifat: "ALACAKLI" | "BORCLU" | "DIGER";
-  varsayilanSifatDiger?: string;
+  // Muvekkil sifati: admin tarafindan yerinde duzenlenebilen liste (muvekkil_sifati).
+  sifatlar: Secenek[];
+  varsayilanSifatId: string;
+  varsayilanYeniSifatEtiketi?: string;
+  yoneticiMi: boolean;
 }) {
   const [turId, setTurId] = useState(varsayilanTurId);
-  const [sifat, setSifat] = useState(varsayilanSifat);
   const davaMi = turler.find((t) => t.id === turId)?.kod === "dava_dosyasi";
 
   return (
@@ -52,28 +57,17 @@ export function DosyaSinifiAlanlari({
           </Secim>
         </Alan>
       )}
-      <Alan>
-        <Etiket htmlFor="muvekkilSifati">Müvekkil Sıfatı</Etiket>
-        <Secim
-          id="muvekkilSifati"
-          name="muvekkilSifati"
-          value={sifat}
-          onChange={(e) => setSifat(e.target.value as "ALACAKLI" | "BORCLU" | "DIGER")}
-        >
-          <option value="ALACAKLI">Alacaklı</option>
-          <option value="BORCLU">Borçlu</option>
-          <option value="DIGER">Diğer</option>
-        </Secim>
-        {sifat === "DIGER" && (
-          <Girdi
-            name="muvekkilSifatiDiger"
-            placeholder="Sıfatı yazın (ör. müdahil, katılan, arabulucu)"
-            defaultValue={varsayilanSifatDiger ?? ""}
-            className="mt-2"
-            maxLength={80}
-          />
-        )}
-      </Alan>
+      <UyusmazlikTuruSecici
+        etiket="Müvekkil Sıfatı"
+        turler={sifatlar}
+        varsayilanId={varsayilanSifatId}
+        varsayilanYeniEtiket={varsayilanYeniSifatEtiketi}
+        alanAdi="muvekkilSifatiId"
+        yeniAlanAdi="yeniMuvekkilSifatiEtiketi"
+        listeAnahtari="muvekkil_sifati"
+        zorunlu
+        yoneticiMi={yoneticiMi}
+      />
     </>
   );
 }

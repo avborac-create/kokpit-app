@@ -44,14 +44,22 @@ async function dosyaSinifiniAl(formData: FormData) {
   const turId = metinYaAlNull(formData, "turId") ?? (await varsayilanTurIdGetir());
   const tur = await prisma.secenekDegeri.findUnique({ where: { id: turId }, select: { kod: true } });
   const yargiKoluId = tur?.kod === "dava_dosyasi" ? metinYaAlNull(formData, "yargiKoluId") : null;
-  const muvekkilSifati = muvekkilSifatiAl(formData.get("muvekkilSifati"));
-  const muvekkilSifatiDiger =
-    muvekkilSifati === "DIGER" ? (metinYaAlNull(formData, "muvekkilSifatiDiger") ?? "").slice(0, 80) || null : null;
-  return { turId, yargiKoluId, muvekkilSifati, muvekkilSifatiDiger };
+  // Muvekkil sifati: admin tarafindan duzenlenebilen liste + "MANUEL GIR" (listeye kalici eklenir).
+  const sifatListesi = await secenekleriGetir("muvekkil_sifati");
+  const secilenSifatId =
+    (await manuelSecenekIdCozumle(formData, "muvekkilSifatiId", "yeniMuvekkilSifatiEtiketi", "muvekkil_sifati")) ??
+    sifatListesi.find((x) => x.kod === "alacakli")?.id ??
+    null;
+  const secilenSifat = secilenSifatId
+    ? await prisma.secenekDegeri.findUnique({ where: { id: secilenSifatId }, select: { kod: true } })
+    : null;
+  const muvekkilSifati = sifatEnumuYaz(secilenSifat?.kod);
+  return { turId, yargiKoluId, muvekkilSifati, muvekkilSifatiId: secilenSifatId, muvekkilSifatiDiger: null };
 }
 
-function muvekkilSifatiAl(deger: FormDataEntryValue | string | null): MuvekkilSifati {
-  return deger === "BORCLU" || deger === "DIGER" ? deger : "ALACAKLI";
+// Liste degerinin koduna gore eski enum'u turetir (alacakli/borclu disindakiler DIGER sayilir).
+function sifatEnumuYaz(kod: string | null | undefined): MuvekkilSifati {
+  return kod === "borclu" ? "BORCLU" : kod === "alacakli" || !kod ? "ALACAKLI" : "DIGER";
 }
 
 async function dosyaTuruEtiketi(turId: string): Promise<string> {
@@ -224,7 +232,7 @@ export async function davaDosyasiOlustur(
   const hukukiIliskiTuruId = await hukukiIliskiTuruIdCozumle(formData);
   const durusmaTarihiHam = metinYaAlNull(formData, "durusmaTarihi");
 
-  const [durumId, { turId, yargiKoluId, muvekkilSifati, muvekkilSifatiDiger }, davaTuru, uyusmazlikGrubuId] = await Promise.all([
+  const [durumId, { turId, yargiKoluId, muvekkilSifati, muvekkilSifatiId, muvekkilSifatiDiger }, davaTuru, uyusmazlikGrubuId] = await Promise.all([
     varsayilanDurumIdGetir(),
     dosyaSinifiniAl(formData),
     davaTuruId ? prisma.secenekDegeri.findUnique({ where: { id: davaTuruId } }) : null,
@@ -249,6 +257,7 @@ export async function davaDosyasiOlustur(
       turId,
       yargiKoluId,
       muvekkilSifati,
+      muvekkilSifatiId,
       muvekkilSifatiDiger,
       hukukiIliskiTuruId,
       davaTuruId,
@@ -330,6 +339,7 @@ export async function davaDosyasiGuncelle(
           turId: sinif.turId,
           yargiKoluId: sinif.yargiKoluId,
           muvekkilSifati: sinif.muvekkilSifati,
+          muvekkilSifatiId: sinif.muvekkilSifatiId,
           muvekkilSifatiDiger: sinif.muvekkilSifatiDiger,
         }),
         ...(g("hukukiIliskiTuruId") && { hukukiIliskiTuruId }),
@@ -436,7 +446,7 @@ export async function davaDosyasiSil(id: string, sifre?: string) {
 // Dava degilse yargi kolu temizlenir, Dava Turu degisince Konu (baslik)
 // yeniden uretilir (bkz. davaDosyasiGuncelle ile ayni kural).
 const DETAY_DUZENLENEBILIR_ALANLAR = [
-  "turId", "yargiKoluId", "muvekkilSifati", "muvekkilSifatiDiger", "hukukiIliskiTuruId", "davaTuruId",
+  "turId", "yargiKoluId", "muvekkilSifatiId", "hukukiIliskiTuruId", "davaTuruId",
   "birimAdi", "buroNo", "dosyaNo", "talepSonucu", "durusmaTarihi",
 ];
 
@@ -451,14 +461,15 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
     }
     const deger = ham.trim();
     switch (alan) {
-      case "muvekkilSifati":
-        data.muvekkilSifati = muvekkilSifatiAl(deger);
-        // Diger disinda bir sifata gecilirse serbest metin temizlenir.
-        if (data.muvekkilSifati !== "DIGER") data.muvekkilSifatiDiger = null;
+      case "muvekkilSifatiId": {
+        if (!deger) throw new Error("Müvekkil sıfatı boş bırakılamaz.");
+        const sifat = await prisma.secenekDegeri.findUnique({ where: { id: deger }, select: { kod: true } });
+        if (!sifat) throw new Error("Müvekkil sıfatı bulunamadı.");
+        data.muvekkilSifatiId = deger;
+        data.muvekkilSifati = sifatEnumuYaz(sifat.kod);
+        data.muvekkilSifatiDiger = null;
         break;
-      case "muvekkilSifatiDiger":
-        data.muvekkilSifatiDiger = deger.slice(0, 80) || null;
-        break;
+      }
       case "turId":
         if (!deger) throw new Error("Tür boş bırakılamaz.");
         data.turId = deger;

@@ -21,6 +21,7 @@ export function UyusmazlikTuruSecici({
   etiket = "Uyuşmazlık Türü",
   zorunlu = false,
   yoneticiMi = false,
+  listeAnahtari,
 }: {
   turler: { id: string; etiket: string }[];
   varsayilanId: string;
@@ -31,6 +32,8 @@ export function UyusmazlikTuruSecici({
   zorunlu?: boolean;
   // Sadece admin: yerinde ad duzeltme paneli + tam liste yonetimi baglantisi.
   yoneticiMi?: boolean;
+  // Ayarlar > Secenek Listeleri baglantisi icin (verilmezse alan adindan turetilir).
+  listeAnahtari?: string;
 }) {
   const [secim, setSecim] = useState(varsayilanId);
   const [etiketDuzeltmeleri, setEtiketDuzeltmeleri] = useState<Record<string, string>>({});
@@ -43,7 +46,7 @@ export function UyusmazlikTuruSecici({
         <Etiket htmlFor={alanAdi}>{etiket}</Etiket>
         {yoneticiMi && (
           <Link
-            href={`/kokpit/ayarlar/secenekler?liste=${alanAdi === "davaTuruId" ? "dava_turu" : "hukuki_iliski_turu"}`}
+            href={`/kokpit/ayarlar/secenekler?liste=${listeAnahtari ?? (alanAdi === "davaTuruId" ? "dava_turu" : "hukuki_iliski_turu")}`}
             target="_blank"
             className="text-xs text-[#6db8ff] hover:underline"
           >

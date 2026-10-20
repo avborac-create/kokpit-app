@@ -111,6 +111,7 @@ model SecenekDegeri {
   davaDosyalariYargiKolu        DavaDosyasi[]         @relation("DavaDosyasiYargiKolu")
   davaDosyalariHukukiIliskiTuru DavaDosyasi[]         @relation("DavaDosyasiHukukiIliskiTuru")
   davaDosyalariDavaTuru         DavaDosyasi[]         @relation("DavaDosyasiDavaTuru")
+  davaDosyalariMuvekkilSifati   DavaDosyasi[]         @relation("DavaDosyasiMuvekkilSifati")
   paraTrafigiTasnifCariKod      ParaTrafigiTasnif[]   @relation("ParaTrafigiTasnifCariKod")
   dosyaMasrafiCariKod           DosyaMasrafi[]        @relation("DosyaMasrafiCariKod")
   avansAktarimiCariKod          DosyaAvansAktarimi[]  @relation("AvansAktarimiCariKod")
@@ -490,6 +491,10 @@ model DavaDosyasi {
   muvekkilSifati     MuvekkilSifati   @default(ALACAKLI)
   // Sifat "Diger" secildiginde serbest metin (ör. müdahil, katılan, arabulucu).
   muvekkilSifatiDiger String?
+  // Liste tabanli (admin duzenleyebilir) sifat; `muvekkilSifati` enum'u bundan TURETILIR
+  // (alacakli/borclu degilse DIGER) - listede olmayan eski mantik/rozetler bozulmasin diye.
+  muvekkilSifatiId    String?
+  muvekkilSifatiDegeri SecenekDegeri?  @relation("DavaDosyasiMuvekkilSifati", fields: [muvekkilSifatiId], references: [id])
   // Ekonomi (cari hesap) disinda tutulan dosya: muvekkil toplamlarina, sayfa
   // sekmelerine ve secim kutularina girmez; kayitlari SILINMEZ (ör. muvekkilin
   // alacakli oldugu, ayri takip edilen icra dosyalari).
@@ -555,6 +560,7 @@ model DavaDosyasi {
   @@index([icraAltTuruId])
   @@index([yargiKoluId])
   @@index([hukukiIliskiTuruId])
+  @@index([muvekkilSifatiId])
   @@index([davaTuruId])
   @@index([dosyaEvresi])
   @@index([anaDosyaId])
