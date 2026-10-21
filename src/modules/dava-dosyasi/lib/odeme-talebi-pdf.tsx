@@ -51,6 +51,12 @@ const s = StyleSheet.create({
 const paraBicim = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 // "₺" gomulu fontta yok (bkz. haciz-raporu/lib/pdf.tsx); "TL" kullanilir.
 const tl = (n: number) => `${paraBicim.format(n)} TL`;
+const adBicimle = (ad: string) =>
+  ad
+    .trim()
+    .split(/\s+/)
+    .map((p) => p.charAt(0).toLocaleUpperCase("tr") + p.slice(1).toLocaleLowerCase("tr"))
+    .join(" ");
 const tarihYaz = (iso: string) => {
   const [y, a, g] = iso.slice(0, 10).split("-");
   return `${g}.${a}.${y}`;
@@ -58,6 +64,7 @@ const tarihYaz = (iso: string) => {
 
 export type OdemeTalebiVerisi = {
   musteriAdi: string;
+  hitap: string; // "Bey" | "Hanım" | ""
   olusturmaTarihi: string; // ISO
   sonOdemeTarihi: string | null; // ISO
   satirlar: TalepSatiri[];
@@ -92,7 +99,7 @@ function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
         </View>
 
         <Text style={s.selam}>
-          Sayın {v.musteriAdi}, dosyalarınızla ilgili hesabınızın güncel durumu ve ödemenizi rica ettiğimiz tutar aşağıda
+          Sayın {adBicimle(v.musteriAdi)}{v.hitap ? ` ${v.hitap}` : ""}, dosyalarınızla ilgili hesabınızın güncel durumu ve ödemenizi rica ettiğimiz tutar aşağıda
           özetlenmiştir.
         </Text>
 

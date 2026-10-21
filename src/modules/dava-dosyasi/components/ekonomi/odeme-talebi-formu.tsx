@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alan, Etiket, Girdi, MetinAlani } from "@/core/ui/form";
+import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
 
 type Satir = { anahtar: number; dahil: boolean; baslik: string; aciklama: string; tutar: string };
 
 const BANKA_ANAHTARI = "kokpit-odeme-talebi-banka";
 const para = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function adBicimle(ad: string): string {
+  return ad
+    .trim()
+    .split(/\s+/)
+    .map((p) => p.charAt(0).toLocaleUpperCase("tr") + p.slice(1).toLocaleLowerCase("tr"))
+    .join(" ");
+}
 
 function bugunArti(gun: number) {
   const d = new Date();
@@ -44,6 +52,7 @@ export function OdemeTalebiFormu({
   });
   const [dokum, setDokum] = useState(false);
   const [kopyalandi, setKopyalandi] = useState(false);
+  const [hitap, setHitap] = useState("");
 
   useEffect(() => {
     const zamanlayici = setTimeout(() => {
@@ -77,13 +86,15 @@ export function OdemeTalebiFormu({
 
   async function whatsappKopyala() {
     const satirMetni = dahilSatirlar.map((s) => `• ${s.baslik}: ${para.format(sayi(s.tutar))} TL`).join("\n");
+    const tamAd = adBicimle(musteriAdi);
+    const selam = hitap ? `${tamAd.split(" ")[0]} ${hitap}` : tamAd;
     const metin =
-      `Sayın ${musteriAdi},\n\nDosyalarınızla ilgili hesap durumunuz:\n${satirMetni}\n\n` +
+      `${selam} merhaba, hesap özetinizi iletiyorum.\n\n${satirMetni}\n\n` +
       `*Ödemeniz gereken toplam: ${para.format(toplam)} TL*\n` +
       (sonOdeme ? `Son ödeme tarihi: ${sonOdeme.split("-").reverse().join(".")}\n` : "") +
       (banka.iban ? `\nHesap sahibi: ${banka.hesapSahibi}\nBanka: ${banka.banka}\nIBAN: ${banka.iban}\n` : "") +
       (kod ? `Havale açıklamasına yazınız: ${kod}\n` : "") +
-      `\nEces Hukuk Bürosu`;
+      `\nÖdemeyi gönderdiğinizde bilgi verirseniz süreci başlatalım.\n\nEces Hukuk Bürosu`;
     try {
       await navigator.clipboard.writeText(metin);
       setKopyalandi(true);
@@ -175,6 +186,14 @@ export function OdemeTalebiFormu({
       <section className="glass rounded-2xl p-5">
         <h2 className="mb-3 text-base font-semibold text-white">2 · Ne zamana kadar, nasıl ödenecek?</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Alan>
+            <Etiket htmlFor="hitap">Hitap</Etiket>
+            <Secim id="hitap" name="hitap" value={hitap} onChange={(e) => setHitap(e.target.value)}>
+              <option value="">Yalnızca ad soyad</option>
+              <option value="Bey">Bey</option>
+              <option value="Hanım">Hanım</option>
+            </Secim>
+          </Alan>
           <Alan>
             <Etiket htmlFor="sonOdemeTarihi">Son ödeme tarihi</Etiket>
             <Girdi id="sonOdemeTarihi" name="sonOdemeTarihi" type="date" value={sonOdeme} onChange={(e) => setSonOdeme(e.target.value)} />

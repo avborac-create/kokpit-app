@@ -33,6 +33,7 @@ export async function POST(request: Request) {
 
   const pdf = await odemeTalebiPdfUret({
     musteriAdi: musteri.adSoyadUnvan,
+    hitap: ["Bey", "Hanım"].includes(metin(fd, "hitap")) ? metin(fd, "hitap") : "",
     olusturmaTarihi: new Date().toISOString(),
     sonOdemeTarihi: /^\d{4}-\d{2}-\d{2}$/.test(sonOdeme) ? sonOdeme : null,
     satirlar,
