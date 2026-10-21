@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Dugme } from "@/core/ui/button";
 import { Girdi } from "@/core/ui/form";
 import { evrakGuncelle, evrakSil, evrakYukle } from "@/modules/cmk-dosyalari/lib/evrak-actions";
@@ -227,7 +227,7 @@ function Onizleme({ dosyaId, evrak, klasorler }: { dosyaId: string; evrak: Evrak
             </Dugme>
           </a>
           <Dugme type="button" varyant="ikincil" boyut="kompakt" onClick={() => setDuzenle((d) => !d)}>
-            Düzenle
+            Adı / klasörü düzenle
           </Dugme>
           <Dugme
             type="button"
@@ -268,16 +268,90 @@ function Onizleme({ dosyaId, evrak, klasorler }: { dosyaId: string; evrak: Evrak
       )}
 
       {evrak.onizlemeTuru === "PDF" && <iframe src={yol} title={evrak.ad} className="h-[75vh] w-full rounded-xl bg-white" />}
-      {evrak.onizlemeTuru === "RESIM" && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={yol} alt={evrak.ad} className="max-h-[78vh] w-full rounded-xl bg-white object-contain" />
-      )}
+      {evrak.onizlemeTuru === "RESIM" && <SayfaGoruntuleyici yol={yol} ad={evrak.ad} cokSayfaliMi={evrak.mimeTipi === "image/tiff"} />}
       {evrak.onizlemeTuru === "METIN" && (
         <iframe src={`${yol}?tur=html`} title={evrak.ad} className="h-[78vh] w-full rounded-xl bg-[#e9ebf0]" />
       )}
       {evrak.onizlemeTuru === "YOK" && (
         <p className="py-24 text-center text-sm text-white/40">Bu evrak türü için önizleme yok; indirerek açabilirsiniz.</p>
       )}
+    </div>
+  );
+}
+
+// Taranmis evrakin (TIF/resim) tum sayfalarini alt alta gosterir; kaydirdikca
+// ya da oklarla gezildikce "Sayfa x / y" gostergesi guncellenir.
+function SayfaGoruntuleyici({ yol, ad, cokSayfaliMi }: { yol: string; ad: string; cokSayfaliMi: boolean }) {
+  const [sayfaSayisi, setSayfaSayisi] = useState<number | null>(cokSayfaliMi ? null : 1);
+  const [aktif, setAktif] = useState(1);
+  const kapsayici = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!cokSayfaliMi) return;
+    let iptal = false;
+    fetch(`${yol}?tur=bilgi`)
+      .then((r) => r.json())
+      .then((v: { sayfa?: number }) => {
+        if (!iptal) setSayfaSayisi(v.sayfa ?? 1);
+      })
+      .catch(() => {
+        if (!iptal) setSayfaSayisi(1);
+      });
+    return () => {
+      iptal = true;
+    };
+  }, [yol, cokSayfaliMi]);
+
+  useEffect(() => {
+    const kok = kapsayici.current;
+    if (!kok || !sayfaSayisi) return;
+    const gozlemci = new IntersectionObserver(
+      (girdiler) => {
+        const gorunen = girdiler.filter((g) => g.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (gorunen) setAktif(Number((gorunen.target as HTMLElement).dataset.sayfa));
+      },
+      { root: kok, threshold: [0.3, 0.6, 0.9] },
+    );
+    kok.querySelectorAll("[data-sayfa]").forEach((el) => gozlemci.observe(el));
+    return () => gozlemci.disconnect();
+  }, [sayfaSayisi]);
+
+  function git(no: number) {
+    const hedef = Math.min(Math.max(1, no), sayfaSayisi ?? 1);
+    kapsayici.current?.querySelector(`[data-sayfa="${hedef}"]`)?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+
+  if (sayfaSayisi === null) return <p className="py-24 text-center text-sm text-white/40">Sayfalar hazırlanıyor…</p>;
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-center gap-3 text-sm text-white/80">
+        <Dugme type="button" varyant="ikincil" boyut="kompakt" onClick={() => git(aktif - 1)} disabled={aktif <= 1}>
+          ‹ Önceki
+        </Dugme>
+        <span className="min-w-28 text-center font-medium">
+          Sayfa {aktif} / {sayfaSayisi}
+        </span>
+        <Dugme type="button" varyant="ikincil" boyut="kompakt" onClick={() => git(aktif + 1)} disabled={aktif >= sayfaSayisi}>
+          Sonraki ›
+        </Dugme>
+      </div>
+      <div ref={kapsayici} className="max-h-[75vh] space-y-3 overflow-y-auto rounded-xl bg-[#e9ebf0] p-3">
+        {Array.from({ length: sayfaSayisi }, (_, i) => i + 1).map((no) => (
+          <div key={no} data-sayfa={no} className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cokSayfaliMi ? `${yol}?tur=sayfa&no=${no}` : yol}
+              alt={`${ad} — sayfa ${no}`}
+              loading="lazy"
+              className="mx-auto w-full max-w-3xl bg-white shadow"
+            />
+            <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white">
+              {no} / {sayfaSayisi}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

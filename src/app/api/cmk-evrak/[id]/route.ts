@@ -28,6 +28,29 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       },
     });
   }
+  // Cok sayfali TIF: sayfa sayisi ve her sayfa ayri PNG olarak orijinalden uretilir.
+  if (evrak.mimeTipi === "image/tiff" && (tur === "bilgi" || tur === "sayfa")) {
+    try {
+      const sharp = (await import("sharp")).default;
+      const kaynak = Buffer.from(icerik.orijinal);
+      if (tur === "bilgi") {
+        const meta = await sharp(kaynak).metadata();
+        return NextResponse.json({ sayfa: meta.pages ?? 1 });
+      }
+      const no = Math.max(1, Number(new URL(request.url).searchParams.get("no") ?? "1") || 1);
+      const png = await sharp(kaynak, { page: no - 1 })
+        .rotate()
+        .resize({ width: 1600, withoutEnlargement: true })
+        .png()
+        .toBuffer();
+      return new NextResponse(new Uint8Array(png), {
+        headers: { "Content-Type": "image/png", "Cache-Control": "private, max-age=300" },
+      });
+    } catch {
+      return NextResponse.json({ hata: "Sayfa üretilemedi" }, { status: 422 });
+    }
+  }
+  if (tur === "bilgi") return NextResponse.json({ sayfa: 1 });
   const indir = tur === "orijinal";
   const bayt = !indir && icerik.onizleme ? icerik.onizleme : icerik.orijinal;
   const mime = !indir && icerik.onizlemeMime ? icerik.onizlemeMime : evrak.mimeTipi;
