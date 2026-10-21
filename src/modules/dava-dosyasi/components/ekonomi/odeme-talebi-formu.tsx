@@ -50,7 +50,7 @@ export function OdemeTalebiFormu({
       .replace(/Ç/g, "C").replace(/Ğ/g, "G").replace(/İ/g, "I").replace(/Ö/g, "O").replace(/Ş/g, "S").replace(/Ü/g, "U");
     return `${soyad}-${new Date().getFullYear()}`;
   });
-  const [dokum, setDokum] = useState(false);
+  const [dokum, setDokum] = useState(dokumSayisi > 0);
   const [kopyalandi, setKopyalandi] = useState(false);
   const [hitap, setHitap] = useState("");
 
