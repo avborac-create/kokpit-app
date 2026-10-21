@@ -6,12 +6,15 @@ import { udfHtmlUret } from "@/modules/cmk-dosyalari/lib/udf-html";
 // CMK evrakini oturum acmis kullaniciya sunar. ?tur=onizleme (varsayilan:
 // tarayicida gosterilecek hali), ?tur=orijinal (indirme), ?tur=metin (UDF metni).
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await mevcutKullanici())) return NextResponse.json({ hata: "Yetkisiz" }, { status: 401 });
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) return NextResponse.json({ hata: "Yetkisiz" }, { status: 401 });
   const { id } = await params;
   const tur = new URL(request.url).searchParams.get("tur") ?? "onizleme";
 
   const evrak = await prisma.cMKEvrak.findUnique({ where: { id }, include: { icerik: true } });
-  if (!evrak?.icerik) return NextResponse.json({ hata: "Bulunamadı" }, { status: 404 });
+  if (!evrak?.icerik || (evrak.ozelKullaniciId && evrak.ozelKullaniciId !== kullanici.kullaniciId)) {
+    return NextResponse.json({ hata: "Bulunamadı" }, { status: 404 });
+  }
   const { icerik } = evrak;
 
   if (tur === "metin") {

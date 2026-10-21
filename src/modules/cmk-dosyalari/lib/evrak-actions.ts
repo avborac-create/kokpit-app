@@ -6,7 +6,17 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { adindanTarihBul, evrakHazirla, gorunenAdUret } from "@/modules/cmk-dosyalari/lib/evrak-hazirla";
 
 async function oturumSart() {
-  if (!(await mevcutKullanici())) throw new Error("Oturum bulunamadı.");
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Oturum bulunamadı.");
+  return kullanici;
+}
+
+// "Avukata ozel" evraka yalniz sahibi dokunabilir.
+async function evrakErisimiKontrolEt(evrakId: string, kullaniciId: string) {
+  const evrak = await prisma.cMKEvrak.findUnique({ where: { id: evrakId }, select: { ozelKullaniciId: true } });
+  if (!evrak || (evrak.ozelKullaniciId && evrak.ozelKullaniciId !== kullaniciId)) {
+    throw new Error("Bu evrak bulunamadı.");
+  }
 }
 
 const IZIN_VERILEN_BOYUT = 4 * 1024 * 1024;
@@ -14,7 +24,8 @@ const IZIN_VERILEN_BOYUT = 4 * 1024 * 1024;
 // Bir ya da birden fazla evraki yukler. Tarih bos birakilirsa dosya adindan
 // (ör. ..._16_10_2025) yakalanmaya calisilir.
 export async function evrakYukle(cmkDosyasiId: string, formData: FormData) {
-  await oturumSart();
+  const kullanici = await oturumSart();
+  const ozel = String(formData.get("ozel") ?? "") === "1";
   const klasor = String(formData.get("klasor") ?? "").trim() || "Diğer";
   const tarihMetni = String(formData.get("evrakTarihi") ?? "").trim();
   const dosyalar = formData.getAll("dosya").filter((d): d is File => d instanceof File && d.size > 0);
@@ -30,6 +41,7 @@ export async function evrakYukle(cmkDosyasiId: string, formData: FormData) {
     await prisma.cMKEvrak.create({
       data: {
         cmkDosyasiId,
+        ozelKullaniciId: ozel ? kullanici.kullaniciId : null,
         klasor,
         ad: gorunenAdUret(dosya.name),
         evrakTarihi: tarih,
@@ -52,7 +64,8 @@ export async function evrakYukle(cmkDosyasiId: string, formData: FormData) {
 }
 
 export async function evrakGuncelle(cmkDosyasiId: string, evrakId: string, formData: FormData) {
-  await oturumSart();
+  const kullanici = await oturumSart();
+  await evrakErisimiKontrolEt(evrakId, kullanici.kullaniciId);
   const ad = String(formData.get("ad") ?? "").trim();
   const klasor = String(formData.get("klasor") ?? "").trim();
   const tarihMetni = String(formData.get("evrakTarihi") ?? "").trim();
@@ -65,7 +78,8 @@ export async function evrakGuncelle(cmkDosyasiId: string, evrakId: string, formD
 }
 
 export async function evrakSil(cmkDosyasiId: string, evrakId: string) {
-  await oturumSart();
+  const kullanici = await oturumSart();
+  await evrakErisimiKontrolEt(evrakId, kullanici.kullaniciId);
   await prisma.cMKEvrak.delete({ where: { id: evrakId } });
   revalidatePath(`/kokpit/cmk-dosyalari/${cmkDosyasiId}`);
 }

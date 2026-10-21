@@ -13,6 +13,7 @@ export type EvrakKaydi = {
   mimeTipi: string;
   boyutBayt: number;
   onizlemeTuru: "PDF" | "RESIM" | "METIN" | "YOK";
+  ozel: boolean; // true: yalniz giris yapan avukatin gorebildigi evrak
 };
 
 const KLASOR_SIRASI = ["İddianame", "Duruşma Zabıtları", "İfadeler", "Tutanaklar", "Şikayet"];
@@ -37,6 +38,49 @@ function tarihKarsilastir(a: EvrakKaydi, b: EvrakKaydi, artan: boolean) {
 // CMK dosyasi evrak alani: solda klasor agaci (evrak bazinda) ya da tarih
 // sirali liste, sagda secili evrakin onizlemesi.
 export function EvrakPaneli({ dosyaId, evraklar }: { dosyaId: string; evraklar: EvrakKaydi[] }) {
+  const [alan, setAlan] = useState<"dosya" | "ozel">("dosya");
+  const dosyaEvraklari = evraklar.filter((e) => !e.ozel);
+  const ozelEvraklar = evraklar.filter((e) => e.ozel);
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap gap-2">
+        {(
+          [
+            ["dosya", "DOSYA EVRAKLARI", dosyaEvraklari.length],
+            ["ozel", "AVUKATA ÖZEL", ozelEvraklar.length],
+          ] as const
+        ).map(([anahtar, etiket, adet]) => (
+          <button
+            key={anahtar}
+            type="button"
+            onClick={() => setAlan(anahtar)}
+            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+              alan === anahtar
+                ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[#6db8ff]"
+                : "border-white/15 text-white/60 hover:bg-white/[0.06]"
+            }`}
+          >
+            {etiket} <span className="ml-1 text-xs opacity-60">{adet}</span>
+          </button>
+        ))}
+      </div>
+      {alan === "ozel" && (
+        <p className="mb-3 text-xs text-white/45">
+          🔒 Bu alandaki evrakları yalnızca siz görürsünüz (duruşma hazırlığı notları, taslaklar vb.). Diğer avukatlar ve
+          yöneticiler göremez; her avukatın kendi özel alanı vardır.
+        </p>
+      )}
+      <EvrakAlani
+        key={alan}
+        dosyaId={dosyaId}
+        evraklar={alan === "dosya" ? dosyaEvraklari : ozelEvraklar}
+        ozel={alan === "ozel"}
+      />
+    </div>
+  );
+}
+
+function EvrakAlani({ dosyaId, evraklar, ozel }: { dosyaId: string; evraklar: EvrakKaydi[]; ozel: boolean }) {
   const [gorunum, setGorunum] = useState<"klasor" | "tarih">("klasor");
   const [artan, setArtan] = useState(true);
   const [arama, setArama] = useState("");
@@ -123,7 +167,11 @@ export function EvrakPaneli({ dosyaId, evraklar }: { dosyaId: string; evraklar: 
           </button>
         </div>
 
-        {evraklar.length === 0 && <p className="px-2 py-6 text-center text-sm text-white/40">Henüz evrak yok.</p>}
+        {evraklar.length === 0 && (
+          <p className="px-2 py-6 text-center text-sm text-white/40">
+            {ozel ? "Özel evrakınız yok. Aşağıdan ekleyebilirsiniz." : "Henüz evrak yok."}
+          </p>
+        )}
 
         {gorunum === "klasor"
           ? gruplar.map(([klasor, liste]) => {
@@ -157,7 +205,7 @@ export function EvrakPaneli({ dosyaId, evraklar }: { dosyaId: string; evraklar: 
           <button type="button" onClick={() => setYonetimAcik((a) => !a)} className="text-xs text-[#6db8ff] hover:underline">
             {yonetimAcik ? "Evrak ekle ▲" : "+ Evrak ekle ▼"}
           </button>
-          {yonetimAcik && <YuklemeFormu dosyaId={dosyaId} klasorler={klasorler} />}
+          {yonetimAcik && <YuklemeFormu dosyaId={dosyaId} klasorler={klasorler} ozel={ozel} />}
         </div>
       </div>
 
@@ -172,7 +220,7 @@ export function EvrakPaneli({ dosyaId, evraklar }: { dosyaId: string; evraklar: 
   );
 }
 
-function YuklemeFormu({ dosyaId, klasorler }: { dosyaId: string; klasorler: string[] }) {
+function YuklemeFormu({ dosyaId, klasorler, ozel }: { dosyaId: string; klasorler: string[]; ozel: boolean }) {
   const [hata, setHata] = useState("");
   const [bekliyor, basla] = useTransition();
   return (
@@ -189,6 +237,7 @@ function YuklemeFormu({ dosyaId, klasorler }: { dosyaId: string; klasorler: stri
         });
       }}
     >
+      {ozel && <input type="hidden" name="ozel" value="1" />}
       <input type="file" name="dosya" multiple required className="block w-full text-xs text-white/60" />
       <Girdi name="klasor" list="cmk-klasorler" placeholder="Klasör (ör. İfadeler)" required className="!py-1.5" />
       <datalist id="cmk-klasorler">

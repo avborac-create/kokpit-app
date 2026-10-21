@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/core/db/prisma";
+import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { cmkDosyasiGetir } from "@/modules/cmk-dosyalari/lib/queries";
 import { DOSYA_DURUMU_ETIKETLERI } from "@/modules/cmk-dosyalari/lib/sabitler";
 import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
@@ -10,12 +11,15 @@ export default async function CMKDosyasiSayfasi({ params }: { params: Promise<{ 
   const dosya = await cmkDosyasiGetir(id);
   if (!dosya) notFound();
 
+  const kullanici = await mevcutKullanici();
   const evraklar = await prisma.cMKEvrak.findMany({
-    where: { cmkDosyasiId: id },
-    select: { id: true, ad: true, klasor: true, evrakTarihi: true, mimeTipi: true, boyutBayt: true, onizlemeTuru: true },
+    // Baska avukatlarin "avukata ozel" evraklari hic cekilmez.
+    where: { cmkDosyasiId: id, OR: [{ ozelKullaniciId: null }, { ozelKullaniciId: kullanici?.kullaniciId ?? "-" }] },
+    select: { id: true, ad: true, klasor: true, evrakTarihi: true, mimeTipi: true, boyutBayt: true, onizlemeTuru: true, ozelKullaniciId: true },
   });
-  const kayitlar: EvrakKaydi[] = evraklar.map((e) => ({
+  const kayitlar: EvrakKaydi[] = evraklar.map(({ ozelKullaniciId, ...e }) => ({
     ...e,
+    ozel: ozelKullaniciId !== null,
     evrakTarihi: e.evrakTarihi ? e.evrakTarihi.toISOString().slice(0, 10) : null,
     onizlemeTuru: e.onizlemeTuru as EvrakKaydi["onizlemeTuru"],
   }));
@@ -42,7 +46,6 @@ export default async function CMKDosyasiSayfasi({ params }: { params: Promise<{ 
         </div>
       </div>
       {dosya.notlar && <p className="glass mb-4 whitespace-pre-line rounded-2xl p-4 text-sm text-white/70">{dosya.notlar}</p>}
-      <h2 className="mb-2 text-sm font-semibold text-white">Dosya Evrakları</h2>
       <EvrakPaneli dosyaId={id} evraklar={kayitlar} />
     </div>
   );

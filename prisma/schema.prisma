@@ -1024,11 +1024,16 @@ model CMKEvrak {
   boyutBayt    Int
   onizlemeTuru String // PDF | RESIM | METIN | YOK
 
+  // Doluysa evrak "avukata ozel"dir: yalniz bu kullanici gorur/duzenler (baska
+  // avukat, yonetici dahil, goremez). Bos ise normal dosya evragidir.
+  ozelKullaniciId String?
+
   createdAt DateTime @default(now())
 
   icerik CMKEvrakIcerik?
 
   @@index([cmkDosyasiId])
+  @@index([ozelKullaniciId])
   @@map("cmk_evraklari")
 }
 
