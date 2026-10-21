@@ -157,7 +157,7 @@ export default async function CMKDosyalariSayfasi({
                   </td>
                   <td className="px-4 py-3">
                     <Link
-                      href={`/kokpit/cmk-dosyalari/${dosya.id}/duzenle`}
+                      href={`/kokpit/cmk-dosyalari/${dosya.id}`}
                       className="font-medium text-white hover:text-[#6db8ff] hover:underline"
                     >
                       {dosya.adSoyad}

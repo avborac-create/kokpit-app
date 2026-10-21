@@ -992,6 +992,8 @@ model CMKDosyasi {
 
   notlar String?
 
+  evraklar CMKEvrak[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1004,6 +1006,43 @@ model CMKDosyasi {
   @@index([durusmaTarihi])
   @@index([sonrakiKontrolTarihi])
   @@map("cmk_dosyalari")
+}
+
+// CMK dosyasinin evraklari (iddianame, durusma zabitlari, ifadeler, taramalar).
+// Meta veri CMKEvrak'ta, dosya baytlari ayri tabloda (CMKEvrakIcerik) tutulur ki
+// liste sorgulari agir baytlari cekmesin. Onizleme: PDF/resim dogrudan, TIF
+// PNG'ye cevrilmis halde, UDF (UYAP) metne cevrilmis halde sunulur.
+model CMKEvrak {
+  id           String     @id @default(cuid())
+  cmkDosyasiId String
+  cmkDosyasi   CMKDosyasi @relation(fields: [cmkDosyasiId], references: [id], onDelete: Cascade)
+
+  klasor       String // "Iddianame", "Durusma Zabitlari", "Ifadeler"...
+  ad           String
+  evrakTarihi  DateTime?
+  mimeTipi     String
+  boyutBayt    Int
+  onizlemeTuru String // PDF | RESIM | METIN | YOK
+
+  createdAt DateTime @default(now())
+
+  icerik CMKEvrakIcerik?
+
+  @@index([cmkDosyasiId])
+  @@map("cmk_evraklari")
+}
+
+model CMKEvrakIcerik {
+  evrakId String   @id
+  evrak   CMKEvrak @relation(fields: [evrakId], references: [id], onDelete: Cascade)
+
+  orijinalAd   String
+  orijinal     Bytes
+  onizleme     Bytes?
+  onizlemeMime String?
+  metin        String?
+
+  @@map("cmk_evrak_icerikleri")
 }
 
 // ============================================================

@@ -37,6 +37,8 @@ async function main() {
   const atlananlar = [];
   let toplamKayit = 0;
   for (const anahtar of modelAnahtarlari) {
+    // Evrak baytlari JSON yedegini sisirir; orijinaller kullanicinin kendi klasorunde, DB yedegi saglayicida.
+    if (anahtar === "cMKEvrakIcerik") continue;
     // Sema yeni bir tablo eklemis ama migration henuz uygulanmamissa (P2021)
     // tek bir tablo yuzunden TUM yedek cokmesin: o tablo atlanir, digerleri alinir.
     let kayitlar;
