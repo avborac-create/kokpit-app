@@ -26,7 +26,7 @@ export default async function OdemeTalebiSayfasi({ params }: { params: Promise<{
       >
         ‹ {varsayilan.musteriAdi} — Müvekkil Ekonomisi
       </Link>
-      <h1 className="mb-1 mt-1 text-2xl font-semibold tracking-tight text-white">Müvekkil Hesap Pusulası</h1>
+      <h1 className="mb-1 mt-1 text-2xl font-semibold tracking-tight text-white">Müvekkil Hesap Özeti</h1>
       <p className="mb-6 text-sm text-white/45">
         Müvekkile gönderilecek, ne için ne kadar ödenmesi gerektiğini sade bir dille anlatan A4 belge.
       </p>

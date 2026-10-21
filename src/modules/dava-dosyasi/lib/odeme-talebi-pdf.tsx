@@ -84,12 +84,12 @@ export type OdemeTalebiVerisi = {
   not: string;
 };
 
-function MuvekkilHesapPusulasi({ v }: { v: OdemeTalebiVerisi }) {
+function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
   const toplam = v.satirlar.reduce((t, x) => t + x.tutar, 0);
   const odemeBilgisiVar = v.banka || v.iban || v.hesapSahibi;
 
   return (
-    <Document title="Müvekkil Hesap Pusulası">
+    <Document title="Müvekkil Hesap Özeti">
       <Page size="A4" style={s.sayfa}>
         <View style={s.ustSatir}>
           <View style={s.logoBaslik}>
@@ -97,7 +97,7 @@ function MuvekkilHesapPusulasi({ v }: { v: OdemeTalebiVerisi }) {
             <Image src={BURO_LOGOSU} style={s.logo} />
             <View>
               <Text style={s.buro}>ECES HUKUK BÜROSU</Text>
-              <Text style={s.baslik}>Müvekkil Hesap Pusulası</Text>
+              <Text style={s.baslik}>Müvekkil Hesap Özeti</Text>
             </View>
           </View>
           <View style={s.tarihKutu}>
@@ -240,5 +240,5 @@ function MuvekkilHesapPusulasi({ v }: { v: OdemeTalebiVerisi }) {
 }
 
 export async function odemeTalebiPdfUret(veri: OdemeTalebiVerisi): Promise<Buffer> {
-  return renderToBuffer(<MuvekkilHesapPusulasi v={veri} />);
+  return renderToBuffer(<MuvekkilHesapOzeti v={veri} />);
 }
