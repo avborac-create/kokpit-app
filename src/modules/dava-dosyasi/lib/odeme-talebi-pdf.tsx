@@ -19,7 +19,7 @@ const s = StyleSheet.create({
   sayfa: { paddingTop: 42, paddingBottom: 56, paddingHorizontal: 44, fontSize: 12, fontFamily: "Liberation Sans", color: R.yazi },
   ustSatir: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 },
   logoBaslik: { flexDirection: "row", alignItems: "center" },
-  logo: { width: 64, height: 64, marginRight: 14 },
+  logo: { width: 76, height: 76, marginRight: 16 },
   buro: { fontSize: 11, color: R.ikincil, letterSpacing: 0.8, marginBottom: 4 },
   baslik: { fontSize: 28, fontWeight: 700 },
   tarihKutu: { alignItems: "flex-end" },
