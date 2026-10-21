@@ -34,7 +34,12 @@ function tarihBul(ad) {
 }
 
 function gorunenAd(ad) {
-  return ad.replace(/\.(udf\.pdf|udf|pdf|tif|tiff)$/i, "").replace(/_/g, " ").trim();
+  return ad
+    .replace(/\.(udf\.pdf|udf|pdf|tif|tiff)$/i, "")
+    .replace(/(\d{2})[_.-](\d{2})[_.-](\d{4})/g, "$1.$2.$3")
+    .replace(/(^|[^\d])(\d{4})_(\d{1,6})(?=_|$)/, "$1$2/$3")
+    .replace(/_/g, " ")
+    .trim();
 }
 
 function klasorBul(altKlasor, ad) {

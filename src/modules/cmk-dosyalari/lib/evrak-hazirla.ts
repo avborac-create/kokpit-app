@@ -72,6 +72,13 @@ export function adindanTarihBul(ad: string): Date | null {
   return Number.isNaN(tarih.getTime()) ? null : tarih;
 }
 
+// Dosya adindan okunur bir gorunen ad uretir: uzanti atilir, tarihler noktali (15.10.2025),
+// esas no egik cizgili (2025/176) olur, kalan alt cizgiler bosluga donusur.
 export function gorunenAdUret(ad: string): string {
-  return ad.replace(/\.(udf\.pdf|udf|pdf|tif|tiff|jpg|jpeg|png|webp|docx)$/i, "").replace(/_/g, " ").trim();
+  return ad
+    .replace(/\.(udf\.pdf|udf|pdf|tif|tiff|jpg|jpeg|png|webp|docx)$/i, "")
+    .replace(/(\d{2})[_.-](\d{2})[_.-](\d{4})/g, "$1.$2.$3")
+    .replace(/(^|[^\d])(\d{4})_(\d{1,6})(?=_|$)/, "$1$2/$3")
+    .replace(/_/g, " ")
+    .trim();
 }
