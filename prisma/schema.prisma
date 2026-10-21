@@ -348,6 +348,7 @@ model KarsiTaraf {
 
   dosyalar DosyaKarsiTarafi[]
   kumeler  UyusmazlikGrubuKarsiTarafi[]
+  masraflar DosyaMasrafi[]
 
   @@index([musteriId])
   @@map("karsi_taraflar")
@@ -637,6 +638,9 @@ model DosyaMasrafi {
   // hesabindan duser), Buro (buro ustlenir, muvekkil carisine girmez) ya da
   // Borclu (karsi taraftan tahsil edilecek, muvekkil carisine girmez).
   yansitmaHedefi MasrafYansitmaHedefi @default(MUVEKKIL)
+  // Borclu/karsi tarafa yansitilan masrafta opsiyonel: hangi karsi taraf.
+  karsiTarafId String?
+  karsiTaraf   KarsiTaraf? @relation(fields: [karsiTarafId], references: [id], onDelete: SetNull)
 
   olusturmaTarihi DateTime @default(now())
 

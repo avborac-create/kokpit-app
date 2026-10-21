@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { prisma } from "@/core/db/prisma";
 import { davaDosyasiGetir, dosyaMasrafiGetir } from "@/modules/dava-dosyasi/lib/queries";
 import { dosyaMasrafiGuncelle } from "@/modules/dava-dosyasi/lib/actions";
 import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
@@ -20,7 +21,13 @@ export default async function MasrafDuzenlemeSayfasi({
     tutar: Number(masraf.tutar),
     aciklama: masraf.aciklama,
     yansitmaHedefi: masraf.yansitmaHedefi,
+    karsiTarafId: masraf.karsiTarafId,
   };
+  const karsiTaraflar = await prisma.karsiTaraf.findMany({
+    where: { dosyalar: { some: { dosyaId: id } } },
+    select: { id: true, ad: true },
+    orderBy: { ad: "asc" },
+  });
 
   return (
     <div className="pt-3">
@@ -43,6 +50,7 @@ export default async function MasrafDuzenlemeSayfasi({
       <MasrafFormu
         action={dosyaMasrafiGuncelle.bind(null, id, masrafId)}
         duzenlemeVerisi={duzenlemeVerisi}
+        karsiTaraflar={karsiTaraflar}
       />
     </div>
   );

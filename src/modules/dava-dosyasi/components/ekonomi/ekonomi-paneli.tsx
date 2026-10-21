@@ -504,6 +504,15 @@ async function HesapSekmesi({
     .map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` }));
 
   const turListesi = hesap.masrafHesabiMi && silmeYetkisiVar ? await secenekListesiTumDegerlerle("masraf_turu") : null;
+  const karsiTaraflar = hesap.masrafHesabiMi
+    ? await prisma.karsiTaraf.findMany({
+        where: kapsam.dosyaId
+          ? { dosyalar: { some: { dosyaId: kapsam.dosyaId } } }
+          : { musteriId: kapsam.musteriId },
+        select: { id: true, ad: true },
+        orderBy: { ad: "asc" },
+      })
+    : [];
   const tumMasraflar = hesap.masrafHesabiMi
     ? (
         await prisma.dosyaMasrafi.findMany({
@@ -643,6 +652,7 @@ async function HesapSekmesi({
                 action={masrafEkle.bind(null, kapsam.musteriId)}
                 varsayilanCariKod={hesap.eskiKod ?? undefined}
                 dosyaSecimi={{ sabitDosyaId: kapsam.dosyaId, dosyalar }}
+                karsiTaraflar={karsiTaraflar}
                 turDuzenleyici={
                   turListesi ? (
                     <SecenekDuzenleyiciPenceresi listeId={turListesi.id} baslik="Masraf Türü" degerler={turListesi.degerler} />

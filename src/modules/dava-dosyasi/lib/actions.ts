@@ -575,6 +575,11 @@ function yansitmaHedefiAl(formData: FormData): MasrafYansitmaHedefi {
   return GECERLI_YANSITMA_HEDEFLERI.includes(ham) ? ham : "MUVEKKIL";
 }
 
+// Karsi taraf yalniz "Borclu" yansitmasinda anlamlidir (opsiyonel).
+function masrafKarsiTarafiAl(formData: FormData): string | null {
+  return yansitmaHedefiAl(formData) === "BORCLU" ? metinYaAlNull(formData, "karsiTarafId") : null;
+}
+
 export async function dosyaMasrafiEkle(dosyaId: string, formData: FormData) {
   const tarih = String(formData.get("tarih") ?? "");
   const cariKodId = String(formData.get("cariKodId") ?? "");
@@ -595,6 +600,7 @@ export async function dosyaMasrafiEkle(dosyaId: string, formData: FormData) {
       aciklama,
       tutar,
       yansitmaHedefi: yansitmaHedefiAl(formData),
+      karsiTarafId: masrafKarsiTarafiAl(formData),
     },
   });
 
@@ -626,6 +632,7 @@ export async function dosyaMasrafiGuncelle(dosyaId: string, masrafId: string, fo
       aciklama,
       tutar,
       yansitmaHedefi: yansitmaHedefiAl(formData),
+      karsiTarafId: masrafKarsiTarafiAl(formData),
     },
   });
 
