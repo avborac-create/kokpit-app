@@ -248,7 +248,7 @@ export async function EkonomiPaneli({
               href={`/kokpit/finans/musteri-iliskileri/${kapsam.musteriId}/odeme-talebi`}
               className="whitespace-nowrap rounded-full border border-[var(--accent)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-medium text-white hover:bg-[var(--accent)]/30"
             >
-              📄 Ödeme Talebi Oluştur
+              📄 Müvekkil Hesap Özeti
             </Link>
           )}
           {kapsam.dosyaId ? (

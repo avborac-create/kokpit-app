@@ -15,7 +15,7 @@ function bugunArti(gun: number) {
   return d.toISOString().slice(0, 10);
 }
 
-// "Hesap Özeti ve Ödeme Talebi" hazırlama formu: satırlar cari hesaplardan gelir,
+// "Müvekkil Hesap Özeti" hazırlama formu: satırlar cari hesaplardan gelir,
 // istenen satır kapatılır/değiştirilir; çıktı A4 PDF ya da WhatsApp metni.
 export function OdemeTalebiFormu({
   musteriId,
@@ -209,7 +209,7 @@ export function OdemeTalebiFormu({
 
       <div className="flex flex-wrap items-center gap-3">
         <Dugme type="submit" disabled={dahilSatirlar.length === 0}>
-          📄 A4 PDF Oluştur
+          📄 A4 Hesap Özeti (PDF) Oluştur
         </Dugme>
         <Dugme type="button" varyant="ikincil" onClick={whatsappKopyala} disabled={dahilSatirlar.length === 0}>
           {kopyalandi ? "Kopyalandı ✓" : "WhatsApp metnini kopyala"}
