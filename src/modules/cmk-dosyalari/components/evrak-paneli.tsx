@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Dugme } from "@/core/ui/button";
 import { Girdi } from "@/core/ui/form";
 import { evrakGuncelle, evrakSil, evrakYukle } from "@/modules/cmk-dosyalari/lib/evrak-actions";
@@ -207,23 +207,9 @@ function YuklemeFormu({ dosyaId, klasorler }: { dosyaId: string; klasorler: stri
 }
 
 function Onizleme({ dosyaId, evrak, klasorler }: { dosyaId: string; evrak: EvrakKaydi; klasorler: string[] }) {
-  const [metin, setMetin] = useState<string | null>(null);
   const [duzenle, setDuzenle] = useState(false);
   const [bekliyor, basla] = useTransition();
   const yol = `/api/cmk-evrak/${evrak.id}`;
-
-  useEffect(() => {
-    if (evrak.onizlemeTuru !== "METIN") return;
-    let iptal = false;
-    fetch(`${yol}?tur=metin`)
-      .then((r) => r.text())
-      .then((t) => {
-        if (!iptal) setMetin(t);
-      });
-    return () => {
-      iptal = true;
-    };
-  }, [evrak.onizlemeTuru, yol]);
 
   return (
     <div>
@@ -287,9 +273,7 @@ function Onizleme({ dosyaId, evrak, klasorler }: { dosyaId: string; evrak: Evrak
         <img src={yol} alt={evrak.ad} className="max-h-[78vh] w-full rounded-xl bg-white object-contain" />
       )}
       {evrak.onizlemeTuru === "METIN" && (
-        <pre className="max-h-[78vh] overflow-auto whitespace-pre-wrap rounded-xl bg-white/[0.04] p-4 text-sm leading-relaxed text-white/85">
-          {metin ?? "Yükleniyor…"}
-        </pre>
+        <iframe src={`${yol}?tur=html`} title={evrak.ad} className="h-[78vh] w-full rounded-xl bg-[#e9ebf0]" />
       )}
       {evrak.onizlemeTuru === "YOK" && (
         <p className="py-24 text-center text-sm text-white/40">Bu evrak türü için önizleme yok; indirerek açabilirsiniz.</p>
