@@ -40,7 +40,14 @@ export function EvrakPaneli({ dosyaId, evraklar }: { dosyaId: string; evraklar: 
   const [gorunum, setGorunum] = useState<"klasor" | "tarih">("klasor");
   const [artan, setArtan] = useState(true);
   const [arama, setArama] = useState("");
-  const [seciliId, setSeciliId] = useState<string | null>(evraklar[0]?.id ?? null);
+  const [seciliId, setSeciliId] = useState<string | null>(() => {
+    const sirali = [...evraklar].sort((a, b) => {
+      const ia = KLASOR_SIRASI.indexOf(a.klasor);
+      const ib = KLASOR_SIRASI.indexOf(b.klasor);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || tarihKarsilastir(a, b, true);
+    });
+    return sirali[0]?.id ?? null;
+  });
   const [kapaliKlasorler, setKapaliKlasorler] = useState<Set<string>>(new Set());
   const [yonetimAcik, setYonetimAcik] = useState(false);
 
