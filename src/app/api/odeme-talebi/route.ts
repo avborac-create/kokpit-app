@@ -10,7 +10,7 @@ function metin(fd: FormData, alan: string): string {
   return String(fd.get(alan) ?? "").trim();
 }
 
-// Müvekkile gönderilecek "Müvekkil Hesap Özeti" belgesini (A4 PDF) üretir.
+// Müvekkile gönderilecek "Müvekkil Hesap Pusulası" belgesini (A4 PDF) üretir.
 export async function POST(request: Request) {
   if (!(await mevcutKullanici())) return NextResponse.json({ hata: "Yetkisiz" }, { status: 401 });
   const fd = await request.formData();
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     not: metin(fd, "not").slice(0, 600),
   });
 
-  const dosyaAdi = `Muvekkil-Hesap-Ozeti-${musteri.adSoyadUnvan.replace(/[^A-Za-z0-9]+/g, "-").slice(0, 40)}.pdf`;
+  const dosyaAdi = `Muvekkil-Hesap-Pusulasi-${musteri.adSoyadUnvan.replace(/[^A-Za-z0-9]+/g, "-").slice(0, 40)}.pdf`;
   return new NextResponse(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",

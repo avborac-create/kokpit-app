@@ -21,7 +21,7 @@ const s = StyleSheet.create({
   logoBaslik: { flexDirection: "row", alignItems: "center" },
   logo: { width: 76, height: 76, marginRight: 16 },
   buro: { fontSize: 11, color: R.ikincil, letterSpacing: 0.8, marginBottom: 4 },
-  baslik: { fontSize: 28, fontWeight: 700 },
+  baslik: { fontSize: 25, fontWeight: 700 },
   tarihKutu: { alignItems: "flex-end" },
   tarihEtiket: { fontSize: 10, color: R.ikincil },
   tarihDeger: { fontSize: 12, marginTop: 2 },
@@ -76,12 +76,12 @@ export type OdemeTalebiVerisi = {
   not: string;
 };
 
-function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
+function MuvekkilHesapPusulasi({ v }: { v: OdemeTalebiVerisi }) {
   const toplam = v.satirlar.reduce((t, x) => t + x.tutar, 0);
   const odemeBilgisiVar = v.banka || v.iban || v.hesapSahibi;
 
   return (
-    <Document title="Müvekkil Hesap Özeti">
+    <Document title="Müvekkil Hesap Pusulası">
       <Page size="A4" style={s.sayfa}>
         <View style={s.ustSatir}>
           <View style={s.logoBaslik}>
@@ -89,7 +89,7 @@ function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
             <Image src={BURO_LOGOSU} style={s.logo} />
             <View>
               <Text style={s.buro}>ECES HUKUK BÜROSU</Text>
-              <Text style={s.baslik}>Müvekkil Hesap Özeti</Text>
+              <Text style={s.baslik}>Müvekkil Hesap Pusulası</Text>
             </View>
           </View>
           <View style={s.tarihKutu}>
@@ -188,5 +188,5 @@ function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
 }
 
 export async function odemeTalebiPdfUret(veri: OdemeTalebiVerisi): Promise<Buffer> {
-  return renderToBuffer(<MuvekkilHesapOzeti v={veri} />);
+  return renderToBuffer(<MuvekkilHesapPusulasi v={veri} />);
 }

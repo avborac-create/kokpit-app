@@ -23,7 +23,7 @@ function bugunArti(gun: number) {
   return d.toISOString().slice(0, 10);
 }
 
-// "Müvekkil Hesap Özeti" hazırlama formu: satırlar cari hesaplardan gelir,
+// "Müvekkil Hesap Pusulası" hazırlama formu: satırlar cari hesaplardan gelir,
 // istenen satır kapatılır/değiştirilir; çıktı A4 PDF ya da WhatsApp metni.
 export function OdemeTalebiFormu({
   musteriId,
@@ -89,7 +89,7 @@ export function OdemeTalebiFormu({
     const tamAd = adBicimle(musteriAdi);
     const selam = hitap ? `${tamAd.split(" ")[0]} ${hitap}` : tamAd;
     const metin =
-      `${selam} merhaba, hesap özetinizi iletiyorum.\n\n${satirMetni}\n\n` +
+      `${selam} merhaba, hesap pusulanızı iletiyorum.\n\n${satirMetni}\n\n` +
       `*Ödemeniz gereken toplam: ${para.format(toplam)} TL*\n` +
       (sonOdeme ? `Son ödeme tarihi: ${sonOdeme.split("-").reverse().join(".")}\n` : "") +
       (banka.iban ? `\nHesap sahibi: ${banka.hesapSahibi}\nBanka: ${banka.banka}\nIBAN: ${banka.iban}\n` : "") +
@@ -228,7 +228,7 @@ export function OdemeTalebiFormu({
 
       <div className="flex flex-wrap items-center gap-3">
         <Dugme type="submit" disabled={dahilSatirlar.length === 0}>
-          📄 A4 Hesap Özeti (PDF) Oluştur
+          📄 A4 Hesap Pusulası (PDF) Oluştur
         </Dugme>
         <Dugme type="button" varyant="ikincil" onClick={whatsappKopyala} disabled={dahilSatirlar.length === 0}>
           {kopyalandi ? "Kopyalandı ✓" : "WhatsApp metnini kopyala"}
