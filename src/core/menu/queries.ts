@@ -10,4 +10,6 @@ import { prisma } from "@/core/db/prisma";
 export const menuDuzeniniGetir = unstable_cache(
   async () => prisma.menuOgesi.findMany({ orderBy: { siraNo: "asc" } }),
   ["menu-duzeni"],
+  // Ayarlar'dan degisince hemen yenilenir (revalidatePath); veritabanindan dogrudan degisirse en gec 2 dk sonra yansir.
+  { revalidate: 120 },
 );
