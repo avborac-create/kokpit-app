@@ -111,10 +111,55 @@ export default async function CMKDosyalariSayfasi({
         )}
       </form>
 
-      <div className="glass overflow-x-auto rounded-2xl">
+      <div className="space-y-3 md:hidden">
+        {dosyalar.map((dosya) => (
+          <div
+            key={dosya.id}
+            className={`glass rounded-2xl p-4 ${dosya.id === params.vurgu ? "ring-1 ring-[var(--accent)]" : ""}`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-lg font-semibold text-white">{dosya.adSoyad}</p>
+                <p className="text-sm text-white/60">
+                  {dosya.birim} · {dosya.dosyaNo}
+                </p>
+              </div>
+              <span className="shrink-0 whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
+                {DOSYA_DURUMU_ETIKETLERI[dosya.dosyaDurumu]}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-white/70">{dosya.suc}</p>
+            {dosya.durusmaTarihi && (
+              <p className="mt-2 text-sm text-white/60">
+                Duruşma: <span className="text-white/85">{tarihSaatFormatlayici.format(dosya.durusmaTarihi)}</span>
+              </p>
+            )}
+            {dosya.sonrakiKontrolTarihi && (
+              <p className="mt-1 text-sm text-white/60">
+                Sonraki kontrol: <span className="text-white/85">{tarihFormatlayici.format(dosya.sonrakiKontrolTarihi)}</span>
+              </p>
+            )}
+            <div className="mt-3 flex items-center gap-3">
+              <Link
+                href={`/kokpit/cmk-dosyalari/${dosya.id}`}
+                className="flex-1 rounded-full bg-[var(--accent)] px-4 py-2.5 text-center text-sm font-medium text-white"
+              >
+                Dosyayı Aç · Evraklar ›
+              </Link>
+              <Link href={`/kokpit/cmk-dosyalari/${dosya.id}/duzenle`} className="text-sm text-[#6db8ff] hover:underline">
+                Düzenle
+              </Link>
+            </div>
+          </div>
+        ))}
+        {dosyalar.length === 0 && <p className="py-8 text-center text-white/40">Kayıt bulunamadı.</p>}
+      </div>
+
+      <div className="glass hidden overflow-x-auto rounded-2xl md:block">
         <table className="w-full text-left text-sm">
           <thead className="text-white/50">
             <tr>
+              <th className="px-4 py-3 font-medium">Dosya</th>
               <th className="px-4 py-3 font-medium">SMS</th>
               <th className="px-4 py-3 font-medium">CMK</th>
               <th className="px-4 py-3 font-medium">Müvekkil</th>
@@ -145,6 +190,14 @@ export default async function CMKDosyalariSayfasi({
                     dosya.id === params.vurgu ? "bg-[var(--accent-soft)]" : ""
                   }`}
                 >
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/kokpit/cmk-dosyalari/${dosya.id}`}
+                      className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-medium text-[#6db8ff] hover:bg-[var(--accent)] hover:text-white"
+                    >
+                      Aç · Evraklar ›
+                    </Link>
+                  </td>
                   <td className="px-4 py-3">
                     <span className={dosya.smsGonderilebilirMi ? "text-[#32d74b]" : "text-white/25"}>
                       {dosya.smsGonderilebilirMi ? "✓" : "—"}
@@ -214,7 +267,7 @@ export default async function CMKDosyalariSayfasi({
             })}
             {dosyalar.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={12} className="px-4 py-8 text-center text-white/40">
                   Kayıt bulunamadı.
                 </td>
               </tr>
