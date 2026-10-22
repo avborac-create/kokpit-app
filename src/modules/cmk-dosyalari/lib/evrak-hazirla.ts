@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { docxHtmlUret } from "@/modules/cmk-dosyalari/lib/docx-html";
 
 export type HazirlananEvrak = {
   mimeTipi: string;
@@ -56,6 +57,10 @@ export async function evrakHazirla(ad: string, icerik: Buffer, bildirilenMime?: 
   }
   if (mimeTipi.startsWith("image/")) {
     return { mimeTipi, onizlemeTuru: "RESIM", onizleme: null, onizlemeMime: null, metin: null };
+  }
+  if (mimeTipi === UZANTI_MIME.docx) {
+    const html = await docxHtmlUret(icerik);
+    return { mimeTipi, onizlemeTuru: html ? "METIN" : "YOK", onizleme: null, onizlemeMime: null, metin: null };
   }
   if (ad.toLowerCase().endsWith(".udf")) {
     const metin = await udfMetniCikar(icerik);

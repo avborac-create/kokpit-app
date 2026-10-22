@@ -10,6 +10,11 @@ import path from "path";
 
 const klasor = process.argv[2];
 const kuru = process.argv.includes("--kuru");
+// --alt-klasor="22 EKİM GÜNÜ": yalniz o alt klasordeki dosyalar (daha once yuklenenler tekrar islenmez)
+// --ozel-eposta=admin@...: bu alt klasordeki evraklar "AVUKATA OZEL" olarak o kullaniciya yazilir
+const secenek = (ad) => process.argv.find((a) => a.startsWith("--" + ad + "="))?.slice(ad.length + 3);
+const sadeceAltKlasor = secenek("alt-klasor");
+const ozelEposta = secenek("ozel-eposta");
 if (!klasor) throw new Error("Klasor yolu verin.");
 
 const DOSYA = {
@@ -26,7 +31,8 @@ const DOSYA = {
     "Müştekiler: Cengiz Gülmez ve Emre Gülmez (toplam zarar 127.000 TL). Soruşturma No 2024/267476, İddianame No 2025/3596.",
 };
 
-const MIME = { pdf: "application/pdf", tif: "image/tiff", tiff: "image/tiff", udf: "application/vnd.uyap.udf" };
+const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const MIME = { pdf: "application/pdf", tif: "image/tiff", tiff: "image/tiff", udf: "application/vnd.uyap.udf", docx: DOCX_MIME, png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg" };
 
 function tarihBul(ad) {
   const e = ad.match(/(\d{2})[_.-](\d{2})[_.-](\d{4})/);
@@ -35,7 +41,7 @@ function tarihBul(ad) {
 
 function gorunenAd(ad) {
   return ad
-    .replace(/\.(udf\.pdf|udf|pdf|tif|tiff)$/i, "")
+    .replace(/\.(udf\.pdf|udf|pdf|tif|tiff|docx|png|jpe?g)$/i, "")
     .replace(/(\d{2})[_.-](\d{2})[_.-](\d{4})/g, "$1.$2.$3")
     .replace(/(^|[^\d])(\d{4})_(\d{1,6})(?=_|$)/, "$1$2/$3")
     .replace(/_/g, " ")
@@ -43,6 +49,7 @@ function gorunenAd(ad) {
 }
 
 function klasorBul(altKlasor, ad) {
+  if (altKlasor === "22 EKİM GÜNÜ") return "22 Ekim Günü";
   if (altKlasor === "DURUŞMALAR") return "Duruşma Zabıtları";
   if (altKlasor === "İFADELER") return "İfadeler";
   if (/[iİ]ddianame/i.test(ad)) return "İddianame";
@@ -58,6 +65,14 @@ async function hazirla(ad, icerik) {
   if (uzanti === "tif" || uzanti === "tiff") {
     const png = await sharp(icerik, { pages: 1 }).rotate().png().toBuffer();
     return { mimeTipi, onizlemeTuru: "RESIM", onizleme: png, onizlemeMime: "image/png", metin: null };
+  }
+  if (uzanti === "docx") {
+    const zip = await JSZip.loadAsync(icerik);
+    const var_ = Boolean(zip.file("word/document.xml"));
+    return { mimeTipi, onizlemeTuru: var_ ? "METIN" : "YOK", onizleme: null, onizlemeMime: null, metin: null };
+  }
+  if (uzanti === "png" || uzanti === "jpg" || uzanti === "jpeg") {
+    return { mimeTipi, onizlemeTuru: "RESIM", onizleme: null, onizlemeMime: null, metin: null };
   }
   if (uzanti === "udf") {
     const zip = await JSZip.loadAsync(icerik);
@@ -83,7 +98,8 @@ function dosyalariTopla() {
   return sonuc.filter((d) => {
     if (statSync(d.tam).size === 0) return false;
     if (/\.udf$/i.test(d.ad) && sonuc.some((x) => x.ad === `${d.ad}.pdf`)) return false;
-    return /\.(pdf|tif|tiff|udf)$/i.test(d.ad);
+    if (sadeceAltKlasor && d.altKlasor !== sadeceAltKlasor) return false;
+    return /\.(pdf|tif|tiff|udf|docx|png|jpe?g)$/i.test(d.ad);
   });
 }
 
@@ -101,13 +117,23 @@ async function main() {
     console.log(`CMK dosyasi: ${cmk.id}`);
   }
 
+  // "Avukata ozel" alt klasoru: evraklar yalniz bu kullaniciya yazilir.
+  let ozelKullaniciId = null;
+  if (ozelEposta && sadeceAltKlasor) {
+    const k = await prisma.kullanici.findUnique({ where: { eposta: ozelEposta }, select: { id: true } });
+    if (!k) throw new Error(`Kullanici bulunamadi: ${ozelEposta}`);
+    ozelKullaniciId = k.id;
+  }
+
   for (const d of dosyalar) {
     const icerik = readFileSync(d.tam);
     const hazir = await hazirla(d.ad, icerik);
     const kayit = {
       klasor: klasorBul(d.altKlasor, d.ad),
-      ad: gorunenAd(d.ad),
-      evrakTarihi: tarihBul(d.ad),
+      // Ayni adli dosya birden fazla klasorde olabilir (ör. iddianamenin 22 Ekim kopyasi): ayirt etmek icin ek yazilir.
+      ad: gorunenAd(d.ad) + (d.altKlasor === "22 EKİM GÜNÜ" && /[iİ]ddianame/i.test(d.ad) ? " — 22 Ekim kopyası" : ""),
+      // Dosya adinda tarih yoksa alt klasor "22 EKİM" ise o gun, degilse bos birakilir.
+      evrakTarihi: tarihBul(d.ad) ?? (d.altKlasor === "22 EKİM GÜNÜ" ? new Date("2026-10-22T12:00:00Z") : null),
       mimeTipi: hazir.mimeTipi,
       boyutBayt: icerik.length,
       onizlemeTuru: hazir.onizlemeTuru,
@@ -117,7 +143,7 @@ async function main() {
       console.log(`[kuru] ${ozet}`);
       continue;
     }
-    const var_ = await prisma.cMKEvrak.findFirst({ where: { cmkDosyasiId: cmk.id, klasor: kayit.klasor, ad: kayit.ad } });
+    const var_ = await prisma.cMKEvrak.findFirst({ where: { cmkDosyasiId: cmk.id, klasor: kayit.klasor, ad: kayit.ad, ozelKullaniciId } });
     if (var_) {
       console.log(`atlandi (var): ${kayit.ad}`);
       continue;
@@ -125,6 +151,7 @@ async function main() {
     await prisma.cMKEvrak.create({
       data: {
         cmkDosyasiId: cmk.id,
+        ozelKullaniciId,
         ...kayit,
         icerik: {
           create: {

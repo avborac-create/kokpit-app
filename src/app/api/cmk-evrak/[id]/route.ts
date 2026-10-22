@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { udfHtmlUret } from "@/modules/cmk-dosyalari/lib/udf-html";
+import { docxHtmlUret } from "@/modules/cmk-dosyalari/lib/docx-html";
 
 // CMK evrakini oturum acmis kullaniciya sunar. ?tur=onizleme (varsayilan:
 // tarayicida gosterilecek hali), ?tur=orijinal (indirme), ?tur=metin (UDF metni).
@@ -21,7 +22,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return new NextResponse(icerik.metin ?? "", { headers: { "Content-Type": "text/plain; charset=utf-8" } });
   }
   if (tur === "html") {
-    const html = await udfHtmlUret(Buffer.from(icerik.orijinal));
+    const kaynak = Buffer.from(icerik.orijinal);
+    const html = evrak.mimeTipi.includes("wordprocessingml") ? await docxHtmlUret(kaynak) : await udfHtmlUret(kaynak);
     if (!html) return NextResponse.json({ hata: "Önizleme üretilemedi" }, { status: 422 });
     return new NextResponse(html, {
       headers: {
