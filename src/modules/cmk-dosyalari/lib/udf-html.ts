@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { SAYFA_DUGME_VE_BETIK, SAYFA_EK_CSS } from "@/modules/cmk-dosyalari/lib/sayfa-kabugu";
 
 // UYAP UDF -> HTML. UDF, content.xml icinde (1) CDATA olarak duz metni ve
 // (2) <elements> altinda paragraf/parca bicimlerini (hizalama, kalin, punto,
@@ -79,5 +80,6 @@ html{background:#e9ebf0}
 body{margin:0;padding:16px;font-family:'Times New Roman',Times,serif;color:#111}
 .sayfa{box-sizing:border-box;width:595pt;max-width:100%;margin:0 auto;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.25);min-height:842pt;padding:${ustBosluk}pt ${sagBosluk}pt 40pt ${solBosluk}pt}
 p{white-space:pre-wrap;tab-size:8;line-height:1.25;word-wrap:break-word;margin-top:0}
-</style></head><body><div class="sayfa">${paragraflar.join("")}</div></body></html>`;
+${SAYFA_EK_CSS}
+</style></head><body><div class="sayfa">${paragraflar.join("")}</div>${SAYFA_DUGME_VE_BETIK}</body></html>`;
 }

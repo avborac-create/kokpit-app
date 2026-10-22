@@ -28,7 +28,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return new NextResponse(html, {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
-        "Content-Security-Policy": "sandbox; default-src 'none'; style-src 'unsafe-inline'",
+        "Content-Security-Policy": "sandbox allow-scripts; default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'",
         "Cache-Control": "private, max-age=300",
       },
     });

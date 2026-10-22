@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { SAYFA_DUGME_VE_BETIK, SAYFA_EK_CSS } from "@/modules/cmk-dosyalari/lib/sayfa-kabugu";
 
 // Word (.docx) -> HTML onizleme. docx bir ZIP'tir; metin word/document.xml'de, bicim
 // (kalin, egik, punto, hizalama, girinti, stiller) word/styles.xml'de durur. Burada
@@ -156,5 +157,6 @@ body{margin:0;padding:16px;font-family:'${varsayilanAile.replace(/[^A-Za-z0-9 ]/
 .sayfa{box-sizing:border-box;width:595pt;max-width:100%;margin:0 auto;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.25);min-height:842pt;padding:${marj("top", 72)}pt ${marj("right", 72)}pt 48pt ${marj("left", 72)}pt}
 p{white-space:pre-wrap;line-height:1.3;word-wrap:break-word}
 table{border-collapse:collapse;width:100%;margin:6pt 0}td{border:1px solid #bbb;padding:4pt;vertical-align:top}
-</style></head><body><div class="sayfa">${parcalar.join("")}</div></body></html>`;
+${SAYFA_EK_CSS}
+</style></head><body><div class="sayfa">${parcalar.join("")}</div>${SAYFA_DUGME_VE_BETIK}</body></html>`;
 }
