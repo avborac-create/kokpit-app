@@ -48,12 +48,13 @@ export async function masrafDokumu(musteriId: string): Promise<MasrafDokumuSatir
     where: { yansitmaHedefi: "MUVEKKIL", dosya: { muvekkiller: { some: { musteriId } }, ekonomiDisi: false } },
     include: {
       tur: true,
-      dosya: { select: { kayitNo: true, altSiraNo: true, buroNo: true, dosyaNo: true, anaDosya: { select: { kayitNo: true } } } },
+      dosya: { select: { kayitNo: true, altSiraNo: true, buroNo: true, dosyaNo: true, birimAdi: true, anaDosya: { select: { kayitNo: true } } } },
     },
     orderBy: [{ tarih: "asc" }],
   });
   return masraflar.map((m) => ({
-    dosya: dosyaEtiketiYaz(m.dosya),
+    // Belgede dosya, birim adi ve esas numarasiyla yazilir (ör. "Bursa 18. İş Mahkemesi 2026/213"); bilgi yoksa KP numarasi.
+    dosya: [m.dosya.birimAdi, m.dosya.dosyaNo].filter(Boolean).join(" ") || dosyaEtiketiYaz(m.dosya),
     tarih: m.tarih.toISOString().slice(0, 10),
     tur: m.tur.etiket,
     aciklama: m.aciklama,

@@ -364,10 +364,24 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
 export async function muvekkilDosyalari(musteriId: string) {
   const dosyalar = await prisma.davaDosyasi.findMany({
     where: { muvekkiller: { some: { musteriId } }, ekonomiDisi: false },
-    select: { ...dosyaSecimi.select, konu: true, birimAdi: true },
+    select: {
+      ...dosyaSecimi.select,
+      konu: true,
+      birimAdi: true,
+      davaKonusu: true,
+      karsiTaraflar: { select: { karsiTaraf: { select: { ad: true } } } },
+    },
     orderBy: { olusturmaTarihi: "asc" },
   });
-  return dosyalar.map((d) => ({ id: d.id, etiket: dosyaEtiketiYaz(d), konu: d.konu, birimAdi: d.birimAdi }));
+  return dosyalar.map((d) => {
+    const mahkeme = [d.birimAdi, d.dosyaNo].filter(Boolean).join(" ");
+    const konu = d.davaKonusu || d.konu;
+    const taraflar = d.karsiTaraflar.map((k) => k.karsiTaraf.ad).filter(Boolean);
+    const ayrinti = [mahkeme, konu && `Konu: ${konu}`, taraflar.length > 0 && `Karşı taraf: ${taraflar.join(", ")}`]
+      .filter(Boolean)
+      .join(" — ");
+    return { id: d.id, etiket: dosyaEtiketiYaz(d), konu: d.konu, birimAdi: d.birimAdi, ayrinti };
+  });
 }
 
 // Ekonomiye dahil / ekonomi disi secimi icin: muvekkilin TUM dosyalari (+ kayit sayilari).

@@ -1,4 +1,5 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
+import { DosyaSecici } from "@/core/ui/dosya-secici";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { MasrafYansitmaSecici } from "@/modules/dava-dosyasi/components/masraf-yansitma-secici";
@@ -28,7 +29,7 @@ export async function MasrafFormu({
   // Yeni masrafta on secili gelecek cari kodun `kod` degeri (ör. masraf_hesabi).
   varsayilanCariKod?: string;
   // Muvekkil ekraninda masrafin hangi dosyaya ait oldugu secilir; dosya ekraninda sabit.
-  dosyaSecimi?: { sabitDosyaId?: string; dosyalar?: { id: string; etiket: string }[] };
+  dosyaSecimi?: { sabitDosyaId?: string; dosyalar?: { id: string; etiket: string; ayrinti?: string }[] };
   // "Karsi Tarafa / Borcluya" secilince opsiyonel secilebilecek karsi taraflar.
   karsiTaraflar?: { id: string; ad: string }[];
 }) {
@@ -45,16 +46,7 @@ export async function MasrafFormu({
       {dosyaSecimi && !dosyaSecimi.sabitDosyaId && (
         <Alan>
           <Etiket htmlFor="dosyaId">Dosya</Etiket>
-          <Secim id="dosyaId" name="dosyaId" required defaultValue="">
-            <option value="" disabled>
-              Seçiniz…
-            </option>
-            {(dosyaSecimi.dosyalar ?? []).map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.etiket}
-              </option>
-            ))}
-          </Secim>
+          <DosyaSecici id="dosyaId" name="dosyaId" dosyalar={dosyaSecimi.dosyalar ?? []} required />
         </Alan>
       )}
       <Alan>

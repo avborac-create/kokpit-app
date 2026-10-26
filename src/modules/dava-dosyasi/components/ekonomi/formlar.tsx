@@ -1,11 +1,12 @@
 import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
+import { DosyaSecici } from "@/core/ui/dosya-secici";
 
 const bugun = () => new Date().toISOString().slice(0, 10);
 const kutu = "glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-2 md:grid-cols-4";
 
-export type DosyaSecenegi = { id: string; etiket: string };
+export type DosyaSecenegi = { id: string; etiket: string; ayrinti?: string };
 
 // Dosya secimi: dosya ekraninda (sabitDosyaId) gizli alan, muvekkil ekraninda secim kutusu.
 function DosyaAlani({
@@ -23,14 +24,7 @@ function DosyaAlani({
   return (
     <Alan>
       <Etiket htmlFor={id}>Dosya</Etiket>
-      <Secim id={id} name="dosyaId" required={!bosSecenek} defaultValue="">
-        <option value="">{bosSecenek ?? "Seçiniz…"}</option>
-        {dosyalar.map((d) => (
-          <option key={d.id} value={d.id}>
-            {d.etiket}
-          </option>
-        ))}
-      </Secim>
+      <DosyaSecici id={id} name="dosyaId" dosyalar={dosyalar} required={!bosSecenek} bosSecenek={bosSecenek} />
     </Alan>
   );
 }
@@ -206,16 +200,7 @@ export function DosyalarArasiVirmanFormu({
       ) : (
         <Alan>
           <Etiket htmlFor="dav-kaynak-dosya">Kaynak Dosya (para buradan çıkar)</Etiket>
-          <Secim id="dav-kaynak-dosya" name="kaynakDosyaId" required defaultValue="">
-            <option value="" disabled>
-              Seçiniz…
-            </option>
-            {dosyalar.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.etiket}
-              </option>
-            ))}
-          </Secim>
+          <DosyaSecici id="dav-kaynak-dosya" name="kaynakDosyaId" dosyalar={dosyalar} required />
         </Alan>
       )}
       <Alan>
@@ -233,18 +218,7 @@ export function DosyalarArasiVirmanFormu({
       </Alan>
       <Alan>
         <Etiket htmlFor="dav-hedef-dosya">Hedef Dosya (para buraya girer)</Etiket>
-        <Secim id="dav-hedef-dosya" name="hedefDosyaId" required defaultValue="">
-          <option value="" disabled>
-            Seçiniz…
-          </option>
-          {dosyalar
-            .filter((d) => d.id !== sabitKaynakDosyaId)
-            .map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.etiket}
-              </option>
-            ))}
-        </Secim>
+        <DosyaSecici id="dav-hedef-dosya" name="hedefDosyaId" dosyalar={dosyalar.filter((d) => d.id !== sabitKaynakDosyaId)} required />
       </Alan>
       <Alan>
         <Etiket htmlFor="dav-hedef-hesap">Hedef Hesap</Etiket>

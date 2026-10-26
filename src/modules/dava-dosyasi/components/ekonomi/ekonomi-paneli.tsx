@@ -223,7 +223,7 @@ export async function EkonomiPaneli({
           ? alt
           : "ozet";
   const ozetOf = (hesapId: string) => ozet.hesaplar.find((o) => o.hesapId === hesapId);
-  const dosyaSecenekleri: DosyaSecenegi[] = dosyalar.map((d) => ({ id: d.id, etiket: d.etiket }));
+  const dosyaSecenekleri: DosyaSecenegi[] = dosyalar.map((d) => ({ id: d.id, etiket: d.etiket, ayrinti: d.ayrinti }));
 
   type Sekme = { anahtar: string; etiket: string; rozet?: string };
   const hesapSekmesi = (h: (typeof aktifHesaplar)[number]): Sekme => {

@@ -165,14 +165,14 @@ function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
               <Text style={s.dokumBaslik}>Masraf dökümü</Text>
               <View style={s.dokumBaslikSatir}>
                 <Text style={{ width: 66 }}>Tarih</Text>
-                <Text style={{ width: 128 }}>Dosya</Text>
+                <Text style={{ width: 176 }}>Dosya</Text>
                 <Text style={{ flex: 1 }}>Gider</Text>
                 <Text style={{ width: 82, textAlign: "right" }}>Tutar</Text>
               </View>
               {v.masrafDokumu.map((m, i) => (
                 <View key={i} style={s.dokumSatir} wrap={false}>
                   <Text style={{ width: 66 }}>{tarihYaz(m.tarih)}</Text>
-                  <Text style={{ width: 128 }}>{m.dosya}</Text>
+                  <Text style={{ width: 176, paddingRight: 8 }}>{m.dosya}</Text>
                   <Text style={{ flex: 1 }}>
                     {giderMetni(m)}
                   </Text>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
+import { DosyaSecici } from "@/core/ui/dosya-secici";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { MUVEKKILE_ODEME } from "@/modules/dava-dosyasi/lib/tasnif-sabitleri";
@@ -80,16 +81,7 @@ export function TopluTasnifFormu({
             ) : (
               <div className="w-56">
                 {i === 0 && <Etiket>Dosya</Etiket>}
-                <Secim name="dosyaId" required defaultValue="">
-                  <option value="" disabled>
-                    Seçiniz…
-                  </option>
-                  {dosyalar.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.etiket}
-                    </option>
-                  ))}
-                </Secim>
+                <DosyaSecici name="dosyaId" dosyalar={dosyalar} required />
               </div>
             )}
             <div className="w-40">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
+import { DosyaSecici } from "@/core/ui/dosya-secici";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { SecenekDuzenleyiciPenceresi } from "@/core/secenek/secenek-duzenleyici-penceresi";
@@ -51,14 +52,7 @@ export function OdemeFormu({
       ) : (
         <Alan>
           <Etiket htmlFor="od-dosya">Dosya</Etiket>
-          <Secim id="od-dosya" name="dosyaId" defaultValue="">
-            <option value="">Dosyasız (müvekkil havuzu)</option>
-            {dosyalar.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.etiket}
-              </option>
-            ))}
-          </Secim>
+          <DosyaSecici id="od-dosya" name="dosyaId" dosyalar={dosyalar} bosSecenek="Dosyasız (müvekkil havuzu)" />
         </Alan>
       )}
       <Alan>
