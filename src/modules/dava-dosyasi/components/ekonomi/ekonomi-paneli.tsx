@@ -65,7 +65,7 @@ function DurumSeridi({
   havuzBakiyesi?: number;
   paraHesapNo?: number;
 }) {
-  const gosterilecek = ozet.hesaplar.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi && h.grup === "MUVEKKIL" && (h.borc !== 0 || h.alacak !== 0 || h.no <= 102));
+  const gosterilecek = ozet.hesaplar.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi && h.grup === "MUVEKKIL" && (h.borc !== 0 || h.alacak !== 0 || h.no <= 102 || h.no === 108));
   const tutulanlar = ozet.hesaplar.filter((h) => h.tutulanHesapMi && (h.borc !== 0 || h.alacak !== 0));
   const para = ozet.hesaplar.find((h) => h.paraHesabiMi);
   return (
@@ -721,7 +721,7 @@ async function HesapSekmesi({
               hesapId={hesap.id}
               dosyalar={dosyalar}
               sabitDosyaId={kapsam.dosyaId}
-              aciklamaIpucu={hesap.no === 101 ? "ör. dosyanın hizmet bedeli" : undefined}
+              aciklamaIpucu={hesap.no === 101 ? "ör. dosyanın hizmet bedeli" : hesap.no === 108 ? "ör. dosya giderleri için istenen avans" : undefined}
             />
           )}
           <h3 className="mb-2 mt-6 text-sm font-semibold text-white">⇄ Bu Hesaba Virman (Para Trafiğinden ya da Başka Hesaptan)</h3>
