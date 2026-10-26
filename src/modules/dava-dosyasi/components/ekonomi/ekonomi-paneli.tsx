@@ -123,8 +123,23 @@ function DurumSeridi({
               {paraYaz.format(Math.abs(h.bakiye))}
             </p>
             <p className="text-[11px] text-white/45">
-              {h.bakiye > 0 ? "Müvekkil bize borçlu" : h.bakiye < 0 ? "Müvekkil bizden alacaklı" : "Borç / alacak yok"}
+              {h.bakiye > 0 ? "Kalan: müvekkil bize borçlu" : h.bakiye < 0 ? "Müvekkil bizden alacaklı" : "Kalan borç yok"}
             </p>
+            {h.borc > 0 && (
+              <div className="mt-2 border-t border-white/10 pt-2 text-[11px] text-white/55">
+                <div className="mb-1.5 h-1 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full bg-[#32d74b]" style={{ width: `${Math.min(100, Math.max(0, (h.alacak / h.borc) * 100))}%` }} />
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span>{h.masrafHesabiMi ? "Yapılan masraf" : "Borçlandırılan"}</span>
+                  <span className="text-white/80">{paraYaz.format(h.borc)}</span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span>Ödenen</span>
+                  <span className="text-[#32d74b]">{paraYaz.format(h.alacak)}</span>
+                </div>
+              </div>
+            )}
           </Link>
         ))}
         {tutulanlar.map((h) => (
