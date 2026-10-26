@@ -81,12 +81,48 @@ export type OdemeTalebiVerisi = {
   sonOdemeTarihi: string | null; // ISO
   satirlar: TalepSatiri[];
   masrafDokumu: MasrafDokumuSatiri[] | null;
+  ekler: string[]; // belgenin sonuna eklenen dosyalarin adlari (EK-1, EK-2 ...)
   banka: string;
   iban: string;
   hesapSahibi: string;
   aciklamaKodu: string;
   not: string;
 };
+
+// Masraf dokumu: dosya (birim adi + esas no) ve varsa karsi taraf, gider, tutar. Kisa dokum odeme kutusundan
+// once, uzun dokum belgenin sonunda kullanilir; tek tanim iki konumda ortaktir.
+function MasrafDokumuTablosu({ v }: { v: OdemeTalebiVerisi }) {
+  const dokum = v.masrafDokumu;
+  if (!dokum || dokum.length === 0) return null;
+  return (
+    <View wrap={dokum.length > 8}>
+      <Text style={s.dokumBaslik} minPresenceAhead={90}>
+        Masraf dökümü
+      </Text>
+      <View style={s.dokumBaslikSatir}>
+        <Text style={{ width: 66 }}>Tarih</Text>
+        <Text style={{ width: 176 }}>Dosya</Text>
+        <Text style={{ flex: 1 }}>Gider</Text>
+        <Text style={{ width: 82, textAlign: "right" }}>Tutar</Text>
+      </View>
+      {dokum.map((m, i) => (
+        <View key={i} style={s.dokumSatir} wrap={false}>
+          <Text style={{ width: 66 }}>{tarihYaz(m.tarih)}</Text>
+          <View style={{ width: 176, paddingRight: 8 }}>
+            <Text>{m.dosya}</Text>
+            {m.karsiTaraf ? <Text style={{ fontSize: 9, color: R.ikincil, marginTop: 1 }}>Karşı taraf: {m.karsiTaraf}</Text> : null}
+          </View>
+          <Text style={{ flex: 1 }}>{giderMetni(m)}</Text>
+          <Text style={{ width: 82, textAlign: "right" }}>{tl(m.tutar)}</Text>
+        </View>
+      ))}
+      <View style={s.dokumToplam}>
+        <Text style={{ flex: 1, fontWeight: 700 }}>Masraf toplamı</Text>
+        <Text style={{ width: 90, textAlign: "right", fontWeight: 700 }}>{tl(dokum.reduce((t, m) => t + m.tutar, 0))}</Text>
+      </View>
+    </View>
+  );
+}
 
 function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
   const toplam = v.satirlar.reduce((t, x) => t + x.tutar, 0);
@@ -158,38 +194,18 @@ function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
           <Text style={[s.satirAciklama, { marginTop: 6 }]}>Masrafların kalem kalem dökümü bu belgenin devamındadır.</Text>
         )}
 
-        {(v.masrafDokumu?.length ?? 0) <= 8 && (
-          <>
-          {v.masrafDokumu && v.masrafDokumu.length > 0 && (
-            <View>
-              <Text style={s.dokumBaslik}>Masraf dökümü</Text>
-              <View style={s.dokumBaslikSatir}>
-                <Text style={{ width: 66 }}>Tarih</Text>
-                <Text style={{ width: 176 }}>Dosya</Text>
-                <Text style={{ flex: 1 }}>Gider</Text>
-                <Text style={{ width: 82, textAlign: "right" }}>Tutar</Text>
-              </View>
-              {v.masrafDokumu.map((m, i) => (
-                <View key={i} style={s.dokumSatir} wrap={false}>
-                  <Text style={{ width: 66 }}>{tarihYaz(m.tarih)}</Text>
-                  <Text style={{ width: 176, paddingRight: 8 }}>{m.dosya}</Text>
-                  <Text style={{ flex: 1 }}>
-                    {giderMetni(m)}
-                  </Text>
-                  <Text style={{ width: 82, textAlign: "right" }}>{tl(m.tutar)}</Text>
-                </View>
-              ))}
-              <View style={s.dokumToplam}>
-                <Text style={{ flex: 1, fontWeight: 700 }}>Masraf toplamı</Text>
-                <Text style={{ width: 90, textAlign: "right", fontWeight: 700 }}>
-                  {tl(v.masrafDokumu.reduce((t, m) => t + m.tutar, 0))}
-                </Text>
-              </View>
-            </View>
-          )}
-  
-            </>
+        {v.ekler.length > 0 && (
+          <View style={{ marginTop: 22 }} wrap={false}>
+            <Text style={s.dokumBaslik}>Ekler</Text>
+            {v.ekler.map((ad, i) => (
+              <Text key={i} style={{ fontSize: 11, marginBottom: 3 }}>
+                EK-{i + 1} · {ad}
+              </Text>
+            ))}
+            <Text style={s.satirAciklama}>Ekler bu belgenin devamında yer almaktadır.</Text>
+          </View>
         )}
+        {(v.masrafDokumu?.length ?? 0) <= 8 && <MasrafDokumuTablosu v={v} />}
         {odemeBilgisiVar && (
           <View style={s.odemeKart} wrap={false}>
             <Text style={[s.bolumBaslik, { marginBottom: 10 }]}>Nasıl ödeyebilirsiniz?</Text>
@@ -222,38 +238,8 @@ function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
 
         {v.not ? <Text style={s.not}>{v.not}</Text> : null}
 
-        {(v.masrafDokumu?.length ?? 0) > 8 && (
-          <>
-          {v.masrafDokumu && v.masrafDokumu.length > 0 && (
-            <View>
-              <Text style={s.dokumBaslik}>Masraf dökümü</Text>
-              <View style={s.dokumBaslikSatir}>
-                <Text style={{ width: 66 }}>Tarih</Text>
-                <Text style={{ width: 128 }}>Dosya</Text>
-                <Text style={{ flex: 1 }}>Gider</Text>
-                <Text style={{ width: 82, textAlign: "right" }}>Tutar</Text>
-              </View>
-              {v.masrafDokumu.map((m, i) => (
-                <View key={i} style={s.dokumSatir} wrap={false}>
-                  <Text style={{ width: 66 }}>{tarihYaz(m.tarih)}</Text>
-                  <Text style={{ width: 128 }}>{m.dosya}</Text>
-                  <Text style={{ flex: 1 }}>
-                    {giderMetni(m)}
-                  </Text>
-                  <Text style={{ width: 82, textAlign: "right" }}>{tl(m.tutar)}</Text>
-                </View>
-              ))}
-              <View style={s.dokumToplam}>
-                <Text style={{ flex: 1, fontWeight: 700 }}>Masraf toplamı</Text>
-                <Text style={{ width: 90, textAlign: "right", fontWeight: 700 }}>
-                  {tl(v.masrafDokumu.reduce((t, m) => t + m.tutar, 0))}
-                </Text>
-              </View>
-            </View>
-          )}
-  
-            </>
-        )}
+        {(v.masrafDokumu?.length ?? 0) > 8 && <MasrafDokumuTablosu v={v} />}
+
         <Text style={s.altBilgi} fixed>
           Eces Hukuk Bürosu · Bu belge {tarihYaz(v.olusturmaTarihi)} tarihinde hazırlanmıştır.
         </Text>

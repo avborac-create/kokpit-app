@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
+import { EkBelgePaneli } from "@/modules/dava-dosyasi/components/ekonomi/ek-belge-paneli";
 
 type Satir = { anahtar: number; dahil: boolean; baslik: string; aciklama: string; tutar: string; tahakkuk?: number; odenen?: number; kalan?: number };
 
@@ -61,6 +62,7 @@ export function OdemeTalebiFormu({
   const [dokum, setDokum] = useState(dokumSayisi > 0);
   const [kopyalandi, setKopyalandi] = useState(false);
   const [hitap, setHitap] = useState("");
+  const [ekHazir, setEkHazir] = useState(true);
 
   useEffect(() => {
     const zamanlayici = setTimeout(() => {
@@ -119,7 +121,7 @@ export function OdemeTalebiFormu({
   const girdiStili = "!rounded-xl !py-2.5";
 
   return (
-    <form method="post" action="/api/odeme-talebi" target="_blank" className="pb-28 lg:pb-0">
+    <form method="post" action="/api/odeme-talebi" encType="multipart/form-data" target="_blank" className="pb-28 lg:pb-0">
       <input type="hidden" name="musteriId" value={musteriId} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -225,6 +227,16 @@ export function OdemeTalebiFormu({
                 </span>
               </label>
             )}
+          </section>
+
+          <section className={kart}>
+            <h2 className={baslikStili}>Ek belgeler</h2>
+            <p className={altYazi}>
+              Dekont, makbuz, tebligat gibi belgeleri sürükleyip bırakın; müvekkil hesap özetinin sonuna EK-1, EK-2… olarak eklenir. İsteğe bağlıdır.
+            </p>
+            <div className="mt-5">
+              <EkBelgePaneli onDurum={(d) => setEkHazir(d.hazir)} />
+            </div>
           </section>
 
           <section className={kart}>
@@ -337,7 +349,7 @@ export function OdemeTalebiFormu({
           <div className="mt-4 hidden flex-col gap-2 lg:flex">
             <button
               type="submit"
-              disabled={dahilSatirlar.length === 0}
+              disabled={dahilSatirlar.length === 0 || !ekHazir}
               className="rounded-full bg-[var(--accent)] px-5 py-3.5 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               📄 A4 PDF Oluştur
@@ -370,7 +382,7 @@ export function OdemeTalebiFormu({
           </button>
           <button
             type="submit"
-            disabled={dahilSatirlar.length === 0}
+            disabled={dahilSatirlar.length === 0 || !ekHazir}
             className="flex-1 whitespace-nowrap rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
           >
             📄 PDF Oluştur

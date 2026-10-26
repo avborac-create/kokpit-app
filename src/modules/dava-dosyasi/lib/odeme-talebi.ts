@@ -3,7 +3,7 @@ import { dosyaEtiketiYaz, kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-si
 
 // tahakkuk/odenen/kalan: cari mantigi - ne kadar borclandirildi, ne kadar odendi, guncel bakiye.
 export type TalepSatiri = { baslik: string; aciklama: string; tutar: number; tahakkuk?: number; odenen?: number; kalan?: number };
-export type MasrafDokumuSatiri = { dosya: string; tarih: string; tur: string; aciklama: string; tutar: number };
+export type MasrafDokumuSatiri = { dosya: string; karsiTaraf?: string; tarih: string; tur: string; aciklama: string; tutar: number };
 
 // Cari hesabin, belgeyi okuyan musterinin anlayacagi dildeki karsiligi.
 const HESAP_ACIKLAMALARI: Record<number, { baslik: string; aciklama: string }> = {
@@ -48,11 +48,12 @@ export async function masrafDokumu(musteriId: string): Promise<MasrafDokumuSatir
     where: { yansitmaHedefi: "MUVEKKIL", dosya: { muvekkiller: { some: { musteriId } }, ekonomiDisi: false } },
     include: {
       tur: true,
-      dosya: { select: { kayitNo: true, altSiraNo: true, buroNo: true, dosyaNo: true, birimAdi: true, anaDosya: { select: { kayitNo: true } } } },
+      dosya: { select: { kayitNo: true, altSiraNo: true, buroNo: true, dosyaNo: true, birimAdi: true, anaDosya: { select: { kayitNo: true } }, karsiTaraflar: { select: { karsiTaraf: { select: { ad: true } } } } } },
     },
     orderBy: [{ tarih: "asc" }],
   });
   return masraflar.map((m) => ({
+    karsiTaraf: m.dosya.karsiTaraflar.map((k) => k.karsiTaraf.ad).filter(Boolean).join(", ") || undefined,
     // Belgede dosya, birim adi ve esas numarasiyla yazilir (ör. "Bursa 18. İş Mahkemesi 2026/213"); bilgi yoksa KP numarasi.
     dosya: [m.dosya.birimAdi, m.dosya.dosyaNo].filter(Boolean).join(" ") || dosyaEtiketiYaz(m.dosya),
     tarih: m.tarih.toISOString().slice(0, 10),

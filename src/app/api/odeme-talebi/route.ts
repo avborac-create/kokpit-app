@@ -3,6 +3,14 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { prisma } from "@/core/db/prisma";
 import { masrafDokumu } from "@/modules/dava-dosyasi/lib/odeme-talebi";
 import { odemeTalebiPdfUret } from "@/modules/dava-dosyasi/lib/odeme-talebi-pdf";
+import {
+  EK_AZAMI_ADET,
+  EK_AZAMI_TOPLAM_BAYT,
+  ekGorunenAd,
+  ekTuruBul,
+  ekleriBirlestir,
+  type EkDosya,
+} from "@/modules/dava-dosyasi/lib/odeme-talebi-ekler";
 
 export const runtime = "nodejs";
 
@@ -39,15 +47,29 @@ export async function POST(request: Request) {
     .slice(0, 30);
   if (satirlar.length === 0) return NextResponse.json({ hata: "En az bir tutar satırı gerekli." }, { status: 400 });
 
+  // Ek belgeler (PDF / resim): belgenin sonuna EK-1, EK-2... olarak eklenir.
+  const ekDosyalari = fd.getAll("ek").filter((x): x is File => x instanceof File && x.size > 0);
+  if (ekDosyalari.length > EK_AZAMI_ADET) return NextResponse.json({ hata: `En çok ${EK_AZAMI_ADET} ek yüklenebilir.` }, { status: 400 });
+  if (ekDosyalari.reduce((t, x) => t + x.size, 0) > EK_AZAMI_TOPLAM_BAYT) {
+    return NextResponse.json({ hata: "Ekler toplamda 4 MB'ı aşamaz." }, { status: 413 });
+  }
+  const ekler: EkDosya[] = [];
+  for (const dosya of ekDosyalari) {
+    const tur = ekTuruBul(dosya.name, dosya.type);
+    if (!tur) return NextResponse.json({ hata: `${dosya.name}: bu dosya türü eklenemez (PDF, HTML ya da resim olmalı).` }, { status: 415 });
+    ekler.push({ ad: ekGorunenAd(dosya.name), tur, bayt: new Uint8Array(await dosya.arrayBuffer()) });
+  }
+
   const dokum = metin(fd, "dokum") === "1" ? await masrafDokumu(musteriId) : null;
   const sonOdeme = metin(fd, "sonOdemeTarihi");
 
-  const pdf = await odemeTalebiPdfUret({
+  const anaPdf = await odemeTalebiPdfUret({
     musteriAdi: musteri.adSoyadUnvan,
     hitap: ["Bey", "Hanım"].includes(metin(fd, "hitap")) ? metin(fd, "hitap") : "",
     olusturmaTarihi: new Date().toISOString(),
     sonOdemeTarihi: /^\d{4}-\d{2}-\d{2}$/.test(sonOdeme) ? sonOdeme : null,
     satirlar,
+    ekler: ekler.map((e) => e.ad),
     masrafDokumu: dokum,
     banka: metin(fd, "banka").slice(0, 80),
     iban: metin(fd, "iban").slice(0, 60),
@@ -56,8 +78,15 @@ export async function POST(request: Request) {
     not: metin(fd, "not").slice(0, 600),
   });
 
+  let pdf: Uint8Array;
+  try {
+    pdf = await ekleriBirlestir(new Uint8Array(anaPdf), ekler);
+  } catch {
+    return NextResponse.json({ hata: "Bir ek okunamadı (şifreli ya da bozuk PDF olabilir)." }, { status: 422 });
+  }
+
   const dosyaAdi = `Muvekkil-Hesap-Ozeti-${musteri.adSoyadUnvan.replace(/[^A-Za-z0-9]+/g, "-").slice(0, 40)}.pdf`;
-  return new NextResponse(new Uint8Array(pdf), {
+  return new NextResponse(pdf as unknown as BodyInit, {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `inline; filename="${dosyaAdi}"`,
