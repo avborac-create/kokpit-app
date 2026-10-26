@@ -40,7 +40,7 @@ export function OdemeTalebiFormu({
   const [satirlar, setSatirlar] = useState<Satir[]>(
     baslangicSatirlari.map((s, i) => ({ anahtar: i + 1, dahil: true, baslik: s.baslik, aciklama: s.aciklama, tutar: s.tutar.toFixed(2) })),
   );
-  const [sonOdeme, setSonOdeme] = useState(bugunArti(7));
+  const [sonOdeme, setSonOdeme] = useState("");
   const [banka, setBanka] = useState({ hesapSahibi: "", banka: "", iban: "" });
   const [kod, setKod] = useState(() => {
     const parcalar = musteriAdi.trim().split(/\s+/);
@@ -204,8 +204,25 @@ export function OdemeTalebiFormu({
             <p className={altYazi}>Banka bilgileri bu bilgisayarda hatırlanır, her seferinde yazmanız gerekmez.</p>
             <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Alan>
-                <Etiket htmlFor="sonOdemeTarihi">Son ödeme tarihi</Etiket>
+                <Etiket htmlFor="sonOdemeTarihi">Son ödeme tarihi (isteğe bağlı)</Etiket>
                 <Girdi id="sonOdemeTarihi" name="sonOdemeTarihi" type="date" value={sonOdeme} onChange={(e) => setSonOdeme(e.target.value)} className={girdiStili} />
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+                  {[7, 15, 30].map((gun) => (
+                    <button
+                      key={gun}
+                      type="button"
+                      onClick={() => setSonOdeme(bugunArti(gun))}
+                      className="rounded-full border border-white/15 px-2.5 py-1 text-white/70 hover:bg-white/10"
+                    >
+                      {gun} gün
+                    </button>
+                  ))}
+                  {sonOdeme && (
+                    <button type="button" onClick={() => setSonOdeme("")} className="rounded-full px-2.5 py-1 text-[#ff7a70] hover:bg-white/10">
+                      Tarihi kaldır
+                    </button>
+                  )}
+                </div>
               </Alan>
               <Alan>
                 <Etiket htmlFor="hitap">Hitap</Etiket>
