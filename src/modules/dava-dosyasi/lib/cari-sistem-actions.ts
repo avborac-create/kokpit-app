@@ -8,7 +8,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { dosyaMasrafiEkle } from "@/modules/dava-dosyasi/lib/actions";
-import { havuzTuretilenAlacak, kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
+import { dosyaEtiketiYaz, havuzTuretilenAlacak, kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { MUVEKKILE_ODEME } from "@/modules/dava-dosyasi/lib/tasnif-sabitleri";
 
 function yenile() {
@@ -383,6 +383,69 @@ export async function topluTasnif(musteriId: string, kapsamDosyaId: string, form
         },
       });
     }
+  });
+  yenile();
+}
+
+// Dosyalar arasi virman: A dosyasindaki bir hesaptaki (fazla odeme / duran tutar) parayi, ayni muvekkilin
+// B dosyasindaki bir hesaba aktarir. Iki satir (ayni virmanId): kaynakta BORC, hedefte ALACAK.
+// Kaynakta aktarilabilir tutar: Para Trafigi'nde dosyanin kendi bakiyesi, normal hesapta fazla odeme
+// (= -bakiye), tutulan (adliye) hesapta orada duran tutar (= +bakiye).
+export async function dosyalarArasiVirman(musteriId: string, formData: FormData) {
+  const kaynakDosyaId = metin(formData, "kaynakDosyaId");
+  const hedefDosyaId = metin(formData, "hedefDosyaId");
+  const kaynakHesapId = metin(formData, "kaynakHesapId");
+  const hedefHesapId = metin(formData, "hedefHesapId") || kaynakHesapId;
+  if (!kaynakDosyaId || !hedefDosyaId || !kaynakHesapId) throw new Error("Kaynak dosya, hedef dosya ve hesap seçilmelidir.");
+  if (kaynakDosyaId === hedefDosyaId) throw new Error("Kaynak ve hedef dosya aynı olamaz; aynı dosyada hesaplar arası virman kullanın.");
+  await Promise.all([dosyaMuvekkilinMi(musteriId, kaynakDosyaId), dosyaMuvekkilinMi(musteriId, hedefDosyaId)]);
+  const tutar = tutarAl(formData);
+  const tarih = tarihAl(formData);
+  const aciklamaEk = metin(formData, "aciklama");
+
+  await prisma.$transaction(async (tx) => {
+    const [kaynakHesap, hedefHesap, dosyalar] = await Promise.all([
+      tx.cariHesap.findUnique({ where: { id: kaynakHesapId } }),
+      tx.cariHesap.findUnique({ where: { id: hedefHesapId } }),
+      tx.davaDosyasi.findMany({
+        where: { id: { in: [kaynakDosyaId, hedefDosyaId] } },
+        select: { id: true, kayitNo: true, altSiraNo: true, buroNo: true, dosyaNo: true, anaDosya: { select: { kayitNo: true } } },
+      }),
+    ]);
+    if (!kaynakHesap || !hedefHesap) throw new Error("Geçerli bir hesap seçin.");
+    const etiket = (id: string) => {
+      const d = dosyalar.find((x) => x.id === id);
+      return d ? dosyaEtiketiYaz(d) : "dosya";
+    };
+
+    let mevcut: number;
+    if (kaynakHesap.paraHesabiMi) {
+      mevcut = Math.max(0, await paraBakiyesi(tx, musteriId, kaynakDosyaId));
+    } else {
+      const ozet = await kapsamOzeti({ musteriId, dosyaId: kaynakDosyaId });
+      const bakiye = ozet.hesaplar.find((h) => h.hesapId === kaynakHesap.id)?.bakiye ?? 0;
+      mevcut = Math.max(0, kaynakHesap.tutulanHesapMi ? bakiye : -bakiye);
+    }
+    if (tutar > mevcut + 0.001) {
+      throw new Error(
+        `${etiket(kaynakDosyaId)} dosyasındaki ${kaynakHesap.no} - ${kaynakHesap.ad} hesabında aktarılabilir tutar ${mevcut.toLocaleString("tr-TR")} TL; daha fazlası aktarılamaz.`,
+      );
+    }
+
+    const virmanId = randomUUID();
+    const ek = aciklamaEk ? ` — ${aciklamaEk}` : "";
+    await tx.cariHareketi.create({
+      data: {
+        musteriId, dosyaId: kaynakDosyaId, hesapId: kaynakHesap.id, yon: "BORC", tarih, tutar, virmanId,
+        aciklama: `${etiket(hedefDosyaId)} DOSYASINA AKTARIM (${hedefHesap.no}-${hedefHesap.ad.toLocaleUpperCase("tr-TR")})${ek}`,
+      },
+    });
+    await tx.cariHareketi.create({
+      data: {
+        musteriId, dosyaId: hedefDosyaId, hesapId: hedefHesap.id, yon: "ALACAK", tarih, tutar, virmanId,
+        aciklama: `${etiket(kaynakDosyaId)} DOSYASINDAN AKTARIM (${kaynakHesap.no}-${kaynakHesap.ad.toLocaleUpperCase("tr-TR")})${ek}`,
+      },
+    });
   });
   yenile();
 }

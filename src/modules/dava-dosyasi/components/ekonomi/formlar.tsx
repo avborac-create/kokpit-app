@@ -186,3 +186,92 @@ export function HareketDuzenlemeFormu({
     </form>
   );
 }
+
+// Dosyalar arasi virman: bir dosyadaki hesaptan baska bir dosyadaki hesaba (ayni muvekkil).
+export function DosyalarArasiVirmanFormu({
+  action,
+  dosyalar,
+  hesaplar,
+  sabitKaynakDosyaId,
+}: {
+  action: (formData: FormData) => void;
+  dosyalar: DosyaSecenegi[];
+  hesaplar: { id: string; etiket: string }[];
+  sabitKaynakDosyaId?: string;
+}) {
+  return (
+    <form action={action} className={kutu}>
+      {sabitKaynakDosyaId ? (
+        <input type="hidden" name="kaynakDosyaId" value={sabitKaynakDosyaId} />
+      ) : (
+        <Alan>
+          <Etiket htmlFor="dav-kaynak-dosya">Kaynak Dosya (para buradan çıkar)</Etiket>
+          <Secim id="dav-kaynak-dosya" name="kaynakDosyaId" required defaultValue="">
+            <option value="" disabled>
+              Seçiniz…
+            </option>
+            {dosyalar.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.etiket}
+              </option>
+            ))}
+          </Secim>
+        </Alan>
+      )}
+      <Alan>
+        <Etiket htmlFor="dav-kaynak-hesap">Kaynak Hesap</Etiket>
+        <Secim id="dav-kaynak-hesap" name="kaynakHesapId" required defaultValue="">
+          <option value="" disabled>
+            Seçiniz…
+          </option>
+          {hesaplar.map((h) => (
+            <option key={h.id} value={h.id}>
+              {h.etiket}
+            </option>
+          ))}
+        </Secim>
+      </Alan>
+      <Alan>
+        <Etiket htmlFor="dav-hedef-dosya">Hedef Dosya (para buraya girer)</Etiket>
+        <Secim id="dav-hedef-dosya" name="hedefDosyaId" required defaultValue="">
+          <option value="" disabled>
+            Seçiniz…
+          </option>
+          {dosyalar
+            .filter((d) => d.id !== sabitKaynakDosyaId)
+            .map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.etiket}
+              </option>
+            ))}
+        </Secim>
+      </Alan>
+      <Alan>
+        <Etiket htmlFor="dav-hedef-hesap">Hedef Hesap</Etiket>
+        <Secim id="dav-hedef-hesap" name="hedefHesapId" defaultValue="">
+          <option value="">Kaynak hesapla aynı</option>
+          {hesaplar.map((h) => (
+            <option key={h.id} value={h.id}>
+              {h.etiket}
+            </option>
+          ))}
+        </Secim>
+      </Alan>
+      <Alan>
+        <Etiket htmlFor="dav-tutar">Tutar</Etiket>
+        <ParaGirdisi id="dav-tutar" name="tutar" required />
+      </Alan>
+      <Alan>
+        <Etiket htmlFor="dav-tarih">Tarih</Etiket>
+        <Girdi id="dav-tarih" name="tarih" type="date" required defaultValue={bugun()} />
+      </Alan>
+      <Alan>
+        <Etiket htmlFor="dav-aciklama">Açıklama (isteğe bağlı)</Etiket>
+        <Girdi id="dav-aciklama" name="aciklama" placeholder="ör. avans dosyalar arası düzeltme" />
+      </Alan>
+      <div className="flex items-end">
+        <GonderButonu>Dosyalar Arası Aktar</GonderButonu>
+      </div>
+    </form>
+  );
+}

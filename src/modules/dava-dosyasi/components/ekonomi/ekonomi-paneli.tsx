@@ -12,6 +12,7 @@ import { KarsiTarafAlacagiFormu } from "@/modules/dava-dosyasi/components/karsi-
 import { Defter } from "@/modules/dava-dosyasi/components/ekonomi/defter";
 import {
   BorcFormu,
+  DosyalarArasiVirmanFormu,
   VirmanFormu,
   type DosyaSecenegi,
 } from "@/modules/dava-dosyasi/components/ekonomi/formlar";
@@ -26,6 +27,7 @@ import {
 } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import {
   borcEkle,
+  dosyalarArasiVirman,
   hesapAdiGuncelle,
   hesapAktifligiDegistir,
   hesapEkle,
@@ -448,6 +450,22 @@ async function OzetSekmesi({
             Dosyaların para trafiği sütunu, müvekkil havuzundan o dosyaya aktarılıp henüz hesaplara dağıtılmamış parayı
             gösterir. Dosyasız (havuzdaki) para yalnızca müvekkil toplamında görünür.
           </p>
+        </div>
+      )}
+
+      {dosyalar.length > 1 && (
+        <div className="mt-8">
+          <h3 className="mb-1 text-sm font-semibold text-white">⇄ Dosyalar Arası Virman</h3>
+          <p className="mb-2 text-xs text-white/45">
+            Bir dosyadaki fazla ödemeyi (ya da adliyede duran tutarı) aynı müvekkilin başka bir dosyasındaki hesaba aktarır.
+            Kaynakta borç, hedefte alacak olarak iki satır yazılır; kaynakta aktarılabilir tutarı aşamazsınız.
+          </p>
+          <DosyalarArasiVirmanFormu
+            action={dosyalarArasiVirman.bind(null, kapsam.musteriId)}
+            dosyalar={dosyalar}
+            sabitKaynakDosyaId={kapsam.dosyaId}
+            hesaplar={ozet.hesaplar.map((h) => ({ id: h.hesapId, etiket: `${h.no} - ${h.ad}` }))}
+          />
         </div>
       )}
     </div>
