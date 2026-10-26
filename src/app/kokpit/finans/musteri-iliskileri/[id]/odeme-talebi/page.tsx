@@ -34,7 +34,6 @@ export default async function OdemeTalebiSayfasi({ params }: { params: Promise<{
         musteriId={id}
         musteriAdi={varsayilan.musteriAdi}
         baslangicSatirlari={satirlar}
-        hesapDurumu={varsayilan.hesapDurumu}
         dokumSayisi={dokum.length}
         dokumToplami={Math.round(dokum.reduce((t, m) => t + m.tutar, 0) * 100) / 100}
       />

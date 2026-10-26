@@ -1,7 +1,7 @@
 import { Document, Page, Text, View, Image, StyleSheet, Font, renderToBuffer } from "@react-pdf/renderer";
 import { LIBERATION_SANS_REGULAR, LIBERATION_SANS_BOLD } from "@/modules/haciz-raporu/lib/yazi-tipleri/liberation-sans";
 import { BURO_LOGOSU } from "@/modules/dava-dosyasi/lib/varliklar/buro-logosu";
-import type { HesapDurumuSatiri, MasrafDokumuSatiri, TalepSatiri } from "@/modules/dava-dosyasi/lib/odeme-talebi";
+import type { MasrafDokumuSatiri, TalepSatiri } from "@/modules/dava-dosyasi/lib/odeme-talebi";
 
 Font.register({
   family: "Liberation Sans",
@@ -37,9 +37,10 @@ const s = StyleSheet.create({
   satirAciklama: { fontSize: 11, color: R.ikincil, lineHeight: 1.4 },
   satirTutar: { fontSize: 14, fontWeight: 700 },
   toplamSatir: { flexDirection: "row", justifyContent: "space-between", paddingTop: 11, borderTopWidth: 1, borderTopColor: R.yazi },
-  durumBaslikSatir: { flexDirection: "row", paddingBottom: 5, fontSize: 10, color: R.ikincil },
-  durumSatir: { flexDirection: "row", alignItems: "center", paddingVertical: 8, borderTopWidth: 0.5, borderTopColor: R.cizgi, fontSize: 11.5 },
-  durumToplam: { flexDirection: "row", paddingTop: 8, borderTopWidth: 1, borderTopColor: R.yazi, fontSize: 12, fontWeight: 700 },
+  trio: { flexDirection: "row", marginTop: 7 },
+  trioKutu: { marginRight: 22 },
+  trioEtiket: { fontSize: 9.5, color: R.ikincil, marginBottom: 1 },
+  trioDeger: { fontSize: 11.5, fontWeight: 700 },
   dokumBaslik: { fontSize: 14, fontWeight: 700, marginTop: 22, marginBottom: 8 },
   dokumSatir: { flexDirection: "row", paddingVertical: 5, borderTopWidth: 0.5, borderTopColor: R.cizgi, fontSize: 10.5 },
   dokumToplam: { flexDirection: "row", paddingTop: 6, borderTopWidth: 1, borderTopColor: R.yazi, fontSize: 11 },
@@ -79,7 +80,6 @@ export type OdemeTalebiVerisi = {
   olusturmaTarihi: string; // ISO
   sonOdemeTarihi: string | null; // ISO
   satirlar: TalepSatiri[];
-  hesapDurumu: HesapDurumuSatiri[];
   masrafDokumu: MasrafDokumuSatiri[] | null;
   banka: string;
   iban: string;
@@ -121,40 +121,33 @@ function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
           {v.sonOdemeTarihi && <Text style={s.sonOdeme}>Son ödeme tarihi: {tarihYaz(v.sonOdemeTarihi)}</Text>}
         </View>
 
-        {v.hesapDurumu.length > 0 && (
-          <View style={{ marginBottom: 22 }} wrap={false}>
-            <Text style={s.bolumBaslik}>Hesap durumunuz</Text>
-            <View style={s.durumBaslikSatir}>
-              <Text style={{ flex: 1 }}>Kalem</Text>
-              <Text style={{ width: 92, textAlign: "right" }}>Borçlandırılan</Text>
-              <Text style={{ width: 84, textAlign: "right" }}>Ödenen</Text>
-              <Text style={{ width: 84, textAlign: "right" }}>Kalan</Text>
-            </View>
-            {v.hesapDurumu.map((h, i) => (
-              <View key={i} style={s.durumSatir}>
-                <Text style={{ flex: 1, fontWeight: 700 }}>{h.baslik}</Text>
-                <Text style={{ width: 92, textAlign: "right" }}>{tl(h.borclandirilan)}</Text>
-                <Text style={{ width: 84, textAlign: "right", color: "#1E8E3E" }}>{tl(h.odenen)}</Text>
-                <Text style={{ width: 84, textAlign: "right", fontWeight: 700 }}>{tl(h.kalan)}</Text>
-              </View>
-            ))}
-            <View style={s.durumToplam}>
-              <Text style={{ flex: 1 }}>Toplam</Text>
-              <Text style={{ width: 92, textAlign: "right" }}>{tl(v.hesapDurumu.reduce((t, h) => t + h.borclandirilan, 0))}</Text>
-              <Text style={{ width: 84, textAlign: "right" }}>{tl(v.hesapDurumu.reduce((t, h) => t + h.odenen, 0))}</Text>
-              <Text style={{ width: 84, textAlign: "right" }}>{tl(v.hesapDurumu.reduce((t, h) => t + h.kalan, 0))}</Text>
-            </View>
-          </View>
-        )}
-
         <Text style={s.bolumBaslik}>Bu tutar ne için isteniyor?</Text>
         {v.satirlar.map((x, i) => (
           <View key={i} style={s.satir} wrap={false}>
             <View style={s.satirSol}>
               <Text style={s.satirBaslik}>{x.baslik}</Text>
               {x.aciklama ? <Text style={s.satirAciklama}>{x.aciklama}</Text> : null}
+              {x.tahakkuk !== undefined ? (
+                <View style={s.trio}>
+                  <View style={s.trioKutu}>
+                    <Text style={s.trioEtiket}>Tahakkuk eden</Text>
+                    <Text style={s.trioDeger}>{tl(x.tahakkuk)}</Text>
+                  </View>
+                  <View style={s.trioKutu}>
+                    <Text style={s.trioEtiket}>Önceden ödenen</Text>
+                    <Text style={[s.trioDeger, { color: "#1E8E3E" }]}>{tl(x.odenen ?? 0)}</Text>
+                  </View>
+                  <View style={s.trioKutu}>
+                    <Text style={s.trioEtiket}>Güncel bakiye</Text>
+                    <Text style={s.trioDeger}>{tl(x.kalan ?? 0)}</Text>
+                  </View>
+                </View>
+              ) : null}
             </View>
-            <Text style={s.satirTutar}>{tl(x.tutar)}</Text>
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={s.satirAciklama}>Ödenmesi istenen</Text>
+              <Text style={s.satirTutar}>{tl(x.tutar)}</Text>
+            </View>
           </View>
         ))}
         <View style={s.toplamSatir}>

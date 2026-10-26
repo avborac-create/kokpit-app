@@ -22,20 +22,22 @@ export async function POST(request: Request) {
   const basliklar = fd.getAll("satirBaslik").map(String);
   const aciklamalar = fd.getAll("satirAciklama").map(String);
   const tutarlar = fd.getAll("satirTutar").map((t) => Number(String(t).replace(",", ".")));
+  const opsiyonelSayi = (alan: string) => fd.getAll(alan).map((t) => (String(t).trim() === "" ? undefined : Number(t)));
+  const tahakkuklar = opsiyonelSayi("satirTahakkuk");
+  const odenenler = opsiyonelSayi("satirOdenen");
+  const kalanlar = opsiyonelSayi("satirKalan");
   const satirlar = basliklar
-    .map((baslik, i) => ({ baslik: baslik.trim(), aciklama: (aciklamalar[i] ?? "").trim(), tutar: tutarlar[i] }))
+    .map((baslik, i) => ({
+      baslik: baslik.trim(),
+      aciklama: (aciklamalar[i] ?? "").trim(),
+      tutar: tutarlar[i],
+      tahakkuk: Number.isFinite(tahakkuklar[i]) ? tahakkuklar[i] : undefined,
+      odenen: Number.isFinite(odenenler[i]) ? odenenler[i] : undefined,
+      kalan: Number.isFinite(kalanlar[i]) ? kalanlar[i] : undefined,
+    }))
     .filter((x) => x.baslik && Number.isFinite(x.tutar) && x.tutar !== 0)
     .slice(0, 30);
   if (satirlar.length === 0) return NextResponse.json({ hata: "En az bir tutar satırı gerekli." }, { status: 400 });
-
-  const durumBasliklari = fd.getAll("durumBaslik").map(String);
-  const durumBorc = fd.getAll("durumBorc").map(Number);
-  const durumOdenen = fd.getAll("durumOdenen").map(Number);
-  const durumKalan = fd.getAll("durumKalan").map(Number);
-  const hesapDurumu = durumBasliklari
-    .map((baslik, i) => ({ baslik: baslik.trim(), borclandirilan: durumBorc[i], odenen: durumOdenen[i], kalan: durumKalan[i] }))
-    .filter((x) => x.baslik && [x.borclandirilan, x.odenen, x.kalan].every(Number.isFinite))
-    .slice(0, 12);
 
   const dokum = metin(fd, "dokum") === "1" ? await masrafDokumu(musteriId) : null;
   const sonOdeme = metin(fd, "sonOdemeTarihi");
@@ -46,7 +48,6 @@ export async function POST(request: Request) {
     olusturmaTarihi: new Date().toISOString(),
     sonOdemeTarihi: /^\d{4}-\d{2}-\d{2}$/.test(sonOdeme) ? sonOdeme : null,
     satirlar,
-    hesapDurumu,
     masrafDokumu: dokum,
     banka: metin(fd, "banka").slice(0, 80),
     iban: metin(fd, "iban").slice(0, 60),

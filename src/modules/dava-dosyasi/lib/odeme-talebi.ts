@@ -1,14 +1,14 @@
 import { prisma } from "@/core/db/prisma";
 import { dosyaEtiketiYaz, kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
 
-export type TalepSatiri = { baslik: string; aciklama: string; tutar: number };
-export type HesapDurumuSatiri = { baslik: string; borclandirilan: number; odenen: number; kalan: number };
+// tahakkuk/odenen/kalan: cari mantigi - ne kadar borclandirildi, ne kadar odendi, guncel bakiye.
+export type TalepSatiri = { baslik: string; aciklama: string; tutar: number; tahakkuk?: number; odenen?: number; kalan?: number };
 export type MasrafDokumuSatiri = { dosya: string; tarih: string; tur: string; aciklama: string; tutar: number };
 
 // Cari hesabin, belgeyi okuyan musterinin anlayacagi dildeki karsiligi.
 const HESAP_ACIKLAMALARI: Record<number, { baslik: string; aciklama: string }> = {
-  101: { baslik: "Avukatlık ücreti", aciklama: "Akdi vekalet bedelinden henüz ödenmeyen kısım" },
-  102: { baslik: "Dosya masrafları", aciklama: "Harç, posta, tebligat, bilirkişi ve benzeri giderler" },
+  101: { baslik: "Avukatlık ücreti", aciklama: "Akdi vekalet (hizmet) bedeli" },
+  102: { baslik: "Dosya masrafları", aciklama: "Adınıza yapılan harç, posta, tebligat ve benzeri giderler" },
   103: { baslik: "Bloke / avans tutarı", aciklama: "Dosya için ayrı tutulması gereken tutar" },
   107: { baslik: "Harç", aciklama: "Dosya için yatırılacak harçlar" },
 };
@@ -31,21 +31,14 @@ export async function odemeTalebiVarsayilanlari(musteriId: string) {
         baslik: tanim?.baslik ?? h.ad,
         aciklama: tanim?.aciklama ?? "Cari hesap bakiyesi",
         tutar: para2(h.bakiye),
+        tahakkuk: para2(h.borc),
+        odenen: para2(h.alacak),
+        kalan: para2(h.bakiye),
       };
     });
 
-  // Cari mantigi: hesap bazinda ne kadar borclandirildi (borc), ne kadar odendi (alacak), ne kadar kaldi.
-  const hesapDurumu: HesapDurumuSatiri[] = ozet.hesaplar
-    .filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi && h.grup === "MUVEKKIL" && (h.borc > 0.009 || h.alacak > 0.009))
-    .map((h) => ({
-      baslik: h.masrafHesabiMi ? "Dosya masrafları (yapılan masraf)" : (HESAP_ACIKLAMALARI[h.no]?.baslik ?? h.ad),
-      borclandirilan: para2(h.borc),
-      odenen: para2(h.alacak),
-      kalan: para2(h.bakiye),
-    }));
-
   const bekleyenPara = para2(Math.max(0, ozet.paraBakiyesi));
-  return { musteriAdi: musteri?.adSoyadUnvan ?? "", satirlar, hesapDurumu, bekleyenPara, net: para2(ozet.net) };
+  return { musteriAdi: musteri?.adSoyadUnvan ?? "", satirlar, bekleyenPara, net: para2(ozet.net) };
 }
 
 // Isteyen icin eklenebilen masraf dokumu: muvekkile yansitilan masraflar, dosya dosya.

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 
-type Satir = { anahtar: number; dahil: boolean; baslik: string; aciklama: string; tutar: string };
+type Satir = { anahtar: number; dahil: boolean; baslik: string; aciklama: string; tutar: string; tahakkuk?: number; odenen?: number; kalan?: number };
 
 const BANKA_ANAHTARI = "kokpit-odeme-talebi-banka";
 const para = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -28,19 +28,26 @@ export function OdemeTalebiFormu({
   musteriId,
   musteriAdi,
   baslangicSatirlari,
-  hesapDurumu,
   dokumSayisi,
   dokumToplami,
 }: {
   musteriId: string;
   musteriAdi: string;
-  baslangicSatirlari: { baslik: string; aciklama: string; tutar: number }[];
-  hesapDurumu: { baslik: string; borclandirilan: number; odenen: number; kalan: number }[];
+  baslangicSatirlari: { baslik: string; aciklama: string; tutar: number; tahakkuk?: number; odenen?: number; kalan?: number }[];
   dokumSayisi: number;
   dokumToplami: number;
 }) {
   const [satirlar, setSatirlar] = useState<Satir[]>(
-    baslangicSatirlari.map((s, i) => ({ anahtar: i + 1, dahil: true, baslik: s.baslik, aciklama: s.aciklama, tutar: s.tutar.toFixed(2) })),
+    baslangicSatirlari.map((s, i) => ({
+      anahtar: i + 1,
+      dahil: true,
+      baslik: s.baslik,
+      aciklama: s.aciklama,
+      tutar: s.tutar.toFixed(2),
+      tahakkuk: s.tahakkuk,
+      odenen: s.odenen,
+      kalan: s.kalan,
+    })),
   );
   const [sonOdeme, setSonOdeme] = useState("");
   const [banka, setBanka] = useState({ hesapSahibi: "", banka: "", iban: "" });
@@ -54,7 +61,6 @@ export function OdemeTalebiFormu({
   const [dokum, setDokum] = useState(dokumSayisi > 0);
   const [kopyalandi, setKopyalandi] = useState(false);
   const [hitap, setHitap] = useState("");
-  const [durumGoster, setDurumGoster] = useState(hesapDurumu.length > 0);
 
   useEffect(() => {
     const zamanlayici = setTimeout(() => {
@@ -118,42 +124,6 @@ export function OdemeTalebiFormu({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
-          {hesapDurumu.length > 0 && (
-            <section className={kart}>
-              <h2 className={baslikStili}>Hesap durumu</h2>
-              <p className={altYazi}>Müvekkil ne kadar borçlandırıldı, ne kadar ödedi, ne kadar kaldı. Belgede ayrı bir tablo olarak yer alır.</p>
-              <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-black/10">
-                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 px-4 py-2 text-[11px] text-white/45">
-                  <span>Kalem</span>
-                  <span className="text-right">Borçlandırılan</span>
-                  <span className="text-right">Ödenen</span>
-                  <span className="text-right">Kalan</span>
-                </div>
-                {hesapDurumu.map((h) => (
-                  <div key={h.baslik} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 border-t border-white/[0.08] px-4 py-3 text-sm">
-                    <span className="text-white/85">{h.baslik}</span>
-                    <span className="text-right text-white/80">{para.format(h.borclandirilan)}</span>
-                    <span className="text-right text-[#32d74b]">{para.format(h.odenen)}</span>
-                    <span className={`text-right font-semibold ${h.kalan > 0 ? "text-[#ff7a70]" : "text-[#32d74b]"}`}>{para.format(h.kalan)}</span>
-                  </div>
-                ))}
-              </div>
-              <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl bg-white/[0.04] px-4 py-3 text-sm text-white/80">
-                <input type="checkbox" checked={durumGoster} onChange={(e) => setDurumGoster(e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
-                Bu tabloyu belgeye ekle
-              </label>
-              {durumGoster &&
-                hesapDurumu.map((h) => (
-                  <span key={h.baslik}>
-                    <input type="hidden" name="durumBaslik" value={h.baslik} />
-                    <input type="hidden" name="durumBorc" value={h.borclandirilan} />
-                    <input type="hidden" name="durumOdenen" value={h.odenen} />
-                    <input type="hidden" name="durumKalan" value={h.kalan} />
-                  </span>
-                ))}
-            </section>
-          )}
-
           <section className={kart}>
             <h2 className={baslikStili}>Ne için, ne kadar?</h2>
             <p className={altYazi}>
@@ -208,8 +178,27 @@ export function OdemeTalebiFormu({
                       <span className="text-sm text-white/40">TL</span>
                     </div>
                   </div>
+                  {s.tahakkuk !== undefined && (
+                    <div className="mt-3 grid grid-cols-3 gap-2 pl-8 text-center">
+                      <div className="rounded-xl bg-white/[0.05] px-2 py-2">
+                        <p className="text-[10px] text-white/45">Tahakkuk eden</p>
+                        <p className="text-sm font-semibold text-white/90">{para.format(s.tahakkuk)}</p>
+                      </div>
+                      <div className="rounded-xl bg-white/[0.05] px-2 py-2">
+                        <p className="text-[10px] text-white/45">Önceden ödenen</p>
+                        <p className="text-sm font-semibold text-[#32d74b]">{para.format(s.odenen ?? 0)}</p>
+                      </div>
+                      <div className="rounded-xl bg-white/[0.05] px-2 py-2">
+                        <p className="text-[10px] text-white/45">Güncel bakiye</p>
+                        <p className="text-sm font-semibold text-[#ff7a70]">{para.format(s.kalan ?? 0)}</p>
+                      </div>
+                    </div>
+                  )}
                   {s.dahil && s.baslik.trim() && sayi(s.tutar) !== 0 && (
                     <>
+                      <input type="hidden" name="satirTahakkuk" value={s.tahakkuk ?? ""} />
+                      <input type="hidden" name="satirOdenen" value={s.odenen ?? ""} />
+                      <input type="hidden" name="satirKalan" value={s.kalan ?? ""} />
                       <input type="hidden" name="satirBaslik" value={s.baslik} />
                       <input type="hidden" name="satirAciklama" value={s.aciklama} />
                       <input type="hidden" name="satirTutar" value={s.tutar} />
@@ -316,21 +305,6 @@ export function OdemeTalebiFormu({
               <p className="text-3xl font-bold tracking-tight">{para.format(toplam)} TL</p>
               {sonOdeme && <p className="mt-1 text-xs font-semibold text-[#0071e3]">Son ödeme tarihi: {tarihYazi(sonOdeme)}</p>}
             </div>
-            {durumGoster && hesapDurumu.length > 0 && (
-              <div className="px-6 pt-4">
-                <p className="mb-1 text-xs font-bold">Hesap durumunuz</p>
-                {hesapDurumu.map((h) => (
-                  <div key={h.baslik} className="border-t border-[#d2d2d7] py-1.5 text-[10px]">
-                    <p className="truncate font-bold">{h.baslik}</p>
-                    <div className="flex justify-between text-[#6e6e73]">
-                      <span>Borçlandırılan {para.format(h.borclandirilan)}</span>
-                      <span>Ödenen {para.format(h.odenen)}</span>
-                      <span className="font-bold text-[#1d1d1f]">Kalan {para.format(h.kalan)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
             <div className="px-6 py-4">
               <p className="mb-1 text-xs font-bold">Bu tutar ne için isteniyor?</p>
               {dahilSatirlar.length === 0 && <p className="py-3 text-xs text-[#6e6e73]">Henüz satır yok.</p>}
@@ -339,6 +313,11 @@ export function OdemeTalebiFormu({
                   <div className="min-w-0">
                     <p className="truncate text-xs font-bold">{x.baslik}</p>
                     {x.aciklama && <p className="truncate text-[10px] text-[#6e6e73]">{x.aciklama}</p>}
+                    {x.tahakkuk !== undefined && (
+                      <p className="text-[9px] text-[#6e6e73]">
+                        Tahakkuk {para.format(x.tahakkuk)} · Ödenen {para.format(x.odenen ?? 0)} · Bakiye {para.format(x.kalan ?? 0)}
+                      </p>
+                    )}
                   </div>
                   <p className="shrink-0 text-xs font-bold">{para.format(sayi(x.tutar))} TL</p>
                 </div>
