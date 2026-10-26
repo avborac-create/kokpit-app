@@ -70,8 +70,17 @@ async function paraBakiyesi(tx: Pick<typeof prisma, "cariHareketi" | "cariHesap"
 export async function odemeEkle(musteriId: string, formData: FormData) {
   const dosyaId = metin(formData, "dosyaId") || null;
   if (dosyaId) await dosyaMuvekkilinMi(musteriId, dosyaId);
-  const para = await prisma.cariHesap.findFirst({ where: { paraHesabiMi: true } });
-  if (!para) throw new Error("Para Trafiği hesabı bulunamadı.");
+  // hesapId verilmisse odeme dogrudan o cari hesaba ALACAK yazilir (hesabin kendi sekmesinden);
+  // verilmezse Para Trafigi'ne gelir.
+  const hesapId = metin(formData, "hesapId");
+  const para = hesapId
+    ? await prisma.cariHesap.findUnique({ where: { id: hesapId } })
+    : await prisma.cariHesap.findFirst({ where: { paraHesabiMi: true } });
+  if (!para) throw new Error(hesapId ? "Hesap bulunamadı." : "Para Trafiği hesabı bulunamadı.");
+  if (hesapId) {
+    if (para.tutulanHesapMi) throw new Error("Tutulan hesaba buradan ödeme girilemez; virman kullanın.");
+    if (!dosyaId && !para.paraHesabiMi) throw new Error("Bu hesaba ödeme girerken dosya seçilmelidir.");
+  }
   const tarih = tarihAl(formData);
   const aciklama = metin(formData, "aciklama") || "GELEN ÖDEME";
   // Tek yontem ya da parcali odeme: her satir (yontem + tutar) ayri bir kayit olarak yazilir.

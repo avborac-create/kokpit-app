@@ -23,11 +23,14 @@ export function OdemeFormu({
   sabitDosyaId,
   yontemler,
   yontemListesi,
+  hesapId,
 }: {
   action: (formData: FormData) => void;
   dosyalar: DosyaSecenegi[];
   sabitDosyaId?: string;
   yontemler: Yontem[];
+  // Doluysa odeme Para Trafigi yerine dogrudan bu cari hesaba ALACAK yazilir (dosya secimi zorunlu).
+  hesapId?: string;
   // Sadece yonetici: yontem listesini yerinde duzenleme penceresi
   yontemListesi?: {
     id: string;
@@ -46,13 +49,14 @@ export function OdemeFormu({
 
   return (
     <form action={action} className="glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-2 md:grid-cols-4">
+      {hesapId && <input type="hidden" name="hesapId" value={hesapId} />}
       {sabitDosyaId ? (
         <input type="hidden" name="dosyaId" value={sabitDosyaId} />
       ) : (
         <Alan>
           <Etiket htmlFor="od-dosya">Dosya</Etiket>
-          <Secim id="od-dosya" name="dosyaId" defaultValue="">
-            <option value="">Dosyasız (müvekkil havuzu)</option>
+          <Secim id="od-dosya" name="dosyaId" defaultValue="" required={Boolean(hesapId)}>
+            <option value="">{hesapId ? "Dosya seçin" : "Dosyasız (müvekkil havuzu)"}</option>
             {dosyalar.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.etiket}

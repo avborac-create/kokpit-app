@@ -489,9 +489,8 @@ async function HesapSekmesi({
       : undefined;
   const satirlar = await hesapDefteri(kapsam, hesap);
   // Para Trafigi: odeme yontemleri (Nakit / Banka / ...), yoneticiye yerinde duzenleme penceresi
-  const yontemler = hesap.paraHesabiMi
-    ? (await secenekleriGetir("odeme_yontemi")).map((y) => ({ id: y.id, etiket: y.etiket }))
-    : [];
+  const odemeYontemleri = (await secenekleriGetir("odeme_yontemi")).map((y) => ({ id: y.id, etiket: y.etiket }));
+  const yontemler = hesap.paraHesabiMi ? odemeYontemleri : [];
   const yontemListesi = hesap.paraHesabiMi && silmeYetkisiVar ? await secenekListesiTumDegerlerle("odeme_yontemi") : null;
   const borcludanToplam = hesap.paraHesabiMi
     ? satirlar.filter((x) => x.borcludan && x.alacak > 0).reduce((t, x) => t + x.alacak, 0)
@@ -648,6 +647,18 @@ async function HesapSekmesi({
                       : `${hesap.no} - ${hesap.ad} — seçilen dosyadaki tutar`,
                   },
                 ]}
+              />
+            </>
+          )}
+          {!hesap.tutulanHesapMi && (
+            <>
+              <h3 className="mb-2 mt-6 text-sm font-semibold text-white">+ Ödeme Geldi (doğrudan bu hesaba)</h3>
+              <OdemeFormu
+                action={odemeEkle.bind(null, kapsam.musteriId)}
+                dosyalar={dosyalar}
+                sabitDosyaId={kapsam.dosyaId}
+                yontemler={odemeYontemleri}
+                hesapId={hesap.id}
               />
             </>
           )}
