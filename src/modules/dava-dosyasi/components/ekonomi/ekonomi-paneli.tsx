@@ -570,7 +570,12 @@ async function HesapSekmesi({
             sabitDosyaId={kapsam.dosyaId}
             yontemler={yontemler}
             yontemListesi={yontemListesi ?? undefined}
+            hedefler={hedefler}
           />
+          <p className="mb-2 mt-6 text-xs text-white/45">
+            Para Trafiği = müvekkilden gelen ve henüz bir hesaba işlenmemiş para. Aşağıdaki <b>Virman</b>, bu paranın bir kısmını (ya da
+            tamamını) 101 Akdi Vekalet, 102 Harcama gibi bir hesaba mahsup eder; para Para Trafiği&apos;nden düşer, hedef hesabın borcunu azaltır.
+          </p>
           <h3 className="mb-2 mt-6 text-sm font-semibold text-white">⇄ Virman: Para Trafiğinden / Hesaplar Arası Aktar</h3>
           <VirmanFormu
             action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
@@ -652,13 +657,16 @@ async function HesapSekmesi({
           )}
           {!hesap.tutulanHesapMi && (
             <>
-              <h3 className="mb-2 mt-6 text-sm font-semibold text-white">+ Ödeme Geldi (doğrudan bu hesaba)</h3>
+              <h3 className="mb-1 mt-6 text-sm font-semibold text-white">+ Ödeme Geldi (bu hesaba işlenir)</h3>
+              <p className="mb-2 text-xs text-white/45">
+                Para önce Para Trafiği&apos;ne girer (ödeme şekliyle kayıtlı kalır), aynı anda bu hesaba aktarılır; ayrıca virman yapmanız gerekmez.
+              </p>
               <OdemeFormu
                 action={odemeEkle.bind(null, kapsam.musteriId)}
                 dosyalar={dosyalar}
                 sabitDosyaId={kapsam.dosyaId}
                 yontemler={odemeYontemleri}
-                hesapId={hesap.id}
+                sabitHedefId={hesap.id}
               />
             </>
           )}

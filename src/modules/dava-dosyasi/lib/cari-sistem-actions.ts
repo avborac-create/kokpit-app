@@ -67,20 +67,13 @@ async function paraBakiyesi(tx: Pick<typeof prisma, "cariHareketi" | "cariHesap"
 
 // Para geldi: Para Trafigi'ne ALACAK. Dosya duzeyinden girilirse dosyaya
 // etiketlenir (muvekkil ekraninda da gorunur); muvekkil duzeyinde dosya bos olabilir.
+// hedefHesapId doluysa ayni islemde, gelen toplam tutar o hesaba VIRMAN edilir
+// (Para Trafigi'nde ALACAK + BORC, hedef hesapta ALACAK): ayri virman yapmaya gerek kalmaz.
 export async function odemeEkle(musteriId: string, formData: FormData) {
   const dosyaId = metin(formData, "dosyaId") || null;
   if (dosyaId) await dosyaMuvekkilinMi(musteriId, dosyaId);
-  // hesapId verilmisse odeme dogrudan o cari hesaba ALACAK yazilir (hesabin kendi sekmesinden);
-  // verilmezse Para Trafigi'ne gelir.
-  const hesapId = metin(formData, "hesapId");
-  const para = hesapId
-    ? await prisma.cariHesap.findUnique({ where: { id: hesapId } })
-    : await prisma.cariHesap.findFirst({ where: { paraHesabiMi: true } });
-  if (!para) throw new Error(hesapId ? "Hesap bulunamadı." : "Para Trafiği hesabı bulunamadı.");
-  if (hesapId) {
-    if (para.tutulanHesapMi) throw new Error("Tutulan hesaba buradan ödeme girilemez; virman kullanın.");
-    if (!dosyaId && !para.paraHesabiMi) throw new Error("Bu hesaba ödeme girerken dosya seçilmelidir.");
-  }
+  const hedefHesapId = metin(formData, "hedefHesapId");
+  if (hedefHesapId && !dosyaId) throw new Error("Ödemeyi bir hesaba aktarmak için dosya seçilmelidir.");
   const tarih = tarihAl(formData);
   const aciklama = metin(formData, "aciklama") || "GELEN ÖDEME";
   // Tek yontem ya da parcali odeme: her satir (yontem + tutar) ayri bir kayit olarak yazilir.
@@ -89,18 +82,40 @@ export async function odemeEkle(musteriId: string, formData: FormData) {
   if (tutarlar.length === 0 || tutarlar.some((t) => !Number.isFinite(t) || t <= 0)) {
     throw new Error("Her satırın tutarı sıfırdan büyük bir sayı olmalıdır.");
   }
-  await prisma.cariHareketi.createMany({
-    data: tutarlar.map((t, i) => ({
-      musteriId,
-      dosyaId,
-      hesapId: para.id,
-      yon: "ALACAK" as const,
-      tarih,
-      tutar: Math.round(t * 100) / 100,
-      aciklama,
-      odemeYontemiId: yontemler[i] || null,
-      borcludanMi: metin(formData, "paraKaynagi") === "borclu",
-    })),
+  const tutarlarYuvarlak = tutarlar.map((t) => Math.round(t * 100) / 100);
+  await prisma.$transaction(async (tx) => {
+    const para = await tx.cariHesap.findFirst({ where: { paraHesabiMi: true } });
+    if (!para) throw new Error("Para Trafiği hesabı bulunamadı.");
+    const hedef = hedefHesapId ? await tx.cariHesap.findUnique({ where: { id: hedefHesapId } }) : null;
+    if (hedefHesapId && (!hedef || hedef.paraHesabiMi)) throw new Error("Geçerli bir hedef hesap seçin.");
+    await tx.cariHareketi.createMany({
+      data: tutarlarYuvarlak.map((t, i) => ({
+        musteriId,
+        dosyaId,
+        hesapId: para.id,
+        yon: "ALACAK" as const,
+        tarih,
+        tutar: t,
+        aciklama,
+        odemeYontemiId: yontemler[i] || null,
+        borcludanMi: metin(formData, "paraKaynagi") === "borclu",
+      })),
+    });
+    if (!hedef || !dosyaId) return;
+    const toplam = Math.round(tutarlarYuvarlak.reduce((t, x) => t + x, 0) * 100) / 100;
+    const virmanId = randomUUID();
+    await tx.cariHareketi.create({
+      data: {
+        musteriId, dosyaId, hesapId: para.id, yon: "BORC", tarih, tutar: toplam, virmanId,
+        aciklama: `${hedef.no}-${hedef.ad.toLocaleUpperCase("tr-TR")} VİRMAN`,
+      },
+    });
+    await tx.cariHareketi.create({
+      data: {
+        musteriId, dosyaId, hesapId: hedef.id, yon: "ALACAK", tarih, tutar: toplam, virmanId,
+        aciklama: `${para.no}-${para.ad.toLocaleUpperCase("tr-TR")} VİRMAN — ${aciklama}`,
+      },
+    });
   });
   yenile();
 }

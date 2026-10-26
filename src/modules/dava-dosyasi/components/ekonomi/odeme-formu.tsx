@@ -23,14 +23,17 @@ export function OdemeFormu({
   sabitDosyaId,
   yontemler,
   yontemListesi,
-  hesapId,
+  hedefler,
+  sabitHedefId,
 }: {
   action: (formData: FormData) => void;
   dosyalar: DosyaSecenegi[];
   sabitDosyaId?: string;
   yontemler: Yontem[];
-  // Doluysa odeme Para Trafigi yerine dogrudan bu cari hesaba ALACAK yazilir (dosya secimi zorunlu).
-  hesapId?: string;
+  // Odeme ayni anda bir cari hesaba virman edilebilsin (ayri virman yapmaya gerek kalmaz).
+  hedefler?: { id: string; etiket: string }[];
+  // Hesabin kendi sekmesinden girilirken hedef sabittir (dosya secimi zorunlu).
+  sabitHedefId?: string;
   // Sadece yonetici: yontem listesini yerinde duzenleme penceresi
   yontemListesi?: {
     id: string;
@@ -49,14 +52,14 @@ export function OdemeFormu({
 
   return (
     <form action={action} className="glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-2 md:grid-cols-4">
-      {hesapId && <input type="hidden" name="hesapId" value={hesapId} />}
+      {sabitHedefId && <input type="hidden" name="hedefHesapId" value={sabitHedefId} />}
       {sabitDosyaId ? (
         <input type="hidden" name="dosyaId" value={sabitDosyaId} />
       ) : (
         <Alan>
           <Etiket htmlFor="od-dosya">Dosya</Etiket>
-          <Secim id="od-dosya" name="dosyaId" defaultValue="" required={Boolean(hesapId)}>
-            <option value="">{hesapId ? "Dosya seçin" : "Dosyasız (müvekkil havuzu)"}</option>
+          <Secim id="od-dosya" name="dosyaId" defaultValue="" required={Boolean(sabitHedefId)}>
+            <option value="">{sabitHedefId ? "Dosya seçin" : "Dosyasız (müvekkil havuzu)"}</option>
             {dosyalar.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.etiket}
@@ -92,6 +95,20 @@ export function OdemeFormu({
           <option value="borclu">Borçludan (karşı taraftan tahsilat)</option>
         </Secim>
       </Alan>
+      {!sabitHedefId && hedefler && hedefler.length > 0 && (
+        <Alan>
+          <Etiket htmlFor="od-hedef">Ödemeyi Hemen Şu Hesaba Aktar</Etiket>
+          <Secim id="od-hedef" name="hedefHesapId" defaultValue="">
+            <option value="">Aktarma — Para Trafiğinde beklesin</option>
+            {hedefler.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.etiket}
+              </option>
+            ))}
+          </Secim>
+          <p className="mt-1 text-[11px] text-white/40">Hesap seçerseniz dosya da seçmelisiniz; ayrıca virman yapmanız gerekmez.</p>
+        </Alan>
+      )}
       <Alan>
         <Etiket htmlFor="od-aciklama">Açıklama</Etiket>
         <Girdi id="od-aciklama" name="aciklama" defaultValue="GELEN ÖDEME" />
@@ -172,7 +189,7 @@ export function OdemeFormu({
       )}
 
       <div className="flex items-end">
-        <GonderButonu>Ödemeyi Ekle</GonderButonu>
+        <GonderButonu>{sabitHedefId ? "Ödemeyi Bu Hesaba İşle" : "Ödemeyi Ekle"}</GonderButonu>
       </div>
     </form>
   );
