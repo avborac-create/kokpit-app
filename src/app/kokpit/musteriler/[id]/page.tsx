@@ -152,9 +152,14 @@ export default async function MusteriDetaySayfasi({
             kayıt).
           </p>
         </div>
-        <Link href={`/kokpit/finans/musteri-iliskileri/${id}/cari-hesap`}>
-          <Dugme varyant="ikincil">Finansal Kayıtları Görüntüle →</Dugme>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/kokpit/finans/musteri-iliskileri/${id}/odeme-talebi`}>
+            <Dugme>📄 Müvekkil Hesap Özeti</Dugme>
+          </Link>
+          <Link href={`/kokpit/finans/musteri-iliskileri/${id}/cari-hesap`}>
+            <Dugme varyant="ikincil">Finansal Kayıtları Görüntüle →</Dugme>
+          </Link>
+        </div>
       </div>
     </div>
   );

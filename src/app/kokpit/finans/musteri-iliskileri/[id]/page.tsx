@@ -114,6 +114,16 @@ export default async function MusteriFinansAksiyonSayfasi({
           </p>
         </Link>
 
+        <Link
+          href={`/kokpit/finans/musteri-iliskileri/${id}/odeme-talebi`}
+          className="glass block rounded-2xl border border-[var(--accent)] p-5 transition-colors hover:bg-white/[0.06]"
+        >
+          <p className="font-medium text-white">📄 Müvekkil Hesap Özeti Oluştur</p>
+          <p className="mt-1 text-sm text-white/55">
+            Müvekkilden ödeme istemek için ne için ne kadar istendiğini gösteren A4 belge hazırlayın.
+          </p>
+        </Link>
+
         <div className="glass rounded-2xl p-5 opacity-50">
           <div className="flex items-center gap-2">
             <p className="font-medium text-white">Finansal Rapor Oluştur</p>

@@ -243,14 +243,6 @@ export async function EkonomiPaneli({
         </h2>
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-xs text-white/40">Bir kayıt hem dosya hem müvekkil ekonomisinde görünür; tek yerde girilir.</p>
-          {musteriDuzeyi && (
-            <Link
-              href={`/kokpit/finans/musteri-iliskileri/${kapsam.musteriId}/odeme-talebi`}
-              className="whitespace-nowrap rounded-full border border-[var(--accent)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-medium text-white hover:bg-[var(--accent)]/30"
-            >
-              📄 Müvekkil Hesap Özeti
-            </Link>
-          )}
           {kapsam.dosyaId ? (
             <Link
               href={`/kokpit/finans/musteri-iliskileri/${kapsam.musteriId}/cari-hesap?sayfa=genel&alt=ozet`}
@@ -261,6 +253,21 @@ export async function EkonomiPaneli({
           ) : null}
         </div>
       </div>
+
+      <Link
+        href={`/kokpit/finans/musteri-iliskileri/${kapsam.musteriId}/odeme-talebi`}
+        className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-3 text-white transition-colors hover:bg-[var(--accent)]/30"
+      >
+        <span>
+          <span className="block text-sm font-semibold">📄 Müvekkil Hesap Özeti Oluştur</span>
+          <span className="block text-xs text-white/60">
+            Müvekkilden ödeme istemek için: ne için ne kadar, banka bilgisi ve masraf dökümüyle A4 belge
+          </span>
+        </span>
+        <span className="shrink-0 text-lg" aria-hidden="true">
+          ›
+        </span>
+      </Link>
 
       {dosyaDisiMi && kapsam.dosyaId && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-sm text-white/80">

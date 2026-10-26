@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
-import { Dugme } from "@/core/ui/button";
 
 type Satir = { anahtar: number; dahil: boolean; baslik: string; aciklama: string; tutar: string };
 
@@ -104,135 +103,229 @@ export function OdemeTalebiFormu({
     }
   }
 
+  const tarihYazi = (iso: string) => (iso ? iso.split("-").reverse().join(".") : "");
+  const kart = "rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-6";
+  const baslikStili = "text-[22px] font-semibold tracking-tight text-white";
+  const altYazi = "mt-1 text-sm leading-relaxed text-white/50";
+  const girdiStili = "!rounded-xl !py-2.5";
+
   return (
-    <form method="post" action="/api/odeme-talebi" target="_blank" className="space-y-6">
+    <form method="post" action="/api/odeme-talebi" target="_blank" className="pb-28 lg:pb-0">
       <input type="hidden" name="musteriId" value={musteriId} />
 
-      <section className="glass rounded-2xl p-5">
-        <h2 className="mb-1 text-base font-semibold text-white">1 · Ne için, ne kadar isteniyor?</h2>
-        <p className="mb-4 text-xs text-white/45">
-          Satırlar müvekkil ekonomisindeki hesaplardan geldi. İstemediğiniz satırın işaretini kaldırın, tutarı ya da
-          açıklamayı değiştirin. Müvekkile okunaklı bir dille anlatılır.
-        </p>
-        <div className="space-y-3">
-          {satirlar.map((s) => (
-            <div key={s.anahtar} className={`rounded-xl border border-white/10 p-3 ${s.dahil ? "" : "opacity-40"}`}>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={s.dahil}
-                  onChange={(e) => guncelle(s.anahtar, { dahil: e.target.checked })}
-                  aria-label="Belgeye ekle"
-                  className="h-4 w-4 accent-[var(--accent)]"
-                />
-                <Girdi
-                  value={s.baslik}
-                  onChange={(e) => guncelle(s.anahtar, { baslik: e.target.value })}
-                  placeholder="Ne için (ör. Avukatlık ücreti)"
-                  className="min-w-48 flex-1"
-                />
-                <Girdi
-                  value={s.tutar}
-                  onChange={(e) => guncelle(s.anahtar, { tutar: e.target.value })}
-                  inputMode="decimal"
-                  placeholder="Tutar (TL)"
-                  className="w-36 text-right"
-                />
-                <button
-                  type="button"
-                  onClick={() => setSatirlar((o) => o.filter((x) => x.anahtar !== s.anahtar))}
-                  className="px-2 text-lg text-[#ff7a70] hover:bg-white/10"
-                  title="Satırı sil"
-                >
-                  ×
-                </button>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="space-y-6">
+          <section className={kart}>
+            <h2 className={baslikStili}>Ne için, ne kadar?</h2>
+            <p className={altYazi}>
+              Satırlar müvekkil ekonomisinden geldi. İstemediğinizi kapatın, tutar ve açıklamayı değiştirin. Müvekkil bu
+              açıklamaları okuyacak.
+            </p>
+            <div className="mt-5 divide-y divide-white/[0.08] overflow-hidden rounded-2xl border border-white/10 bg-black/10">
+              {satirlar.map((s) => (
+                <div key={s.anahtar} className={`p-4 transition-opacity ${s.dahil ? "" : "opacity-40"}`}>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={s.dahil}
+                      onChange={(e) => guncelle(s.anahtar, { dahil: e.target.checked })}
+                      aria-label="Belgeye ekle"
+                      className="h-5 w-5 shrink-0 accent-[var(--accent)]"
+                    />
+                    <Girdi
+                      value={s.baslik}
+                      onChange={(e) => guncelle(s.anahtar, { baslik: e.target.value })}
+                      placeholder="Ne için (ör. Avukatlık ücreti)"
+                      className={`min-w-0 flex-1 ${girdiStili}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSatirlar((o) => o.filter((x) => x.anahtar !== s.anahtar))}
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-lg text-white/40 hover:bg-white/10 hover:text-[#ff7a70]"
+                      title="Satırı sil"
+                      aria-label="Satırı sil"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 pl-8">
+                    <div className="min-w-48 flex-1">
+                      <Girdi
+                        value={s.aciklama}
+                        onChange={(e) => guncelle(s.anahtar, { aciklama: e.target.value })}
+                        placeholder="Kısa açıklama"
+                        className={`text-sm ${girdiStili}`}
+                      />
+                    </div>
+                    <div className="flex w-44 shrink-0 items-center gap-2">
+                      <Girdi
+                        value={s.tutar}
+                        onChange={(e) => guncelle(s.anahtar, { tutar: e.target.value })}
+                        inputMode="decimal"
+                        placeholder="0,00"
+                        aria-label="Tutar (TL)"
+                        className={`text-right text-lg font-semibold ${girdiStili}`}
+                      />
+                      <span className="text-sm text-white/40">TL</span>
+                    </div>
+                  </div>
+                  {s.dahil && s.baslik.trim() && sayi(s.tutar) !== 0 && (
+                    <>
+                      <input type="hidden" name="satirBaslik" value={s.baslik} />
+                      <input type="hidden" name="satirAciklama" value={s.aciklama} />
+                      <input type="hidden" name="satirTutar" value={s.tutar} />
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setSatirlar((o) => [...o, { anahtar: Math.max(0, ...o.map((x) => x.anahtar)) + 1, dahil: true, baslik: "", aciklama: "", tutar: "" }])}
+              className="mt-3 rounded-full px-3 py-2 text-sm font-medium text-[#6db8ff] hover:bg-white/[0.06]"
+            >
+              ＋ Satır ekle
+            </button>
+            {dokumSayisi > 0 && (
+              <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl bg-white/[0.04] px-4 py-3 text-sm text-white/80">
+                <input type="checkbox" name="dokum" value="1" checked={dokum} onChange={(e) => setDokum(e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
+                <span>
+                  Masraf dökümünü de ekle
+                  <span className="block text-xs text-white/45">
+                    {dokumSayisi} kalem · toplam {para.format(dokumToplami)} TL
+                  </span>
+                </span>
+              </label>
+            )}
+          </section>
+
+          <section className={kart}>
+            <h2 className={baslikStili}>Nasıl ödenecek?</h2>
+            <p className={altYazi}>Banka bilgileri bu bilgisayarda hatırlanır, her seferinde yazmanız gerekmez.</p>
+            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Alan>
+                <Etiket htmlFor="sonOdemeTarihi">Son ödeme tarihi</Etiket>
+                <Girdi id="sonOdemeTarihi" name="sonOdemeTarihi" type="date" value={sonOdeme} onChange={(e) => setSonOdeme(e.target.value)} className={girdiStili} />
+              </Alan>
+              <Alan>
+                <Etiket htmlFor="hitap">Hitap</Etiket>
+                <Secim id="hitap" name="hitap" value={hitap} onChange={(e) => setHitap(e.target.value)} className={girdiStili}>
+                  <option value="">Yalnızca ad soyad</option>
+                  <option value="Bey">Bey</option>
+                  <option value="Hanım">Hanım</option>
+                </Secim>
+              </Alan>
+              <Alan>
+                <Etiket htmlFor="hesapSahibi">Hesap sahibi</Etiket>
+                <Girdi id="hesapSahibi" name="hesapSahibi" value={banka.hesapSahibi} onChange={(e) => bankaGuncelle("hesapSahibi", e.target.value)} className={girdiStili} />
+              </Alan>
+              <Alan>
+                <Etiket htmlFor="banka">Banka</Etiket>
+                <Girdi id="banka" name="banka" value={banka.banka} onChange={(e) => bankaGuncelle("banka", e.target.value)} className={girdiStili} />
+              </Alan>
+              <div className="sm:col-span-2">
+                <Alan>
+                  <Etiket htmlFor="iban">IBAN</Etiket>
+                  <Girdi id="iban" name="iban" value={banka.iban} onChange={(e) => bankaGuncelle("iban", e.target.value)} placeholder="TR00 0000 0000 0000 0000 0000 00" className={girdiStili} />
+                </Alan>
               </div>
-              <Girdi
-                value={s.aciklama}
-                onChange={(e) => guncelle(s.anahtar, { aciklama: e.target.value })}
-                placeholder="Kısa açıklama (müvekkil bunu okuyacak)"
-                className="mt-2 !py-1.5 text-xs"
-              />
-              {s.dahil && s.baslik.trim() && sayi(s.tutar) !== 0 && (
-                <>
-                  <input type="hidden" name="satirBaslik" value={s.baslik} />
-                  <input type="hidden" name="satirAciklama" value={s.aciklama} />
-                  <input type="hidden" name="satirTutar" value={s.tutar} />
-                </>
+              <div className="sm:col-span-2">
+                <Alan>
+                  <Etiket htmlFor="aciklamaKodu">Havale açıklamasına yazılacak</Etiket>
+                  <Girdi id="aciklamaKodu" name="aciklamaKodu" value={kod} onChange={(e) => setKod(e.target.value)} className={girdiStili} />
+                </Alan>
+              </div>
+              <div className="sm:col-span-2">
+                <Alan>
+                  <Etiket htmlFor="not">Müvekkile not (isteğe bağlı)</Etiket>
+                  <MetinAlani id="not" name="not" rows={2} placeholder="ör. Duruşma öncesi ödemenizi rica ederiz." className="!rounded-xl" />
+                </Alan>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <aside className="lg:sticky lg:top-6 lg:self-start">
+          <div className="overflow-hidden rounded-3xl border border-white/10 bg-white text-[#1d1d1f] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]">
+            <div className="px-6 pb-2 pt-6">
+              <p className="text-[10px] font-semibold tracking-[0.14em] text-[#6e6e73]">ECES HUKUK BÜROSU</p>
+              <p className="text-xl font-bold leading-tight">Müvekkil Hesap Özeti</p>
+              <p className="mt-2 text-xs text-[#6e6e73]">
+                Sayın {adBicimle(musteriAdi)}
+                {hitap ? ` ${hitap}` : ""}
+              </p>
+            </div>
+            <div className="mx-4 rounded-2xl bg-[#f5f5f7] px-4 py-4">
+              <p className="text-[11px] text-[#6e6e73]">Ödemeniz gereken toplam tutar</p>
+              <p className="text-3xl font-bold tracking-tight">{para.format(toplam)} TL</p>
+              {sonOdeme && <p className="mt-1 text-xs font-semibold text-[#0071e3]">Son ödeme tarihi: {tarihYazi(sonOdeme)}</p>}
+            </div>
+            <div className="px-6 py-4">
+              <p className="mb-1 text-xs font-bold">Bu tutar ne için isteniyor?</p>
+              {dahilSatirlar.length === 0 && <p className="py-3 text-xs text-[#6e6e73]">Henüz satır yok.</p>}
+              {dahilSatirlar.map((x) => (
+                <div key={x.anahtar} className="flex items-start justify-between gap-3 border-t border-[#d2d2d7] py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-bold">{x.baslik}</p>
+                    {x.aciklama && <p className="truncate text-[10px] text-[#6e6e73]">{x.aciklama}</p>}
+                  </div>
+                  <p className="shrink-0 text-xs font-bold">{para.format(sayi(x.tutar))} TL</p>
+                </div>
+              ))}
+              {banka.iban && (
+                <div className="mt-3 rounded-xl border border-[#d2d2d7] p-3 text-[11px]">
+                  <p className="mb-1 font-bold">Nasıl ödeyebilirsiniz?</p>
+                  <p className="text-[#6e6e73]">{banka.hesapSahibi}</p>
+                  <p className="font-semibold">{banka.iban}</p>
+                  {kod && <p className="mt-1 font-semibold text-[#0071e3]">Açıklamaya yazın: {kod}</p>}
+                </div>
               )}
             </div>
-          ))}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          </div>
+          <p className="mt-2 text-center text-xs text-white/35">Canlı önizleme · A4 PDF bu görünümde hazırlanır</p>
+
+          <div className="mt-4 hidden flex-col gap-2 lg:flex">
+            <button
+              type="submit"
+              disabled={dahilSatirlar.length === 0}
+              className="rounded-full bg-[var(--accent)] px-5 py-3.5 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              📄 A4 PDF Oluştur
+            </button>
+            <button
+              type="button"
+              onClick={whatsappKopyala}
+              disabled={dahilSatirlar.length === 0}
+              className="rounded-full border border-white/15 bg-white/[0.06] px-5 py-3 text-base font-medium text-white/90 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {kopyalandi ? "Kopyalandı ✓" : "WhatsApp metnini kopyala"}
+            </button>
+          </div>
+        </aside>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#12151d]/90 p-3 backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-xl items-center gap-2">
+          <div className="min-w-0 pr-1">
+            <p className="text-[11px] leading-none text-white/50">Toplam</p>
+            <p className="text-lg font-bold leading-tight text-white">{para.format(toplam)} TL</p>
+          </div>
           <button
             type="button"
-            onClick={() => setSatirlar((o) => [...o, { anahtar: Math.max(0, ...o.map((x) => x.anahtar)) + 1, dahil: true, baslik: "", aciklama: "", tutar: "" }])}
-            className="text-xs text-[#6db8ff] hover:underline"
+            onClick={whatsappKopyala}
+            disabled={dahilSatirlar.length === 0}
+            className="whitespace-nowrap rounded-full border border-white/15 bg-white/[0.06] px-4 py-3 text-sm font-medium text-white/90 disabled:opacity-40"
           >
-            + Satır ekle
+            {kopyalandi ? "✓" : "WhatsApp"}
           </button>
-          <p className="text-sm text-white/70">
-            Ödenecek toplam: <b className="text-lg text-white">{para.format(toplam)} TL</b>
-          </p>
+          <button
+            type="submit"
+            disabled={dahilSatirlar.length === 0}
+            className="flex-1 whitespace-nowrap rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            📄 PDF Oluştur
+          </button>
         </div>
-        {dokumSayisi > 0 && (
-          <label className="mt-3 flex items-center gap-2 text-sm text-white/75">
-            <input type="checkbox" name="dokum" value="1" checked={dokum} onChange={(e) => setDokum(e.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
-            Masraf dökümünü de ekle ({dokumSayisi} kalem, toplam {para.format(dokumToplami)} TL)
-          </label>
-        )}
-      </section>
-
-      <section className="glass rounded-2xl p-5">
-        <h2 className="mb-3 text-base font-semibold text-white">2 · Ne zamana kadar, nasıl ödenecek?</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Alan>
-            <Etiket htmlFor="hitap">Hitap</Etiket>
-            <Secim id="hitap" name="hitap" value={hitap} onChange={(e) => setHitap(e.target.value)}>
-              <option value="">Yalnızca ad soyad</option>
-              <option value="Bey">Bey</option>
-              <option value="Hanım">Hanım</option>
-            </Secim>
-          </Alan>
-          <Alan>
-            <Etiket htmlFor="sonOdemeTarihi">Son ödeme tarihi</Etiket>
-            <Girdi id="sonOdemeTarihi" name="sonOdemeTarihi" type="date" value={sonOdeme} onChange={(e) => setSonOdeme(e.target.value)} />
-          </Alan>
-          <Alan>
-            <Etiket htmlFor="hesapSahibi">Hesap sahibi</Etiket>
-            <Girdi id="hesapSahibi" name="hesapSahibi" value={banka.hesapSahibi} onChange={(e) => bankaGuncelle("hesapSahibi", e.target.value)} />
-          </Alan>
-          <Alan>
-            <Etiket htmlFor="banka">Banka</Etiket>
-            <Girdi id="banka" name="banka" value={banka.banka} onChange={(e) => bankaGuncelle("banka", e.target.value)} />
-          </Alan>
-          <div className="sm:col-span-2">
-            <Alan>
-              <Etiket htmlFor="iban">IBAN</Etiket>
-              <Girdi id="iban" name="iban" value={banka.iban} onChange={(e) => bankaGuncelle("iban", e.target.value)} placeholder="TR00 0000 0000 0000 0000 0000 00" />
-            </Alan>
-          </div>
-          <Alan>
-            <Etiket htmlFor="aciklamaKodu">Havale açıklamasına yazılacak</Etiket>
-            <Girdi id="aciklamaKodu" name="aciklamaKodu" value={kod} onChange={(e) => setKod(e.target.value)} />
-          </Alan>
-        </div>
-        <p className="mt-2 text-[11px] text-white/35">Banka bilgileri bu bilgisayarda hatırlanır, her seferinde yazmanız gerekmez.</p>
-        <div className="mt-3">
-          <Alan>
-            <Etiket htmlFor="not">Müvekkile not (isteğe bağlı)</Etiket>
-            <MetinAlani id="not" name="not" rows={2} placeholder="ör. Duruşma öncesi ödemenizi rica ederiz." />
-          </Alan>
-        </div>
-      </section>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <Dugme type="submit" disabled={dahilSatirlar.length === 0}>
-          📄 A4 Hesap Özeti (PDF) Oluştur
-        </Dugme>
-        <Dugme type="button" varyant="ikincil" onClick={whatsappKopyala} disabled={dahilSatirlar.length === 0}>
-          {kopyalandi ? "Kopyalandı ✓" : "WhatsApp metnini kopyala"}
-        </Dugme>
       </div>
     </form>
   );
