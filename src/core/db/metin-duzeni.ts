@@ -21,7 +21,6 @@ export const KURALLAR: Record<string, Record<string, Kural>> = {
   },
   CMKDosyasi: { adSoyad: baslikDuzeni, suc: cumleDuzeni, birim: baslikDuzeni, notlar: cumleDuzeni },
   DosyaNabzi: { adSoyad: baslikDuzeni },
-  MuvekkilAnlasma: { notlar: cumleDuzeni },
   MusteriParaTrafigi: { aciklama: cumleDuzeni },
   KarsiTarafAlacagi: { aciklama: cumleDuzeni },
   DosyaMasrafi: { aciklama: cumleDuzeni },
@@ -31,6 +30,9 @@ export const KURALLAR: Record<string, Record<string, Kural>> = {
   DosyaParaGirisi: { aciklama: cumleDuzeni },
   DosyaCariDagitimi: { aciklama: cumleDuzeni },
   CariHareketi: { aciklama: cumleDuzeni },
+  HacizRaporu: { islemYapilanBorclular: cumleDuzeni, avukatGorusu: cumleDuzeni },
+  DosyaCariTahakkuku: { dayanak: cumleDuzeni },
+  MuvekkilAnlasma: { odemePlani: cumleDuzeni, basariPrimi: cumleDuzeni, notlar: cumleDuzeni },
   HukukiMudahale: { baslik: cumleDuzeni, aciklama: cumleDuzeni },
 };
 

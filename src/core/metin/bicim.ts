@@ -87,8 +87,23 @@ function kodGibiMi(kelime: string) {
   return /[\d@\\_/]|:\/\//.test(kelime);
 }
 
-export function cumleDuzeni(metin: string): string {
-  if (!metin.trim()) return metin;
+// Caps Lock açık kalmış metin: harflerin tamamı büyükse küçültülür (kısaltmalar ve
+// kod/sayı içeren parçalar hariç); ardından normal cümle düzeni uygulanır.
+function capsLockuDuzelt(metin: string): string {
+  const harfler = metin.match(/\p{L}/gu);
+  if (!harfler || harfler.length < 2 || metin !== buyut(metin)) return metin;
+  return metin
+    .split(/(\s+)/)
+    .map((parca) => {
+      if (!parca || /^\s+$/.test(parca) || kodGibiMi(parca)) return parca;
+      return parca.replace(/\p{L}+/gu, (kelime) => (KORUNAN_KISALTMALAR.has(kelime) ? kelime : kucult(kelime)));
+    })
+    .join("");
+}
+
+export function cumleDuzeni(girdi: string): string {
+  if (!girdi.trim()) return girdi;
+  const metin = capsLockuDuzelt(girdi);
 
   // 1) Metnin başı: baştaki boşluk/noktalamadan sonraki ilk harf büyür.
   const bas = metin.match(/^([^\p{L}\d]*)(\p{L})/u);
