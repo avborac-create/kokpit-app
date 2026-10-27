@@ -113,8 +113,11 @@ export default async function MusteriDetaySayfasi({
                   <th className="px-4 py-3 font-medium">Kokpit No</th>
                   <th className="px-4 py-3 font-medium">Dosya No</th>
                   <th className="px-4 py-3 font-medium">Tür</th>
+                  <th className="px-4 py-3 font-medium">Birim Adı</th>
+                  <th className="px-4 py-3 font-medium">Dava Konusu</th>
                   <th className="px-4 py-3 font-medium">Konu</th>
                   <th className="px-4 py-3 font-medium">Durum</th>
+                  <th className="px-4 py-3 font-medium"></th>
                 </tr>
               </thead>
               <tbody>
@@ -130,11 +133,21 @@ export default async function MusteriDetaySayfasi({
                     </td>
                     <td className="px-4 py-3 text-white/60">{dosya.dosyaNo ?? "—"}</td>
                     <td className="px-4 py-3 text-white/60">{dosya.tur?.etiket ?? "—"}</td>
+                    <td className="px-4 py-3 text-white/60">{dosya.birimAdi ?? "—"}</td>
+                    <td className="px-4 py-3 text-white/60">{dosya.davaKonusu ?? "—"}</td>
                     <td className="px-4 py-3 text-white/85">{dosya.konu}</td>
                     <td className="px-4 py-3">
                       <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
                         {dosya.durum.etiket}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/kokpit/dava-dosyalari/${dosya.id}`}
+                        className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-medium text-[#6db8ff] hover:underline"
+                      >
+                        Dosya Kartı →
+                      </Link>
                     </td>
                   </tr>
                 ))}
