@@ -782,7 +782,7 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
                 </td>
                 <td className="px-4 py-3 text-white/60">
                   {h.grup === "ADLIYE" ? "Adliye" : h.grup === "BORCLU" ? "Borçlu" : "Müvekkil"}
-                  {h.tutulanHesapMi ? " · tutulan" : h.paraHesabiMi ? " · para" : ""}
+                  {h.grup === "ADLIYE" ? "" : h.tutulanHesapMi ? " · tutulan" : h.paraHesabiMi ? " · para" : ""}
                 </td>
                 <td className="px-4 py-3 text-white/60">{h.aktifMi ? "Aktif" : "Pasif"}</td>
                 <td className="px-4 py-3">
