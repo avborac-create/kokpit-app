@@ -47,6 +47,11 @@ function parcaDuzenle(parca: string, ilkKelimeMi: boolean): string {
 
 // Bir "kelime"yi (boşluksuz parça) baştaki/sondaki noktalamayı koruyarak düzenler.
 function kelimeDuzenle(kelime: string, ilkKelimeMi: boolean): string {
+  // "Borç(ödenmedi)" gibi parantez bitişik yazım: parantezle başlayan parça yeni ifade sayılır.
+  const segmentler = kelime.split(/(?=\()/);
+  if (segmentler.length > 1) {
+    return segmentler.map((seg, i) => kelimeDuzenle(seg, i > 0 || ilkKelimeMi)).join("");
+  }
   // "10.ASLİYE" gibi sıra numarasına bitişik yazılmış kelime: numara korunur, kalanı düzenlenir.
   const sira = kelime.match(/^(\d+\.)(\p{L}.*)$/u);
   if (sira) return sira[1] + kelimeDuzenle(sira[2], false);
@@ -116,6 +121,10 @@ export function cumleDuzeni(girdi: string): string {
 
   // 2) Yeni satır başları ve "!" "?" sonrası.
   sonuc = sonuc.replace(/([\n!?][ \t]*)(\p{L})/gu, (_m, onEk: string, harf: string) => onEk + buyut(harf));
+
+  // 2b) Parantez içi de yeni bir ifade sayılır: "(depozito iadesi)" -> "(Depozito iadesi)".
+  //     "(a)" gibi tek harfli madde işaretlerine dokunulmaz.
+  sonuc = sonuc.replace(/(\()(\s*)(\p{L})(?!\))/gu, (_m, ac: string, bosluk: string, harf: string) => ac + bosluk + buyut(harf));
 
   // 3) "Dört+ harfli kelime" + nokta + boşluk sonrası yeni cümle. "Av. Ali", "No. 5" gibi
   //    kısaltma noktaları (3 harf ve altı) yeni cümle sayılmaz.
