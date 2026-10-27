@@ -174,10 +174,30 @@ model Musteri {
   cmkDosyalari       CMKDosyasi[]
   cariHareketleri    CariHareketi[]
   anlasmalar         MuvekkilAnlasma[]
+  telefonlar         MusteriTelefonu[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
   @@map("musteriler")
+}
+
+// Musterinin telefon rehberi: her numara; tipi (cep / sabit), kime ait oldugu
+// (numaranin sahibi olan kisi) ve sifatiyla (firma sahibi, ortak, satis muduru,
+// calisan vb.) birlikte tutulur.
+model MusteriTelefonu {
+  id        String  @id @default(cuid())
+  musteriId String
+  musteri   Musteri @relation(fields: [musteriId], references: [id], onDelete: Cascade)
+
+  telefon         String
+  telefonTipi     String? // "CEP" | "SABIT"
+  aidiyet         String? // numara kime ait (ad soyad)
+  sifat           String?
+  siraNo          Int      @default(0)
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([musteriId])
+  @@map("musteri_telefonlari")
 }
 
 // Musterinin (ozellikle tuzel kisilerin) irtibat kisileri/temsilcileri.

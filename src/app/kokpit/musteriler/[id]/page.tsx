@@ -85,6 +85,28 @@ export default async function MusteriDetaySayfasi({
         />
       </div>
 
+      {musteri.telefonlar.length > 0 && (
+        <div className="mb-8 max-w-2xl">
+          <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Telefonlar</h2>
+          <div className="glass divide-y divide-white/[0.06] rounded-2xl">
+            {musteri.telefonlar.map((t) => (
+              <div key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
+                <a href={`tel:${t.telefon.replace(/\s+/g, "")}`} className="font-medium text-white hover:text-[#6db8ff] hover:underline">
+                  {t.telefon}
+                </a>
+                {t.telefonTipi && (
+                  <span className="rounded-full bg-white/[0.07] px-2 py-0.5 text-xs text-white/70">
+                    {t.telefonTipi === "CEP" ? "Cep" : "Sabit"}
+                  </span>
+                )}
+                {t.aidiyet && <span className="text-white/85">{t.aidiyet}</span>}
+                {t.sifat && <span className="text-white/50">· {t.sifat}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mb-8">
         <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">İrtibat Kişileri</h2>
         <div className="mb-4">

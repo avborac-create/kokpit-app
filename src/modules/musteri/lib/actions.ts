@@ -21,6 +21,29 @@ function buyukHarfeCevir(metin: string): string {
   return metin.toLocaleUpperCase("tr-TR");
 }
 
+// Telefon rehberi satirlari: tel_no / tel_tip / tel_aidiyet / tel_sifat alanlari paralel dizilerdir.
+// Bos numarali satirlar atlanir; mevcutlar silinip sirayla yeniden yazilir.
+async function telefonSatirlariniYaz(musteriId: string, formData: FormData) {
+  if (!formData.has("tel_no")) return; // form telefon rehberini hic tasimiyorsa dokunma
+  const noLar = formData.getAll("tel_no").map(String);
+  const tipler = formData.getAll("tel_tip").map(String);
+  const aidiyetler = formData.getAll("tel_aidiyet").map(String);
+  const sifatlar = formData.getAll("tel_sifat").map(String);
+  const satirlar = noLar
+    .map((no, i) => ({
+      telefon: no.trim(),
+      telefonTipi: tipler[i] === "CEP" || tipler[i] === "SABIT" ? tipler[i] : null,
+      aidiyet: (aidiyetler[i] ?? "").trim() || null,
+      sifat: (sifatlar[i] ?? "").trim() || null,
+    }))
+    .filter((s) => s.telefon !== "")
+    .map((s, i) => ({ ...s, musteriId, siraNo: i }));
+  await prisma.$transaction([
+    prisma.musteriTelefonu.deleteMany({ where: { musteriId } }),
+    prisma.musteriTelefonu.createMany({ data: satirlar }),
+  ]);
+}
+
 export async function musteriOlustur(formData: FormData) {
   const adSoyadUnvan = buyukHarfeCevir(String(formData.get("adSoyadUnvan") ?? "").trim());
   const tipId = String(formData.get("tipId") ?? "");
@@ -43,6 +66,7 @@ export async function musteriOlustur(formData: FormData) {
     },
   });
 
+  await telefonSatirlariniYaz(musteri.id, formData);
   revalidatePath("/kokpit/musteriler");
   redirect(`/kokpit/musteriler/${musteri.id}`);
 }
@@ -70,6 +94,7 @@ export async function musteriGuncelle(id: string, formData: FormData) {
     },
   });
 
+  await telefonSatirlariniYaz(id, formData);
   revalidatePath("/kokpit/musteriler");
   revalidatePath(`/kokpit/musteriler/${id}`);
   redirect(`/kokpit/musteriler/${id}`);

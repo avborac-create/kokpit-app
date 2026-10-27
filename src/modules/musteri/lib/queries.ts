@@ -46,6 +46,7 @@ export async function musteriGetir(id: string) {
       irtibatKisileri: {
         orderBy: [{ birincilMi: "desc" }, { olusturmaTarihi: "asc" }],
       },
+      telefonlar: { orderBy: [{ siraNo: "asc" }, { olusturmaTarihi: "asc" }] },
     },
   });
 }

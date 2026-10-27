@@ -4,15 +4,17 @@ import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { avukatlariListele } from "@/modules/musteri/lib/queries";
 import { formAlanDuzeniniGetir } from "@/core/form-duzeni/queries";
 import { MUSTERI_GIZLENEMEZ_ALANLAR } from "@/core/form-duzeni/musteri-alanlari";
-import type { Kullanici, Musteri } from "@prisma/client";
+import type { Kullanici, Musteri, MusteriTelefonu } from "@prisma/client";
+import { TelefonSatirlari } from "@/modules/musteri/components/telefon-satirlari";
 
 type Props = {
   action: (formData: FormData) => void;
-  musteri?: Musteri;
+  musteri?: Musteri & { telefonlar?: MusteriTelefonu[] };
   gonderButonuMetni: string;
 };
 
 export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props) {
+  const telefonlar = musteri?.telefonlar;
   const [tipler, durumlar, avukatlar, alanDuzeni] = await Promise.all([
     secenekleriGetir("musteri_tipi"),
     secenekleriGetir("musteri_durumu"),
@@ -66,10 +68,13 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
       gizli ? (
         <input type="hidden" name="telefon" value={musteri?.telefon ?? ""} />
       ) : (
-        <Alan>
-          <Etiket htmlFor="telefon">Telefon</Etiket>
-          <Girdi id="telefon" name="telefon" type="tel" defaultValue={musteri?.telefon ?? ""} />
-        </Alan>
+        <>
+          <Alan>
+            <Etiket htmlFor="telefon">Genel Telefon</Etiket>
+            <Girdi id="telefon" name="telefon" type="tel" defaultValue={musteri?.telefon ?? ""} />
+          </Alan>
+          <TelefonSatirlari baslangic={telefonlar ?? []} />
+        </>
       ),
     eposta: (gizli) =>
       gizli ? (
