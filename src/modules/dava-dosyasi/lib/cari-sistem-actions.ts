@@ -304,6 +304,59 @@ export async function satirGuncelle(tip: "hareket" | "virman", id: string, formD
   }
 }
 
+// Defterde coklu secim: toplu silme (sifreli) ve toplu tarih degistirme. Yalniz yonetici.
+export type TopluOge = { tip: "hareket" | "virman"; id: string };
+
+function topluAyir(ogeler: TopluOge[]) {
+  return {
+    hareketIdleri: ogeler.filter((o) => o.tip === "hareket").map((o) => o.id),
+    virmanIdleri: ogeler.filter((o) => o.tip === "virman").map((o) => o.id),
+  };
+}
+
+export async function topluSil(ogeler: TopluOge[], sifre?: string): Promise<{ hata?: string }> {
+  try {
+    await silmeYetkisiniDogrula(sifre);
+    if (ogeler.length === 0) throw new Error("Kayıt seçilmedi.");
+    const { hareketIdleri, virmanIdleri } = topluAyir(ogeler);
+    await prisma.$transaction(async (tx) => {
+      const kosul = { OR: [{ id: { in: hareketIdleri } }, { virmanId: { in: virmanIdleri } }] };
+      const satirlar = await tx.cariHareketi.findMany({ where: kosul });
+      await tx.cariHareketi.deleteMany({ where: kosul });
+      const gorulen = new Set<string>();
+      for (const s of satirlar) {
+        const anahtar = `${s.musteriId}|${s.dosyaId ?? ""}`;
+        if (gorulen.has(anahtar)) continue;
+        gorulen.add(anahtar);
+        await eksiyeDusmeKontrolu(tx, s.musteriId, s.dosyaId);
+      }
+    });
+    yenile();
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "İşlem başarısız oldu." };
+  }
+}
+
+export async function topluTarihDegistir(ogeler: TopluOge[], tarihMetni: string): Promise<{ hata?: string }> {
+  try {
+    await yoneticiyiDogrula();
+    if (ogeler.length === 0) throw new Error("Kayıt seçilmedi.");
+    if (!tarihMetni) throw new Error("Tarih zorunludur.");
+    const tarih = new Date(tarihMetni);
+    if (Number.isNaN(tarih.getTime())) throw new Error("Geçerli bir tarih girin.");
+    const { hareketIdleri, virmanIdleri } = topluAyir(ogeler);
+    await prisma.cariHareketi.updateMany({
+      where: { OR: [{ id: { in: hareketIdleri } }, { virmanId: { in: virmanIdleri } }] },
+      data: { tarih },
+    });
+    yenile();
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "İşlem başarısız oldu." };
+  }
+}
+
 // ---- Hesap yonetimi (admin) ----
 
 export async function hesapEkle(formData: FormData) {

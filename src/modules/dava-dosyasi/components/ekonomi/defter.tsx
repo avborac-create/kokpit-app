@@ -1,5 +1,7 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { OnayliButon } from "@/core/ui/onayli-buton";
+import { TopluSecim } from "@/modules/dava-dosyasi/components/ekonomi/toplu-secim";
 import { YerindeDuzenle } from "@/modules/dava-dosyasi/components/ekonomi/yerinde-duzenle";
 import type { DefterSatiri } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { hareketSil, virmanSil } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
@@ -81,12 +83,15 @@ export function Defter({
   const renk = (b: number) =>
     tersBakiye ? (b > 0 ? "text-[#6db8ff]" : "text-white/60") : b > 0 ? "text-[#ff7a70]" : b < 0 ? "text-[#32d74b]" : "text-white/60";
 
+  const Sarmal = silmeYetkisiVar ? TopluSecim : Fragment;
   return (
     <div>
+      <Sarmal>
       <div className="glass overflow-x-auto rounded-2xl">
         <table className="w-full text-left text-sm">
           <thead className="text-white/50">
             <tr>
+              {silmeYetkisiVar && <th className="w-8 px-3 py-3" />}
               <th className="px-4 py-3 font-medium">Tarih</th>
               {dosyaSutunu && <th className="px-4 py-3 font-medium">Dosya</th>}
               <th className="px-4 py-3 font-medium">Açıklama</th>
@@ -99,6 +104,18 @@ export function Defter({
           <tbody>
             {hesaplanan.map((s) => (
               <tr key={s.id} className={`border-t border-white/[0.06] ${s.turetilmis ? "italic opacity-70" : ""}`}>
+                {silmeYetkisiVar && (
+                  <td className="w-8 px-3 py-3">
+                    {s.duzenle && (
+                      <input
+                        type="checkbox"
+                        data-toplu={`${s.duzenle.tip}:${s.duzenle.id}`}
+                        aria-label="Kaydı seç"
+                        className="h-4 w-4 cursor-pointer accent-[var(--accent)]"
+                      />
+                    )}
+                  </td>
+                )}
                 <td className="whitespace-nowrap px-4 py-3 text-white/60">{tarihBicimi.format(s.tarih)}</td>
                 {dosyaSutunu && (
                   <td className="px-4 py-3">
@@ -144,7 +161,7 @@ export function Defter({
               </tr>
             ))}
             <tr className="border-t border-white/10 font-medium">
-              <td className="px-4 py-3 text-white" colSpan={dosyaSutunu ? 3 : 2}>
+              <td className="px-4 py-3 text-white" colSpan={(dosyaSutunu ? 3 : 2) + (silmeYetkisiVar ? 1 : 0)}>
                 Toplam
               </td>
               <td className="px-4 py-3 text-right text-white">{para.format(toplamBorc)}</td>
@@ -155,6 +172,7 @@ export function Defter({
           </tbody>
         </table>
       </div>
+      </Sarmal>
       <p className="mt-2 text-xs text-white/35">
         {tutulanHesapMi
           ? "Bakiye = Alacak − Borç (bu hesapta/adliyede şu an duran tutar; iade edilince Borç olarak düşer)."
