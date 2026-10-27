@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { SekmeDuzeni } from "./sekme-duzeni";
 import { Dugme } from "@/core/ui/button";
 import { OnayliButon } from "@/core/ui/onayli-buton";
 import { Girdi, Secim } from "@/core/ui/form";
@@ -301,10 +300,29 @@ export async function EkonomiPaneli({
       )}
       <DurumSeridi ozet={ozet} hrefYaz={hrefYaz} havuzBakiyesi={havuzBakiyesi} paraHesapNo={aktifHesaplar.find((h) => h.paraHesabiMi)?.no} />
 
-      <SekmeDuzeni
-        aktif={aktif}
-        katlar={katlar.map((k) => ({ baslik: k.baslik, sekmeler: k.sekmeler.map((s) => ({ ...s, href: hrefYaz({ alt: s.anahtar }) })) }))}
-      />
+      <div className="mb-5 space-y-2 border-b border-white/[0.08] pb-4">
+        {katlar.map((kat, i) => (
+          <div key={i} className="flex flex-wrap items-center gap-1.5">
+            {kat.baslik && (
+              <span className="mr-1 w-32 shrink-0 text-[11px] font-semibold tracking-wide text-white/35">{kat.baslik}</span>
+            )}
+            {kat.sekmeler.map((sk) => (
+              <Link
+                key={sk.anahtar}
+                href={hrefYaz({ alt: sk.anahtar })}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                  sk.anahtar === aktif
+                    ? "border-[var(--accent)] bg-[var(--accent-soft)] text-white"
+                    : "border-white/10 text-white/60 hover:bg-white/[0.06] hover:text-white"
+                }`}
+              >
+                {sk.etiket}
+                {sk.rozet && <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-white/70">{sk.rozet}</span>}
+              </Link>
+            ))}
+          </div>
+        ))}
+      </div>
 
       {aktif === "ozet" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyalar} />}
       {seciliHesap && aktif === String(seciliHesap.no) && (
@@ -764,7 +782,7 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
                 </td>
                 <td className="px-4 py-3 text-white/60">
                   {h.grup === "ADLIYE" ? "Adliye" : h.grup === "BORCLU" ? "Borçlu" : "Müvekkil"}
-                  {h.grup === "ADLIYE" ? "" : h.tutulanHesapMi ? " · tutulan" : h.paraHesabiMi ? " · para" : ""}
+                  {h.tutulanHesapMi ? " · tutulan" : h.paraHesabiMi ? " · para" : ""}
                 </td>
                 <td className="px-4 py-3 text-white/60">{h.aktifMi ? "Aktif" : "Pasif"}</td>
                 <td className="px-4 py-3">
