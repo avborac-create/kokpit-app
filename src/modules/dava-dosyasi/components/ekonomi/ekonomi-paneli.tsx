@@ -10,6 +10,7 @@ import { CariDefter } from "@/modules/dava-dosyasi/components/cari-defter";
 import { AdliBirimHareketFormu } from "@/modules/dava-dosyasi/components/adli-birim-hareket-formu";
 import { KarsiTarafAlacagiFormu } from "@/modules/dava-dosyasi/components/karsi-taraf-alacagi-formu";
 import { Defter } from "@/modules/dava-dosyasi/components/ekonomi/defter";
+import { AcilirHesapSatiri } from "@/modules/dava-dosyasi/components/ekonomi/acilir-hesap-satiri";
 import {
   BorcFormu,
   DosyalarArasiVirmanFormu,
@@ -342,7 +343,7 @@ export async function EkonomiPaneli({
         ))}
       </div>
 
-      {aktif === "ozet" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyalar} />}
+      {aktif === "ozet" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyalar} hesapNesneleri={aktifHesaplar} silmeYetkisiVar={silmeYetkisiVar} />}
       {seciliHesap && aktif === String(seciliHesap.no) && (
         <HesapSekmesi
           kapsam={kapsam}
@@ -394,11 +395,26 @@ async function OzetSekmesi({
   ozet,
   kapsam,
   dosyalar,
+  hesapNesneleri,
+  silmeYetkisiVar,
 }: {
   ozet: Awaited<ReturnType<typeof kapsamOzeti>>;
   kapsam: Kapsam;
   dosyalar: { id: string; etiket: string }[];
+  hesapNesneleri: Awaited<ReturnType<typeof hesaplariGetir>>;
+  silmeYetkisiVar: boolean;
 }) {
+  // Hareketi olan hesaplarin defteri (satir acilinca gosterilir)
+  const defterler = new Map(
+    await Promise.all(
+      ozet.hesaplar
+        .filter((h) => h.borc || h.alacak)
+        .map(async (h) => {
+          const nesne = hesapNesneleri.find((x) => x.id === h.hesapId);
+          return [h.hesapId, nesne ? await hesapDefteri(kapsam, nesne) : null] as const;
+        }),
+    ).then((liste) => liste.filter((x): x is readonly [string, NonNullable<(typeof x)[1]>] => x[1] !== null)),
+  );
   const kirilim = !kapsam.dosyaId
     ? await Promise.all(
         dosyalar.map(async (d) => ({ ...d, ozet: await kapsamOzeti({ musteriId: kapsam.musteriId, dosyaId: d.id }) })),
@@ -419,18 +435,38 @@ async function OzetSekmesi({
             </tr>
           </thead>
           <tbody>
-            {ozet.hesaplar.map((h) => (
-              <tr key={h.hesapId} className="border-t border-white/[0.06]">
-                <td className="px-4 py-3 text-white/85">
-                  {h.no} - {h.ad}
-                </td>
-                <td className="px-4 py-3 text-right text-white/85">{h.borc ? para.format(h.borc) : "—"}</td>
-                <td className="px-4 py-3 text-right text-white/85">{h.alacak ? para.format(h.alacak) : "—"}</td>
-                <td className="px-4 py-3 text-right font-medium">
-                  {h.paraHesabiMi || h.tutulanHesapMi ? <span className="text-[#6db8ff]">{para.format(h.bakiye)}</span> : <Bakiye b={h.bakiye} />}
-                </td>
-              </tr>
-            ))}
+            {ozet.hesaplar.map((h) => {
+              const hesapNesnesi = hesapNesneleri.find((x) => x.id === h.hesapId);
+              const acilabilir = Boolean(hesapNesnesi) && Boolean(h.borc || h.alacak);
+              const satirDefteri = defterler.get(h.hesapId);
+              return (
+                <AcilirHesapSatiri
+                  key={h.hesapId}
+                  baslik={`${h.no} - ${h.ad}`}
+                  acilabilir={acilabilir}
+                  hucreler={
+                    <>
+                      <td className="px-4 py-3 text-right text-white/85">{h.borc ? para.format(h.borc) : "—"}</td>
+                      <td className="px-4 py-3 text-right text-white/85">{h.alacak ? para.format(h.alacak) : "—"}</td>
+                      <td className="px-4 py-3 text-right font-medium">
+                        {h.paraHesabiMi || h.tutulanHesapMi ? <span className="text-[#6db8ff]">{para.format(h.bakiye)}</span> : <Bakiye b={h.bakiye} />}
+                      </td>
+                    </>
+                  }
+                >
+                  {satirDefteri && hesapNesnesi && (
+                    <Defter
+                      satirlar={satirDefteri}
+                      paraHesabiMi={hesapNesnesi.paraHesabiMi}
+                      tutulanHesapMi={hesapNesnesi.tutulanHesapMi}
+                      dosyaSutunu={!kapsam.dosyaId}
+                      silmeYetkisiVar={silmeYetkisiVar}
+                      bosMesaj="Bu hesapta henüz hareket yok."
+                    />
+                  )}
+                </AcilirHesapSatiri>
+              );
+            })}
             <tr className="border-t border-white/10 font-medium">
               <td className="px-4 py-3 text-white">Net (diğer hesaplar − para trafiği)</td>
               <td colSpan={2} />
