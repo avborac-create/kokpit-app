@@ -338,7 +338,10 @@ export async function topluSil(ogeler: TopluOge[], sifre?: string): Promise<{ ha
   }
 }
 
-export async function topluTarihDegistir(ogeler: TopluOge[], tarihMetni: string): Promise<{ hata?: string }> {
+export type OncekiTarih = { id: string; tarih: string };
+
+// Doner: degisen kayitlarin ESKI tarihleri (geri alma icin).
+export async function topluTarihDegistir(ogeler: TopluOge[], tarihMetni: string): Promise<{ hata?: string; onceki?: OncekiTarih[] }> {
   try {
     await yoneticiyiDogrula();
     if (ogeler.length === 0) throw new Error("Kayıt seçilmedi.");
@@ -346,14 +349,30 @@ export async function topluTarihDegistir(ogeler: TopluOge[], tarihMetni: string)
     const tarih = new Date(tarihMetni);
     if (Number.isNaN(tarih.getTime())) throw new Error("Geçerli bir tarih girin.");
     const { hareketIdleri, virmanIdleri } = topluAyir(ogeler);
-    await prisma.cariHareketi.updateMany({
-      where: { OR: [{ id: { in: hareketIdleri } }, { virmanId: { in: virmanIdleri } }] },
-      data: { tarih },
-    });
+    const kosul = { OR: [{ id: { in: hareketIdleri } }, { virmanId: { in: virmanIdleri } }] };
+    const onceki = (await prisma.cariHareketi.findMany({ where: kosul, select: { id: true, tarih: true } })).map((h) => ({
+      id: h.id,
+      tarih: h.tarih.toISOString(),
+    }));
+    await prisma.cariHareketi.updateMany({ where: kosul, data: { tarih } });
+    yenile();
+    return { onceki };
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "İşlem başarısız oldu." };
+  }
+}
+
+// Toplu tarih degisikligini geri alir: her kaydi eski tarihine dondurur.
+export async function tarihleriGeriYukle(onceki: OncekiTarih[]): Promise<{ hata?: string }> {
+  try {
+    await yoneticiyiDogrula();
+    await prisma.$transaction(
+      onceki.map((o) => prisma.cariHareketi.update({ where: { id: o.id }, data: { tarih: new Date(o.tarih) } })),
+    );
     yenile();
     return {};
   } catch (e) {
-    return { hata: e instanceof Error ? e.message : "İşlem başarısız oldu." };
+    return { hata: e instanceof Error ? e.message : "Geri alma başarısız oldu." };
   }
 }
 
