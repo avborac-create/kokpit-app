@@ -11,7 +11,6 @@ import {
   DosyalarIkonu,
   HukukDosyalariIkonu,
   CezaDosyalariIkonu,
-  HacizArtcilariIkonu,
   OnerilerIkonu,
   AyarlarIkonu,
   OkKirilimIkonu,
@@ -107,8 +106,7 @@ export function KenarCubugu({
 
         {(gorunurMu("musteriler") ||
           gorunurMu("dava-dosyalari") ||
-          gorunurMu("cmk-dosyalari") ||
-          gorunurMu("haciz-artcilari")) && <BolumBasligi>ÇALIŞMA</BolumBasligi>}
+          gorunurMu("cmk-dosyalari")) && <BolumBasligi>ÇALIŞMA</BolumBasligi>}
         {gorunurMu("musteriler") && (
           <MenuBagi modul={modulHaritasi.get("musteriler")!} ikon={MuvekkillerIkonu} seciliMi={yol.startsWith("/kokpit/musteriler")} />
         )}
@@ -147,13 +145,6 @@ export function KenarCubugu({
               </div>
             )}
           </>
-        )}
-        {gorunurMu("haciz-artcilari") && (
-          <MenuBagi
-            modul={modulHaritasi.get("haciz-artcilari")!}
-            ikon={HacizArtcilariIkonu}
-            seciliMi={yol.startsWith("/kokpit/haciz-artcilari")}
-          />
         )}
 
         {gorunurMu("oneriler") && (

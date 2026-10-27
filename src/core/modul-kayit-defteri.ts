@@ -31,13 +31,10 @@ export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
   { anahtar: "musteriler", ad: "Müvekkiller", yol: "/kokpit/musteriler", aktif: true },
   { anahtar: "dava-dosyalari", ad: "Yargı Dosyaları", yol: "/kokpit/dava-dosyalari", aktif: true },
   { anahtar: "cmk-dosyalari", ad: "CMK Dosyaları", yol: "/kokpit/cmk-dosyalari", aktif: true },
-  {
-    anahtar: "haciz-artcilari",
-    ad: "Haciz Artçıları",
-    yol: "/kokpit/haciz-artcilari",
-    aktif: true,
-    rolGorebilir: ["SORUMLU_AVUKAT", "YONETICI", "ORTAK"],
-  },
+  // "haciz-artcilari" menuden kaldirildi (deaktif); sayfa, veri ve /kokpit/haciz-artcilari
+  // adresi yerinde. Geri getirmek icin su girisi ve kenar-cubugu.tsx'teki blogu geri ekleyin:
+  // { anahtar: "haciz-artcilari", ad: "Haciz Artçıları", yol: "/kokpit/haciz-artcilari", aktif: true,
+  //   rolGorebilir: ["SORUMLU_AVUKAT", "YONETICI", "ORTAK"] },
   // "muvekkil-finans" menuden kaldirildi (su an kullanilmiyor); sayfa ve veri yerinde,
   // /kokpit/muvekkil-finans adresi ve dosyalardaki baglanti calismaya devam eder.
   // Geri getirmek icin satiri ve kenar-cubugu.tsx'teki FINANS blogunu geri ekleyin.
