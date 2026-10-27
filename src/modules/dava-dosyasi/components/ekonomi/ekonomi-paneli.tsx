@@ -54,6 +54,24 @@ const Bakiye = ({ b }: { b: number }) => <span className={bakiyeRenk(b)}>{para.f
 
 // "Bu muvekkil bize hangi cari turden ne kadar borclu / bizden ne kadar alacakli?"
 // sorusunun tek bakista cevabi: her hesap icin tek satirlik durum karti.
+// Kisa panel basligi; uzun aciklama yalnizca ustune gelince (hover/odak) acilir.
+function PanelBasligi({ baslik, ipucu }: { baslik: string; ipucu: string }) {
+  return (
+    <h3 className="group relative mb-2 mt-6 flex w-fit items-center gap-2 text-sm font-semibold text-white">
+      {baslik}
+      <span tabIndex={0} aria-label={ipucu} className="cursor-help rounded-full border border-white/25 px-1.5 text-[10px] font-normal text-white/50">
+        ?
+      </span>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-0 top-full z-40 mt-1 hidden w-[28rem] max-w-[80vw] rounded-xl border border-white/15 bg-[#10151f] p-3 text-xs font-normal leading-relaxed text-white/75 shadow-xl group-hover:block group-focus-within:block"
+      >
+        {ipucu}
+      </span>
+    </h3>
+  );
+}
+
 function DurumSeridi({
   ozet,
   hrefYaz,
@@ -520,8 +538,8 @@ async function HesapSekmesi({
     });
   const kaynaklar = kapsam.dosyaId
     ? [
-        { deger: "havuz", etiket: `Para Trafiği — müvekkil havuzu (${para.format(havuzBakiyesi ?? 0)})` },
-        { deger: "dosya", etiket: `Para Trafiği — bu dosya (${para.format(paraBakiyesi)})` },
+        { deger: "havuz", etiket: `Tüm dosyalar (${para.format(havuzBakiyesi ?? 0)})` },
+        { deger: "dosya", etiket: `Bu dosya (${para.format(paraBakiyesi)})` },
         ...digerKaynaklar,
       ]
     : digerKaynaklar.length > 0
@@ -612,7 +630,10 @@ async function HesapSekmesi({
             yontemler={yontemler}
             yontemListesi={yontemListesi ?? undefined}
           />
-          <h3 className="mb-2 mt-6 text-sm font-semibold text-white">⇄ Virman: Para Trafiğinden / Hesaplar Arası Aktar</h3>
+          <PanelBasligi
+            baslik="⇄ Virman"
+            ipucu="Para trafiğindeki (henüz dağıtılmamış) parayı bir hesaba aktarır, ya da bir hesaptaki fazla ödemeyi başka hesaba taşır. Örn. müvekkilden gelen 5.000 TL'yi 102 - Harcama hesabına aktararak masrafı karşılarsınız. Para Nereden: 'Tüm dosyalar' müvekkilin bütün dosyalarındaki bekleyen parayı, 'Bu dosya' yalnızca bu dosyaya girilen parayı gösterir."
+          />
           <VirmanFormu
             action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
             hedefler={hedefler}
@@ -621,11 +642,10 @@ async function HesapSekmesi({
             mevcutBakiye={paraBakiyesi}
             kaynaklar={kaynaklar}
           />
-          <h3 className="mb-1 mt-6 text-sm font-semibold text-white">⇉ Toplu Tasnif: Bir Parayı Birden Fazla Dosya / Hesaba Böl</h3>
-          <p className="mb-2 text-xs text-white/45">
-            Örn. borçludan gelen 50.000 TL: 36.000 masraf iadesi (Harcama), 14.000 vekalet ücreti kesintisi (Akdi Vekalet);
-            ya da kalanı müvekkile ödeme. Her satıra &quot;neye mahsup edildiğini&quot; yazın.
-          </p>
+          <PanelBasligi
+            baslik="⇉ Toplu Tasnif"
+            ipucu={'Bir parayı birden fazla dosya / hesaba böler. Örn. borçludan gelen 50.000 TL: 36.000 masraf iadesi (Harcama), 14.000 vekalet ücreti kesintisi (Akdi Vekalet); ya da kalanı müvekkile ödeme. Her satıra "neye mahsup edildiğini" yazın.'}
+          />
           <TopluTasnifFormu
             action={topluTasnif.bind(null, kapsam.musteriId, kapsamDosyaId)}
             hedefler={hedefler}
@@ -635,7 +655,7 @@ async function HesapSekmesi({
             kaynaklar={
               kapsam.dosyaId
                 ? [
-                    { deger: "havuz", etiket: "Müvekkil havuzu", bakiye: havuzBakiyesi ?? 0 },
+                    { deger: "havuz", etiket: "Tüm dosyalar", bakiye: havuzBakiyesi ?? 0 },
                     { deger: "dosya", etiket: "Bu dosyanın para trafiği", bakiye: paraBakiyesi },
                   ]
                 : undefined
