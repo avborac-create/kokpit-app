@@ -49,6 +49,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Yazi boyutu (kullanici tercihi): rem tabanli olculer birlikte buyur/kuculur */
+html[data-punto="kucuk"] { font-size: 90%; }
+html[data-punto="buyuk"] { font-size: 112.5%; }
+html[data-punto="cokbuyuk"] { font-size: 125%; }
+
 html {
   color-scheme: dark;
 }

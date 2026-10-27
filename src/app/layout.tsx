@@ -57,6 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       data-tema="koyu"
       data-cam="orta"
       data-palet="fume"
+      data-punto="normal"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-svh overflow-hidden antialiased`}
     >

@@ -64,6 +64,8 @@ model Kullanici {
   gorunumTema  String?
   gorunumCam   String?
   gorunumPalet String?
+  // Yazi boyutu: kucuk / normal / buyuk / cokbuyuk. Bos = normal.
+  gorunumPunto String?
 
   sorumluOlduguMusteriler       Musteri[]          @relation("MusteriSorumluAvukat")
   sorumluOlduguDosyalar          DavaDosyasi[]      @relation("DavaDosyasiSorumluAvukat")

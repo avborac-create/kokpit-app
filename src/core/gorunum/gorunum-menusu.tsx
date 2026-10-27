@@ -7,6 +7,8 @@ import {
   CAM_KADEMELERI,
   PALETLER,
   PALET_BILGISI,
+  PUNTO_ETIKETLERI,
+  PUNTO_KADEMELERI,
   TEMA_ETIKETLERI,
   TEMA_MODLARI,
   VARSAYILAN_GORUNUM,
@@ -117,6 +119,14 @@ export function GorunumMenusu() {
               );
             })}
           </div>
+
+          <Baslik className="mt-4">Yazı boyutu</Baslik>
+          <Segment
+            degerler={PUNTO_KADEMELERI}
+            etiketler={PUNTO_ETIKETLERI}
+            secili={tercih.punto}
+            sec={(punto) => degistir({ punto })}
+          />
 
           <Baslik className="mt-4">Cam efekti</Baslik>
           <Segment

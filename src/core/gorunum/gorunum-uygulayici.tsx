@@ -21,6 +21,7 @@ export function gorunumuUygula(tercih: GorunumTercihi) {
   kok.setAttribute("data-tema", etkinTema(tercih.tema, sistemAcikMi));
   kok.setAttribute("data-cam", tercih.cam);
   kok.setAttribute("data-palet", tercih.palet);
+  kok.setAttribute("data-punto", tercih.punto);
 }
 
 export function gorunumCookiesiniYaz(tercih: GorunumTercihi) {
