@@ -4,6 +4,7 @@ import { baslikDuzeni, cumleDuzeni } from "@/core/metin/bicim";
 // Veri hangi yoldan girerse girsin (form, Excel aktarımı, iç içe kayıt) veritabanına
 // YAZILIRKEN metin biçimi otomatik düzeltilir. Kurallar:
 //  - baslik: kişi/kurum/mahkeme-birim adları -> Her Kelimenin İlk Harfi Büyük (bağlaçlar küçük)
+//  - baslik: ayrıca kısa başlık/konu alanları (dava konusu, suç, adres) -> Her Kelimenin İlk Harfi Büyük
 //  - cumle:  not ve açıklamalar -> yalnızca cümle başları büyük
 //  - numara, kod, e-posta, IBAN, tutar vb. hiçbir kurala dahil değildir (dokunulmaz).
 // Mevcut kayıtlar bu uzantıyla değişmez; yalnızca bundan sonraki yazmalar etkilenir.
@@ -11,15 +12,15 @@ type Kural = (metin: string) => string;
 
 export const KURALLAR: Record<string, Record<string, Kural>> = {
   Kullanici: { adSoyad: baslikDuzeni },
-  Musteri: { adSoyadUnvan: baslikDuzeni, adres: cumleDuzeni, notlar: cumleDuzeni },
-  IrtibatKisisi: { adSoyad: baslikDuzeni, unvanGorev: baslikDuzeni, konuBasligi: cumleDuzeni, notlar: cumleDuzeni },
+  Musteri: { adSoyadUnvan: baslikDuzeni, adres: baslikDuzeni, notlar: cumleDuzeni },
+  IrtibatKisisi: { adSoyad: baslikDuzeni, unvanGorev: baslikDuzeni, konuBasligi: baslikDuzeni, notlar: cumleDuzeni },
   KarsiTaraf: { ad: baslikDuzeni, notlar: cumleDuzeni },
   UyusmazlikGrubu: { ad: baslikDuzeni, notlar: cumleDuzeni },
   DavaDosyasi: {
-    birimAdi: baslikDuzeni, konu: cumleDuzeni, davaKonusu: cumleDuzeni, talepSonucu: cumleDuzeni,
+    birimAdi: baslikDuzeni, konu: baslikDuzeni, davaKonusu: baslikDuzeni, talepSonucu: cumleDuzeni,
     aciklama: cumleDuzeni, sonrakiKontrolSorusu: cumleDuzeni, sonKontrolSonucu: cumleDuzeni,
   },
-  CMKDosyasi: { adSoyad: baslikDuzeni, suc: cumleDuzeni, birim: baslikDuzeni, notlar: cumleDuzeni },
+  CMKDosyasi: { adSoyad: baslikDuzeni, suc: baslikDuzeni, birim: baslikDuzeni, notlar: cumleDuzeni },
   DosyaNabzi: { adSoyad: baslikDuzeni },
   MusteriParaTrafigi: { aciklama: cumleDuzeni },
   KarsiTarafAlacagi: { aciklama: cumleDuzeni },
@@ -33,7 +34,7 @@ export const KURALLAR: Record<string, Record<string, Kural>> = {
   HacizRaporu: { islemYapilanBorclular: cumleDuzeni, avukatGorusu: cumleDuzeni },
   DosyaCariTahakkuku: { dayanak: cumleDuzeni },
   MuvekkilAnlasma: { odemePlani: cumleDuzeni, basariPrimi: cumleDuzeni, notlar: cumleDuzeni },
-  HukukiMudahale: { baslik: cumleDuzeni, aciklama: cumleDuzeni },
+  HukukiMudahale: { baslik: baslikDuzeni, aciklama: cumleDuzeni },
 };
 
 type AlanBilgisi = { kind: string; type: string };

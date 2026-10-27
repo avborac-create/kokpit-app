@@ -7,9 +7,9 @@ import { baslikDuzeni, cumleDuzeni } from "@/core/metin/bicim";
 // yazma düzeniyle (src/core/db/metin-duzeni.ts) aynı fonksiyonları kullanır; sunucu
 // yine de yazarken düzeltir, burası yalnızca kullanıcıya sonucu önceden gösterir.
 // Elle belirtmek için alana data-metin-duzeni="baslik" | "cumle" | "yok" verilir.
-const BASLIK_ALANLARI = new Set(["adSoyad", "adSoyadUnvan", "unvanGorev", "birimAdi", "birim"]);
+const BASLIK_ALANLARI = new Set(["adSoyad", "adSoyadUnvan", "unvanGorev", "birimAdi", "birim", "konuBasligi", "davaKonusu", "suc", "adres", "baslik"]);
 const CUMLE_ALANLARI = new Set([
-  "notlar", "aciklama", "konuBasligi", "davaKonusu", "suc", "adres", "baslik", "dayanak",
+  "notlar", "aciklama", "dayanak",
   "odemePlani", "basariPrimi", "avukatGorusu", "islemYapilanBorclular", "talepMaddeleri",
   "sonrakiKontrolSorusu", "sonKontrolSonucu",
 ]);
