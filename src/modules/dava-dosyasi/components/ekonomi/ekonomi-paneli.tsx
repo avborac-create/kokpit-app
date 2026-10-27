@@ -420,8 +420,8 @@ async function OzetSekmesi({
           <thead className="text-white/50">
             <tr>
               <th className="px-4 py-3 font-medium">Hesap</th>
-              <th className="px-4 py-3 text-right font-medium">Borç</th>
-              <th className="px-4 py-3 text-right font-medium">Alacak</th>
+              <th className="px-4 py-3 text-right font-medium text-[#ff7a70]/85">Borç</th>
+              <th className="px-4 py-3 text-right font-medium text-[#32d74b]/85">Alacak</th>
               <th className="px-4 py-3 text-right font-medium">Bakiye</th>
             </tr>
           </thead>
