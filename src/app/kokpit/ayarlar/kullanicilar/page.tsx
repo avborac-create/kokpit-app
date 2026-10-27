@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
-import { silebilirMi } from "@/core/auth/yetki";
+import { silebilirMi, sistemYoneticisiMi } from "@/core/auth/yetki";
+import { KullaniciDuzenleButonu } from "@/core/kullanici/kullanici-duzenle-butonu";
 import { kullanicilariListele } from "@/core/kullanici/queries";
 import { atanabilirRoller, ROL_ETIKETLERI } from "@/core/kullanici/rol-etiketleri";
 import { KullaniciFormu } from "@/core/kullanici/kullanici-formu";
+import { KullaniciSilButonu } from "@/core/kullanici/kullanici-sil-butonu";
 import { KullaniciDurumButonu } from "@/core/kullanici/kullanici-durum-butonu";
 
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -21,9 +23,8 @@ export default async function KullanicilarSayfasi() {
       <h1 className="mb-1 text-2xl font-semibold tracking-tight text-white">Kullanıcılar</h1>
       <p className="mb-6 max-w-2xl text-sm text-white/50">
         Büro personeli/avukatları için giriş hesabı oluşturun. Oluşturulan kişi, buradaki
-        e-posta ve geçici şifreyle giriş yapıp Ayarlar üzerinden şifresini kendisi
-        değiştiremez — şifre değişikliği için şimdilik yeniden buradan bir hesap oluşturulması
-        gerekir.
+        e-posta ve geçici şifreyle giriş yapar. Ad Soyad, e-posta ve şifreyi satırdaki
+        &quot;Düzenle&quot; düğmesiyle değiştirebilirsiniz.
       </p>
 
       <div className="glass mb-8 overflow-x-auto rounded-2xl">
@@ -57,9 +58,18 @@ export default async function KullanicilarSayfasi() {
                   )}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {k.id !== kullanici.kullaniciId && (
-                    <KullaniciDurumButonu id={k.id} adSoyad={k.adSoyad} aktifMi={k.aktifMi} />
-                  )}
+                  <div className="flex justify-end gap-2">
+                    {(k.rol !== "YONETICI" || k.id === kullanici.kullaniciId || sistemYoneticisiMi(kullanici.rol)) && (
+                      <KullaniciDuzenleButonu id={k.id} adSoyad={k.adSoyad} eposta={k.eposta} />
+                    )}
+                    {k.id !== kullanici.kullaniciId && (
+                      <KullaniciDurumButonu id={k.id} adSoyad={k.adSoyad} aktifMi={k.aktifMi} />
+                    )}
+                    {k.id !== kullanici.kullaniciId &&
+                      (k.rol !== "YONETICI" || sistemYoneticisiMi(kullanici.rol)) && (
+                        <KullaniciSilButonu id={k.id} adSoyad={k.adSoyad} />
+                      )}
+                  </div>
                 </td>
               </tr>
             ))}
