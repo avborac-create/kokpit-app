@@ -300,17 +300,17 @@ export async function EkonomiPaneli({
       )}
       <DurumSeridi ozet={ozet} hrefYaz={hrefYaz} havuzBakiyesi={havuzBakiyesi} paraHesapNo={aktifHesaplar.find((h) => h.paraHesabiMi)?.no} />
 
-      <div className="mb-5 space-y-2 border-b border-white/[0.08] pb-4">
+      <div className="mb-5 space-y-2 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
         {katlar.map((kat, i) => (
-          <div key={i} className="flex flex-wrap items-center gap-1.5">
-            {kat.baslik && (
-              <span className="mr-1 w-32 shrink-0 text-[11px] font-semibold tracking-wide text-white/35">{kat.baslik}</span>
-            )}
+          <div key={i} className="flex flex-wrap items-stretch gap-1.5">
+            <span className="flex w-32 shrink-0 items-center px-1 text-[11px] font-semibold tracking-wide text-white/35">
+              {kat.baslik || "GENEL"}
+            </span>
             {kat.sekmeler.map((sk) => (
               <Link
                 key={sk.anahtar}
                 href={hrefYaz({ alt: sk.anahtar })}
-                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                   sk.anahtar === aktif
                     ? "border-[var(--accent)] bg-[var(--accent-soft)] text-white"
                     : "border-white/10 text-white/60 hover:bg-white/[0.06] hover:text-white"
