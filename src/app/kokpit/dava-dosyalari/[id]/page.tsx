@@ -15,6 +15,7 @@ import { Dugme } from "@/core/ui/button";
 import { DuzenlenebilirKart, type KartAlani } from "@/core/ui/duzenlenebilir-kart";
 import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
 import { FormKarti } from "@/core/ui/form-karti";
+import { DosyaBirlikteUyarisi } from "@/core/birlikte/dosya-birlikte-uyarisi";
 
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
 
@@ -349,6 +350,8 @@ export default async function DavaDosyasiDetaySayfasi({
           )}
         </div>
       </div>
+
+      <DosyaBirlikteUyarisi dosyaId={id} />
 
       <DavaDosyasiSekmeleri dosyaId={id} aktif={aktifSekme} />
 

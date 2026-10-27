@@ -1466,3 +1466,16 @@ model MuvekkilAnlasma {
   @@index([dosyaId])
   @@map("muvekkil_anlasmalari")
 }
+
+// Dosya nabzi: acik dosya sayfasi her ~20 sn'de bir kendini isaretler; 45 sn'den
+// eski nabiz "ayrildi" sayilir. Iliski tanimlanmaz (kisa omurlu, kendi kendine temizlenir).
+model DosyaNabzi {
+  dosyaId     String
+  kullaniciId String
+  adSoyad     String
+  sonGorulme  DateTime @default(now())
+
+  @@id([dosyaId, kullaniciId])
+  @@index([sonGorulme])
+  @@map("dosya_nabizlari")
+}
