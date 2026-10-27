@@ -59,7 +59,10 @@ export function Defter({
   silmeYetkisiVar,
   bosMesaj,
   yontemler,
+  kompakt = false,
 }: {
+  // Ozet icinde alt veri gorunumu: kutusuz, kucuk punto, dar satir
+  kompakt?: boolean;
   yontemler?: { id: string; etiket: string }[];
   satirlar: DefterSatiri[];
   paraHesabiMi: boolean;
@@ -87,8 +90,8 @@ export function Defter({
   return (
     <div>
       <Sarmal>
-      <div className="glass overflow-x-auto rounded-2xl">
-        <table className="w-full text-left text-sm">
+      <div className={kompakt ? "overflow-x-auto" : "glass overflow-x-auto rounded-2xl"}>
+        <table className={kompakt ? "w-full text-left text-xs [&_td]:!py-1.5 [&_th]:!py-1.5" : "w-full text-left text-sm"}>
           <thead className="text-white/50">
             <tr>
               {silmeYetkisiVar && <th className="w-8 px-3 py-3" />}

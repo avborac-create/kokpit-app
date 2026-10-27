@@ -343,7 +343,7 @@ export async function EkonomiPaneli({
         ))}
       </div>
 
-      {aktif === "ozet" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyaSecenekleri} hesapNesneleri={aktifHesaplar} silmeYetkisiVar={silmeYetkisiVar} havuzBakiyesi={havuzBakiyesi} />}
+      {aktif === "ozet" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyaSecenekleri} hesapNesneleri={aktifHesaplar} silmeYetkisiVar={silmeYetkisiVar} havuzBakiyesi={havuzBakiyesi} hrefYaz={hrefYaz} />}
       {seciliHesap && aktif === String(seciliHesap.no) && (
         <HesapSekmesi
           kapsam={kapsam}
@@ -398,7 +398,9 @@ async function OzetSekmesi({
   hesapNesneleri,
   silmeYetkisiVar,
   havuzBakiyesi,
+  hrefYaz,
 }: {
+  hrefYaz: (p: { sayfa?: string; alt?: string }) => string;
   ozet: Awaited<ReturnType<typeof kapsamOzeti>>;
   kapsam: Kapsam;
   dosyalar: DosyaSecenegi[];
@@ -454,6 +456,7 @@ async function OzetSekmesi({
                       havuzBakiyesi={havuzBakiyesi}
                       ozetHesaplar={ozet.hesaplar}
                       silmeYetkisiVar={silmeYetkisiVar}
+                      cariSayfaHref={hrefYaz({ alt: String(h.no) })}
                     />
                   )}
                 </AcilirHesapSatiri>
@@ -542,7 +545,10 @@ async function HesapSekmesi({
   havuzBakiyesi,
   ozetHesaplar,
   silmeYetkisiVar,
+  cariSayfaHref,
 }: {
+  // Doluysa: Ozet icinde acilan sade gorunum (yalniz defter + "cari sayfaya git" baglantisi)
+  cariSayfaHref?: string;
   kapsam: Kapsam;
   hesap: Awaited<ReturnType<typeof hesaplariGetir>>[number];
   aktifHesaplar: Awaited<ReturnType<typeof hesaplariGetir>>;
@@ -648,9 +654,18 @@ async function HesapSekmesi({
         dosyaSutunu={musteriDuzeyi}
         silmeYetkisiVar={silmeYetkisiVar}
         yontemler={yontemler}
+        kompakt={Boolean(cariSayfaHref)}
         bosMesaj={`${hesap.no} - ${hesap.ad} hesabında henüz hareket yok.`}
       />
 
+      {cariSayfaHref ? (
+        <div className="mt-2 flex justify-end">
+          <Link href={cariSayfaHref} className="text-xs text-[#6db8ff] hover:underline">
+            {hesap.no} - {hesap.ad} sayfasına git (kayıt girişi) →
+          </Link>
+        </div>
+      ) : (
+      <>
       {hesap.paraHesabiMi ? (
         <>
           <h3 className="mb-2 mt-6 text-sm font-semibold text-white">
@@ -799,6 +814,8 @@ async function HesapSekmesi({
             <MasrafListesi masraflar={tumMasraflar} dosyaId={kapsam.dosyaId ?? tumMasraflar[0]?.dosyaId ?? ""} silmeYetkisiVar={silmeYetkisiVar} />
           </div>
         </details>
+      )}
+      </>
       )}
     </div>
   );

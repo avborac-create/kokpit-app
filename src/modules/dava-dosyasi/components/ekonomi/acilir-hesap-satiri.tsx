@@ -36,8 +36,8 @@ export function AcilirHesapSatiri({
       </tr>
       {acik && (
         <tr>
-          <td colSpan={4} className="bg-black/20 px-4 py-4">
-            {children}
+          <td colSpan={4} className="bg-white/[0.025] px-4 pb-4 pt-1">
+            <div className="ml-4 border-l-2 border-white/15 pl-4 opacity-90">{children}</div>
           </td>
         </tr>
       )}
