@@ -27,7 +27,7 @@ export default async function MasrafAktarSayfasi({ params }: { params: Promise<{
       <Link href={`/kokpit/dava-dosyalari/${id}?sekme=ekonomi`} className="text-sm text-[#6db8ff] hover:underline">
         ‹ Dosya Ekonomisi
       </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-semibold tracking-tight text-white">Excel'den Masraf Aktar</h1>
+      <h1 className="mb-6 mt-2 text-2xl font-semibold tracking-tight text-white">Excel&apos;den Masraf Aktar</h1>
       <MasrafExcelAktar dosyaId={id} dosyaEtiketi={etiket} />
     </div>
   );

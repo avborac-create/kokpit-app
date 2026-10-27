@@ -4,6 +4,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/core/db/prisma";
 import { sifreDogrula } from "./password";
+import {
+  GORUNUM_COOKIE_ADI,
+  GORUNUM_COOKIE_OMRU_SN,
+  gorunumuBirlestir,
+  gorunumuCozumle,
+} from "@/core/gorunum/sabitler";
 import { OTURUM_COOKIE_ADI, OTURUM_COOKIE_SECENEKLERI, oturumTokeniOlustur } from "./session";
 
 export type GirisSonucu = { hata: string } | undefined;
@@ -38,6 +44,18 @@ export async function girisYap(
 
   const cookieStore = await cookies();
   cookieStore.set(OTURUM_COOKIE_ADI, token, OTURUM_COOKIE_SECENEKLERI);
+
+  // Kullanicinin hesabinda kayitli gorunum tercihi varsa bu cihaza tasinir
+  // (yeni bilgisayarda da ayni tema/palet/cam gelsin).
+  if (kullanici.gorunumTema || kullanici.gorunumCam || kullanici.gorunumPalet) {
+    cookieStore.set(
+      GORUNUM_COOKIE_ADI,
+      gorunumuBirlestir(
+        gorunumuCozumle(`${kullanici.gorunumTema}.${kullanici.gorunumCam}.${kullanici.gorunumPalet}`),
+      ),
+      { path: "/", maxAge: GORUNUM_COOKIE_OMRU_SN, sameSite: "lax" },
+    );
+  }
 
   redirect("/kokpit");
 }

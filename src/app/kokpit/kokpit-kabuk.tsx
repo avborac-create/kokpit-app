@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cikisYap } from "@/core/auth/actions";
 import { Dugme } from "@/core/ui/button";
 import { OneriButonu } from "@/core/oneri/oneri-butonu";
+import { GorunumMenusu } from "@/core/gorunum/gorunum-menusu";
 import { UYGULAMA_LOGOSU_YOLU } from "@/core/ui/marka";
 
 // Apple'in kendi uygulamalarindaki (Ayarlar, Mail) master-detail deseni:
@@ -55,7 +56,7 @@ export function KokpitKabuk({
         {kenarCubugu}
       </aside>
       <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
-        <header className="glass m-3 flex items-center justify-between rounded-2xl px-4 py-3 md:px-6">
+        <header className="glass relative z-30 m-3 flex items-center justify-between rounded-2xl px-4 py-3 md:px-6">
           <div className="flex items-center gap-3">
             <Link
               href="/kokpit"
@@ -67,6 +68,7 @@ export function KokpitKabuk({
           </div>
           <div className="flex items-center gap-2">
             <OneriButonu />
+            <GorunumMenusu />
             <form action={cikisYap}>
               <Dugme type="submit" varyant="ikincil">
                 Çıkış Yap

@@ -369,7 +369,7 @@ function Onizleme({
         </form>
       )}
 
-      {evrak.onizlemeTuru === "PDF" && <iframe src={yol} title={evrak.ad} className="h-[75vh] w-full rounded-xl bg-white" />}
+      {evrak.onizlemeTuru === "PDF" && <iframe src={yol} title={evrak.ad} className="h-[75vh] w-full rounded-xl bg-[#ffffff]" />}
       {evrak.onizlemeTuru === "RESIM" && <SayfaGoruntuleyici yol={yol} ad={evrak.ad} cokSayfaliMi={evrak.mimeTipi === "image/tiff"} />}
       {evrak.onizlemeTuru === "METIN" && (
         <iframe src={`${yol}?tur=html`} title={evrak.ad} className="h-[78vh] w-full rounded-xl bg-[#e9ebf0]" />
@@ -446,9 +446,9 @@ function SayfaGoruntuleyici({ yol, ad, cokSayfaliMi }: { yol: string; ad: string
               src={cokSayfaliMi ? `${yol}?tur=sayfa&no=${no}` : yol}
               alt={`${ad} — sayfa ${no}`}
               loading="lazy"
-              className="mx-auto w-full max-w-3xl bg-white shadow"
+              className="mx-auto w-full max-w-3xl bg-[#ffffff] shadow"
             />
-            <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white">
+            <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-[#ffffff]">
               {no} / {sayfaSayisi}
             </span>
           </div>

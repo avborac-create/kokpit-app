@@ -71,7 +71,7 @@ export function OneriButonu() {
       // foreignObject icinde tarayiciya cizdirdigi icin bu sinirlamayi tasimaz.
       const { toCanvas } = await import("html-to-image");
       const tamSayfa = await toCanvas(document.body, {
-        backgroundColor: "#12151d",
+        backgroundColor: getComputedStyle(document.body).backgroundColor,
         pixelRatio: 1,
       });
       const kirpilmis = document.createElement("canvas");
@@ -136,7 +136,7 @@ export function OneriButonu() {
             onMouseMove={mouseMove}
             onMouseUp={mouseUp}
           >
-            <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-sm text-white">
+            <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-sm text-[#ffffff]">
               Bir bölge seçin (sürükleyin) — İptal için ESC
             </div>
             {secim && (

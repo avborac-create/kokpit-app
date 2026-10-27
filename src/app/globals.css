@@ -1,19 +1,45 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------
+   TEMA SISTEMI
+   <html> uzerindeki uc nitelik gorunumu belirler (bkz. src/core/gorunum):
+     data-tema   = acik | koyu          (sistem secimi betik tarafindan cozulur)
+     data-palet  = fume | bakir | petrol | lacivert
+     data-cam    = kapali | hafif | orta | yogun
+   Arayuzdeki yuzlerce "text-white / bg-white/10 / border-white/10" sinifi
+   Tailwind v4'te var(--color-white) uzerinden uretilir. Acik modda
+   --color-white'i MUREKKEP rengine cevirmek, tek hamlede tum bu siniflari
+   (metin, ince cizgi, hover zemini) acik zemine uygun hale getirir.
+   ------------------------------------------------------------------ */
+
+/* Varsayilan = Fume ve mavi / koyu / orta cam (nitelik yazilmadan once). */
 :root {
-  --background: #12151d;
-  --background-2: #1b1e28;
+  --background: #1b222c;
+  --background-2: #252c37;
+  --yuzey: #252c37;
   --foreground: rgba(255, 255, 255, 0.92);
   --foreground-muted: rgba(255, 255, 255, 0.58);
-  --glass-bg: rgba(255, 255, 255, 0.08);
-  --glass-bg-strong: rgba(255, 255, 255, 0.13);
-  --glass-border: rgba(255, 255, 255, 0.16);
-  --accent: #0a84ff;
-  --accent-soft: rgba(10, 132, 255, 0.2);
+  --accent: #3f7fcb;
+  --accent-soft: rgba(63, 127, 203, 0.24);
+  --link: #7db1ee;
+  --blob-1: #3e6aa8;
+  --blob-2: #4a5568;
+  --blob-3: #2c4a78;
   --danger: #ff453a;
   --danger-soft: rgba(255, 69, 58, 0.2);
   --success: #30d158;
   --success-soft: rgba(48, 209, 88, 0.2);
+
+  --cam-alfa: 0.1;
+  --cam-alfa-guclu: 0.16;
+  --cam-bulaniklik: 14px;
+  --glass-bg: rgb(255 255 255 / var(--cam-alfa));
+  --glass-bg-strong: rgb(255 255 255 / var(--cam-alfa-guclu));
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-cizgi: rgba(255, 255, 255, 0.12);
+  --glass-parilti: rgba(255, 255, 255, 0.14);
+  --glass-golge: rgba(0, 0, 0, 0.35);
+  --popover-golge: rgba(0, 0, 0, 0.7);
 }
 
 @theme inline {
@@ -26,14 +52,86 @@
 html {
   color-scheme: dark;
 }
+html[data-tema="acik"] {
+  color-scheme: light;
+}
 
-/* <select>'in acilir listesi (popup) native/OS tarafindan cizilir; sayfanin
-   geri kalanindaki "glass" karanlik tema oraya sizmiyor. Sadece
-   color-scheme:dark bazi tarayicilarda (ozellikle mobil) popup'i yine de
-   acik/beyaz zeminde biraktigindan, metin acik renkte kalinca (sayfanin
-   genel text-white'i miras alinarak) beyaz zemin uzerinde beyaz yazi gibi
-   okunmaz hale geliyordu. option'a dogrudan koyu zemin + acik yazi rengi
-   vererek bunu tum tarayicilarda garanti ediyoruz.*/
+/* ---- Paletler: KOYU mod ---- */
+html[data-palet="fume"][data-tema="koyu"] {
+  --background: #1b222c; --background-2: #252c37; --yuzey: #252c37;
+  --accent: #3f7fcb; --accent-soft: rgba(63, 127, 203, 0.24); --link: #7db1ee;
+  --blob-1: #3e6aa8; --blob-2: #4a5568; --blob-3: #2c4a78;
+}
+html[data-palet="bakir"][data-tema="koyu"] {
+  --background: #231f1d; --background-2: #2d2826; --yuzey: #2b2624;
+  --accent: #c27240; --accent-soft: rgba(194, 114, 64, 0.26); --link: #e8a878;
+  --blob-1: #a8643f; --blob-2: #524f4e; --blob-3: #82502f;
+}
+html[data-palet="petrol"][data-tema="koyu"] {
+  --background: #17232a; --background-2: #21323a; --yuzey: #1f2f35;
+  --accent: #2a8f97; --accent-soft: rgba(42, 143, 151, 0.26); --link: #5fcbd0;
+  --blob-1: #217880; --blob-2: #3f505b; --blob-3: #2a5b69;
+}
+html[data-palet="lacivert"][data-tema="koyu"] {
+  --background: #1a1e2b; --background-2: #262b3b; --yuzey: #232838;
+  --accent: #4a68b8; --accent-soft: rgba(74, 104, 184, 0.28); --link: #94aeea;
+  --blob-1: #364783; --blob-2: #4d473a; --blob-3: #2e3e72;
+}
+
+/* ---- Paletler: ACIK mod ---- */
+html[data-tema="acik"] {
+  --color-white: var(--murekkep);
+  --foreground: rgba(26, 34, 48, 0.92);
+  --foreground-muted: rgba(26, 34, 48, 0.6);
+  --danger: #c23b30;
+  --danger-soft: rgba(194, 59, 48, 0.12);
+  --success: #1e7d3a;
+  --success-soft: rgba(30, 125, 58, 0.14);
+  --cam-alfa: 0.6;
+  --cam-alfa-guclu: 0.72;
+  --glass-bg: rgb(255 255 255 / var(--cam-alfa));
+  --glass-bg-strong: rgb(255 255 255 / var(--cam-alfa-guclu));
+  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass-cizgi: rgba(30, 45, 80, 0.14);
+  --glass-parilti: rgba(255, 255, 255, 0.9);
+  --glass-golge: rgba(40, 60, 100, 0.14);
+  --popover-golge: rgba(40, 60, 100, 0.28);
+}
+html[data-palet="fume"][data-tema="acik"] {
+  --murekkep: #1a2230; --background: #e9eef5; --background-2: #ffffff; --yuzey: #f7f9fc;
+  --accent: #2f6db5; --accent-soft: rgba(47, 109, 181, 0.14); --link: #1f5fa8;
+  --blob-1: #8fb4e6; --blob-2: #b3bdcb; --blob-3: #6e8fc0;
+}
+html[data-palet="bakir"][data-tema="acik"] {
+  --murekkep: #2a2220; --background: #f1ece8; --background-2: #ffffff; --yuzey: #faf7f4;
+  --accent: #a85b2e; --accent-soft: rgba(168, 91, 46, 0.14); --link: #8f4a22;
+  --blob-1: #e0ae88; --blob-2: #bdb8b3; --blob-3: #cf9468;
+}
+html[data-palet="petrol"][data-tema="acik"] {
+  --murekkep: #15292d; --background: #e8f1f1; --background-2: #ffffff; --yuzey: #f3f9f9;
+  --accent: #1a7078; --accent-soft: rgba(26, 112, 120, 0.14); --link: #12606a;
+  --blob-1: #74bebe; --blob-2: #afbcc4; --blob-3: #5497ab;
+}
+html[data-palet="lacivert"][data-tema="acik"] {
+  --murekkep: #1b2236; --background: #f4efe4; --background-2: #ffffff; --yuzey: #faf6ec;
+  --accent: #2d4a8a; --accent-soft: rgba(45, 74, 138, 0.14); --link: #243f78;
+  --blob-1: #a4b6da; --blob-2: #ddd2b8; --blob-3: #7389bc;
+}
+
+/* ---- Cam kademeleri (bulaniklik ust siniri bilerek 20px: ekran karti yuku) ---- */
+html[data-cam="hafif"] { --cam-bulaniklik: 8px; }
+html[data-cam="orta"] { --cam-bulaniklik: 14px; }
+html[data-cam="yogun"] { --cam-bulaniklik: 20px; }
+html[data-tema="koyu"][data-cam="hafif"] { --cam-alfa: 0.15; --cam-alfa-guclu: 0.22; }
+html[data-tema="koyu"][data-cam="orta"] { --cam-alfa: 0.1; --cam-alfa-guclu: 0.16; }
+html[data-tema="koyu"][data-cam="yogun"] { --cam-alfa: 0.06; --cam-alfa-guclu: 0.11; }
+html[data-tema="acik"][data-cam="hafif"] { --cam-alfa: 0.78; --cam-alfa-guclu: 0.86; }
+html[data-tema="acik"][data-cam="orta"] { --cam-alfa: 0.6; --cam-alfa-guclu: 0.72; }
+html[data-tema="acik"][data-cam="yogun"] { --cam-alfa: 0.42; --cam-alfa-guclu: 0.56; }
+
+/* select acilir listesi (popup) isletim sistemi tarafindan cizilir; koyu
+   zemin + acik yazi (veya tersi) dogrudan option'a verilir ki beyaz uzerine
+   beyaz yazi sorunu hicbir tarayicida olusmasin. */
 select option {
   background-color: var(--background-2);
   color: var(--foreground);
@@ -59,15 +157,17 @@ select option {
   }
 }
 
+/* Arka plan SABIT (hareketsiz) renk bulutlarindan olusur; animasyonlu arka
+   plan cam efektinin yukunu ciddi artirir, bu yuzden bilerek yok. */
 body {
   min-height: 100%;
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   background-color: var(--background);
   background-image:
-    radial-gradient(1100px 600px at 12% -10%, rgba(10, 132, 255, 0.28), transparent 60%),
-    radial-gradient(900px 500px at 110% 10%, rgba(94, 92, 230, 0.2), transparent 55%),
-    linear-gradient(180deg, #12151d 0%, #181c26 55%, #12151d 100%);
+    radial-gradient(1100px 600px at 12% -10%, color-mix(in srgb, var(--blob-1) 55%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, color-mix(in srgb, var(--blob-2) 45%, transparent), transparent 55%),
+    radial-gradient(900px 600px at 50% 115%, color-mix(in srgb, var(--blob-3) 40%, transparent), transparent 60%);
   background-attachment: fixed;
 }
 
@@ -75,8 +175,9 @@ body {
   .glass {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    box-shadow: inset 0 1px 0 var(--glass-parilti), 0 8px 24px -10px var(--glass-golge);
+    backdrop-filter: blur(var(--cam-bulaniklik)) saturate(160%);
+    -webkit-backdrop-filter: blur(var(--cam-bulaniklik)) saturate(160%);
     /* WebKit (Safari/iOS), uzun/bos buzlu cam yuzeylerde blur'u parcalara
        ayirip ortasinda gorunmez bir "dikis" birakabiliyor. Elemani tek bir
        kompozit katmanina zorlayarak bu kusuru gideriyoruz. */
@@ -87,15 +188,64 @@ body {
      icerigi gosterdiginden menuler okunmaz oluyordu. */
   .popover {
     background: var(--background-2);
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
+    border: 1px solid var(--glass-cizgi);
+    box-shadow: 0 20px 50px -10px var(--popover-golge);
   }
   .glass-strong {
     background: var(--glass-bg-strong);
     border: 1px solid var(--glass-border);
-    backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    box-shadow: inset 0 1px 0 var(--glass-parilti), 0 8px 24px -10px var(--glass-golge);
+    backdrop-filter: blur(calc(var(--cam-bulaniklik) + 4px)) saturate(160%);
+    -webkit-backdrop-filter: blur(calc(var(--cam-bulaniklik) + 4px)) saturate(160%);
     transform: translateZ(0);
     isolation: isolate;
   }
 }
+
+/* Cam KAPALI: bulaniklik yok, opak mat yuzey (zayif bilgisayarlar, uzak
+   masaustu). Isletim sistemi "saydamligi azalt" diyorsa da ayni sekilde. */
+html[data-cam="kapali"] .glass,
+html[data-cam="kapali"] .glass-strong {
+  background: var(--yuzey);
+  border-color: var(--glass-cizgi);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transform: none;
+  isolation: auto;
+}
+@media (prefers-reduced-transparency: reduce) {
+  html .glass,
+  html .glass-strong {
+    background: var(--yuzey);
+    border-color: var(--glass-cizgi);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transform: none;
+  }
+}
+
+/* Dolgulu (vurgu renkli) zeminlerin ustundeki "text-white" acik modda da
+   BEYAZ kalmali; murekkep rengine donmemeli. Degisken eleman kapsamina
+   yeniden yazilir, cocuklar da miras alir. */
+.bg-\[var\(--accent\)\],
+.hover\:bg-\[var\(--accent\)\]:hover,
+.group:hover .group-hover\:bg-\[var\(--accent\)\] {
+  --color-white: #fff;
+}
+
+/* Sabit renk kodlu metin/ikon renkleri: koyu modda parlak, acik modda
+   okunur (koyu) tonlar. Baglanti mavisi paletin kendi rengini izler. */
+.text-\[\#6db8ff\] { color: var(--link); }
+html[data-tema="acik"] .text-\[\#ff7a70\] { color: #c23b30; }
+html[data-tema="acik"] .text-\[\#32d74b\],
+html[data-tema="acik"] .text-\[\#30d158\],
+html[data-tema="acik"] .text-\[\#5fd97a\] { color: #1e7d3a; }
+html[data-tema="acik"] .text-\[\#ffb340\],
+html[data-tema="acik"] .text-\[\#ff9f0a\],
+html[data-tema="acik"] .text-\[\#f5c451\] { color: #9a5b00; }
+html[data-tema="acik"] .text-\[\#6e6e73\] { color: #5c6678; }
+/* Mavi rozet/kutu zeminleri paletin vurgusunu izler */
+[class*="bg-[#6db8ff]/"] { background-color: color-mix(in srgb, var(--link) 14%, transparent); }
+[class*="border-[#6db8ff]/"] { border-color: color-mix(in srgb, var(--link) 40%, transparent); }

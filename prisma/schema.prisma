@@ -59,7 +59,13 @@ model Kullanici {
   olusturmaTarihi  DateTime      @default(now())
   guncellemeTarihi DateTime      @updatedAt
 
-  sorumluOlduguMusteriler        Musteri[]          @relation("MusteriSorumluAvukat")
+  // Gorunum tercihleri (kullaniciya ozel): tema modu (acik/koyu/sistem), cam
+  // efekti kademesi (kapali/hafif/orta/yogun), renk paleti. Bos = varsayilan.
+  gorunumTema  String?
+  gorunumCam   String?
+  gorunumPalet String?
+
+  sorumluOlduguMusteriler       Musteri[]          @relation("MusteriSorumluAvukat")
   sorumluOlduguDosyalar          DavaDosyasi[]      @relation("DavaDosyasiSorumluAvukat")
   gonderdigiOneriler             Oneri[]
   gonderdigiGelistirmeTalepleri  GelistirmeTalebi[]

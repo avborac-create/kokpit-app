@@ -89,7 +89,7 @@ export function MuvekkilSecici({
               }}
             />
             <div
-              className="fixed z-[101] rounded-xl border border-white/10 bg-[#1b1e28] p-2 shadow-2xl"
+              className="fixed z-[101] rounded-xl border border-white/10 bg-[var(--background-2)] p-2 shadow-2xl"
               style={{ top: konum.top, left: konum.left, width: konum.width }}
             >
               <Girdi

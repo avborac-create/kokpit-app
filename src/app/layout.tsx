@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SwKaydet } from "./sw-kaydet";
+import { GORUNUM_BASLATMA_BETIGI } from "@/core/gorunum/sabitler";
+import { GorunumUygulayici } from "@/core/gorunum/gorunum-uygulayici";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,15 +44,29 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#12151d",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#e9eef5" },
+    { media: "(prefers-color-scheme: dark)", color: "#1b222c" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="tr"
+      data-tema="koyu"
+      data-cam="orta"
+      data-palet="fume"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-svh overflow-hidden antialiased`}
     >
+      {/*
+        Gorunum (tema/palet/cam) tercihi ilk boyamadan ONCE bu satir ici betikle
+        <html> niteliklerine yazilir - sayfa acilirken yanip sonme olmaz.
+      */}
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: GORUNUM_BASLATMA_BETIGI }} />
+      </head>
       {/*
         h-dvh (dynamic viewport height) denendiginde bazi iOS Safari
         surumlerinde adres cubugu gizlenip/gosterilirken dvh degeri anlik
@@ -63,6 +79,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       */}
       <body className="h-svh flex flex-col overflow-hidden">
         <SwKaydet />
+        <GorunumUygulayici />
         {children}
       </body>
     </html>

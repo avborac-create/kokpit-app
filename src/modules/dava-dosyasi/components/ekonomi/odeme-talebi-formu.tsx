@@ -303,7 +303,7 @@ export function OdemeTalebiFormu({
         </div>
 
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <div className="overflow-hidden rounded-3xl border border-white/10 bg-white text-[#1d1d1f] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]">
+          <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#ffffff] text-[#1d1d1f] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]">
             <div className="px-6 pb-2 pt-6">
               <p className="text-[10px] font-semibold tracking-[0.14em] text-[#6e6e73]">ECES HUKUK BÜROSU</p>
               <p className="text-xl font-bold leading-tight">Müvekkil Hesap Özeti</p>
@@ -366,7 +366,7 @@ export function OdemeTalebiFormu({
         </aside>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#12151d]/90 p-3 backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[var(--background)]/90 p-3 backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-xl items-center gap-2">
           <div className="min-w-0 pr-1">
             <p className="text-[11px] leading-none text-white/50">Toplam</p>

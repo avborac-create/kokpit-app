@@ -27,7 +27,7 @@ export function Dugme({
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center rounded-full font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#12151d] ${boyutSiniflari[boyut]} ${varyantSiniflari[varyant]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] ${boyutSiniflari[boyut]} ${varyantSiniflari[varyant]} ${className}`}
     />
   );
 }

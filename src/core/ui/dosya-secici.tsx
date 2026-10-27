@@ -114,7 +114,7 @@ export function DosyaSecici({
       />
       <input type="hidden" name={name} value={secili} />
       {acik && (
-        <div id={`${id ?? name}-liste`} role="listbox" className="absolute left-0 right-0 z-50 mt-1 max-h-72 min-w-[18rem] overflow-y-auto rounded-xl border border-white/15 bg-[#1b1f2a] p-1 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.7)]">
+        <div id={`${id ?? name}-liste`} role="listbox" className="absolute left-0 right-0 z-50 mt-1 max-h-72 min-w-[18rem] overflow-y-auto rounded-xl border border-white/15 bg-[var(--background-2)] p-1 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.7)]">
           {secenekler.length === 0 && <p className="px-3 py-3 text-sm text-white/45">Eşleşen dosya yok.</p>}
           {secenekler.map((d, i) => (
             <button
