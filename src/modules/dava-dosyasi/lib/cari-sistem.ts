@@ -219,6 +219,17 @@ export async function kapsamOzeti(kapsam: Kapsam): Promise<KapsamOzeti> {
   return { hesaplar: ozetler, paraBakiyesi, digerBorclar, tutulanToplam, net: digerBorclar - paraBakiyesi };
 }
 
+// Virman satirinin okunur aciklamasi. Kayitta "<no>-<AD> VİRMAN[ — not]" yazar ve
+// diger taraftaki hesabi gosterir: ALACAK satirinda para o hesaptan GELMISTIR,
+// BORC satirinda o hesaba AKTARILMISTIR. Eski ve yeni kayitlar ayni sekilde cozulur.
+function virmanAciklamasi(ham: string, yon: string): string {
+  const e = ham.match(/^(.+?) VİRMAN(?: — ([\s\S]*))?$/);
+  if (!e) return ham;
+  const yonMetni = yon === "ALACAK" ? "hesabından geldi" : "hesabına aktarıldı";
+  return `VİRMAN: ${e[1]} ${yonMetni}${e[2] ? `
+${e[2]}` : ""}`;
+}
+
 // Tek hesabin defteri: kapsamdaki tum satirlar (kronolojik siralanmak uzere).
 export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesabiMi: boolean; eskiKod: string | null }) {
   const dosyaIdleri = await kapsamDosyaIdleri(kapsam);
@@ -297,7 +308,7 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
       tarih: h.tarih,
       dosyaId: h.dosyaId,
       dosyaEtiketi: etiket(h.dosya),
-      aciklama: h.aciklama ?? "",
+      aciklama: virmanMi ? virmanAciklamasi(h.aciklama ?? "", h.yon) : (h.aciklama ?? ""),
       odemeYontemi: h.odemeYontemi?.etiket,
       borcludan: h.borcludanMi,
       borc: h.yon === "BORC" ? sayi(h.tutar) : 0,
