@@ -560,10 +560,14 @@ async function HesapSekmesi({
       const tutar = Math.max(0, h.tutulanHesapMi ? bakiye : -bakiye);
       const tur = h.tutulanHesapMi ? "orada duran tutar" : "fazla ödeme";
       return {
+        tutar,
         deger: `hesap:${h.id}`,
         etiket: kapsam.dosyaId ? `${h.no} - ${h.ad} — ${tur} ${para.format(tutar)}` : `${h.no} - ${h.ad} — seçilen dosyadaki ${tur}`,
       };
-    });
+    })
+    // Dosya ekraninda aktarilacak tutari olmayan (0 TL) hesaplar listeyi kalabaliklastirmasin
+    .filter((k) => !kapsam.dosyaId || k.tutar > 0)
+    .map(({ deger, etiket }) => ({ deger, etiket }));
   const kaynaklar = kapsam.dosyaId
     ? [
         { deger: "havuz", etiket: `Tüm dosyalar (${para.format(havuzBakiyesi ?? 0)})` },
