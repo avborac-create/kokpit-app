@@ -123,7 +123,6 @@ export function DavaDosyasiFormIcerik({
         alanAdi="davaTuruId"
         yeniAlanAdi="yeniDavaTuruEtiketi"
         etiket={bilgi("davaTuruId", "Tür")}
-        zorunlu
         yoneticiMi={yoneticiMi}
       />
     ),
