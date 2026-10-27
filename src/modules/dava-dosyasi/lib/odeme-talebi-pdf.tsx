@@ -157,7 +157,7 @@ function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
           {v.sonOdemeTarihi && <Text style={s.sonOdeme}>Son ödeme tarihi: {tarihYaz(v.sonOdemeTarihi)}</Text>}
         </View>
 
-        <Text style={s.bolumBaslik}>Bu tutar ne için isteniyor?</Text>
+        <Text style={s.bolumBaslik}>Bu tutar neye ilişkin?</Text>
         {v.satirlar.map((x, i) => (
           <View key={i} style={s.satir} wrap={false}>
             <View style={s.satirSol}>
@@ -181,7 +181,7 @@ function MuvekkilHesapOzeti({ v }: { v: OdemeTalebiVerisi }) {
               ) : null}
             </View>
             <View style={{ alignItems: "flex-end" }}>
-              <Text style={s.satirAciklama}>Ödenmesi istenen</Text>
+              <Text style={s.satirAciklama}>Ödenmesi gerekli</Text>
               <Text style={s.satirTutar}>{tl(x.tutar)}</Text>
             </View>
           </View>

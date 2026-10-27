@@ -85,7 +85,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ hata: "Bir ek okunamadı (şifreli ya da bozuk PDF olabilir)." }, { status: 422 });
   }
 
-  const dosyaAdi = `Muvekkil-Hesap-Ozeti-${musteri.adSoyadUnvan.replace(/[^A-Za-z0-9]+/g, "-").slice(0, 40)}.pdf`;
+  const dosyaAdi = `Muvekkil-Hesap-Ozeti-${musteri.adSoyadUnvan
+    .replace(/ı/g, "i")
+    .replace(/İ/g, "I")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^A-Za-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 40)}.pdf`;
   return new NextResponse(pdf as unknown as BodyInit, {
     headers: {
       "Content-Type": "application/pdf",

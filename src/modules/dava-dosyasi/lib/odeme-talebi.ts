@@ -9,7 +9,7 @@ export type MasrafDokumuSatiri = { dosya: string; karsiTaraf?: string; tarih: st
 const HESAP_ACIKLAMALARI: Record<number, { baslik: string; aciklama: string }> = {
   101: { baslik: "Avukatlık ücreti", aciklama: "Akdi vekalet (hizmet) bedeli" },
   102: { baslik: "Dosya masrafları", aciklama: "Adınıza yapılan harç, posta, tebligat ve benzeri giderler" },
-  108: { baslik: "Avans", aciklama: "Dosya giderleri için istenen avans" },
+  108: { baslik: "Avans", aciklama: "Dosya giderleri için avans" },
   103: { baslik: "Bloke / avans tutarı", aciklama: "Dosya için ayrı tutulması gereken tutar" },
   107: { baslik: "Harç", aciklama: "Dosya için yatırılacak harçlar" },
 };

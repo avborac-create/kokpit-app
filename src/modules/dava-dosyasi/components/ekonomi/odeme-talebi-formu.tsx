@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { EkBelgePaneli } from "@/modules/dava-dosyasi/components/ekonomi/ek-belge-paneli";
 
@@ -63,6 +63,49 @@ export function OdemeTalebiFormu({
   const [kopyalandi, setKopyalandi] = useState(false);
   const [hitap, setHitap] = useState("");
   const [ekHazir, setEkHazir] = useState(true);
+  const [uretiyor, setUretiyor] = useState(false);
+  const [hata, setHata] = useState("");
+  const [sonuc, setSonuc] = useState<{ url: string; ad: string; boyut: number; dosya: File } | null>(null);
+  const sonucRef = useRef<HTMLElement>(null);
+  const paylasilabilir = typeof navigator !== "undefined" && typeof navigator.canShare === "function" && sonuc ? navigator.canShare({ files: [sonuc.dosya] }) : false;
+
+  // Belgeyi sunucuda uretip tarayicida tutar: "indir" sunucuya yeniden gitmez, bu yuzden ag hatasi vermez.
+  async function belgeUret(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (uretiyor) return;
+    setHata("");
+    setUretiyor(true);
+    try {
+      const yanit = await fetch("/api/odeme-talebi", { method: "POST", body: new FormData(e.currentTarget) });
+      if (!yanit.ok) {
+        let mesaj = "Belge hazırlanamadı.";
+        try {
+          mesaj = ((await yanit.json()) as { hata?: string }).hata ?? mesaj;
+        } catch {
+          // govde JSON degil
+        }
+        throw new Error(mesaj);
+      }
+      const blob = await yanit.blob();
+      const ad = yanit.headers.get("content-disposition")?.match(/filename="([^"]+)"/)?.[1] ?? "Muvekkil-Hesap-Ozeti.pdf";
+      if (sonuc) URL.revokeObjectURL(sonuc.url);
+      setSonuc({ url: URL.createObjectURL(blob), ad, boyut: blob.size, dosya: new File([blob], ad, { type: "application/pdf" }) });
+      setTimeout(() => sonucRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Belge hazırlanamadı.");
+    } finally {
+      setUretiyor(false);
+    }
+  }
+
+  async function paylas() {
+    if (!sonuc) return;
+    try {
+      await navigator.share({ files: [sonuc.dosya], title: "Müvekkil Hesap Özeti" });
+    } catch {
+      // kullanici vazgecti
+    }
+  }
 
   useEffect(() => {
     const zamanlayici = setTimeout(() => {
@@ -121,11 +164,40 @@ export function OdemeTalebiFormu({
   const girdiStili = "!rounded-xl !py-2.5";
 
   return (
-    <form method="post" action="/api/odeme-talebi" encType="multipart/form-data" target="_blank" className="pb-28 lg:pb-0">
+    <form method="post" action="/api/odeme-talebi" encType="multipart/form-data" onSubmit={belgeUret} className="pb-28 lg:pb-0">
       <input type="hidden" name="musteriId" value={musteriId} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
+          {(sonuc || hata) && (
+            <section ref={sonucRef} className="rounded-3xl border border-[var(--accent)] bg-[var(--accent-soft)] p-5 sm:p-6">
+              {hata ? (
+                <p className="text-sm text-[#ff7a70]">{hata}</p>
+              ) : (
+                sonuc && (
+                  <>
+                    <h2 className="text-lg font-semibold text-white">✓ Belge hazır</h2>
+                    <p className="mt-1 break-all text-sm text-white/60">
+                      {sonuc.ad} · {sonuc.boyut >= 1048576 ? `${(sonuc.boyut / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(sonuc.boyut / 1024))} KB`}
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <a href={sonuc.url} target="_blank" rel="noreferrer" className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90">
+                        Aç
+                      </a>
+                      <a href={sonuc.url} download={sonuc.ad} className="rounded-full border border-white/20 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-white hover:bg-white/10">
+                        İndir
+                      </a>
+                      {paylasilabilir && (
+                        <button type="button" onClick={paylas} className="rounded-full border border-white/20 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-white hover:bg-white/10">
+                          Paylaş (WhatsApp vb.)
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )
+              )}
+            </section>
+          )}
           <section className={kart}>
             <h2 className={baslikStili}>Ne için, ne kadar?</h2>
             <p className={altYazi}>
@@ -318,7 +390,7 @@ export function OdemeTalebiFormu({
               {sonOdeme && <p className="mt-1 text-xs font-semibold text-[#0071e3]">Son ödeme tarihi: {tarihYazi(sonOdeme)}</p>}
             </div>
             <div className="px-6 py-4">
-              <p className="mb-1 text-xs font-bold">Bu tutar ne için isteniyor?</p>
+              <p className="mb-1 text-xs font-bold">Bu tutar neye ilişkin?</p>
               {dahilSatirlar.length === 0 && <p className="py-3 text-xs text-[#6e6e73]">Henüz satır yok.</p>}
               {dahilSatirlar.map((x) => (
                 <div key={x.anahtar} className="flex items-start justify-between gap-3 border-t border-[#d2d2d7] py-2">
@@ -349,10 +421,10 @@ export function OdemeTalebiFormu({
           <div className="mt-4 hidden flex-col gap-2 lg:flex">
             <button
               type="submit"
-              disabled={dahilSatirlar.length === 0 || !ekHazir}
+              disabled={dahilSatirlar.length === 0 || !ekHazir || uretiyor}
               className="rounded-full bg-[var(--accent)] px-5 py-3.5 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              📄 A4 PDF Oluştur
+              {uretiyor ? "Hazırlanıyor…" : "📄 A4 PDF Oluştur"}
             </button>
             <button
               type="button"
@@ -382,10 +454,10 @@ export function OdemeTalebiFormu({
           </button>
           <button
             type="submit"
-            disabled={dahilSatirlar.length === 0 || !ekHazir}
+            disabled={dahilSatirlar.length === 0 || !ekHazir || uretiyor}
             className="flex-1 whitespace-nowrap rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
           >
-            📄 PDF Oluştur
+            {uretiyor ? "Hazırlanıyor…" : "📄 PDF Oluştur"}
           </button>
         </div>
       </div>

@@ -7,9 +7,15 @@ export const EK_AZAMI_TOPLAM_BAYT = 4 * 1024 * 1024; // Vercel istek govdesi sin
 
 const A4 = { genislik: 595.28, yukseklik: 841.89 };
 
-// "2026_213_Tahsilat_Makbuzu_20_10_2026.pdf" -> "2026 213 Tahsilat Makbuzu 20 10 2026"
+// "2026_213_Tahsilat_Makbuzu_20_10_2026 (1).pdf" -> "2026/213 Tahsilat Makbuzu 20.10.2026"
 export function ekGorunenAd(dosyaAdi: string): string {
-  return dosyaAdi.replace(/\.(pdf|png|jpe?g|webp|tiff?|html?)$/i, "").replace(/_/g, " ").trim();
+  return dosyaAdi
+    .replace(/\.(pdf|png|jpe?g|webp|tiff?|html?)$/i, "")
+    .replace(/\s*\(\d+\)\s*$/, "") // tarayicinin "(1)" kopya eki
+    .replace(/(\d{2})[_.-](\d{2})[_.-](\d{4})/g, "$1.$2.$3")
+    .replace(/(^|[^\d])(\d{4})_(\d{1,6})(?=_|\s|$)/, "$1$2/$3")
+    .replace(/_/g, " ")
+    .trim();
 }
 
 export function ekTuruBul(dosyaAdi: string, mime: string): EkDosya["tur"] | null {
