@@ -19,13 +19,17 @@ export function OnayliButon({
   eylem,
   mesaj,
   sifreIste = false,
+  ekSecenekEtiketi,
   varyant = "tehlike",
   boyut = "normal",
   className,
   children,
 }: {
   // Beklenen hata (yanlis sifre, bagli kayit vb.) {hata} olarak donerse pencerede gosterilir.
-  eylem: (sifre: string) => Promise<void | { hata?: string }>;
+  eylem: (sifre: string, ekSecenek: boolean) => Promise<void | { hata?: string }>;
+  // Verilirse sifre penceresinde bu etiketli bir onay kutusu gosterilir; isaretli
+  // durumu eylem'e ikinci parametre olarak gider.
+  ekSecenekEtiketi?: string;
   mesaj: string;
   // true ise native confirm() yerine sifre kutulu bir onay penceresi acilir;
   // girilen sifre eylem'e iletilir ve SUNUCUDA dogrulanir (bkz.
@@ -41,18 +45,20 @@ export function OnayliButon({
   const [pencereAcik, setPencereAcik] = useState(false);
   const [sifre, setSifre] = useState("");
   const [hata, setHata] = useState<string | null>(null);
+  const [ekSecenek, setEkSecenek] = useState(false);
 
   function sifreyleCalistir() {
     setHata(null);
     baslatTransition(async () => {
       try {
-        const sonuc = await eylem(sifre);
+        const sonuc = await eylem(sifre, ekSecenek && Boolean(ekSecenekEtiketi));
         if (sonuc && sonuc.hata) {
           setHata(sonuc.hata);
           return;
         }
         setPencereAcik(false);
         setSifre("");
+        setEkSecenek(false);
         router.refresh();
       } catch (e) {
         // Yanlis sifrede pencere acik kalir, hata pencerede gosterilir.
@@ -65,6 +71,7 @@ export function OnayliButon({
     setPencereAcik(false);
     setSifre("");
     setHata(null);
+    setEkSecenek(false);
   }
 
   return (
@@ -83,7 +90,7 @@ export function OnayliButon({
         if (!confirm(mesaj)) return;
         baslatTransition(async () => {
           try {
-            const sonuc = await eylem("");
+            const sonuc = await eylem("", false);
             if (sonuc && sonuc.hata) {
               alert(sonuc.hata);
               return;
@@ -125,6 +132,17 @@ export function OnayliButon({
               onChange={(e) => setSifre(e.target.value)}
               className="w-full rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2 text-sm text-white outline-none focus:border-[var(--accent)]"
             />
+            {ekSecenekEtiketi && (
+              <label className="mt-3 flex items-start gap-2 text-sm text-[#ff7a70]">
+                <input
+                  type="checkbox"
+                  checked={ekSecenek}
+                  onChange={(e) => setEkSecenek(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>{ekSecenekEtiketi}</span>
+              </label>
+            )}
             {hata && <p className="mt-2 text-sm text-[#ff7a70]">{hata}</p>}
             <div className="mt-4 flex justify-end gap-2">
               <Dugme type="button" varyant="ikincil" onClick={pencereyiKapat}>

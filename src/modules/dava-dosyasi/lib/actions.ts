@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import type { MuvekkilSifati, HukukiMudahaleDurumu, DosyaEvresi, AdliBirimHareketYonu, MasrafYansitmaHedefi } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
-import { silebilirMi } from "@/core/auth/yetki";
+import { silebilirMi, sistemYoneticisiMi } from "@/core/auth/yetki";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { dosyaCariHesapOzeti } from "./queries";
 
@@ -394,10 +394,13 @@ export async function davaDosyasiGuncelle(
   redirect(`/kokpit/dava-dosyalari/${id}`);
 }
 
-async function davaDosyasiSilIc(id: string, sifre?: string) {
+async function davaDosyasiSilIc(id: string, sifre?: string, paraTrafiginiDeSil = false) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
+  }
+  if (paraTrafiginiDeSil && !sistemYoneticisiMi(kullanici.rol)) {
+    throw new Error("Para trafiği kayıtlarını silme yetkisi yalnızca sistem yöneticisindedir.");
   }
   await silmeSifresiniDogrula(sifre);
 
@@ -426,8 +429,25 @@ async function davaDosyasiSilIc(id: string, sifre?: string) {
   if (dosya._count.altDosyalar > 0) {
     throw new Error("Bu dosyanın alt dosyaları var. Önce alt dosyaları ana dosyadan ayırın.");
   }
-  const { masraflar, karsiTarafAlacaklari, paraTrafigiKayitlari, paraTrafigiDagitimlari, finansHareketleri, hacizRaporlari, cariHareketleri } =
-    dosya._count;
+  let { paraTrafigiKayitlari, paraTrafigiDagitimlari } = dosya._count;
+  const { masraflar, karsiTarafAlacaklari, finansHareketleri, hacizRaporlari, cariHareketleri } = dosya._count;
+  // Sistem yoneticisi secenegi: yalnizca BU dosyaya ait para trafigi kayitlari
+  // silinir. Baska dosyalarla da iliskili (ortak) bir kayit varsa islem durur.
+  let silinecekParaTrafigiIdleri: string[] = [];
+  if (paraTrafiginiDeSil) {
+    const bagli = await prisma.musteriParaTrafigi.findMany({
+      where: { dosyalar: { some: { dosyaId: id } } },
+      select: { id: true, dosyalar: { select: { dosyaId: true } } },
+    });
+    if (bagli.some((k) => k.dosyalar.some((d) => d.dosyaId !== id))) {
+      throw new Error(
+        "Dosyaya bağlı para trafiği kayıtlarından bazıları başka dosyalarla ortak; bunlar silinemez. Önce ilgili kayıtları ayırın.",
+      );
+    }
+    silinecekParaTrafigiIdleri = bagli.map((k) => k.id);
+    paraTrafigiKayitlari = 0;
+    paraTrafigiDagitimlari = 0;
+  }
   if (
     masraflar > 0 ||
     karsiTarafAlacaklari > 0 ||
@@ -445,17 +465,31 @@ async function davaDosyasiSilIc(id: string, sifre?: string) {
     throw new Error("Bu dosyaya bağlı haciz raporu var. Önce haciz raporlarını silin.");
   }
 
-  await prisma.davaDosyasi.delete({ where: { id } });
+  await prisma.$transaction([
+    ...(silinecekParaTrafigiIdleri.length > 0
+      ? [prisma.musteriParaTrafigi.deleteMany({ where: { id: { in: silinecekParaTrafigiIdleri } } })]
+      : []),
+    prisma.davaDosyasi.delete({ where: { id } }),
+  ]);
   revalidatePath("/kokpit/dava-dosyalari");
   revalidatePath("/kokpit/finans/musteri-iliskileri");
+}
+
+export async function paraTrafigiSilmeSecenegiVarMi(): Promise<boolean> {
+  const kullanici = await mevcutKullanici();
+  return Boolean(kullanici && sistemYoneticisiMi(kullanici.rol));
 }
 
 // Canli ortamda (production) Server Action'dan firlatilan Error mesajlari
 // istemciye maskelenerek ("Minified React error #441") gider; sifre hatasi
 // gibi beklenen durumlarin okunur gorunmesi icin hata sonuc olarak doner.
-export async function davaDosyasiSil(id: string, sifre?: string): Promise<{ hata?: string }> {
+export async function davaDosyasiSil(
+  id: string,
+  sifre?: string,
+  paraTrafiginiDeSil = false,
+): Promise<{ hata?: string }> {
   try {
-    await davaDosyasiSilIc(id, sifre);
+    await davaDosyasiSilIc(id, sifre, paraTrafiginiDeSil);
     return {};
   } catch (e) {
     return { hata: e instanceof Error ? e.message : "Silme işlemi başarısız oldu." };

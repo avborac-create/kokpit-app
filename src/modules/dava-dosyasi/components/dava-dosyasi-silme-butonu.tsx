@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { davaDosyasiSil } from "@/modules/dava-dosyasi/lib/actions";
+import { davaDosyasiSil, paraTrafigiSilmeSecenegiVarMi } from "@/modules/dava-dosyasi/lib/actions";
 import { OnayliButon } from "@/core/ui/onayli-buton";
 
 export function DavaDosyasiSilmeButonu({
@@ -18,12 +19,21 @@ export function DavaDosyasiSilmeButonu({
   boyut?: "normal" | "kompakt";
 }) {
   const router = useRouter();
+  // Para trafiği kayıtlarını da silme seçeneği yalnızca sistem yöneticisine görünür
+  // (sunucu ayrıca doğrular).
+  const [paraTrafigiSecenegi, setParaTrafigiSecenegi] = useState(false);
+  useEffect(() => {
+    paraTrafigiSilmeSecenegiVarMi().then(setParaTrafigiSecenegi, () => {});
+  }, []);
 
   return (
     <OnayliButon
       sifreIste
-      eylem={async (sifre) => {
-        const sonuc = await davaDosyasiSil(dosyaId, sifre);
+      ekSecenekEtiketi={
+        paraTrafigiSecenegi ? "Dosyaya bağlı para trafiği kayıtlarını da kalıcı olarak sil" : undefined
+      }
+      eylem={async (sifre, paraTrafiginiDeSil) => {
+        const sonuc = await davaDosyasiSil(dosyaId, sifre, paraTrafiginiDeSil);
         if (sonuc.hata) return sonuc;
         if (sonrasindaYonlendir) router.push(sonrasindaYonlendir);
       }}
