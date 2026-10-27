@@ -188,7 +188,7 @@ type Satir = { dosya: Dosya; seviye: 0 | 1; altSayisi: number };
 
 // Duz listeyi agaca cevirir: alt dosyalar ana dosyasinin hemen altina, altSiraNo
 // sirasiyla girintili dizilir. Ana dosyasi (arama/durum filtresi yuzunden)
-// listede olmayan bir alt dosya tek basina, kendi "KP-0019/1" numarasiyla
+// listede olmayan bir alt dosya tek basina, kendi "KN-19/1" numarasiyla
 // gorunur. Daraltilmis ana dosyalarin alt satirlari atlanir.
 function agacSatirlari(dosyalar: Dosya[], daraltilmis: Set<string>): Satir[] {
   const idler = new Set(dosyalar.map((d) => d.id));

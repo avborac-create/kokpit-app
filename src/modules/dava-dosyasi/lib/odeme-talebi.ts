@@ -54,7 +54,7 @@ export async function masrafDokumu(musteriId: string): Promise<MasrafDokumuSatir
   });
   return masraflar.map((m) => ({
     karsiTaraf: m.dosya.karsiTaraflar.map((k) => k.karsiTaraf.ad).filter(Boolean).join(", ") || undefined,
-    // Belgede dosya, birim adi ve esas numarasiyla yazilir (ör. "Bursa 18. İş Mahkemesi 2026/213"); bilgi yoksa KP numarasi.
+    // Belgede dosya, birim adi ve esas numarasiyla yazilir (ör. "Bursa 18. İş Mahkemesi 2026/213"); bilgi yoksa KN numarasi.
     dosya: [m.dosya.birimAdi, m.dosya.dosyaNo].filter(Boolean).join(" ") || dosyaEtiketiYaz(m.dosya),
     tarih: m.tarih.toISOString().slice(0, 10),
     tur: m.tur.etiket,

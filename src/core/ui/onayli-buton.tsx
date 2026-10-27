@@ -24,7 +24,8 @@ export function OnayliButon({
   className,
   children,
 }: {
-  eylem: (sifre: string) => Promise<void>;
+  // Beklenen hata (yanlis sifre, bagli kayit vb.) {hata} olarak donerse pencerede gosterilir.
+  eylem: (sifre: string) => Promise<void | { hata?: string }>;
   mesaj: string;
   // true ise native confirm() yerine sifre kutulu bir onay penceresi acilir;
   // girilen sifre eylem'e iletilir ve SUNUCUDA dogrulanir (bkz.
@@ -45,7 +46,11 @@ export function OnayliButon({
     setHata(null);
     baslatTransition(async () => {
       try {
-        await eylem(sifre);
+        const sonuc = await eylem(sifre);
+        if (sonuc && sonuc.hata) {
+          setHata(sonuc.hata);
+          return;
+        }
         setPencereAcik(false);
         setSifre("");
         router.refresh();
@@ -78,7 +83,11 @@ export function OnayliButon({
         if (!confirm(mesaj)) return;
         baslatTransition(async () => {
           try {
-            await eylem("");
+            const sonuc = await eylem("");
+            if (sonuc && sonuc.hata) {
+              alert(sonuc.hata);
+              return;
+            }
             router.refresh();
           } catch (hata) {
             // Server action'in atttigi (ör. "bu kayitta finansal veri var,

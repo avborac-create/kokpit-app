@@ -394,7 +394,7 @@ export async function davaDosyasiGuncelle(
   redirect(`/kokpit/dava-dosyalari/${id}`);
 }
 
-export async function davaDosyasiSil(id: string, sifre?: string) {
+async function davaDosyasiSilIc(id: string, sifre?: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
@@ -416,6 +416,8 @@ export async function davaDosyasiSil(id: string, sifre?: string) {
           paraTrafigiDagitimlari: true,
           finansHareketleri: true,
           altDosyalar: true,
+          hacizRaporlari: true,
+          cariHareketleri: true,
         },
       },
     },
@@ -424,23 +426,40 @@ export async function davaDosyasiSil(id: string, sifre?: string) {
   if (dosya._count.altDosyalar > 0) {
     throw new Error("Bu dosyanın alt dosyaları var. Önce alt dosyaları ana dosyadan ayırın.");
   }
-  const { masraflar, karsiTarafAlacaklari, paraTrafigiKayitlari, paraTrafigiDagitimlari, finansHareketleri } =
+  const { masraflar, karsiTarafAlacaklari, paraTrafigiKayitlari, paraTrafigiDagitimlari, finansHareketleri, hacizRaporlari, cariHareketleri } =
     dosya._count;
   if (
     masraflar > 0 ||
     karsiTarafAlacaklari > 0 ||
     paraTrafigiKayitlari > 0 ||
     paraTrafigiDagitimlari > 0 ||
-    finansHareketleri > 0
+    finansHareketleri > 0 ||
+    cariHareketleri > 0
   ) {
     throw new Error(
       "Bu dosyada finansal kayıt var, silinemez. Önce durumunu \"Kapalı\" veya \"Arşiv\" yaparak arşivleyin.",
     );
   }
 
+  if (hacizRaporlari > 0) {
+    throw new Error("Bu dosyaya bağlı haciz raporu var. Önce haciz raporlarını silin.");
+  }
+
   await prisma.davaDosyasi.delete({ where: { id } });
   revalidatePath("/kokpit/dava-dosyalari");
   revalidatePath("/kokpit/finans/musteri-iliskileri");
+}
+
+// Canli ortamda (production) Server Action'dan firlatilan Error mesajlari
+// istemciye maskelenerek ("Minified React error #441") gider; sifre hatasi
+// gibi beklenen durumlarin okunur gorunmesi icin hata sonuc olarak doner.
+export async function davaDosyasiSil(id: string, sifre?: string): Promise<{ hata?: string }> {
+  try {
+    await davaDosyasiSilIc(id, sifre);
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "Silme işlemi başarısız oldu." };
+  }
 }
 
 // "Paneli düzenle" ile dosya detayindaki kartlardan yapilan tekil alan

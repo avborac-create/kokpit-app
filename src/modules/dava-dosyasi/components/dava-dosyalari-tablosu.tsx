@@ -154,7 +154,7 @@ function sutunHucresiOlustur(anahtar: SutunAnahtari, dosya: Dosya): React.ReactN
           href={`/kokpit/dava-dosyalari/${dosya.id}`}
           className="font-medium text-white hover:text-[#6db8ff] hover:underline"
         >
-          KP-{String(dosya.kayitNo).padStart(4, "0")}
+          KN-{dosya.kayitNo}
         </Link>
       );
     case "dosyaNo":

@@ -23,7 +23,8 @@ export function DavaDosyasiSilmeButonu({
     <OnayliButon
       sifreIste
       eylem={async (sifre) => {
-        await davaDosyasiSil(dosyaId, sifre);
+        const sonuc = await davaDosyasiSil(dosyaId, sifre);
+        if (sonuc.hata) return sonuc;
         if (sonrasindaYonlendir) router.push(sonrasindaYonlendir);
       }}
       mesaj="Bu dava dosyasını silmek istediğinize emin misiniz? Dosyaya bağlı para trafiği kayıtları silinmez, sadece dosya bağlantısı kalkar."

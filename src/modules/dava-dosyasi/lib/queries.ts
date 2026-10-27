@@ -9,7 +9,7 @@ export type DavaDosyasiFiltre = {
 
 // Arama kutusu: bosluklarla ayrilan her sozcuk (AND) listedeki herhangi bir
 // sutunda gecmelidir - ör. "saray 2026" = Saray muvekkilinin 2026 dosyalari.
-// "KP-0014" ya da "14" Kokpit No'ya da eslesir. Turkce I/İ farki icin sozcuk
+// "KN-14" ya da "14" Kokpit No'ya da eslesir. Turkce I/İ farki icin sozcuk
 // hem yazildigi hem tr-buyuk/kucuk haliyle aranir.
 function aramaKosulu(arama?: string): Prisma.DavaDosyasiWhereInput {
   const sozcukler = (arama ?? "").trim().split(/\s+/).filter(Boolean);
@@ -19,7 +19,7 @@ function aramaKosulu(arama?: string): Prisma.DavaDosyasiWhereInput {
       const varyantlar = [
         ...new Set([sozcuk, sozcuk.toLocaleUpperCase("tr"), sozcuk.toLocaleLowerCase("tr")]),
       ];
-      const kayitNoMatch = /^(?:kp-?)?0*(\d{1,9})(?:\/(\d{1,4}))?$/i.exec(sozcuk);
+      const kayitNoMatch = /^(?:k[np]-?)?0*(\d{1,9})(?:\/(\d{1,4}))?$/i.exec(sozcuk);
       const metin = (alan: (v: string) => Prisma.DavaDosyasiWhereInput): Prisma.DavaDosyasiWhereInput[] =>
         varyantlar.map(alan);
       const icerir = { contains: "", mode: "insensitive" as const };
@@ -42,7 +42,7 @@ function aramaKosulu(arama?: string): Prisma.DavaDosyasiWhereInput {
           ...metin((v) => ({
             karsiTaraflar: { some: { karsiTaraf: { tanimlayiciKod: { ...icerir, contains: v } } } },
           })),
-          // "KP-0019/1" tam o alt dosyayi, "KP-0019" ana dosyayi VE alt
+          // "KN-19/1" tam o alt dosyayi, "KN-19" ana dosyayi VE alt
           // dosyalarini bulur (ağaç listede birlikte görünsünler diye).
           ...(kayitNoMatch
             ? kayitNoMatch[2]

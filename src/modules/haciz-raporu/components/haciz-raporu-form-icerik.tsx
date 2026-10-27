@@ -33,7 +33,7 @@ export function HacizRaporuFormIcerik({ icraDosyalari, tahsilatKanallari }: Prop
           </option>
           {icraDosyalari.map((dosya) => (
             <option key={dosya.id} value={dosya.id}>
-              KP-{String(dosya.kayitNo).padStart(4, "0")}
+              KN-{dosya.kayitNo}
               {dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""} — {dosya.konu}
               {dosya.icraAltTuru ? ` (${dosya.icraAltTuru.etiket})` : ""}
               {dosya.muvekkiller.length > 0 ? ` — ${dosya.muvekkiller[0].musteri.adSoyadUnvan}` : ""}
