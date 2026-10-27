@@ -9,7 +9,7 @@ import { baslikDuzeni, cumleDuzeni } from "@/core/metin/bicim";
 // Mevcut kayıtlar bu uzantıyla değişmez; yalnızca bundan sonraki yazmalar etkilenir.
 type Kural = (metin: string) => string;
 
-const KURALLAR: Record<string, Record<string, Kural>> = {
+export const KURALLAR: Record<string, Record<string, Kural>> = {
   Kullanici: { adSoyad: baslikDuzeni },
   Musteri: { adSoyadUnvan: baslikDuzeni, adres: cumleDuzeni, notlar: cumleDuzeni },
   IrtibatKisisi: { adSoyad: baslikDuzeni, unvanGorev: baslikDuzeni, konuBasligi: cumleDuzeni, notlar: cumleDuzeni },
@@ -32,7 +32,6 @@ const KURALLAR: Record<string, Record<string, Kural>> = {
   DosyaCariDagitimi: { aciklama: cumleDuzeni },
   CariHareketi: { aciklama: cumleDuzeni },
   HukukiMudahale: { baslik: cumleDuzeni, aciklama: cumleDuzeni },
-  SecenekDegeri: { etiket: baslikDuzeni },
 };
 
 type AlanBilgisi = { kind: string; type: string };

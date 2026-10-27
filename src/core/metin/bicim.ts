@@ -14,7 +14,7 @@ const BAGLACLAR = new Set(["ve", "ile", "veya", "yahut", "ya", "da", "de", "ki",
 // Yeni bir kısaltma gerekirse buraya eklenir.
 const KORUNAN_KISALTMALAR = new Set([
   "TC", "AŞ", "TBK", "HMK", "İİK", "CMK", "TCK", "TMK", "TTK", "İYUK", "SGK", "KDV", "AYM",
-  "UYAP", "PTT", "TBMM", "SMMM", "YMM", "TL", "ÖTV", "MTV", "VKN", "TCKN", "KEP", "BDDK", "SPK",
+  "UYAP", "PTT", "TBMM", "SMMM", "YMM", "TL", "ÖTV", "MTV", "VKN", "TCKN", "KEP", "BDDK", "SPK", "ATM", "ASM", "TTOK", "QNB", "DYG",
 ]);
 
 const buyut = (s: string) => s.toLocaleUpperCase(TR);
@@ -47,6 +47,9 @@ function parcaDuzenle(parca: string, ilkKelimeMi: boolean): string {
 
 // Bir "kelime"yi (boşluksuz parça) baştaki/sondaki noktalamayı koruyarak düzenler.
 function kelimeDuzenle(kelime: string, ilkKelimeMi: boolean): string {
+  // "10.ASLİYE" gibi sıra numarasına bitişik yazılmış kelime: numara korunur, kalanı düzenlenir.
+  const sira = kelime.match(/^(\d+\.)(\p{L}.*)$/u);
+  if (sira) return sira[1] + kelimeDuzenle(sira[2], false);
   // Rakam, e-posta, adres, yol/kod içeren parçalara dokunulmaz (2026/412, KP-0025, a@b.com).
   if (/[\d@\\_]|:\/\//.test(kelime)) return kelime;
   if (!/\p{L}/u.test(kelime)) return kelime;
