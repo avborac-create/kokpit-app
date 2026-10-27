@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ekGorunenAd } from "@/modules/dava-dosyasi/lib/ek-adi";
 
 type Ek = {
   id: number;
@@ -178,7 +179,7 @@ export function EkBelgePaneli({ onDurum }: { onDurum?: (durum: { hazir: boolean 
             <li key={e.id} className="flex items-center gap-3 px-4 py-3">
               <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-white/80">EK-{i + 1}</span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-white">{e.ad}</p>
+                <p className="truncate text-sm text-white">{ekGorunenAd(e.ad)}</p>
                 <p className={`text-xs ${e.durum === "hata" ? "text-[#ff7a70]" : "text-white/45"}`}>
                   {e.durum === "isleniyor" && "Hazırlanıyor…"}
                   {e.durum === "hata" && (e.hata ?? "Eklenemedi")}
