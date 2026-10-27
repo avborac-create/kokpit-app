@@ -44,6 +44,7 @@ export function KarsiTarafEkleyici({
       <div className="flex gap-2">
         <Girdi
           id="karsiTarafGirdi"
+          data-metin-duzeni="baslik"
           value={girdi}
           onChange={(e) => setGirdi(e.target.value)}
           onKeyDown={(e) => {

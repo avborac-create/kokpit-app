@@ -1,3 +1,4 @@
+import { MetinDuzeniDinleyici } from "@/core/metin/metin-duzeni-dinleyici";
 import { Suspense } from "react";
 import { KokpitKabuk } from "./kokpit-kabuk";
 import { KenarCubuguVerisi, UstBilgiVerisi } from "./kokpit-kabuk-verisi";
@@ -26,6 +27,7 @@ export default function KokpitLayout({ children }: { children: React.ReactNode }
         </Suspense>
       }
     >
+      <MetinDuzeniDinleyici />
       {children}
     </KokpitKabuk>
   );
