@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { KunyeSeridi } from "@/core/ui/kunye-seridi";
 import { kokpitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { notFound } from "next/navigation";
 import { musteriGetir, avukatlariListele } from "@/modules/musteri/lib/queries";
@@ -52,7 +53,7 @@ export default async function MusteriDetaySayfasi({
 
   return (
     <div className="pt-3">
-      <div className="mb-6 flex items-start justify-between">
+      <KunyeSeridi className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">{musteri.adSoyadUnvan}</h1>
           <p className="mt-1 text-sm text-white/55">
@@ -71,7 +72,7 @@ export default async function MusteriDetaySayfasi({
           </Link>
           {silmeYetkisiVar && <MusteriSilmeButonu musteriId={id} />}
         </div>
-      </div>
+      </KunyeSeridi>
 
       <div className="mb-8 max-w-2xl">
         <DuzenlenebilirKart

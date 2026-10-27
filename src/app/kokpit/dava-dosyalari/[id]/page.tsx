@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { KunyeSeridi } from "@/core/ui/kunye-seridi";
 import { notFound } from "next/navigation";
 import { davaDosyasiGetir, anaDosyaAdaylariniGetir } from "@/modules/dava-dosyasi/lib/queries";
 import { dosyaAlanlariniGuncelle } from "@/modules/dava-dosyasi/lib/actions";
@@ -280,7 +281,7 @@ export default async function DavaDosyasiDetaySayfasi({
 
   return (
     <div className="pt-3">
-      <div className="mb-6 flex items-start justify-between">
+      <KunyeSeridi className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">
             <span className="text-white/45" title={dosya.anaDosya ? `Eski numarası: ${kayitNoGoster(dosya.kayitNo)}` : undefined}>
@@ -349,7 +350,7 @@ export default async function DavaDosyasiDetaySayfasi({
             <DavaDosyasiSilmeButonu dosyaId={id} sonrasindaYonlendir="/kokpit/dava-dosyalari" />
           )}
         </div>
-      </div>
+      </KunyeSeridi>
 
       <DosyaBirlikteUyarisi dosyaId={id} />
 
