@@ -129,6 +129,12 @@ export function VirmanFormu({
         </Etiket>
         <ParaGirdisi id="vf-tutar" name="tutar" required />
       </Alan>
+      <div className="min-w-0 sm:col-span-2 md:col-span-3">
+        <Alan>
+          <Etiket htmlFor="vf-aciklama">Açıklama (isteğe bağlı)</Etiket>
+          <Girdi id="vf-aciklama" name="aciklama" placeholder="ör. 36.000 TL masraf iadesi, vekalet ücreti kesintisi" autoComplete="off" />
+        </Alan>
+      </div>
       <div className="flex items-end">
         <GonderButonu>Virman Yap</GonderButonu>
       </div>

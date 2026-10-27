@@ -143,6 +143,9 @@ export async function virmanYap(musteriId: string, kapsamDosyaId: string, formDa
   await dosyaMuvekkilinMi(musteriId, dosyaId);
   const tutar = tutarAl(formData);
   const tarih = tarihAl(formData);
+  // Kullanicinin notu varsa otomatik virman metninin sonuna eklenir.
+  const not = metin(formData, "aciklama");
+  const acik = (oto: string) => (not ? `${oto} — ${not}` : oto);
 
   await prisma.$transaction(async (tx) => {
     const [para, hedef] = await Promise.all([
@@ -169,13 +172,13 @@ export async function virmanYap(musteriId: string, kapsamDosyaId: string, formDa
       await tx.cariHareketi.create({
         data: {
           musteriId, dosyaId, hesapId: kaynakHesap.id, yon: "BORC", tarih, tutar, virmanId,
-          aciklama: `${hedef.no}-${hedef.ad.toLocaleUpperCase("tr-TR")} VİRMAN`,
+          aciklama: acik(`${hedef.no}-${hedef.ad.toLocaleUpperCase("tr-TR")} VİRMAN`),
         },
       });
       await tx.cariHareketi.create({
         data: {
           musteriId, dosyaId, hesapId: hedef.id, yon: "ALACAK", tarih, tutar, virmanId,
-          aciklama: `${kaynakHesap.no}-${kaynakHesap.ad.toLocaleUpperCase("tr-TR")} VİRMAN`,
+          aciklama: acik(`${kaynakHesap.no}-${kaynakHesap.ad.toLocaleUpperCase("tr-TR")} VİRMAN`),
         },
       });
       return;
@@ -192,13 +195,13 @@ export async function virmanYap(musteriId: string, kapsamDosyaId: string, formDa
       data: {
         musteriId, dosyaId, hesapId: para.id, yon: "BORC", tarih, tutar, virmanId,
         havuzKaynakli: havuzdan,
-        aciklama: `${hedef.no}-${hedef.ad.toLocaleUpperCase("tr-TR")} VİRMAN`,
+        aciklama: acik(`${hedef.no}-${hedef.ad.toLocaleUpperCase("tr-TR")} VİRMAN`),
       },
     });
     await tx.cariHareketi.create({
       data: {
         musteriId, dosyaId, hesapId: hedef.id, yon: "ALACAK", tarih, tutar, virmanId,
-        aciklama: `${para.no}-${para.ad.toLocaleUpperCase("tr-TR")} VİRMAN`,
+        aciklama: acik(`${para.no}-${para.ad.toLocaleUpperCase("tr-TR")} VİRMAN`),
       },
     });
   });
