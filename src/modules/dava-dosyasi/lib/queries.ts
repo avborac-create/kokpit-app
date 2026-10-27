@@ -203,9 +203,9 @@ const KULLANIM_AMACI_KOD_ILE_ESLESEN_CARI_KOD_KODU: Record<string, string> = {
 // aktif tekil-kume tipleriyle girilenler) kayitlarda tasnif eskisi gibi
 // okunur - geriye donuk uyumluluk.
 async function cariHesapOzetiHesapla(
-  tasnifWhere: Parameters<typeof prisma.paraTrafigiTasnif.groupBy>[0]["where"],
-  masrafWhere: Parameters<typeof prisma.dosyaMasrafi.groupBy>[0]["where"],
-  dagitimWhere: Parameters<typeof prisma.paraTrafigiDagitimi.groupBy>[0]["where"],
+  tasnifWhere: Prisma.ParaTrafigiTasnifWhereInput | undefined,
+  masrafWhere: Prisma.DosyaMasrafiWhereInput | undefined,
+  dagitimWhere: Prisma.ParaTrafigiDagitimiWhereInput | undefined,
   // Avans aktarimlari icin dosya kapsami: kapsamdaki bir dosyadan CIKAN
   // aktarim bakiyeyi dusurur, kapsama GIREN artirir. Kapsam hem kaynagi hem
   // hedefi iceriyorsa (musteri/kume seviyesi) ikisi birbirini goturur.
