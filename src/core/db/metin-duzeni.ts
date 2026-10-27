@@ -11,12 +11,15 @@ type Kural = (metin: string) => string;
 
 const KURALLAR: Record<string, Record<string, Kural>> = {
   Kullanici: { adSoyad: baslikDuzeni },
-  Musteri: { adSoyadUnvan: baslikDuzeni, notlar: cumleDuzeni },
+  Musteri: { adSoyadUnvan: baslikDuzeni, adres: cumleDuzeni, notlar: cumleDuzeni },
   IrtibatKisisi: { adSoyad: baslikDuzeni, unvanGorev: baslikDuzeni, konuBasligi: cumleDuzeni, notlar: cumleDuzeni },
   KarsiTaraf: { ad: baslikDuzeni, notlar: cumleDuzeni },
   UyusmazlikGrubu: { ad: baslikDuzeni, notlar: cumleDuzeni },
-  DavaDosyasi: { birimAdi: baslikDuzeni, konu: cumleDuzeni, davaKonusu: cumleDuzeni, aciklama: cumleDuzeni },
-  CMKDosyasi: { adSoyad: baslikDuzeni, birim: baslikDuzeni, notlar: cumleDuzeni },
+  DavaDosyasi: {
+    birimAdi: baslikDuzeni, konu: cumleDuzeni, davaKonusu: cumleDuzeni, talepSonucu: cumleDuzeni,
+    aciklama: cumleDuzeni, sonrakiKontrolSorusu: cumleDuzeni, sonKontrolSonucu: cumleDuzeni,
+  },
+  CMKDosyasi: { adSoyad: baslikDuzeni, suc: cumleDuzeni, birim: baslikDuzeni, notlar: cumleDuzeni },
   DosyaNabzi: { adSoyad: baslikDuzeni },
   MuvekkilAnlasma: { notlar: cumleDuzeni },
   MusteriParaTrafigi: { aciklama: cumleDuzeni },
@@ -28,7 +31,8 @@ const KURALLAR: Record<string, Record<string, Kural>> = {
   DosyaParaGirisi: { aciklama: cumleDuzeni },
   DosyaCariDagitimi: { aciklama: cumleDuzeni },
   CariHareketi: { aciklama: cumleDuzeni },
-  HukukiMudahale: { aciklama: cumleDuzeni },
+  HukukiMudahale: { baslik: cumleDuzeni, aciklama: cumleDuzeni },
+  SecenekDegeri: { etiket: baslikDuzeni },
 };
 
 type AlanBilgisi = { kind: string; type: string };
