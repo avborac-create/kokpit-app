@@ -433,7 +433,7 @@ async function OzetSekmesi({
                 <AcilirHesapSatiri
                   key={h.hesapId}
                   baslik={`${h.no} - ${h.ad}`}
-                  acilabilir={Boolean(hesapNesnesi)}
+                  acilabilir={Boolean(hesapNesnesi) && (hareketVar || hesapNesnesi!.paraHesabiMi)}
                   hucreler={
                     <>
                       <td className="px-4 py-3 text-right text-white/85">{h.borc ? para.format(h.borc) : "—"}</td>
@@ -444,7 +444,7 @@ async function OzetSekmesi({
                     </>
                   }
                 >
-                  {hesapNesnesi && (hareketVar || hesapNesnesi.paraHesabiMi) ? (
+                  {hesapNesnesi && (
                     <HesapSekmesi
                       kapsam={kapsam}
                       hesap={hesapNesnesi}
@@ -455,10 +455,6 @@ async function OzetSekmesi({
                       ozetHesaplar={ozet.hesaplar}
                       silmeYetkisiVar={silmeYetkisiVar}
                     />
-                  ) : (
-                    <p className="text-sm text-white/55">
-                      Bu hesapta henüz hareket yok. Kayıt girmek için yukarıdaki <b>{h.no} - {h.ad}</b> sekmesini açın.
-                    </p>
                   )}
                 </AcilirHesapSatiri>
               );
