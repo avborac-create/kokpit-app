@@ -254,3 +254,14 @@ html[data-tema="acik"] .text-\[\#6e6e73\] { color: #5c6678; }
 /* Mavi rozet/kutu zeminleri paletin vurgusunu izler */
 [class*="bg-[#6db8ff]/"] { background-color: color-mix(in srgb, var(--link) 14%, transparent); }
 [class*="border-[#6db8ff]/"] { border-color: color-mix(in srgb, var(--link) 40%, transparent); }
+
+/* Ana sayfa haber akisi: icerik iki kez dizilir, yarisi kadar yukari kayar ve basa sarar. */
+@keyframes haber-yukari {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+.haber-akisi-ic { animation: haber-yukari 70s linear infinite; }
+.haber-akisi:hover .haber-akisi-ic { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .haber-akisi-ic { animation: none; }
+}
