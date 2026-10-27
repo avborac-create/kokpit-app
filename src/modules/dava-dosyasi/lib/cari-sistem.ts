@@ -39,7 +39,17 @@ export type DefterSatiri = {
   // Para borcludan (karsi taraftan) gelmisse
   borcludan?: boolean;
   duzenleHref?: string;
+  // Defterde sayfa acmadan (yerinde) duzenleme icin; virmanda yalniz tarih + tutar
+  duzenle?: SatirDuzenleme;
   turetilmis?: boolean;
+};
+export type SatirDuzenleme = {
+  tip: "hareket" | "virman";
+  id: string;
+  tarih: string;
+  tutar: number;
+  aciklama: string;
+  yontemId?: string;
 };
 type SilmeKaynagi = SatirSilme;
 
@@ -294,6 +304,14 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
       alacak: h.yon === "ALACAK" ? sayi(h.tutar) : 0,
       silme: virmanMi ? { tip: "virman", id: h.virmanId! } : { tip: "hareket", id: h.id },
       duzenleHref: virmanMi ? undefined : `/kokpit/finans/musteri-iliskileri/${kapsam.musteriId}/hareket/${h.id}/duzenle`,
+      duzenle: {
+        tip: virmanMi ? "virman" : "hareket",
+        id: virmanMi ? h.virmanId! : h.id,
+        tarih: h.tarih.toISOString().slice(0, 10),
+        tutar: sayi(h.tutar),
+        aciklama: h.aciklama ?? "",
+        yontemId: h.odemeYontemiId ?? undefined,
+      },
     });
   }
   for (const m of masraflar) {

@@ -212,7 +212,7 @@ async function eksiyeDusmeKontrolu(
   dosyaId: string | null,
 ) {
   if ((await paraBakiyesi(tx, musteriId)) < -0.001 || (dosyaId && (await paraBakiyesi(tx, musteriId, dosyaId)) < -0.001)) {
-    throw new Error("Bu kaydı silmek, virmanla kullanılmış parayı eksiye düşürür. Önce ilgili virmanı silin.");
+    throw new Error("Bu işlem, virmanla kullanılmış parayı eksiye düşürür. Önce ilgili virmanı düzeltin ya da silin.");
   }
 }
 
@@ -260,6 +260,48 @@ export async function hareketGuncelle(id: string, formData: FormData) {
   redirect(
     `/kokpit/finans/musteri-iliskileri/${donus.musteriId}/cari-hesap?sayfa=${donus.dosyaId ?? "genel"}&alt=${donus.hesapNo}`,
   );
+}
+
+// Defterde yerinde duzenleme (sayfa degistirmez, hatayi pencereye dondurur).
+// hareket: tarih / tutar / aciklama (+ odeme sekli). virman: iki bagli satirin
+// tarih ve tutari birlikte guncellenir (yoneticiye ozel); Para Trafigi eksiye dusemez.
+export async function satirGuncelle(tip: "hareket" | "virman", id: string, formData: FormData): Promise<{ hata?: string }> {
+  try {
+    const tutar = tutarAl(formData);
+    const tarih = tarihAl(formData);
+    if (tip === "virman") {
+      await yoneticiyiDogrula();
+      await prisma.$transaction(async (tx) => {
+        const satirlar = await tx.cariHareketi.findMany({ where: { virmanId: id } });
+        if (satirlar.length === 0) throw new Error("Virman bulunamadı.");
+        await tx.cariHareketi.updateMany({ where: { virmanId: id }, data: { tarih, tutar } });
+        const gorulen = new Set<string>();
+        for (const s of satirlar) {
+          const anahtar = `${s.musteriId}|${s.dosyaId ?? ""}`;
+          if (gorulen.has(anahtar)) continue;
+          gorulen.add(anahtar);
+          await eksiyeDusmeKontrolu(tx, s.musteriId, s.dosyaId);
+        }
+      });
+    } else {
+      const aciklama = metin(formData, "aciklama") || null;
+      const yontemId = formData.has("yontemId") ? metin(formData, "yontemId") || null : undefined;
+      await prisma.$transaction(async (tx) => {
+        const h = await tx.cariHareketi.findUnique({ where: { id } });
+        if (!h) throw new Error("Kayıt bulunamadı.");
+        if (h.virmanId) throw new Error("Virman kayıtları bu yoldan düzenlenemez.");
+        await tx.cariHareketi.update({
+          where: { id },
+          data: { tarih, tutar, aciklama, ...(yontemId !== undefined ? { odemeYontemiId: yontemId } : {}) },
+        });
+        await eksiyeDusmeKontrolu(tx, h.musteriId, h.dosyaId);
+      });
+    }
+    yenile();
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "İşlem başarısız oldu." };
+  }
 }
 
 // ---- Hesap yonetimi (admin) ----

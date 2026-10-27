@@ -343,7 +343,7 @@ export async function EkonomiPaneli({
         ))}
       </div>
 
-      {aktif === "ozet" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyalar} hesapNesneleri={aktifHesaplar} silmeYetkisiVar={silmeYetkisiVar} />}
+      {aktif === "ozet" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyaSecenekleri} hesapNesneleri={aktifHesaplar} silmeYetkisiVar={silmeYetkisiVar} havuzBakiyesi={havuzBakiyesi} />}
       {seciliHesap && aktif === String(seciliHesap.no) && (
         <HesapSekmesi
           kapsam={kapsam}
@@ -397,24 +397,15 @@ async function OzetSekmesi({
   dosyalar,
   hesapNesneleri,
   silmeYetkisiVar,
+  havuzBakiyesi,
 }: {
   ozet: Awaited<ReturnType<typeof kapsamOzeti>>;
   kapsam: Kapsam;
-  dosyalar: { id: string; etiket: string }[];
+  dosyalar: DosyaSecenegi[];
   hesapNesneleri: Awaited<ReturnType<typeof hesaplariGetir>>;
   silmeYetkisiVar: boolean;
+  havuzBakiyesi?: number;
 }) {
-  // Hareketi olan hesaplarin defteri (satir acilinca gosterilir)
-  const defterler = new Map(
-    await Promise.all(
-      ozet.hesaplar
-        .filter((h) => h.borc || h.alacak)
-        .map(async (h) => {
-          const nesne = hesapNesneleri.find((x) => x.id === h.hesapId);
-          return [h.hesapId, nesne ? await hesapDefteri(kapsam, nesne) : null] as const;
-        }),
-    ).then((liste) => liste.filter((x): x is readonly [string, NonNullable<(typeof x)[1]>] => x[1] !== null)),
-  );
   const kirilim = !kapsam.dosyaId
     ? await Promise.all(
         dosyalar.map(async (d) => ({ ...d, ozet: await kapsamOzeti({ musteriId: kapsam.musteriId, dosyaId: d.id }) })),
@@ -437,13 +428,12 @@ async function OzetSekmesi({
           <tbody>
             {ozet.hesaplar.map((h) => {
               const hesapNesnesi = hesapNesneleri.find((x) => x.id === h.hesapId);
-              const acilabilir = Boolean(hesapNesnesi) && Boolean(h.borc || h.alacak);
-              const satirDefteri = defterler.get(h.hesapId);
+              const hareketVar = Boolean(h.borc || h.alacak);
               return (
                 <AcilirHesapSatiri
                   key={h.hesapId}
                   baslik={`${h.no} - ${h.ad}`}
-                  acilabilir={acilabilir}
+                  acilabilir={Boolean(hesapNesnesi)}
                   hucreler={
                     <>
                       <td className="px-4 py-3 text-right text-white/85">{h.borc ? para.format(h.borc) : "—"}</td>
@@ -454,15 +444,21 @@ async function OzetSekmesi({
                     </>
                   }
                 >
-                  {satirDefteri && hesapNesnesi && (
-                    <Defter
-                      satirlar={satirDefteri}
-                      paraHesabiMi={hesapNesnesi.paraHesabiMi}
-                      tutulanHesapMi={hesapNesnesi.tutulanHesapMi}
-                      dosyaSutunu={!kapsam.dosyaId}
+                  {hesapNesnesi && (hareketVar || hesapNesnesi.paraHesabiMi) ? (
+                    <HesapSekmesi
+                      kapsam={kapsam}
+                      hesap={hesapNesnesi}
+                      aktifHesaplar={hesapNesneleri}
+                      dosyalar={dosyalar}
+                      paraBakiyesi={ozet.paraBakiyesi}
+                      havuzBakiyesi={havuzBakiyesi}
+                      ozetHesaplar={ozet.hesaplar}
                       silmeYetkisiVar={silmeYetkisiVar}
-                      bosMesaj="Bu hesapta henüz hareket yok."
                     />
+                  ) : (
+                    <p className="text-sm text-white/55">
+                      Bu hesapta henüz hareket yok. Kayıt girmek için yukarıdaki <b>{h.no} - {h.ad}</b> sekmesini açın.
+                    </p>
                   )}
                 </AcilirHesapSatiri>
               );
@@ -651,6 +647,7 @@ async function HesapSekmesi({
         tutulanHesapMi={hesap.tutulanHesapMi}
         dosyaSutunu={musteriDuzeyi}
         silmeYetkisiVar={silmeYetkisiVar}
+        yontemler={yontemler}
         bosMesaj={`${hesap.no} - ${hesap.ad} hesabında henüz hareket yok.`}
       />
 

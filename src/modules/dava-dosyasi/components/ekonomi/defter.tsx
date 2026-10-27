@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { OnayliButon } from "@/core/ui/onayli-buton";
+import { YerindeDuzenle } from "@/modules/dava-dosyasi/components/ekonomi/yerinde-duzenle";
 import type { DefterSatiri } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { hareketSil, virmanSil } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
 import { dosyaMasrafiSil, avansAktarimiSil } from "@/modules/dava-dosyasi/lib/actions";
@@ -55,7 +56,9 @@ export function Defter({
   dosyaSutunu,
   silmeYetkisiVar,
   bosMesaj,
+  yontemler,
 }: {
+  yontemler?: { id: string; etiket: string }[];
   satirlar: DefterSatiri[];
   paraHesabiMi: boolean;
   // Adliyede vb. tutulan para: bakiye = Alacak - Borc (orada duran tutar)
@@ -126,10 +129,14 @@ export function Defter({
                 <td className={`whitespace-nowrap px-4 py-3 text-right font-medium ${renk(s.bakiye)}`}>{para.format(s.bakiye)}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
-                    {s.duzenleHref && (
-                      <Link href={s.duzenleHref} className="text-xs text-[#6db8ff] hover:underline">
-                        Düzenle
-                      </Link>
+                    {s.duzenle && (s.duzenle.tip === "hareket" || silmeYetkisiVar) ? (
+                      <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} />
+                    ) : (
+                      s.duzenleHref && (
+                        <Link href={s.duzenleHref} className="text-xs text-[#6db8ff] hover:underline">
+                          Düzenle
+                        </Link>
+                      )
                     )}
                     {silmeYetkisiVar && <SilButonu satir={s} />}
                   </div>
