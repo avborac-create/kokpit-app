@@ -51,6 +51,9 @@ export default async function MusteriDetaySayfasi({
     },
   ];
 
+  // Telefonlar artik rehberde tutulur; eski tek satirlik alan yalniz doluysa gosterilir.
+  const gorunenAlanlar = bilgiAlanlari.filter((a) => a.anahtar !== "telefon" || musteri.telefon);
+
   return (
     <div className="pt-3">
       <KunyeSeridi className="mb-6 flex items-start justify-between">
@@ -79,7 +82,7 @@ export default async function MusteriDetaySayfasi({
           etiketOnEki="musteri-detay.genel-bilgiler"
           varsayilanBaslik="Genel Bilgiler"
           etiketler={etiketler}
-          alanlar={bilgiAlanlari}
+          alanlar={gorunenAlanlar}
           etiketDuzenleyebilir={silmeYetkisiVar}
           onKaydet={musteriAlanlariniGuncelle.bind(null, id)}
         />

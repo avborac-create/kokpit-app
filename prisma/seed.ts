@@ -233,6 +233,22 @@ const SECENEK_LISTELERI: {
     ],
   },
   {
+    // Telefon rehberinde numara sahibinin sifati (admin yerinde duzenleyebilir / yenisini ekleyebilir).
+    anahtar: "telefon_sifati",
+    ad: "Telefon Sıfatı",
+    degerler: [
+      { kod: "firma_sahibi", etiket: "Firma sahibi" },
+      { kod: "firma_ortagi", etiket: "Firma ortağı" },
+      { kod: "yonetim_kurulu_uyesi", etiket: "Yönetim kurulu üyesi" },
+      { kod: "genel_mudur", etiket: "Genel müdür" },
+      { kod: "satis_muduru", etiket: "Satış müdürü" },
+      { kod: "muhasebe", etiket: "Muhasebe" },
+      { kod: "calisan_personel", etiket: "Çalışan personel" },
+      { kod: "yetkili", etiket: "Yetkili" },
+      { kod: "aile_yakini", etiket: "Aile yakını" },
+    ],
+  },
+  {
     // Muvekkil anlasmasi: odeme sekli (admin yerinde duzenleyebilir / yenisini ekleyebilir)
     anahtar: "anlasma_odeme_sekli",
     ad: "Anlaşma Ödeme Şekli",

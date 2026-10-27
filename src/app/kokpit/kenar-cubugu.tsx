@@ -106,7 +106,7 @@ export function KenarCubugu({
 
         {(gorunurMu("musteriler") ||
           gorunurMu("dava-dosyalari") ||
-          gorunurMu("cmk-dosyalari")) && <BolumBasligi>ÇALIŞMA</BolumBasligi>}
+          gorunurMu("cmk-dosyalari")) && <BolumBasligi>MODÜLLER</BolumBasligi>}
         {gorunurMu("musteriler") && (
           <MenuBagi modul={modulHaritasi.get("musteriler")!} ikon={MuvekkillerIkonu} seciliMi={yol.startsWith("/kokpit/musteriler")} />
         )}
@@ -168,11 +168,11 @@ export function KenarCubugu({
   );
 }
 
-// iOS Ayarlar'daki kisa grup basliklari: kucuk, dusuk kontrastli,
-// tiklanamaz - sadece asagidaki ogeleri anlamca grupluyor.
+// Grup basliklari (MODÜLLER, YÖNETİM): belirgin, tiklanamaz; asagidaki ogeleri anlamca grupluyor.
 function BolumBasligi({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-0.5 mt-4 px-3 text-[11px] font-medium uppercase tracking-wide text-white/35 first:mt-1">
+    <p className="mb-1 mt-5 flex items-center gap-2 px-3 text-xs font-bold uppercase tracking-[0.14em] text-white/75 first:mt-1">
+      <span aria-hidden="true" className="h-3.5 w-[3px] rounded-full bg-[var(--accent)]" />
       {children}
     </p>
   );

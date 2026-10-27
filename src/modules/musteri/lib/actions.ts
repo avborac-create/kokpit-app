@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
+import { telefonuDuzenle } from "@/modules/musteri/lib/telefon";
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
   const deger = String(formData.get(alan) ?? "").trim();
@@ -30,14 +31,20 @@ async function telefonSatirlariniYaz(musteriId: string, formData: FormData) {
   const aidiyetler = formData.getAll("tel_aidiyet").map(String);
   const sifatlar = formData.getAll("tel_sifat").map(String);
   const satirlar = noLar
-    .map((no, i) => ({
-      telefon: no.trim(),
-      telefonTipi: tipler[i] === "CEP" || tipler[i] === "SABIT" ? tipler[i] : null,
-      aidiyet: (aidiyetler[i] ?? "").trim() || null,
-      sifat: (sifatlar[i] ?? "").trim() || null,
-    }))
-    .filter((s) => s.telefon !== "")
-    .map((s, i) => ({ ...s, musteriId, siraNo: i }));
+    .map((no, i) => ({ no: no.trim(), tip: tipler[i] ?? "", aidiyet: (aidiyetler[i] ?? "").trim() || null, sifat: (sifatlar[i] ?? "").trim() || null }))
+    .filter((s) => s.no !== "")
+    .map((s, i) => {
+      const sonuc = telefonuDuzenle(s.no, s.tip);
+      if ("hata" in sonuc) throw new Error(`Telefon ${i + 1} (${s.no}): ${sonuc.hata}`);
+      return {
+        musteriId,
+        siraNo: i,
+        telefon: sonuc.deger,
+        telefonTipi: s.tip === "CEP" || s.tip === "SABIT" ? s.tip : sonuc.tip,
+        aidiyet: s.aidiyet,
+        sifat: s.sifat,
+      };
+    });
   await prisma.$transaction([
     prisma.musteriTelefonu.deleteMany({ where: { musteriId } }),
     prisma.musteriTelefonu.createMany({ data: satirlar }),

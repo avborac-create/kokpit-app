@@ -5,7 +5,12 @@ import { avukatlariListele } from "@/modules/musteri/lib/queries";
 import { formAlanDuzeniniGetir } from "@/core/form-duzeni/queries";
 import { MUSTERI_GIZLENEMEZ_ALANLAR } from "@/core/form-duzeni/musteri-alanlari";
 import type { Kullanici, Musteri, MusteriTelefonu } from "@prisma/client";
+import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
+import { silebilirMi } from "@/core/auth/yetki";
+import { secenekListesiTumDegerlerle } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { TelefonSatirlari } from "@/modules/musteri/components/telefon-satirlari";
+
+const VARSAYILAN_SIFATLAR = ["Firma sahibi", "Firma ortağı", "Genel müdür", "Satış müdürü", "Muhasebe", "Çalışan personel", "Yetkili"];
 
 type Props = {
   action: (formData: FormData) => void;
@@ -15,6 +20,12 @@ type Props = {
 
 export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props) {
   const telefonlar = musteri?.telefonlar;
+  const kullanici = await mevcutKullanici();
+  const [sifatDegerleri, sifatListesi] = await Promise.all([
+    secenekleriGetir("telefon_sifati"),
+    kullanici && silebilirMi(kullanici.rol) ? secenekListesiTumDegerlerle("telefon_sifati") : Promise.resolve(null),
+  ]);
+  const sifatEtiketleri = sifatDegerleri.length > 0 ? sifatDegerleri.map((d) => d.etiket) : VARSAYILAN_SIFATLAR;
   const [tipler, durumlar, avukatlar, alanDuzeni] = await Promise.all([
     secenekleriGetir("musteri_tipi"),
     secenekleriGetir("musteri_durumu"),
@@ -69,11 +80,18 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
         <input type="hidden" name="telefon" value={musteri?.telefon ?? ""} />
       ) : (
         <>
-          <Alan>
-            <Etiket htmlFor="telefon">Genel Telefon</Etiket>
-            <Girdi id="telefon" name="telefon" type="tel" defaultValue={musteri?.telefon ?? ""} />
-          </Alan>
-          <TelefonSatirlari baslangic={telefonlar ?? []} />
+          {/* Eski tek satirlik "Genel Telefon": yalniz dolu kayitlarda gorunur (veri kaybolmasin); bosaltilinca bir daha cikmaz. */}
+          {musteri?.telefon ? (
+            <Alan>
+              <Etiket htmlFor="telefon">Eski Telefon Notu (rehbere taşıyıp boşaltın)</Etiket>
+              <Girdi id="telefon" name="telefon" defaultValue={musteri.telefon} />
+            </Alan>
+          ) : null}
+          <TelefonSatirlari
+            baslangic={telefonlar ?? []}
+            sifatlar={sifatEtiketleri}
+            sifatListesi={sifatListesi}
+          />
         </>
       ),
     eposta: (gizli) =>
