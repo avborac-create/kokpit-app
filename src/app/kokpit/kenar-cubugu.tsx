@@ -12,7 +12,6 @@ import {
   HukukDosyalariIkonu,
   CezaDosyalariIkonu,
   HacizArtcilariIkonu,
-  MuvekkilFinansIkonu,
   OnerilerIkonu,
   AyarlarIkonu,
   OkKirilimIkonu,
@@ -155,17 +154,6 @@ export function KenarCubugu({
             ikon={HacizArtcilariIkonu}
             seciliMi={yol.startsWith("/kokpit/haciz-artcilari")}
           />
-        )}
-
-        {gorunurMu("muvekkil-finans") && (
-          <>
-            <BolumBasligi>FİNANS</BolumBasligi>
-            <MenuBagi
-              modul={modulHaritasi.get("muvekkil-finans")!}
-              ikon={MuvekkilFinansIkonu}
-              seciliMi={yol.startsWith("/kokpit/muvekkil-finans")}
-            />
-          </>
         )}
 
         {gorunurMu("oneriler") && (

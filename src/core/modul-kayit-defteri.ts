@@ -38,7 +38,9 @@ export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
     aktif: true,
     rolGorebilir: ["SORUMLU_AVUKAT", "YONETICI", "ORTAK"],
   },
-  { anahtar: "muvekkil-finans", ad: "Müvekkil Finans", yol: "/kokpit/muvekkil-finans", aktif: true },
+  // "muvekkil-finans" menuden kaldirildi (su an kullanilmiyor); sayfa ve veri yerinde,
+  // /kokpit/muvekkil-finans adresi ve dosyalardaki baglanti calismaya devam eder.
+  // Geri getirmek icin satiri ve kenar-cubugu.tsx'teki FINANS blogunu geri ekleyin.
   {
     anahtar: "oneriler",
     ad: "Öneriler",
