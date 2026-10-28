@@ -132,7 +132,7 @@ export default async function DavaDosyasiDetaySayfasi({
     },
     {
       anahtar: "hukukiIliskiTuruId",
-      varsayilanEtiket: "Uyuşmazlık Türü",
+      varsayilanEtiket: "Davanın Konusu (Maddi Hak)",
       tip: "secim",
       deger: dosya.hukukiIliskiTuruId ?? "",
       gosterim: dosya.hukukiIliskiTuru?.etiket ?? "—",
@@ -140,7 +140,7 @@ export default async function DavaDosyasiDetaySayfasi({
     },
     {
       anahtar: "davaTuruId",
-      varsayilanEtiket: "Davanın Türü",
+      varsayilanEtiket: "Davanın Türü (Talep Türü)",
       tip: "secim",
       deger: dosya.davaTuruId ?? "",
       gosterim: dosya.davaTuru?.etiket ?? "—",
@@ -155,7 +155,7 @@ export default async function DavaDosyasiDetaySayfasi({
     },
     {
       anahtar: "davaKonusu",
-      varsayilanEtiket: "Davanın Konusu",
+      varsayilanEtiket: "Konu Açıklaması",
       tip: "metin",
       deger: dosya.davaKonusu ?? "",
       gosterim: dosya.davaKonusu ?? "—",

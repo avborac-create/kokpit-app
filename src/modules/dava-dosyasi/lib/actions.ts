@@ -97,7 +97,13 @@ function musteriIdleriniAl(formData: FormData): string[] {
 // "Uyuşmazlık Türü" menüsünde "MANUEL GİR" seçilmişse yazılan etiketi
 // (büyük/küçük harf duyarsız) listede arar, yoksa listeye kalıcı ekler.
 async function hukukiIliskiTuruIdCozumle(formData: FormData): Promise<string | null> {
-  return manuelSecenekIdCozumle(formData, "hukukiIliskiTuruId", "yeniHukukiIliskiTuruEtiketi", "hukuki_iliski_turu");
+  return manuelSecenekIdCozumle(
+    formData,
+    "hukukiIliskiTuruId",
+    "yeniHukukiIliskiTuruEtiketi",
+    "hukuki_iliski_turu",
+    metinYaAlNull(formData, "hukukiIliskiTuruUstId"),
+  );
 }
 
 async function manuelSecenekIdCozumle(
@@ -105,6 +111,7 @@ async function manuelSecenekIdCozumle(
   alan: string,
   yeniAlan: string,
   listeAnahtari: string,
+  ustId: string | null = null,
 ): Promise<string | null> {
   const secim = metinYaAlNull(formData, alan);
   if (secim !== "__manuel__") return secim;
@@ -127,7 +134,7 @@ async function manuelSecenekIdCozumle(
   }
   const enBuyukSira = await prisma.secenekDegeri.aggregate({ where: { listeId: liste.id }, _max: { siraNo: true } });
   const yeni = await prisma.secenekDegeri.create({
-    data: { listeId: liste.id, kod, etiket, siraNo: (enBuyukSira._max.siraNo ?? -1) + 1 },
+    data: { listeId: liste.id, kod, etiket, siraNo: (enBuyukSira._max.siraNo ?? -1) + 1, ustId },
   });
   updateTag("secenek-listeleri");
   return yeni.id;
@@ -248,7 +255,14 @@ export async function davaDosyasiOlustur(
   // Dava turu girilmediyse konu dosya turunden turetilir.
   // Davanin konusu girildiyse baslik o olur (ör. "1.000.000 TL para alacagi");
   // dava turu (Eda/Tespit/Insa) hukuki korumanin niteligidir, baslik olmaz.
-  const konu = metinYaAlNull(formData, "davaKonusu") ?? davaTuru?.etiket ?? (await dosyaTuruEtiketi(turId));
+  const hukukiKonu = hukukiIliskiTuruId
+    ? await prisma.secenekDegeri.findUnique({ where: { id: hukukiIliskiTuruId }, select: { etiket: true } })
+    : null;
+  const konu =
+    metinYaAlNull(formData, "davaKonusu") ??
+    hukukiKonu?.etiket ??
+    davaTuru?.etiket ??
+    (await dosyaTuruEtiketi(turId));
 
   const dosya = await prisma.davaDosyasi.create({
     data: {
@@ -315,9 +329,14 @@ export async function davaDosyasiGuncelle(
     where: { id },
     select: { turId: true, konu: true },
   });
+  const hukukiKonu =
+    g("hukukiIliskiTuruId") && hukukiIliskiTuruId
+      ? await prisma.secenekDegeri.findUnique({ where: { id: hukukiIliskiTuruId }, select: { etiket: true } })
+      : null;
   const yeniDavaKonusu = g("davaKonusu") ? metinYaAlNull(formData, "davaKonusu") : null;
   const konu =
     yeniDavaKonusu ??
+    hukukiKonu?.etiket ??
     (g("davaTuruId")
       ? (davaTuru?.etiket ?? (await dosyaTuruEtiketi(sinif?.turId ?? mevcut.turId ?? (await varsayilanTurIdGetir()))))
       : mevcut.konu);

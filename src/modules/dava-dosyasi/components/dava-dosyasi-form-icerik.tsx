@@ -12,7 +12,7 @@ import { DosyaSinifiAlanlari } from "./dosya-sinifi-alanlari";
 import { TalepSonucuListesi } from "./talep-sonucu-listesi";
 import { DavaDosyasiSekmeleri } from "./dava-dosyasi-sekmeleri";
 
-type Secenek = { id: string; etiket: string };
+type Secenek = { id: string; etiket: string; ustId?: string | null };
 
 type DosyaDegerleri = {
   buroNo: string | null;
@@ -39,10 +39,10 @@ type DosyaDegerleri = {
 // istenir; gerisi "Ek bilgiler" altinda opsiyoneldir (dosya detayindan da
 // sonradan girilebilir).
 const KARTLAR: { baslik: string; alanlar: string[]; ekBilgi?: boolean }[] = [
-  { baslik: "Dosya Bilgileri", alanlar: ["birimAdi", "dosyaNo", "davaKonusu", "davaTuruId", "talepSonucu"] },
+  { baslik: "Dosya Bilgileri", alanlar: ["birimAdi", "dosyaNo", "hukukiIliskiTuruId", "davaKonusu", "davaTuruId", "talepSonucu"] },
   {
     baslik: "Ek Bilgiler (isteğe bağlı)",
-    alanlar: ["hukukiIliskiTuruId", "buroNo", "durusmaTarihi"],
+    alanlar: ["buroNo", "durusmaTarihi"],
     ekBilgi: true,
   },
 ];
@@ -56,6 +56,7 @@ export function DavaDosyasiFormIcerik({
   gonderButonuMetni,
   musteriler,
   seciliIdler,
+  hukukDallari,
   hukukiIliskiTurleri,
   muvekkilSifatlari,
   davaTurleri,
@@ -74,6 +75,7 @@ export function DavaDosyasiFormIcerik({
   dosyaId?: string;
   musteriler: { id: string; adSoyadUnvan: string }[];
   seciliIdler: string[];
+  hukukDallari: { id: string; etiket: string }[];
   hukukiIliskiTurleri: Secenek[];
   muvekkilSifatlari: { id: string; etiket: string; kod: string }[];
   davaTurleri: Secenek[];
@@ -108,7 +110,8 @@ export function DavaDosyasiFormIcerik({
   const alanRenderHaritasi: Record<string, () => React.ReactNode> = {
     hukukiIliskiTuruId: () => (
       <UyusmazlikTuruSecici
-        etiket={bilgi("hukukiIliskiTuruId", "Uyuşmazlık Türü")}
+        etiket={bilgi("hukukiIliskiTuruId", "Davanın Konusu (Maddi Hak)")}
+        dallar={hukukDallari}
         turler={hukukiIliskiTurleri}
         varsayilanId={g?.hukukiIliskiTuruId ?? dosya?.hukukiIliskiTuruId ?? ""}
         varsayilanYeniEtiket={g?.yeniHukukiIliskiTuruEtiketi}
@@ -122,7 +125,7 @@ export function DavaDosyasiFormIcerik({
         varsayilanYeniEtiket={g?.yeniDavaTuruEtiketi}
         alanAdi="davaTuruId"
         yeniAlanAdi="yeniDavaTuruEtiketi"
-        etiket={bilgi("davaTuruId", "Davanın Türü (Eda / Tespit / İnşa)")}
+        etiket={bilgi("davaTuruId", "Davanın Türü (Talep Türü)")}
         yoneticiMi={yoneticiMi}
       />
     ),
@@ -139,11 +142,11 @@ export function DavaDosyasiFormIcerik({
     ),
     davaKonusu: () => (
       <Alan>
-        <Etiket htmlFor="davaKonusu">{bilgi("davaKonusu", "Davanın Konusu")}</Etiket>
+        <Etiket htmlFor="davaKonusu">{bilgi("davaKonusu", "Konu Açıklaması (isteğe bağlı)")}</Etiket>
         <Girdi
           id="davaKonusu"
           name="davaKonusu"
-          placeholder="Ne isteniyor? ör. 1.000.000 TL para alacağı"
+          placeholder="ör. 1.000.000 TL para alacağı"
           defaultValue={g?.davaKonusu ?? dosya?.davaKonusu ?? ""}
         />
       </Alan>
@@ -212,7 +215,7 @@ export function DavaDosyasiFormIcerik({
 
   const yeniAlanlar = alanSirasi.filter((a) => KARTLAR[0].alanlar.includes(a));
   const ekAlanlar = alanSirasi.filter((a) => KARTLAR[1].alanlar.includes(a));
-  const ekDoluMu = Boolean(dosya?.hukukiIliskiTuruId || dosya?.buroNo || dosya?.durusmaTarihi);
+  const ekDoluMu = Boolean(dosya?.buroNo || dosya?.durusmaTarihi);
 
   return (
     <form action={formAction} className="max-w-2xl" autoComplete="off">

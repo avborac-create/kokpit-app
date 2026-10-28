@@ -19,8 +19,9 @@ type Props = {
 };
 
 export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSecilenMusteriId }: Props) {
-  const [kullanici, hukukiIliskiTurleri, muvekkilSifatlari, davaTurleri, dosyaTurleri, yargiKollari, musteriler, alanDuzeni, etiketler] = await Promise.all([
+  const [kullanici, hukukDallari, hukukiIliskiTurleri, muvekkilSifatlari, davaTurleri, dosyaTurleri, yargiKollari, musteriler, alanDuzeni, etiketler] = await Promise.all([
     mevcutKullanici(),
+    secenekleriGetir("hukuk_dali"),
     secenekleriGetir("hukuki_iliski_turu"),
     secenekleriGetir("muvekkil_sifati"),
     secenekleriGetir("dava_turu"),
@@ -48,7 +49,8 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
       gonderButonuMetni={gonderButonuMetni}
       musteriler={musteriler}
       seciliIdler={seciliIdler}
-      hukukiIliskiTurleri={hukukiIliskiTurleri}
+      hukukDallari={hukukDallari.map((d) => ({ id: d.id, etiket: d.etiket }))}
+      hukukiIliskiTurleri={hukukiIliskiTurleri.map((t) => ({ id: t.id, etiket: t.etiket, ustId: t.ustId }))}
       muvekkilSifatlari={muvekkilSifatlari.map((x) => ({ id: x.id, etiket: x.etiket, kod: x.kod }))}
       davaTurleri={davaTurleri}
       dosyaTurleri={dosyaTurleri.map((t) => ({ id: t.id, etiket: t.etiket, kod: t.kod }))}

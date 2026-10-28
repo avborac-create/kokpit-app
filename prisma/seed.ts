@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 const SECENEK_LISTELERI: {
   anahtar: string;
   ad: string;
-  degerler: { kod: string; etiket: string; aktifMi?: boolean }[];
+  degerler: { kod: string; etiket: string; aktifMi?: boolean; ustKod?: string }[];
 }[] = [
   {
     anahtar: "musteri_tipi",
@@ -207,6 +207,13 @@ const SECENEK_LISTELERI: {
       { kod: "senet", etiket: "Senet" },
       { kod: "ttok", etiket: "TTOK" },
       { kod: "is_hukuku_uyusmazligi", etiket: "İş Hukuku Uyuşmazlığı" },
+      { kod: "kidem_ihbar_fazla_mesai", etiket: "Kıdem, İhbar ve Fazla Mesai Alacağı", ustKod: "is_hukuku" },
+      { kod: "bosanma", etiket: "Boşanma (Çekişmeli/Anlaşmalı)", ustKod: "aile_hukuku" },
+      { kod: "fatura_alacagina_dayali_borc", etiket: "Fatura Alacağına Dayalı Borç", ustKod: "ticaret_hukuku" },
+      { kod: "itirazin_iptali", etiket: "İcra Takibine İtirazın İptali", ustKod: "ticaret_hukuku" },
+      { kod: "kira_alacagi_tahliye", etiket: "Kira Alacağı ve Tahliye", ustKod: "gayrimenkul_hukuku" },
+      { kod: "sigortalilik_baslangic_suresi", etiket: "Sigortalılık Başlangıç Süresi", ustKod: "sgk_hukuku" },
+      { kod: "senetten_dolayi_borcsuzluk", etiket: "Senetten Dolayı Borçsuzluk", ustKod: "borclar_hukuku" },
       { kod: "sozlesme_uyusmazligi", etiket: "Sözleşme Uyuşmazlığı" },
       { kod: "diger", etiket: "Diğer" },
     ],
@@ -280,6 +287,8 @@ const SECENEK_LISTELERI: {
       { kod: "eda", etiket: "Eda (İfa) Davası" },
       { kod: "tespit", etiket: "Tespit Davası" },
       { kod: "insa", etiket: "İnşa (Yenilik Doğurucu) Dava" },
+      { kod: "belirsiz_alacak", etiket: "Belirsiz Alacak Davası" },
+      { kod: "menfi_tespit", etiket: "Menfi Tespit Davası" },
       { kod: "iscilik_alacagi_davasi", etiket: "İşçilik Alacağı Davası" },
       { kod: "icra_takibi", etiket: "İcra Takibi" },
     ],
@@ -434,6 +443,20 @@ async function secenekListeleriniOlustur() {
           siraNo: index,
           aktifMi: deger.aktifMi ?? true,
         },
+      });
+    }
+  }
+  // Ust (Hukuk Dali) baglari: yalniz henuz bagli olmayan degerler icin kurulur.
+  for (const liste of SECENEK_LISTELERI) {
+    for (const deger of liste.degerler) {
+      if (!deger.ustKod) continue;
+      const ust = await prisma.secenekDegeri.findFirst({
+        where: { kod: deger.ustKod, liste: { anahtar: "hukuk_dali" } },
+      });
+      if (!ust) continue;
+      await prisma.secenekDegeri.updateMany({
+        where: { kod: deger.kod, liste: { anahtar: liste.anahtar }, ustId: null },
+        data: { ustId: ust.id },
       });
     }
   }

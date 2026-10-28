@@ -80,7 +80,7 @@ model Kullanici {
   // Yazi boyutu: kucuk / normal / buyuk / cokbuyuk. Bos = normal.
   gorunumPunto String?
 
-  sorumluOlduguMusteriler       Musteri[]          @relation("MusteriSorumluAvukat")
+  sorumluOlduguMusteriler        Musteri[]          @relation("MusteriSorumluAvukat")
   sorumluOlduguDosyalar          DavaDosyasi[]      @relation("DavaDosyasiSorumluAvukat")
   gonderdigiOneriler             Oneri[]
   gonderdigiGelistirmeTalepleri  GelistirmeTalebi[]
@@ -106,20 +106,24 @@ model SecenekListesi {
 }
 
 model SecenekDegeri {
-  id              String         @id @default(cuid())
+  id              String          @id @default(cuid())
   listeId         String
-  liste           SecenekListesi @relation(fields: [listeId], references: [id], onDelete: Cascade)
+  liste           SecenekListesi  @relation(fields: [listeId], references: [id], onDelete: Cascade)
   kod             String // makine-okunur anahtar, orn. "gercek_kisi"
   etiket          String // ekranda gosterilen ad, orn. "Gerçek Kişi"
-  siraNo          Int            @default(0)
-  aktifMi         Boolean        @default(true)
+  siraNo          Int             @default(0)
+  aktifMi         Boolean         @default(true)
   // Bazi listelerde (orn. masraf_turu -> "Basvuru Harci") deger her zaman
   // ayni sabit tutari tasir (harc, damga vergisi vb. - yilda bir kez
   // Ayarlar > Seçenek Listeleri'nden guncellenir). Null ise bu deger icin
   // maktu tutar tanimli degildir, formda "Maktu Tutar Kullan" secenegi
   // gosterilmez.
-  maktuTutar      Decimal?       @db.Decimal(14, 2)
-  olusturmaTarihi DateTime       @default(now())
+  maktuTutar      Decimal?        @db.Decimal(14, 2)
+  olusturmaTarihi DateTime        @default(now())
+  // Ust deger (ör. Dava Konusu -> Hukuk Dali). Bos ise her dalda gorunur.
+  ustId           String?
+  ust             SecenekDegeri?  @relation("SecenekUst", fields: [ustId], references: [id], onDelete: SetNull)
+  altlar          SecenekDegeri[] @relation("SecenekUst")
 
   musterilerTip                 Musteri[]             @relation("MusteriTipi")
   musterilerDurum               Musteri[]             @relation("MusteriDurumu")
@@ -387,8 +391,8 @@ model KarsiTaraf {
 
   olusturmaTarihi DateTime @default(now())
 
-  dosyalar DosyaKarsiTarafi[]
-  kumeler  UyusmazlikGrubuKarsiTarafi[]
+  dosyalar  DosyaKarsiTarafi[]
+  kumeler   UyusmazlikGrubuKarsiTarafi[]
   masraflar DosyaMasrafi[]
 
   @@index([musteriId])
@@ -471,101 +475,101 @@ model UyusmazlikGrubuKarsiTarafi {
 // veraset vb.); bu yuzden Musteri <-> DavaDosyasi iliskisi DosyaMuvekkili
 // ara tablosu uzerinden coka-cok kurulur (bkz. semanin en ustundeki not).
 model DavaDosyasi {
-  id                 String           @id @default(cuid())
+  id                   String           @id @default(cuid())
   // Kokpit'in kendi ic kayit numarasi - "Dosya No" (mahkeme/icra
   // dairesinin verdigi esas no) artik opsiyonel oldugu icin, HER dosyanin
   // (turu ne olursa olsun - ihtar/muzakere/icra/dava) sistemde her zaman
   // sahip oldugu, otomatik atanan, sirali bir kimlik numarasi. Kullanicinin
   // girmesi gerekmez, "Kokpit No" olarak gosterilir (ör. "KP-0007").
-  kayitNo            Int              @unique @default(autoincrement())
-  dosyaNo            String?
+  kayitNo              Int              @unique @default(autoincrement())
+  dosyaNo              String?
   // Buronun kendi (ic) dosya numarasi (ör. "8714") - icra dairesi esas
   // no'sundan bagimsiz, buro takip programindaki "Buro No".
-  buroNo             String?
-  birimAdi           String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
+  buroNo               String?
+  birimAdi             String? // Mahkeme/Icra Dairesi adi, orn. "Istanbul 19. Icra Dairesi"
   // Davanin / takibin konusu (serbest metin): "SIGORTALILIK BASLANGIC TESPITI", "CEK - ORNEK NO 10" vb.
-  davaKonusu         String?
-  konu               String
+  davaKonusu           String?
+  konu                 String
   // Dosya turu: ihtar/arabuluculuk/muzakere gibi dava/icra oncesi
   // asamalari da, icra/ihtiyati haciz/dava gibi resmi dosyalari da kapsayan
   // tek bir secenek listesi (bkz. ARCHITECTURE.md). Nullable: eski kayitlar
   // geriye donuk turlendirilene kadar bos kalabilir, ama yeni dosya
   // formunda zorunlu tutulur.
-  turId              String?
-  tur                SecenekDegeri?   @relation("DavaDosyasiTuru", fields: [turId], references: [id])
+  turId                String?
+  tur                  SecenekDegeri?   @relation("DavaDosyasiTuru", fields: [turId], references: [id])
   // Icra Dosyasi alt turu: tur=icra_dosyasi secildiginde Esas mi Talimat mi
   // oldugunu ayirt eder (bkz. ARCHITECTURE.md "Dosya Turu"). Digir turlerde
   // (ihtar/arabuluculuk/dava vb.) anlamsizdir, bos kalir - bu yuzden
   // Dosya Turu'nun kendisi degil, ayri, bagimsiz bir alan.
-  icraAltTuruId      String?
-  icraAltTuru        SecenekDegeri?   @relation("DavaDosyasiIcraAltTuru", fields: [icraAltTuruId], references: [id])
+  icraAltTuruId        String?
+  icraAltTuru          SecenekDegeri?   @relation("DavaDosyasiIcraAltTuru", fields: [icraAltTuruId], references: [id])
   // Yargi kolu: tur=dava_dosyasi secildiginde Hukuk/Ceza/Idari ayrimini
   // tasir. Icra/ihtar gibi mahkeme disi dosyalarda anlamsizdir, bos kalir.
-  yargiKoluId        String?
-  yargiKolu          SecenekDegeri?   @relation("DavaDosyasiYargiKolu", fields: [yargiKoluId], references: [id])
+  yargiKoluId          String?
+  yargiKolu            SecenekDegeri?   @relation("DavaDosyasiYargiKolu", fields: [yargiKoluId], references: [id])
   // Alacagin/uyusmazligin dayandigi temel hukuki iliski: cek, senet, TTOK,
   // is hukuku uyusmazligi vb. Dosya Turu'nden (ihtar/icra/dava - hangi
   // ASAMADAYIZ) farkli bir boyut: bu "hangi hukuki ARACA dayaniyor" sorusuna
   // cevap verir. Opsiyonel - her dosyaya uygulanabilir bir siniflandirma
   // olmayabilir.
-  hukukiIliskiTuruId String?
-  hukukiIliskiTuru   SecenekDegeri?   @relation("DavaDosyasiHukukiIliskiTuru", fields: [hukukiIliskiTuruId], references: [id])
+  hukukiIliskiTuruId   String?
+  hukukiIliskiTuru     SecenekDegeri?   @relation("DavaDosyasiHukukiIliskiTuru", fields: [hukukiIliskiTuruId], references: [id])
   // Dava Turu: "Iscilik Alacagi Davasi" gibi somut, spesifik dava
   // sinifi - Dosya Turu'nden (asama: ihtar/icra/dava) VE Hukuki Iliski
   // Turu'nden (hangi hukuki araca dayaniyor: cek/senet/TTOK) farkli,
   // uctuncu bir boyut. Sadelestirilmis Yeni Dosya formunun cekirdek
   // alanlarindan biri (bkz. dava-dosyasi-formu.tsx).
-  davaTuruId         String?
-  davaTuru           SecenekDegeri?   @relation("DavaDosyasiDavaTuru", fields: [davaTuruId], references: [id])
-  talepSonucu        String?
-  durusmaTarihi      DateTime?
-  uyusmazlikGrubuId  String?
-  uyusmazlikGrubu    UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])
+  davaTuruId           String?
+  davaTuru             SecenekDegeri?   @relation("DavaDosyasiDavaTuru", fields: [davaTuruId], references: [id])
+  talepSonucu          String?
+  durusmaTarihi        DateTime?
+  uyusmazlikGrubuId    String?
+  uyusmazlikGrubu      UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])
   // Talimat dosyasi gibi baska bir dosyaya siki sikiya bagli (o dosyanin
   // bir uzantisi olan) dosyalar icin: hangi ESAS dosyaya bagli oldugu.
   // UyusmazlikGrubu'ndan farki: grup gevsek bir gruplamadir (ayni alacagin
   // bagimsiz kardes dosyalari - icra ceza, ihtiyati haciz vb.), bu alan ise
   // "bu dosya somut olarak şu belirli dosyanin bir eki/talimatidir" gibi
   // kesin, tekil bir bagi ifade eder.
-  bagliOlduguDosyaId String?
-  bagliOlduguDosya   DavaDosyasi?     @relation("DosyaBaglantisi", fields: [bagliOlduguDosyaId], references: [id])
-  baglananDosyalar   DavaDosyasi[]    @relation("DosyaBaglantisi")
+  bagliOlduguDosyaId   String?
+  bagliOlduguDosya     DavaDosyasi?     @relation("DosyaBaglantisi", fields: [bagliOlduguDosyaId], references: [id])
+  baglananDosyalar     DavaDosyasi[]    @relation("DosyaBaglantisi")
   // Dosya agaci (ana dosya / alt dosya): ayni uyusmazligin bagimsiz acilmis
   // dosyalarini (ör. esas icra + karsiliksiz cek davasi) tek ana dosyanin
   // altinda toplar. TEK seviyedir - alt dosyanin kendi alt dosyasi olmaz.
   // Alt dosya "KP-0019/1" gibi gosterilir (ana kayitNo + altSiraNo); kendi
   // kayitNo'su DB'de ve aramada korunur, ana dosyadan ayrilinca eski
   // numarasina doner. bagliOlduguDosya (talimat baglantisi) ile KARISMAZ.
-  muvekkilSifati     MuvekkilSifati   @default(ALACAKLI)
+  muvekkilSifati       MuvekkilSifati   @default(ALACAKLI)
   // Sifat "Diger" secildiginde serbest metin (ör. müdahil, katılan, arabulucu).
-  muvekkilSifatiDiger String?
+  muvekkilSifatiDiger  String?
   // Liste tabanli (admin duzenleyebilir) sifat; `muvekkilSifati` enum'u bundan TURETILIR
   // (alacakli/borclu degilse DIGER) - listede olmayan eski mantik/rozetler bozulmasin diye.
-  muvekkilSifatiId    String?
-  muvekkilSifatiDegeri SecenekDegeri?  @relation("DavaDosyasiMuvekkilSifati", fields: [muvekkilSifatiId], references: [id])
+  muvekkilSifatiId     String?
+  muvekkilSifatiDegeri SecenekDegeri?   @relation("DavaDosyasiMuvekkilSifati", fields: [muvekkilSifatiId], references: [id])
   // Ekonomi (cari hesap) disinda tutulan dosya: muvekkil toplamlarina, sayfa
   // sekmelerine ve secim kutularina girmez; kayitlari SILINMEZ (ör. muvekkilin
   // alacakli oldugu, ayri takip edilen icra dosyalari).
-  ekonomiDisi         Boolean          @default(false)
-  anaDosyaId         String?
-  anaDosya           DavaDosyasi?     @relation("DosyaAgaci", fields: [anaDosyaId], references: [id])
-  altDosyalar        DavaDosyasi[]    @relation("DosyaAgaci")
-  altSiraNo          Int?
-  durumId            String
-  durum              SecenekDegeri    @relation("DavaDosyasiDurumu", fields: [durumId], references: [id])
-  sorumluAvukatId    String?
-  sorumluAvukat      Kullanici?       @relation("DavaDosyasiSorumluAvukat", fields: [sorumluAvukatId], references: [id])
-  acilisTarihi       DateTime
-  kapanisTarihi      DateTime?
-  aciklama           String?
-  olusturmaTarihi    DateTime         @default(now())
-  guncellemeTarihi   DateTime         @updatedAt
+  ekonomiDisi          Boolean          @default(false)
+  anaDosyaId           String?
+  anaDosya             DavaDosyasi?     @relation("DosyaAgaci", fields: [anaDosyaId], references: [id])
+  altDosyalar          DavaDosyasi[]    @relation("DosyaAgaci")
+  altSiraNo            Int?
+  durumId              String
+  durum                SecenekDegeri    @relation("DavaDosyasiDurumu", fields: [durumId], references: [id])
+  sorumluAvukatId      String?
+  sorumluAvukat        Kullanici?       @relation("DavaDosyasiSorumluAvukat", fields: [sorumluAvukatId], references: [id])
+  acilisTarihi         DateTime
+  kapanisTarihi        DateTime?
+  aciklama             String?
+  olusturmaTarihi      DateTime         @default(now())
+  guncellemeTarihi     DateTime         @updatedAt
   // Iyimser kilitleme (optimistic locking): dosya duzenleme formu acildiginda
   // gordugu surumu kaydederken geri gonderir; arada baska biri kaydettiyse
   // surum artmis olur ve kayit, sessizce ezmek yerine cakisma olarak
   // bildirilir (bkz. davaDosyasiGuncelle). Formda duzenlenebilen alanlari
   // degistiren her yazma `surum`u 1 artirmalidir.
-  surum              Int              @default(0)
+  surum                Int              @default(0)
 
   // ============================================================
   // Karar Sonrasi Takip (bkz. ARCHITECTURE.md "Dava Dosyasi Yasam
@@ -597,8 +601,8 @@ model DavaDosyasi {
   hukukiMudahaleler      HukukiMudahale[]
   hacizRaporlari         HacizRaporu[]
   adliBirimHareketleri   AdliBirimHareketi[]
-  gidenAvansAktarimlari  DosyaAvansAktarimi[] @relation("AvansAktarimiKaynak")
-  gelenAvansAktarimlari  DosyaAvansAktarimi[] @relation("AvansAktarimiHedef")
+  gidenAvansAktarimlari  DosyaAvansAktarimi[]    @relation("AvansAktarimiKaynak")
+  gelenAvansAktarimlari  DosyaAvansAktarimi[]    @relation("AvansAktarimiHedef")
 
   @@index([buroNo])
   @@index([durumId])
@@ -659,8 +663,8 @@ model DosyaMasrafi {
   // Dosya Islem / Bloke Tip / Tahsil Harci / Cezaevi Harci) ve ince kalem
   // (ilk tebligat, 89/1 banka, yakalama avansi...). Ikisi de opsiyonel:
   // eski kayitlar bos kalir, Excel aktariminda tahmin edilip onaylanir.
-  grupId String?
-  grup   SecenekDegeri? @relation("DosyaMasrafiGrubu", fields: [grupId], references: [id])
+  grupId  String?
+  grup    SecenekDegeri? @relation("DosyaMasrafiGrubu", fields: [grupId], references: [id])
   kalemId String?
   kalem   SecenekDegeri? @relation("DosyaMasrafiKalemi", fields: [kalemId], references: [id])
 
@@ -680,8 +684,8 @@ model DosyaMasrafi {
   // Borclu (karsi taraftan tahsil edilecek, muvekkil carisine girmez).
   yansitmaHedefi MasrafYansitmaHedefi @default(MUVEKKIL)
   // Borclu/karsi tarafa yansitilan masrafta opsiyonel: hangi karsi taraf.
-  karsiTarafId String?
-  karsiTaraf   KarsiTaraf? @relation(fields: [karsiTarafId], references: [id], onDelete: SetNull)
+  karsiTarafId   String?
+  karsiTaraf     KarsiTaraf?          @relation(fields: [karsiTarafId], references: [id], onDelete: SetNull)
 
   olusturmaTarihi DateTime @default(now())
 
@@ -747,9 +751,9 @@ model DosyaAvansAktarimi {
 // Bakiye = toplam ODEME - toplam TAHSILAT (pozitifse buro net avans
 // vermis/alacaklidir).
 model AdliBirimHareketi {
-  id      String              @id @default(cuid())
+  id      String               @id @default(cuid())
   dosyaId String
-  dosya   DavaDosyasi         @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+  dosya   DavaDosyasi          @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
   yon     AdliBirimHareketYonu
 
   tarih    DateTime
@@ -1238,7 +1242,7 @@ model HacizRaporu {
   islemYapilanBorclular String
   // Google Form'da 5 ayri satir olarak toplanan telefon numaralari - tek
   // bir metin dizisi olarak saklanir, formda satir satir girilir.
-  irtibatNumaralari String[]
+  irtibatNumaralari     String[]
 
   muhafazaDurumu      HacizIslemDurumu
   istihkakDurumu      HacizIslemDurumu
@@ -1310,15 +1314,15 @@ model ArayuzEtiketi {
 // tahmin eder ve tekrar sormaz. anahtar = normalize("<excel turu>|<excel cari
 // kod>"). Bkz. src/modules/dava-dosyasi/lib/masraf-tasnif.ts.
 model MasrafTasnifKurali {
-  id               String   @id @default(cuid())
-  anahtar          String   @unique
+  id               String               @id @default(cuid())
+  anahtar          String               @unique
   turId            String?
   cariKodId        String?
   grupId           String?
   kalemId          String?
   yansitmaHedefi   MasrafYansitmaHedefi @default(MUVEKKIL)
-  kullanimSayisi   Int      @default(1)
-  guncellemeTarihi DateTime @updatedAt
+  kullanimSayisi   Int                  @default(1)
+  guncellemeTarihi DateTime             @updatedAt
 
   @@map("masraf_tasnif_kurallari")
 }
@@ -1453,11 +1457,11 @@ model CariHareketi {
   // Odeme sekli (Nakit / Banka / ...): sadece Para Trafigi'ne gelen odemelerde dolu.
   // Parcali odeme, her yontem icin ayri bir satir olarak kaydedilir.
   // Para borcludan (karsi taraftan) mi geldi? (muvekkilden gelen avansla karismasin diye isaretlenir)
-  borcludanMi    Boolean       @default(false)
+  borcludanMi    Boolean        @default(false)
   odemeYontemiId String?
   odemeYontemi   SecenekDegeri? @relation("CariHareketiOdemeYontemi", fields: [odemeYontemiId], references: [id])
 
-  virmanId String?
+  virmanId      String?
   // Muvekkil duzeyinden (havuzdan) yapilan virman: dosya gorunumunde Para
   // Trafigi'ne "havuzdan aktarim" ALACAGI turetilir.
   havuzKaynakli Boolean @default(false)
@@ -1481,10 +1485,10 @@ model MuvekkilAnlasma {
   dosyaId   String?
   dosya     DavaDosyasi? @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
 
-  hizmetBedeli Decimal?  @db.Decimal(14, 2)
+  hizmetBedeli Decimal? @db.Decimal(14, 2)
   // true: bedel KDV dahil, false: KDV haric (ustune eklenir), null: belirtilmedi
   kdvDahilMi   Boolean?
-  kdvOrani     Decimal   @default(20) @db.Decimal(5, 2)
+  kdvOrani     Decimal  @default(20) @db.Decimal(5, 2)
 
   odemeSekliId String?
   odemeSekli   SecenekDegeri? @relation("AnlasmaOdemeSekli", fields: [odemeSekliId], references: [id])

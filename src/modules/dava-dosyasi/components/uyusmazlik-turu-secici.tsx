@@ -22,8 +22,9 @@ export function UyusmazlikTuruSecici({
   zorunlu = false,
   yoneticiMi = false,
   listeAnahtari,
+  dallar,
 }: {
-  turler: { id: string; etiket: string }[];
+  turler: { id: string; etiket: string; ustId?: string | null }[];
   varsayilanId: string;
   varsayilanYeniEtiket?: string;
   alanAdi?: string;
@@ -34,6 +35,8 @@ export function UyusmazlikTuruSecici({
   yoneticiMi?: boolean;
   // Ayarlar > Secenek Listeleri baglantisi icin (verilmezse alan adindan turetilir).
   listeAnahtari?: string;
+  // Verilirse yazilan/secilen listenin ustunde "Hukuk Dali" filtresi cikar.
+  dallar?: { id: string; etiket: string }[];
 }) {
   // Zorunlu (kisa, sabit) listeler acilir menu olarak kalir; istege bagli
   // uzun listeler tek kutuda "yaz ya da listeden sec" olur.
@@ -48,6 +51,7 @@ export function UyusmazlikTuruSecici({
         etiket={etiket}
         yoneticiMi={yoneticiMi}
         listeAnahtari={listeAnahtari}
+        dallar={dallar}
       />
     );
   }
@@ -80,11 +84,15 @@ function YazVeSecKutusu({
   etiket = "Uyuşmazlık Türü",
   yoneticiMi = false,
   listeAnahtari,
+  dallar,
 }: SeciciOzellikleri) {
   const baslangic =
     varsayilanYeniEtiket ?? turler.find((t) => t.id === varsayilanId)?.etiket ?? "";
   const [metin, setMetin] = useState(baslangic);
+  const [dalId, setDalId] = useState(turler.find((t) => t.id === varsayilanId)?.ustId ?? "");
   const listeId = `${alanAdi}-liste`;
+  // Dal secilince yalniz o dala bagli (ya da hicbir dala bagli olmayan) konular onerilir.
+  const gorunenTurler = dalId ? turler.filter((t) => !t.ustId || t.ustId === dalId) : turler;
 
   return (
     <Alan>
@@ -100,6 +108,24 @@ function YazVeSecKutusu({
           </Link>
         )}
       </div>
+      {dallar && (
+        <>
+          <Secim
+            value={dalId}
+            onChange={(e) => setDalId(e.target.value)}
+            aria-label="Hukuk Dalı (filtre)"
+            className="mb-2"
+          >
+            <option value="">Hukuk Dalı (filtre) — tümü</option>
+            {dallar.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.etiket}
+              </option>
+            ))}
+          </Secim>
+          <input type="hidden" name="hukukiIliskiTuruUstId" value={dalId} readOnly />
+        </>
+      )}
       <input type="hidden" name={alanAdi} value={metin.trim() ? MANUEL_UYUSMAZLIK_DEGERI : ""} readOnly />
       <Girdi
         id={yeniAlanAdi}
@@ -110,7 +136,7 @@ function YazVeSecKutusu({
         placeholder="Yazın ya da listeden seçin…"
       />
       <datalist id={listeId}>
-        {turler.map((t) => (
+        {gorunenTurler.map((t) => (
           <option key={t.id} value={t.etiket} />
         ))}
       </datalist>
