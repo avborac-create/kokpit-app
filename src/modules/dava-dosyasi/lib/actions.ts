@@ -9,6 +9,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi, sistemYoneticisiMi } from "@/core/auth/yetki";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { dosyaCariHesapOzeti } from "./queries";
+import { dosyaKimligiHatasi } from "./dosya-kimligi";
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
   const deger = String(formData.get(alan) ?? "").trim();
@@ -235,6 +236,16 @@ export async function davaDosyasiOlustur(
     };
   }
 
+  const kimlikHatasi = dosyaKimligiHatasi(metinYaAlNull(formData, "birimAdi"), metinYaAlNull(formData, "dosyaNo"));
+  if (kimlikHatasi) {
+    return {
+      hata: kimlikHatasi,
+      gonderilenAlanlar,
+      gonderilenMusteriIdleri: musteriIdleri,
+      gonderilenTalepMaddeleri,
+    };
+  }
+
   const karsiTarafIdleri = await karsiTarafIdleriniCozumle(formData, musteriIdleri);
   const hukukiIliskiTuruId = await hukukiIliskiTuruIdCozumle(formData);
   const durusmaTarihiHam = metinYaAlNull(formData, "durusmaTarihi");
@@ -327,8 +338,21 @@ export async function davaDosyasiGuncelle(
   const sinif = g("dosyaSinifi") ? await dosyaSinifiniAl(formData) : null;
   const mevcut = await prisma.davaDosyasi.findUniqueOrThrow({
     where: { id },
-    select: { turId: true, konu: true },
+    select: { turId: true, konu: true, birimAdi: true, dosyaNo: true },
   });
+  const kimlikHatasi = dosyaKimligiHatasi(
+    g("birimAdi") ? metinYaAlNull(formData, "birimAdi") : null,
+    g("dosyaNo") ? metinYaAlNull(formData, "dosyaNo") : null,
+    mevcut,
+  );
+  if (kimlikHatasi) {
+    return {
+      hata: kimlikHatasi,
+      gonderilenAlanlar,
+      gonderilenMusteriIdleri: musteriIdleri,
+      gonderilenTalepMaddeleri,
+    };
+  }
   const hukukiKonu =
     g("hukukiIliskiTuruId") && hukukiIliskiTuruId
       ? await prisma.secenekDegeri.findUnique({ where: { id: hukukiIliskiTuruId }, select: { etiket: true } })
@@ -539,6 +563,18 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
       throw new Error("Bu alan buradan değiştirilemez.");
     }
     const deger = ham.trim();
+    if (alan === "birimAdi" || alan === "dosyaNo") {
+      const mevcutKimlik = await prisma.davaDosyasi.findUnique({
+        where: { id: dosyaId },
+        select: { birimAdi: true, dosyaNo: true },
+      });
+      const hata = dosyaKimligiHatasi(
+        alan === "birimAdi" ? deger || null : null,
+        alan === "dosyaNo" ? deger || null : null,
+        mevcutKimlik ?? undefined,
+      );
+      if (hata) throw new Error(hata);
+    }
     switch (alan) {
       case "muvekkilSifatiId": {
         if (!deger) throw new Error("Müvekkil sıfatı boş bırakılamaz.");

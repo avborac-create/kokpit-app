@@ -18,6 +18,7 @@ export function DosyaSinifiAlanlari({
   varsayilanSifatId,
   varsayilanYeniSifatEtiketi,
   yoneticiMi,
+  bolum = "hepsi",
 }: {
   turler: Secenek[];
   yargiKollari: Secenek[];
@@ -28,12 +29,19 @@ export function DosyaSinifiAlanlari({
   varsayilanSifatId: string;
   varsayilanYeniSifatEtiketi?: string;
   yoneticiMi: boolean;
+  // "tur": Tür + Yargı Kolu; "sifat": Müvekkil Sıfatı; ikisi ayri kartlarda gösterilir.
+  bolum?: "tur" | "sifat" | "hepsi";
 }) {
   const [turId, setTurId] = useState(varsayilanTurId);
   const davaMi = turler.find((t) => t.id === turId)?.kod === "dava_dosyasi";
 
+  const turGoster = bolum !== "sifat";
+  const sifatGoster = bolum !== "tur";
+
   return (
     <>
+      {turGoster && (
+      <>
       <Alan>
         <Etiket htmlFor="turId">Tür</Etiket>
         <Secim id="turId" name="turId" value={turId} onChange={(e) => setTurId(e.target.value)}>
@@ -57,6 +65,9 @@ export function DosyaSinifiAlanlari({
           </Secim>
         </Alan>
       )}
+      </>
+      )}
+      {sifatGoster && (
       <UyusmazlikTuruSecici
         etiket="Müvekkil Sıfatı"
         turler={sifatlar}
@@ -68,6 +79,7 @@ export function DosyaSinifiAlanlari({
         zorunlu
         yoneticiMi={yoneticiMi}
       />
+      )}
     </>
   );
 }

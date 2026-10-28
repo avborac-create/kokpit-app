@@ -11,6 +11,7 @@ import { KarsiTarafEkleyici } from "./karsi-taraf-ekleyici";
 import { DosyaSinifiAlanlari } from "./dosya-sinifi-alanlari";
 import { TalepSonucuListesi } from "./talep-sonucu-listesi";
 import { DavaDosyasiSekmeleri } from "./dava-dosyasi-sekmeleri";
+import { DosyaKimligiAlanlari } from "./dosya-kimligi-alanlari";
 
 type Secenek = { id: string; etiket: string; ustId?: string | null };
 
@@ -39,7 +40,7 @@ type DosyaDegerleri = {
 // istenir; gerisi "Ek bilgiler" altinda opsiyoneldir (dosya detayindan da
 // sonradan girilebilir).
 const KARTLAR: { baslik: string; alanlar: string[]; ekBilgi?: boolean }[] = [
-  { baslik: "Dosya Bilgileri", alanlar: ["birimAdi", "dosyaNo", "hukukiIliskiTuruId", "davaKonusu", "davaTuruId", "talepSonucu"] },
+  { baslik: "İçerik Bilgileri", alanlar: ["hukukiIliskiTuruId", "davaKonusu", "davaTuruId", "talepSonucu"] },
   {
     baslik: "Ek Bilgiler (isteğe bağlı)",
     alanlar: ["buroNo", "durusmaTarihi"],
@@ -191,27 +192,21 @@ export function DavaDosyasiFormIcerik({
   // tur/sifat, birim, dosya no. Digerleri dosya detayindan girilir.
   const yeniMi = !dosyaId;
 
-  const dosyaSinifiBlogu = alanSirasi.includes("dosyaSinifi") && (
-    <div key={anahtar}>
-      <DosyaSinifiAlanlari
-        turler={dosyaTurleri}
-        yargiKollari={yargiKollari}
-        varsayilanTurId={
-          g?.turId ?? dosya?.turId ?? dosyaTurleri.find((t) => t.kod === "dava_dosyasi")?.id ?? ""
-        }
-        varsayilanYargiKoluId={g?.yargiKoluId ?? dosya?.yargiKoluId ?? ""}
-        sifatlar={muvekkilSifatlari}
-        varsayilanSifatId={
-          g?.muvekkilSifatiId ??
-          dosya?.muvekkilSifatiId ??
-          muvekkilSifatlari.find((x) => x.kod === "alacakli")?.id ??
-          ""
-        }
-        varsayilanYeniSifatEtiketi={g?.yeniMuvekkilSifatiEtiketi}
-        yoneticiMi={yoneticiMi}
-      />
-    </div>
-  );
+  const sinifVarMi = alanSirasi.includes("dosyaSinifi");
+  const sinifOzellikleri = {
+    turler: dosyaTurleri,
+    yargiKollari,
+    varsayilanTurId: g?.turId ?? dosya?.turId ?? dosyaTurleri.find((t) => t.kod === "dava_dosyasi")?.id ?? "",
+    varsayilanYargiKoluId: g?.yargiKoluId ?? dosya?.yargiKoluId ?? "",
+    sifatlar: muvekkilSifatlari,
+    varsayilanSifatId:
+      g?.muvekkilSifatiId ??
+      dosya?.muvekkilSifatiId ??
+      muvekkilSifatlari.find((x) => x.kod === "alacakli")?.id ??
+      "",
+    varsayilanYeniSifatEtiketi: g?.yeniMuvekkilSifatiEtiketi,
+    yoneticiMi,
+  };
 
   const yeniAlanlar = alanSirasi.filter((a) => KARTLAR[0].alanlar.includes(a));
   const ekAlanlar = alanSirasi.filter((a) => KARTLAR[1].alanlar.includes(a));
@@ -229,12 +224,37 @@ export function DavaDosyasiFormIcerik({
       {alanSirasi.map((a) => (
         <input key={a} type="hidden" name="gorunenAlanlar" value={a} />
       ))}
-      <FormKarti baslik={yeniMi ? "Yeni Dosya" : "Dosya"}>
+      <FormKarti baslik="1 · Taraf Bilgileri">
         <div key={anahtar}>
           <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdlerGuncel} />
         </div>
         <KarsiTarafEkleyici baslangicKarsiTaraflar={baslangicKarsiTaraflar} />
-        {dosyaSinifiBlogu}
+        {sinifVarMi && (
+          <div key={`${anahtar}-s`}>
+            <DosyaSinifiAlanlari {...sinifOzellikleri} bolum="sifat" />
+          </div>
+        )}
+      </FormKarti>
+      <FormKarti baslik="2 · Dosya Bilgileri (Tür · Birim · Dosya No)">
+        {sinifVarMi && (
+          <div key={`${anahtar}-t`}>
+            <DosyaSinifiAlanlari {...sinifOzellikleri} bolum="tur" />
+          </div>
+        )}
+        <div key={`${anahtar}-k`}>
+          <DosyaKimligiAlanlari
+            varsayilanBirim={g?.birimAdi ?? dosya?.birimAdi ?? ""}
+            varsayilanDosyaNo={g?.dosyaNo ?? dosya?.dosyaNo ?? ""}
+            birimGoster={alanSirasi.includes("birimAdi")}
+            dosyaNoGoster={alanSirasi.includes("dosyaNo")}
+            etiketler={{
+              birim: bilgi("birimAdi", "Birim (Mahkeme/İcra Dairesi)"),
+              dosyaNo: bilgi("dosyaNo", "Dosya Numarası"),
+            }}
+          />
+        </div>
+      </FormKarti>
+      <FormKarti baslik="3 · İçerik Bilgileri (Hukuk Dalı · Konu · Tür)">
         <div key={`${anahtar}-b`}>
           {yeniAlanlar.map((a) => (
             <div key={a}>{alanRenderHaritasi[a]?.()}</div>
