@@ -237,7 +237,7 @@ export function DavaDosyasiFormIcerik({
             birimGoster={alanSirasi.includes("birimAdi")}
             dosyaNoGoster={alanSirasi.includes("dosyaNo")}
             etiketler={{
-              birim: bilgi("birimAdi", "Birim (Mahkeme/İcra Dairesi)"),
+              birim: bilgi("birimAdi", "Birim"),
               dosyaNo: bilgi("dosyaNo", "Dosya Numarası"),
             }}
           />

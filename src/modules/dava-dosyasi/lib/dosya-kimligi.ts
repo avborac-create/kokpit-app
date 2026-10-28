@@ -2,7 +2,7 @@
 // Hem form (istemci) hem sunucu ayni kurali kullanir; dosya no tek metin
 // olarak saklanir ("2026/1 Esas") - sema degismez, eski kayitlar bozulmaz.
 
-export const DOSYA_NO_TURLERI = ["Esas", "Talimat", "Değişik İş", "Soruşturma", "Müteferrik"] as const;
+export const DOSYA_NO_TURLERI = ["Esas", "Talimat", "Değişik İş", "Soruşturma", "İhbar"] as const;
 
 export const EN_ESKI_DOSYA_YILI = 1980;
 

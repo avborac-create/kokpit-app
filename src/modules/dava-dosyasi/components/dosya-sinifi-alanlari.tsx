@@ -43,7 +43,9 @@ export function DosyaSinifiAlanlari({
       {turGoster && (
       <>
       <Alan>
-        <Etiket htmlFor="turId">Tür</Etiket>
+        <Etiket htmlFor="turId">
+          Tür <span className="ml-1 text-[11px] font-normal text-white/30">Dosya çeşidi (icra / dava / arabuluculuk / ihtarname dosyası gibi)</span>
+        </Etiket>
         <Secim id="turId" name="turId" value={turId} onChange={(e) => setTurId(e.target.value)}>
           {turler.map((t) => (
             <option key={t.id} value={t.id}>
@@ -54,7 +56,9 @@ export function DosyaSinifiAlanlari({
       </Alan>
       {davaMi && (
         <Alan>
-          <Etiket htmlFor="yargiKoluId">Yargı Kolu</Etiket>
+          <Etiket htmlFor="yargiKoluId">
+            Yargı Kolu <span className="ml-1 text-[11px] font-normal text-white/30">Hukuk / Ceza / İdare / Anayasa Mahkemesi gibi</span>
+          </Etiket>
           <Secim id="yargiKoluId" name="yargiKoluId" defaultValue={varsayilanYargiKoluId}>
             <option value="">Seçiniz…</option>
             {yargiKollari.map((y) => (

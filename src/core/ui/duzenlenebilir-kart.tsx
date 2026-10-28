@@ -14,6 +14,8 @@ export type KartAlani = {
   deger?: string;
   gosterim: React.ReactNode;
   secenekler?: { value: string; label: string }[];
+  // Etiketin yaninda soluk yazilan kisa aciklama (ör. "icra / dava / arabuluculuk gibi").
+  ipucu?: string;
 };
 
 // Kart basligi ve alan etiketlerini (yonetici) ve alan degerlerini (herkes)
@@ -134,7 +136,10 @@ export function DuzenlenebilirKart({
                   className="mb-1 w-full rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 text-xs text-white/70 outline-none focus:border-[var(--accent)]"
                 />
               ) : (
-                <p className="mb-1 text-white/45">{gecerliEtiket(a)}</p>
+                <p className="mb-1 text-white/45">
+                  {gecerliEtiket(a)}
+                  {a.ipucu && <span className="ml-2 text-[11px] text-white/30">{a.ipucu}</span>}
+                </p>
               )}
               {a.tip === "salt" ? (
                 <div className="text-white/80">{a.gosterim}</div>
@@ -165,7 +170,10 @@ export function DuzenlenebilirKart({
             </>
           ) : (
             <>
-              <p className="text-white/45">{gecerliEtiket(a)}</p>
+              <p className="text-white/45">
+                {gecerliEtiket(a)}
+                {a.ipucu && <span className="ml-2 text-[11px] text-white/30">{a.ipucu}</span>}
+              </p>
               <div className="text-white">{a.gosterim}</div>
             </>
           )}

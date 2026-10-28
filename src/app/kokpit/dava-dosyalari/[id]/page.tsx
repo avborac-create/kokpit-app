@@ -120,6 +120,7 @@ export default async function DavaDosyasiDetaySayfasi({
     {
       anahtar: "turId",
       varsayilanEtiket: "Tür",
+      ipucu: "Dosya çeşidi (icra / dava / arabuluculuk / ihtarname dosyası gibi)",
       tip: "secim",
       deger: dosya.turId ?? "",
       gosterim: dosya.tur?.etiket ?? "—",
@@ -130,6 +131,7 @@ export default async function DavaDosyasiDetaySayfasi({
           {
             anahtar: "yargiKoluId",
             varsayilanEtiket: "Yargı Kolu",
+            ipucu: "Hukuk / Ceza / İdare / Anayasa Mahkemesi gibi",
             tip: "secim" as const,
             deger: dosya.yargiKoluId ?? "",
             gosterim: dosya.yargiKolu?.etiket ?? "—",
@@ -139,7 +141,7 @@ export default async function DavaDosyasiDetaySayfasi({
       : []),
     {
       anahtar: "birimAdi",
-      varsayilanEtiket: "Birim (Mahkeme/İcra Dairesi)",
+      varsayilanEtiket: "Birim",
       tip: "metin",
       deger: dosya.birimAdi ?? "",
       gosterim: dosya.birimAdi ?? "—",
@@ -147,6 +149,7 @@ export default async function DavaDosyasiDetaySayfasi({
     {
       anahtar: "dosyaNo",
       varsayilanEtiket: "Dosya Numarası",
+      ipucu: "Tip: Esas / Talimat / Değişik İş / Soruşturma / İhbar vs.",
       tip: "metin",
       deger: dosya.dosyaNo ?? "",
       gosterim: dosya.dosyaNo ?? "—",

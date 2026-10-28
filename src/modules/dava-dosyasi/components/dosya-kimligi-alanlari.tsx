@@ -98,7 +98,8 @@ export function DosyaKimligiAlanlari({
                 onChange={(e) => setSira(e.target.value.replace(/\D/g, ""))}
                 className="!w-28"
               />
-              <Secim value={tur} onChange={(e) => setTur(e.target.value)} aria-label="Dosya numarası türü" className="!w-auto">
+              <Secim value={tur} onChange={(e) => setTur(e.target.value)} aria-label="Dosya numarası tipi" className="!w-auto">
+                {(DOSYA_NO_TURLERI as readonly string[]).includes(tur) ? null : <option value={tur}>{tur}</option>}
                 {DOSYA_NO_TURLERI.map((t) => (
                   <option key={t} value={t}>
                     {t}
@@ -110,6 +111,7 @@ export function DosyaKimligiAlanlari({
           {!eskiBicim && (yilDokunuldu || yil.length === 4) && (yilHata || siraEksik) && (
             <p className="mt-1 text-xs text-[#ff7a70]">{yilHata || siraEksik}</p>
           )}
+          <p className="mt-1 text-[11px] text-white/30">Tip: Esas / Talimat / Değişik İş / Soruşturma / İhbar vs.</p>
           <input type="hidden" name="dosyaNo" value={dosyaNoDegeri} readOnly />
         </Alan>
       )}
