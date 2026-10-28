@@ -353,7 +353,6 @@ export default async function DavaDosyasiDetaySayfasi({
                   <NumaraliAdlar adlar={dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan)} />
                 </span>
               </div>
-              <span className="self-center text-xs font-semibold uppercase tracking-widest text-white/30">karşı</span>
               <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5">
                 <span className="block text-[10px] font-semibold uppercase tracking-wider text-white/40">Karşı Taraf</span>
                 <span className="text-white/90">
