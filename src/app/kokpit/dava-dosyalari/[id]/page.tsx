@@ -101,7 +101,7 @@ export default async function DavaDosyasiDetaySayfasi({
     { value: "", label: bosEtiket },
     ...liste.map((o) => ({ value: o.id, label: o.etiket })),
   ];
-  const dosyaBilgileriAlanlari: KartAlani[] = [
+  const kunyeAlanlari: KartAlani[] = [
     {
       anahtar: "turId",
       varsayilanEtiket: "Tür",
@@ -123,13 +123,28 @@ export default async function DavaDosyasiDetaySayfasi({
         ]
       : []),
     {
-      anahtar: "muvekkilSifatiId",
-      varsayilanEtiket: "Müvekkil Sıfatı",
-      tip: "secim",
-      deger: dosya.muvekkilSifatiId ?? "",
-      gosterim: dosya.muvekkilSifatiDegeri?.etiket ?? { ALACAKLI: "Alacaklı", BORCLU: "Borçlu", DIGER: "3. kişi" }[dosya.muvekkilSifati],
-      secenekler: muvekkilSifatlari.map((o) => ({ value: o.id, label: o.etiket })),
+      anahtar: "birimAdi",
+      varsayilanEtiket: "Birim (Mahkeme/İcra Dairesi)",
+      tip: "metin",
+      deger: dosya.birimAdi ?? "",
+      gosterim: dosya.birimAdi ?? "—",
     },
+    {
+      anahtar: "dosyaNo",
+      varsayilanEtiket: "Dosya Numarası",
+      tip: "metin",
+      deger: dosya.dosyaNo ?? "",
+      gosterim: dosya.dosyaNo ?? "—",
+    },
+    {
+      anahtar: "buroNo",
+      varsayilanEtiket: "Objekt Büro No (BN)",
+      tip: "metin",
+      deger: dosya.buroNo ?? "",
+      gosterim: buroNoGoster(dosya.buroNo),
+    },
+  ];
+  const icerikAlanlari: KartAlani[] = [
     {
       anahtar: "hukukiIliskiTuruId",
       varsayilanEtiket: "Davanın Konusu (Maddi Hak)",
@@ -147,13 +162,6 @@ export default async function DavaDosyasiDetaySayfasi({
       secenekler: davaTurleri.map((o) => ({ value: o.id, label: o.etiket })),
     },
     {
-      anahtar: "birimAdi",
-      varsayilanEtiket: "Birim (Mahkeme/İcra Dairesi)",
-      tip: "metin",
-      deger: dosya.birimAdi ?? "",
-      gosterim: dosya.birimAdi ?? "—",
-    },
-    {
       anahtar: "davaKonusu",
       varsayilanEtiket: "Konu Açıklaması",
       tip: "metin",
@@ -161,24 +169,8 @@ export default async function DavaDosyasiDetaySayfasi({
       gosterim: dosya.davaKonusu ?? "—",
     },
     {
-      anahtar: "buroNo",
-      varsayilanEtiket: "Objekt Büro No (BN)",
-      tip: "metin",
-      deger: dosya.buroNo ?? "",
-      gosterim: buroNoGoster(dosya.buroNo),
-    },
-    {
-      anahtar: "dosyaNo",
-      varsayilanEtiket: "Dosya Numarası",
-      tip: "metin",
-      deger: dosya.dosyaNo ?? "",
-      gosterim: dosya.dosyaNo ?? "—",
-    },
-  ];
-  const talepAlanlari: KartAlani[] = [
-    {
       anahtar: "talepSonucu",
-      varsayilanEtiket: "Talep Sonucu",
+      varsayilanEtiket: "Talep Sonucu / Takip Miktarı",
       tip: "cokSatir",
       deger: dosya.talepSonucu ?? "",
       gosterim: dosya.talepSonucu ? (
@@ -190,13 +182,6 @@ export default async function DavaDosyasiDetaySayfasi({
       ) : (
         "—"
       ),
-    },
-    {
-      anahtar: "durusmaTarihi",
-      varsayilanEtiket: "Duruşma Tarihi",
-      tip: "tarih",
-      deger: dosya.durusmaTarihi ? dosya.durusmaTarihi.toISOString().slice(0, 10) : "",
-      gosterim: dosya.durusmaTarihi ? tarihFormatlayici.format(dosya.durusmaTarihi) : "—",
     },
   ];
   const taraflarAlanlari: KartAlani[] = [
@@ -225,6 +210,14 @@ export default async function DavaDosyasiDetaySayfasi({
       gosterim: (
         <SiraliListe>{dosya.karsiTaraflar.map((kt) => <span key={kt.karsiTarafId}>{kt.karsiTaraf.ad}</span>)}</SiraliListe>
       ),
+    },
+    {
+      anahtar: "muvekkilSifatiId",
+      varsayilanEtiket: "Müvekkil Sıfatı",
+      tip: "secim",
+      deger: dosya.muvekkilSifatiId ?? "",
+      gosterim: dosya.muvekkilSifatiDegeri?.etiket ?? { ALACAKLI: "Alacaklı", BORCLU: "Borçlu", DIGER: "3. kişi" }[dosya.muvekkilSifati],
+      secenekler: muvekkilSifatlari.map((o) => ({ value: o.id, label: o.etiket })),
     },
   ];
   const agacAlanlari: KartAlani[] = [
@@ -296,6 +289,12 @@ export default async function DavaDosyasiDetaySayfasi({
             {" — "}
             {dosya.davaKonusu || dosya.konu}
           </h1>
+          <p className="mt-1 text-sm text-white/75">
+            <span className="text-white/45">Müvekkil: </span>
+            {dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
+            <span className="text-white/45"> · Karşı Taraf: </span>
+            {dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—"}
+          </p>
           <p className="mt-1 flex flex-wrap gap-2 text-sm text-white/55">
             <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
               {dosya.durum.etiket}
@@ -360,27 +359,28 @@ export default async function DavaDosyasiDetaySayfasi({
         <>
           <div className="mb-8 max-w-2xl">
             <DuzenlenebilirKart
-              etiketOnEki="dosya-detay.taraflar"
-              varsayilanBaslik="Taraflar"
+              etiketOnEki="dosya-detay.taraf-bilgileri"
+              varsayilanBaslik="Taraf Bilgileri"
               etiketler={etiketler}
               alanlar={taraflarAlanlari}
-              etiketDuzenleyebilir={etiketDuzenleyebilir}
-            />
-
-            <DuzenlenebilirKart
-              etiketOnEki="dosya-detay.dosya-bilgileri"
-              varsayilanBaslik="Dosya Bilgileri"
-              etiketler={etiketler}
-              alanlar={dosyaBilgileriAlanlari}
               etiketDuzenleyebilir={etiketDuzenleyebilir}
               onKaydet={dosyaAlanlariniGuncelle.bind(null, id)}
             />
 
             <DuzenlenebilirKart
-              etiketOnEki="dosya-detay.talep-durusma"
-              varsayilanBaslik="Talep ve Duruşma"
+              etiketOnEki="dosya-detay.kunye"
+              varsayilanBaslik="Künye (Tür · Birim · Dosya No)"
               etiketler={etiketler}
-              alanlar={talepAlanlari}
+              alanlar={kunyeAlanlari}
+              etiketDuzenleyebilir={etiketDuzenleyebilir}
+              onKaydet={dosyaAlanlariniGuncelle.bind(null, id)}
+            />
+
+            <DuzenlenebilirKart
+              etiketOnEki="dosya-detay.icerik"
+              varsayilanBaslik="İçerik"
+              etiketler={etiketler}
+              alanlar={icerikAlanlari}
               etiketDuzenleyebilir={etiketDuzenleyebilir}
               onKaydet={dosyaAlanlariniGuncelle.bind(null, id)}
             />

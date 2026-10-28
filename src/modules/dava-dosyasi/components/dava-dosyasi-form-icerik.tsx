@@ -43,7 +43,7 @@ const KARTLAR: { baslik: string; alanlar: string[]; ekBilgi?: boolean }[] = [
   { baslik: "İçerik Bilgileri", alanlar: ["hukukiIliskiTuruId", "davaKonusu", "davaTuruId", "talepSonucu"] },
   {
     baslik: "Ek Bilgiler (isteğe bağlı)",
-    alanlar: ["buroNo", "durusmaTarihi"],
+    alanlar: ["buroNo"],
     ekBilgi: true,
   },
 ];
@@ -174,18 +174,7 @@ export function DavaDosyasiFormIcerik({
         />
       </Alan>
     ),
-    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} etiket={talep("talepSonucu", "Talep Sonucu (netice ve talep)")} />,
-    durusmaTarihi: () => (
-      <Alan>
-        <Etiket htmlFor="durusmaTarihi">{talep("durusmaTarihi", "Duruşma Tarihi")}</Etiket>
-        <Girdi
-          id="durusmaTarihi"
-          name="durusmaTarihi"
-          type="date"
-          defaultValue={g?.durusmaTarihi ?? dosya?.durusmaTarihi?.toISOString().slice(0, 10) ?? ""}
-        />
-      </Alan>
-    ),
+    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} etiket="Talep Sonucu / Takip Miktarı" />,
   };
 
   // Yeni dosya acilisinda tek kart ve en az alan: muvekkil, karsi taraf,
@@ -210,7 +199,7 @@ export function DavaDosyasiFormIcerik({
 
   const yeniAlanlar = alanSirasi.filter((a) => KARTLAR[0].alanlar.includes(a));
   const ekAlanlar = alanSirasi.filter((a) => KARTLAR[1].alanlar.includes(a));
-  const ekDoluMu = Boolean(dosya?.buroNo || dosya?.durusmaTarihi);
+  const ekDoluMu = Boolean(dosya?.buroNo);
 
   return (
     <form action={formAction} className="max-w-2xl" autoComplete="off">
