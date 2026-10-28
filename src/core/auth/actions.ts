@@ -40,6 +40,7 @@ export async function girisYap(
     adSoyad: kullanici.adSoyad,
     eposta: kullanici.eposta,
     rol: kullanici.rol,
+    buroRolu: kullanici.buroRolu,
   });
 
   const cookieStore = await cookies();

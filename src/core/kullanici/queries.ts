@@ -7,6 +7,7 @@ export function kullanicilariListele() {
       adSoyad: true,
       eposta: true,
       rol: true,
+      buroRolu: true,
       aktifMi: true,
       olusturmaTarihi: true,
     },

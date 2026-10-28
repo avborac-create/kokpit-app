@@ -2,13 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import type { KullaniciRolu } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi, sistemYoneticisiMi } from "@/core/auth/yetki";
 import { sifreyiHashle } from "@/core/auth/password";
 import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
-import { atanabilirRoller } from "./rol-etiketleri";
+import { buroRoluGecerliMi, uygulamaRoluDbDegeri, type UygulamaRolu } from "./rol-etiketleri";
 
 async function yetkiliKullaniciyiGetir() {
   const kullanici = await mevcutKullanici();
@@ -24,22 +23,27 @@ export async function kullaniciOlustur(
   _oncekiDurum: KullaniciOlusturSonucu,
   formData: FormData,
 ): Promise<KullaniciOlusturSonucu> {
-  const islemiYapan = await yetkiliKullaniciyiGetir();
+  await yetkiliKullaniciyiGetir();
 
   const adSoyad = String(formData.get("adSoyad") ?? "").trim();
   const eposta = String(formData.get("eposta") ?? "").trim().toLowerCase();
   const sifre = String(formData.get("sifre") ?? "");
-  const rol = String(formData.get("rol") ?? "") as KullaniciRolu;
+  const rolDegeri = String(formData.get("rol") ?? "");
+  const buroRolu = String(formData.get("buroRolu") ?? "");
 
-  if (!adSoyad || !eposta || !sifre || !rol) {
-    return { hata: "Ad Soyad, e-posta, şifre ve rol zorunludur." };
+  if (!adSoyad || !eposta || !sifre || !rolDegeri || !buroRolu) {
+    return { hata: "Ad Soyad, e-posta, şifre, uygulama rolü ve büro rolü zorunludur." };
   }
   if (sifre.length < 8) {
     return { hata: "Şifre en az 8 karakter olmalıdır." };
   }
-  if (!atanabilirRoller(islemiYapan.rol).includes(rol)) {
-    return { hata: "Bu rolü atama yetkiniz yok." };
+  if (rolDegeri !== "YONETICI" && rolDegeri !== "KULLANICI") {
+    return { hata: "Geçersiz uygulama rolü." };
   }
+  if (!buroRoluGecerliMi(buroRolu)) {
+    return { hata: "Geçersiz büro rolü." };
+  }
+  const rol = uygulamaRoluDbDegeri(rolDegeri);
 
   const mevcut = await prisma.kullanici.findUnique({ where: { eposta } });
   if (mevcut) {
@@ -52,6 +56,7 @@ export async function kullaniciOlustur(
       eposta,
       sifreHash: await sifreyiHashle(sifre),
       rol,
+      buroRolu,
     },
   });
 
@@ -66,6 +71,8 @@ export async function kullaniciGuncelle(
   adSoyad: string,
   eposta: string,
   yeniSifre: string,
+  uygulamaRolu: UygulamaRolu,
+  buroRolu: string,
 ): Promise<void> {
   const islemiYapan = await yetkiliKullaniciyiGetir();
 
@@ -81,15 +88,18 @@ export async function kullaniciGuncelle(
     throw new Error("Şifre en az 8 karakter olmalıdır.");
   }
 
+  if (uygulamaRolu !== "YONETICI" && uygulamaRolu !== "KULLANICI") {
+    throw new Error("Geçersiz uygulama rolü.");
+  }
+  if (!buroRoluGecerliMi(buroRolu)) {
+    throw new Error("Geçersiz büro rolü.");
+  }
+  if (id === islemiYapan.kullaniciId && uygulamaRolu !== "YONETICI") {
+    throw new Error("Kendi yönetici rolünüzü kaldıramazsınız.");
+  }
+
   const hedef = await prisma.kullanici.findUnique({ where: { id } });
   if (!hedef) throw new Error("Kullanıcı bulunamadı.");
-  if (
-    hedef.rol === "YONETICI" &&
-    hedef.id !== islemiYapan.kullaniciId &&
-    !sistemYoneticisiMi(islemiYapan.rol)
-  ) {
-    throw new Error("Bir yöneticinin bilgilerini değiştirme yetkiniz yok.");
-  }
 
   if (posta !== hedef.eposta) {
     const baska = await prisma.kullanici.findUnique({ where: { eposta: posta } });
@@ -101,6 +111,8 @@ export async function kullaniciGuncelle(
     data: {
       adSoyad: ad,
       eposta: posta,
+      rol: uygulamaRoluDbDegeri(uygulamaRolu),
+      buroRolu,
       ...(yeniSifre ? { sifreHash: await sifreyiHashle(yeniSifre) } : {}),
     },
   });

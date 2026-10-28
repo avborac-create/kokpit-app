@@ -49,12 +49,25 @@ enum KullaniciRolu {
   @@map("kullanici_rolu")
 }
 
+// Kisinin buro icindeki gorevi. Uygulama yetkisinden (KullaniciRolu) AYRIDIR:
+// ileride modul ve dosya ici menu erisimini bu role gore kisitlamak icin.
+enum BuroRolu {
+  AVUKAT
+  YONETICI
+  PERSONEL
+
+  @@map("buro_rolu")
+}
+
 model Kullanici {
   id               String        @id @default(cuid())
   adSoyad          String
   eposta           String        @unique
   sifreHash        String
+  // Uygulama rolu: YONETICI = Yonetici, digerleri (PERSONEL yeni kullanicilar icin
+  // kullanilir; ORTAK/SORUMLU_AVUKAT eski degerlerdir) = Kullanici.
   rol              KullaniciRolu @default(PERSONEL)
+  buroRolu         BuroRolu      @default(PERSONEL)
   aktifMi          Boolean       @default(true)
   olusturmaTarihi  DateTime      @default(now())
   guncellemeTarihi DateTime      @updatedAt

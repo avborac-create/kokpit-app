@@ -14,7 +14,7 @@ import { hacizAvukatiMi } from "@/core/auth/yetki";
 // bu route'u cagirip Blob deposuna keyfi dosya yukleyebilirdi.
 export async function POST(request: Request): Promise<NextResponse> {
   const kullanici = await mevcutKullanici();
-  if (!kullanici || !hacizAvukatiMi(kullanici.rol)) {
+  if (!kullanici || !hacizAvukatiMi(kullanici.rol, kullanici.buroRolu)) {
     return NextResponse.json({ error: "Bu işlem için yetkiniz yok." }, { status: 403 });
   }
 

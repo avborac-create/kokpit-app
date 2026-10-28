@@ -8,7 +8,7 @@ const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR", { day: "2-digit", mon
 
 export default async function HacizArtcilariSayfasi() {
   const [raporlar, kullanici] = await Promise.all([hacizRaporlariniListele(), mevcutKullanici()]);
-  const yeniRaporYetkisiVar = Boolean(kullanici && hacizAvukatiMi(kullanici.rol));
+  const yeniRaporYetkisiVar = Boolean(kullanici && hacizAvukatiMi(kullanici.rol, kullanici.buroRolu));
 
   return (
     <div className="pt-3">

@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import type { KullaniciRolu } from "@prisma/client";
+import type { BuroRolu, KullaniciRolu } from "@prisma/client";
 
 // Oturum, veritabaninda tutulmayan imzali bir JWT olarak cookie'de saklanir.
 // Bu, middleware'in (edge runtime) veritabanina gitmeden oturumu dogrulamasini
@@ -22,6 +22,7 @@ export type OturumVerisi = {
   adSoyad: string;
   eposta: string;
   rol: KullaniciRolu;
+  buroRolu: BuroRolu;
 };
 
 export async function oturumTokeniOlustur(veri: OturumVerisi): Promise<string> {
@@ -43,6 +44,8 @@ export async function oturumTokeniDogrula(
       adSoyad: payload.adSoyad as string,
       eposta: payload.eposta as string,
       rol: payload.rol as KullaniciRolu,
+      // Bu alan eklenmeden once acilan oturumlarda yok: o durumda eski role bakilir.
+      buroRolu: (payload.buroRolu as BuroRolu | undefined) ?? (payload.rol === "YONETICI" ? "YONETICI" : "PERSONEL"),
     };
   } catch {
     return null;

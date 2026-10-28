@@ -1,4 +1,4 @@
-import type { KullaniciRolu } from "@prisma/client";
+import type { BuroRolu, KullaniciRolu } from "@prisma/client";
 
 // Kokpit'in sol menusunu besleyen tek kaynak. Yeni bir modul eklerken
 // (dava dosyalari, personel takibi, vb.) once bu modulun kendi klasoru
@@ -9,7 +9,9 @@ export type ModulTanimi = {
   ad: string;
   yol: string;
   aktif: boolean; // false ise menude "Yakında" rozetiyle gosterilir, tiklanamaz
-  rolGorebilir?: KullaniciRolu[]; // belirtilmezse tum roller gorur
+  rolGorebilir?: KullaniciRolu[]; // uygulama rolu; belirtilmezse tum roller gorur
+  // Buro rolune gore kisitlama (Avukat/Yonetici/Personel): belirtilmezse tum buro rolleri gorur.
+  buroRolGorebilir?: BuroRolu[];
 };
 
 // NOT: Bu liste bilerek DUZ (flat) kalir - Ayarlar > Menü Düzeni ekrani
@@ -34,7 +36,7 @@ export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
   // "haciz-artcilari" menuden kaldirildi (deaktif); sayfa, veri ve /kokpit/haciz-artcilari
   // adresi yerinde. Geri getirmek icin su girisi ve kenar-cubugu.tsx'teki blogu geri ekleyin:
   // { anahtar: "haciz-artcilari", ad: "Haciz Artçıları", yol: "/kokpit/haciz-artcilari", aktif: true,
-  //   rolGorebilir: ["SORUMLU_AVUKAT", "YONETICI", "ORTAK"] },
+  //   rolGorebilir: ["YONETICI"] },
   // "muvekkil-finans" menuden kaldirildi (su an kullanilmiyor); sayfa ve veri yerinde,
   // /kokpit/muvekkil-finans adresi ve dosyalardaki baglanti calismaya devam eder.
   // Geri getirmek icin satiri ve kenar-cubugu.tsx'teki FINANS blogunu geri ekleyin.
@@ -43,13 +45,13 @@ export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
     ad: "Öneriler",
     yol: "/kokpit/oneriler",
     aktif: true,
-    rolGorebilir: ["YONETICI", "ORTAK"],
+    rolGorebilir: ["YONETICI"],
   },
   {
     anahtar: "ayarlar",
     ad: "Ayarlar",
     yol: "/kokpit/ayarlar/secenekler",
     aktif: true,
-    rolGorebilir: ["YONETICI", "ORTAK"],
+    rolGorebilir: ["YONETICI"],
   },
 ];

@@ -18,7 +18,7 @@ function metinYaAlNull(formData: FormData, alan: string): string | null {
 
 async function yetkiKontrolEt() {
   const kullanici = await mevcutKullanici();
-  if (!kullanici || !hacizAvukatiMi(kullanici.rol)) {
+  if (!kullanici || !hacizAvukatiMi(kullanici.rol, kullanici.buroRolu)) {
     throw new Error("Bu işlem için yetkiniz yok - haciz raporu sadece sorumlu avukatlar tarafından girilebilir.");
   }
   return kullanici;
@@ -140,7 +140,7 @@ export async function hacizRaporuOlustur(formData: FormData) {
 
 export async function hacizRaporuSil(id: string, sifre?: string) {
   const kullanici = await mevcutKullanici();
-  if (!kullanici || !hacizAvukatiMi(kullanici.rol)) {
+  if (!kullanici || !hacizAvukatiMi(kullanici.rol, kullanici.buroRolu)) {
     throw new Error("Bu işlem için yetkiniz yok.");
   }
   await silmeSifresiniDogrula(sifre);

@@ -19,7 +19,7 @@ export default async function HacizRaporuDetaySayfasi({ params }: { params: Prom
   const [rapor, kullanici] = await Promise.all([hacizRaporuGetir(id), mevcutKullanici()]);
   if (!rapor) notFound();
 
-  const silmeYetkisiVar = Boolean(kullanici && hacizAvukatiMi(kullanici.rol));
+  const silmeYetkisiVar = Boolean(kullanici && hacizAvukatiMi(kullanici.rol, kullanici.buroRolu));
 
   return (
     <div className="pt-3">

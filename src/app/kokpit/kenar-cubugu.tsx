@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { KullaniciRolu } from "@prisma/client";
+import type { BuroRolu, KullaniciRolu } from "@prisma/client";
 import { MODUL_KAYIT_DEFTERI, type ModulTanimi } from "@/core/modul-kayit-defteri";
 import {
   AnaSayfaIkonu,
@@ -62,10 +62,12 @@ function dosyalarAbone(dinleyici: () => void) {
 // okunur, ama grupla(n)ma burada, sunum katmaninda kurulur.
 export function KenarCubugu({
   kullaniciRol,
+  buroRolu,
   menuDuzeni,
   cmkDikkatSayisi = 0,
 }: {
   kullaniciRol?: KullaniciRolu;
+  buroRolu?: BuroRolu;
   menuDuzeni: { anahtar: string; gizliMi: boolean }[];
   // Ceza/CMK listesinde gercekten dikkat/islem gerektiren kayit sayisi
   // (yaklasan durusma + gecikmis sonraki kontrol) - bkz.
@@ -81,6 +83,7 @@ export function KenarCubugu({
     if (!modul) return false;
     if (gizliSeti.has(anahtar)) return false;
     if (modul.rolGorebilir && !(kullaniciRol && modul.rolGorebilir.includes(kullaniciRol))) return false;
+    if (modul.buroRolGorebilir && !(buroRolu && modul.buroRolGorebilir.includes(buroRolu))) return false;
     return true;
   }
 

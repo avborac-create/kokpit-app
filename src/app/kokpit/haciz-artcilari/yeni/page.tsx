@@ -5,7 +5,7 @@ import { HacizRaporuFormu } from "@/modules/haciz-raporu/components/haciz-raporu
 
 export default async function YeniHacizRaporuSayfasi() {
   const kullanici = await mevcutKullanici();
-  if (!kullanici || !hacizAvukatiMi(kullanici.rol)) {
+  if (!kullanici || !hacizAvukatiMi(kullanici.rol, kullanici.buroRolu)) {
     redirect("/kokpit/haciz-artcilari");
   }
 

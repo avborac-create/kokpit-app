@@ -3,7 +3,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi, sistemYoneticisiMi } from "@/core/auth/yetki";
 import { KullaniciDuzenleButonu } from "@/core/kullanici/kullanici-duzenle-butonu";
 import { kullanicilariListele } from "@/core/kullanici/queries";
-import { atanabilirRoller, ROL_ETIKETLERI } from "@/core/kullanici/rol-etiketleri";
+import { BURO_ROLU_ETIKETLERI, UYGULAMA_ROLU_ETIKETLERI, uygulamaRoluOf } from "@/core/kullanici/rol-etiketleri";
 import { KullaniciFormu } from "@/core/kullanici/kullanici-formu";
 import { KullaniciSilButonu } from "@/core/kullanici/kullanici-sil-butonu";
 import { KullaniciDurumButonu } from "@/core/kullanici/kullanici-durum-butonu";
@@ -33,7 +33,8 @@ export default async function KullanicilarSayfasi() {
             <tr>
               <th className="px-4 py-3 font-medium">Ad Soyad</th>
               <th className="px-4 py-3 font-medium">E-posta</th>
-              <th className="px-4 py-3 font-medium">Rol</th>
+              <th className="px-4 py-3 font-medium">Uygulama Rolü</th>
+              <th className="px-4 py-3 font-medium">Büro Rolü</th>
               <th className="px-4 py-3 font-medium">Katılım</th>
               <th className="px-4 py-3 font-medium">Durum</th>
               <th className="px-4 py-3 font-medium" />
@@ -44,7 +45,8 @@ export default async function KullanicilarSayfasi() {
               <tr key={k.id} className="border-t border-white/[0.06] hover:bg-white/[0.04]">
                 <td className="px-4 py-3 font-medium text-white">{k.adSoyad}</td>
                 <td className="px-4 py-3 text-white/60">{k.eposta}</td>
-                <td className="px-4 py-3 text-white/60">{ROL_ETIKETLERI[k.rol]}</td>
+                <td className="px-4 py-3 text-white/60">{UYGULAMA_ROLU_ETIKETLERI[uygulamaRoluOf(k.rol)]}</td>
+                <td className="px-4 py-3 text-white/60">{BURO_ROLU_ETIKETLERI[k.buroRolu]}</td>
                 <td className="px-4 py-3 text-white/60">{tarihFormatlayici.format(k.olusturmaTarihi)}</td>
                 <td className="px-4 py-3">
                   {k.aktifMi ? (
@@ -60,7 +62,13 @@ export default async function KullanicilarSayfasi() {
                 <td className="px-4 py-3 text-right">
                   <div className="flex justify-end gap-2">
                     {(k.rol !== "YONETICI" || k.id === kullanici.kullaniciId || sistemYoneticisiMi(kullanici.rol)) && (
-                      <KullaniciDuzenleButonu id={k.id} adSoyad={k.adSoyad} eposta={k.eposta} />
+                      <KullaniciDuzenleButonu
+                        id={k.id}
+                        adSoyad={k.adSoyad}
+                        eposta={k.eposta}
+                        uygulamaRolu={uygulamaRoluOf(k.rol)}
+                        buroRolu={k.buroRolu}
+                      />
                     )}
                     {k.id !== kullanici.kullaniciId && (
                       <KullaniciDurumButonu id={k.id} adSoyad={k.adSoyad} aktifMi={k.aktifMi} />
@@ -78,7 +86,7 @@ export default async function KullanicilarSayfasi() {
       </div>
 
       <h2 className="mb-4 text-lg font-semibold tracking-tight text-white">Yeni Kullanıcı</h2>
-      <KullaniciFormu rolSecenekleri={atanabilirRoller(kullanici.rol)} />
+      <KullaniciFormu rolSecenekleri={["YONETICI", "KULLANICI"]} />
     </div>
   );
 }

@@ -1,24 +1,23 @@
-import type { KullaniciRolu } from "@prisma/client";
+import type { BuroRolu, KullaniciRolu } from "@prisma/client";
 
-// Ilk faz icin basit bir yetki modeli: goruntuleme/olusturma/duzenleme tum
-// giris yapmis kullanicilara acik, silme islemleri sadece Yonetici ve Ortak
-// rolune taninir. Ileride modul bazli/daha ayrintili bir yetki matrisine
-// genisletilebilir (bu fonksiyonlarin imzasi degismeden ic mantik buyuyebilir).
-const SILME_YETKISI_OLAN_ROLLER: KullaniciRolu[] = ["YONETICI", "ORTAK"];
-
+// Iki ayri rol vardir:
+//  - Uygulama rolu (KullaniciRolu.rol): Yonetici / Kullanici. Sistem ayarlari,
+//    kullanici yonetimi ve silme gibi islemleri belirler. YONETICI disindaki
+//    her deger (PERSONEL, eski ORTAK/SORUMLU_AVUKAT) "Kullanici" sayilir.
+//  - Buro rolu (BuroRolu): Avukat / Yonetici / Personel. Kisinin buro icindeki
+//    gorevi; modul ve dosya ici menu erisimini kisitlamak icin (bkz.
+//    modul-kayit-defteri.ts buroRolGorebilir). Kisitlama tanimlanmadikca
+//    tum buro rolleri ayni yetkidedir.
 export function silebilirMi(rol: KullaniciRolu): boolean {
-  return SILME_YETKISI_OLAN_ROLLER.includes(rol);
+  return rol === "YONETICI";
 }
 
-// Geliştirme Kutusu gibi sadece sistem yöneticisine ait alanlar icin -
-// silebilirMi'den (YONETICI+ORTAK) daha dar, yalnizca YONETICI.
 export function sistemYoneticisiMi(rol: KullaniciRolu): boolean {
   return rol === "YONETICI";
 }
 
-// Haciz Raporu OLUSTURMA/YUKLEME - sahaya cikan haciz avukatlarina (bkz.
-// ARCHITECTURE.md "Haciz Raporu") ve denetim/yedekleme amacli YONETICI/
-// ORTAK'a acik. PERSONEL bu role dahil degil.
-export function hacizAvukatiMi(rol: KullaniciRolu): boolean {
-  return rol === "SORUMLU_AVUKAT" || rol === "YONETICI" || rol === "ORTAK";
+// Haciz Raporu OLUSTURMA/YUKLEME - sahaya cikan avukatlara ve sistem
+// yoneticisine acik; buro rolu PERSONEL olan kullanici bu role dahil degil.
+export function hacizAvukatiMi(rol: KullaniciRolu, buroRolu?: BuroRolu): boolean {
+  return rol === "YONETICI" || buroRolu === "AVUKAT";
 }

@@ -1,20 +1,32 @@
-import type { KullaniciRolu } from "@prisma/client";
-import { sistemYoneticisiMi } from "@/core/auth/yetki";
+import type { BuroRolu, KullaniciRolu } from "@prisma/client";
 
-export const ROL_ETIKETLERI: Record<KullaniciRolu, string> = {
+// Uygulama rolu: yalniz Yonetici / Kullanici. Eski ORTAK ve SORUMLU_AVUKAT
+// kayitlari da "Kullanici" gorunur (bkz. yetki.ts).
+export type UygulamaRolu = "YONETICI" | "KULLANICI";
+
+export const UYGULAMA_ROLU_ETIKETLERI: Record<UygulamaRolu, string> = {
   YONETICI: "Yönetici",
-  ORTAK: "Ortak",
-  SORUMLU_AVUKAT: "Sorumlu Avukat",
+  KULLANICI: "Kullanıcı",
+};
+
+export function uygulamaRoluOf(rol: KullaniciRolu): UygulamaRolu {
+  return rol === "YONETICI" ? "YONETICI" : "KULLANICI";
+}
+
+// Formdan gelen uygulama rolunu veritabani degerine cevirir. "Kullanici"
+// yeni kayitlarda PERSONEL olarak saklanir (enum'u degistirmemek icin).
+export function uygulamaRoluDbDegeri(rol: UygulamaRolu): KullaniciRolu {
+  return rol === "YONETICI" ? "YONETICI" : "PERSONEL";
+}
+
+export const BURO_ROLU_ETIKETLERI: Record<BuroRolu, string> = {
+  AVUKAT: "Avukat",
+  YONETICI: "Yönetici",
   PERSONEL: "Personel",
 };
 
-// YONETICI rolu sistem yoneticiligi anlamina geldigi icin (bkz. yetki.ts) -
-// bir ORTAK'in yeni kullanici formundan baskasina YONETICI yetkisi
-// verebilmesi bir yetki yukselmesi acigi olur. Bu yuzden atanabilir rol
-// listesi, formu acan kisinin kendi roluyle sinirlanir: sadece mevcut bir
-// YONETICI baska bir YONETICI olusturabilir.
-export function atanabilirRoller(islemiYapaninRolu: KullaniciRolu): KullaniciRolu[] {
-  const tumRoller: KullaniciRolu[] = ["YONETICI", "ORTAK", "SORUMLU_AVUKAT", "PERSONEL"];
-  if (sistemYoneticisiMi(islemiYapaninRolu)) return tumRoller;
-  return tumRoller.filter((rol) => rol !== "YONETICI");
+export const BURO_ROLLERI: BuroRolu[] = ["AVUKAT", "YONETICI", "PERSONEL"];
+
+export function buroRoluGecerliMi(deger: string): deger is BuroRolu {
+  return (BURO_ROLLERI as string[]).includes(deger);
 }

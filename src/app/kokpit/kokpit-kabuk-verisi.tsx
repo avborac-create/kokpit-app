@@ -23,6 +23,7 @@ export async function KenarCubuguVerisi() {
   return (
     <KenarCubugu
       kullaniciRol={kullanici?.rol}
+      buroRolu={kullanici?.buroRolu}
       menuDuzeni={menuDuzeni.map((oge) => ({ anahtar: oge.anahtar, gizliMi: oge.gizliMi }))}
       cmkDikkatSayisi={cmkOzet.yaklasanDurusma + cmkOzet.gecikmisKontrol}
     />
@@ -36,5 +37,5 @@ export async function KenarCubuguVerisi() {
 // bilesen.
 export async function UstBilgiVerisi() {
   const kullanici = await mevcutKullanici();
-  return <UstBilgiRozeti kullaniciAdSoyad={kullanici?.adSoyad} kullaniciRol={kullanici?.rol} />;
+  return <UstBilgiRozeti kullaniciAdSoyad={kullanici?.adSoyad} kullaniciRol={kullanici?.rol} buroRolu={kullanici?.buroRolu} />;
 }
