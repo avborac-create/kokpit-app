@@ -35,6 +35,100 @@ export function UyusmazlikTuruSecici({
   // Ayarlar > Secenek Listeleri baglantisi icin (verilmezse alan adindan turetilir).
   listeAnahtari?: string;
 }) {
+  // Zorunlu (kisa, sabit) listeler acilir menu olarak kalir; istege bagli
+  // uzun listeler tek kutuda "yaz ya da listeden sec" olur.
+  if (!zorunlu) {
+    return (
+      <YazVeSecKutusu
+        turler={turler}
+        varsayilanId={varsayilanId}
+        varsayilanYeniEtiket={varsayilanYeniEtiket}
+        alanAdi={alanAdi}
+        yeniAlanAdi={yeniAlanAdi}
+        etiket={etiket}
+        yoneticiMi={yoneticiMi}
+        listeAnahtari={listeAnahtari}
+      />
+    );
+  }
+  return (
+    <AcilirMenuSecici
+      turler={turler}
+      varsayilanId={varsayilanId}
+      varsayilanYeniEtiket={varsayilanYeniEtiket}
+      alanAdi={alanAdi}
+      yeniAlanAdi={yeniAlanAdi}
+      etiket={etiket}
+      zorunlu={zorunlu}
+      yoneticiMi={yoneticiMi}
+      listeAnahtari={listeAnahtari}
+    />
+  );
+}
+
+type SeciciOzellikleri = Parameters<typeof UyusmazlikTuruSecici>[0];
+
+// Tek kutu: yazilan metin listedeki bir etiketle (buyuk/kucuk harf duyarsiz)
+// eslesirse o secenek, eslesmezse yeni secenek olarak listeye eklenir -
+// sunucu tarafi "__manuel__" + etiket sozlesmesiyle zaten bunu yapar.
+function YazVeSecKutusu({
+  turler,
+  varsayilanId,
+  varsayilanYeniEtiket,
+  alanAdi = "hukukiIliskiTuruId",
+  yeniAlanAdi = "yeniHukukiIliskiTuruEtiketi",
+  etiket = "Uyuşmazlık Türü",
+  yoneticiMi = false,
+  listeAnahtari,
+}: SeciciOzellikleri) {
+  const baslangic =
+    varsayilanYeniEtiket ?? turler.find((t) => t.id === varsayilanId)?.etiket ?? "";
+  const [metin, setMetin] = useState(baslangic);
+  const listeId = `${alanAdi}-liste`;
+
+  return (
+    <Alan>
+      <div className="flex items-center justify-between">
+        <Etiket htmlFor={yeniAlanAdi}>{etiket}</Etiket>
+        {yoneticiMi && (
+          <Link
+            href={`/kokpit/ayarlar/secenekler?liste=${listeAnahtari ?? (alanAdi === "davaTuruId" ? "dava_turu" : "hukuki_iliski_turu")}`}
+            target="_blank"
+            className="text-xs text-[#6db8ff] hover:underline"
+          >
+            Listeyi düzenle ↗
+          </Link>
+        )}
+      </div>
+      <input type="hidden" name={alanAdi} value={metin.trim() ? MANUEL_UYUSMAZLIK_DEGERI : ""} readOnly />
+      <Girdi
+        id={yeniAlanAdi}
+        name={yeniAlanAdi}
+        list={listeId}
+        value={metin}
+        onChange={(e) => setMetin(e.target.value)}
+        placeholder="Yazın ya da listeden seçin…"
+      />
+      <datalist id={listeId}>
+        {turler.map((t) => (
+          <option key={t.id} value={t.etiket} />
+        ))}
+      </datalist>
+    </Alan>
+  );
+}
+
+function AcilirMenuSecici({
+  turler,
+  varsayilanId,
+  varsayilanYeniEtiket,
+  alanAdi = "hukukiIliskiTuruId",
+  yeniAlanAdi = "yeniHukukiIliskiTuruEtiketi",
+  etiket = "Uyuşmazlık Türü",
+  zorunlu = false,
+  yoneticiMi = false,
+  listeAnahtari,
+}: SeciciOzellikleri) {
   const [secim, setSecim] = useState(varsayilanId);
   const [etiketDuzeltmeleri, setEtiketDuzeltmeleri] = useState<Record<string, string>>({});
   const manuelMi = secim === MANUEL_UYUSMAZLIK_DEGERI;
