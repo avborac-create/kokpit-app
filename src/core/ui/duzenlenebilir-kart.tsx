@@ -136,9 +136,8 @@ export function DuzenlenebilirKart({
                   className="mb-1 w-full rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 text-xs text-white/70 outline-none focus:border-[var(--accent)]"
                 />
               ) : (
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-[#8fb4e8]">
+                <p title={a.ipucu} className={`mb-1 text-xs font-semibold uppercase tracking-wider text-[#8fb4e8] ${a.ipucu ? "cursor-help" : ""}`}>
                   {gecerliEtiket(a)}
-                  {a.ipucu && <span className="ml-2 text-sm font-normal normal-case tracking-normal text-white/55">{a.ipucu}</span>}
                 </p>
               )}
               {a.tip === "salt" ? (
@@ -170,9 +169,8 @@ export function DuzenlenebilirKart({
             </>
           ) : (
             <>
-              <p className="mb-0.5 text-xs font-semibold uppercase tracking-wider text-[#8fb4e8]">
+              <p title={a.ipucu} className={`mb-0.5 text-xs font-semibold uppercase tracking-wider text-[#8fb4e8] ${a.ipucu ? "cursor-help" : ""}`}>
                 {gecerliEtiket(a)}
-                {a.ipucu && <span className="ml-2 text-sm font-normal normal-case tracking-normal text-white/55">{a.ipucu}</span>}
               </p>
               <div className="text-white">{a.gosterim}</div>
             </>
