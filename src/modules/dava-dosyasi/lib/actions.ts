@@ -693,6 +693,40 @@ export async function anaDosyaBagla(dosyaId: string, anaDosyaId: string | null) 
   revalidatePath("/kokpit/finans/musteri-iliskileri");
 }
 
+// Tek "Dosyalari bagla" akisi: ANA = bu dosya ana olur (secilen onun alt
+// dosyasi olur), ALT = bu dosya secilen dosyanin altina girer, BILMIYORUM =
+// yalniz "bagli dosya" isareti konur (hiyerarsi sonra belirlenebilir).
+export async function dosyalariBagla(dosyaId: string, digerDosyaId: string, rol: "ANA" | "ALT" | "BILMIYORUM") {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+  if (dosyaId === digerDosyaId) throw new Error("Bir dosya kendine bağlanamaz.");
+
+  if (rol === "ANA") {
+    await anaDosyaBagla(digerDosyaId, dosyaId);
+  } else if (rol === "ALT") {
+    await anaDosyaBagla(dosyaId, digerDosyaId);
+  } else {
+    const diger = await prisma.davaDosyasi.findUnique({ where: { id: digerDosyaId }, select: { id: true } });
+    if (!diger) throw new Error("Seçilen dosya bulunamadı.");
+    await prisma.davaDosyasi.update({
+      where: { id: dosyaId },
+      data: { bagliOlduguDosyaId: digerDosyaId, surum: { increment: 1 } },
+    });
+    revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+    revalidatePath(`/kokpit/dava-dosyalari/${digerDosyaId}`);
+  }
+}
+
+export async function dosyaBaglantisiniKaldir(dosyaId: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+  await prisma.davaDosyasi.update({
+    where: { id: dosyaId },
+    data: { bagliOlduguDosyaId: null, surum: { increment: 1 } },
+  });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
 const GECERLI_YANSITMA_HEDEFLERI: MasrafYansitmaHedefi[] = ["MUVEKKIL", "BURO", "BORCLU"];
 
 function yansitmaHedefiAl(formData: FormData): MasrafYansitmaHedefi {

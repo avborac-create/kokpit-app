@@ -10,7 +10,7 @@ import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { DavaDosyasiSekmeleri } from "@/modules/dava-dosyasi/components/dava-dosyasi-sekmeleri";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
-import { AnaDosyaSecici } from "@/modules/dava-dosyasi/components/ana-dosya-secici";
+import { DosyaBaglayici } from "@/modules/dava-dosyasi/components/dosya-baglayici";
 import { kokpitNoGoster, kayitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { Dugme } from "@/core/ui/button";
 import { DuzenlenebilirKart, type KartAlani } from "@/core/ui/duzenlenebilir-kart";
@@ -448,11 +448,20 @@ export default async function DavaDosyasiDetaySayfasi({
               alanlar={agacAlanlari}
               etiketDuzenleyebilir={etiketDuzenleyebilir}
             >
-              <AnaDosyaSecici
+              <DosyaBaglayici
                 dosyaId={id}
                 mevcutAnaDosyaId={dosya.anaDosyaId}
+                bagliOlduguDosya={
+                  dosya.bagliOlduguDosya
+                    ? {
+                        id: dosya.bagliOlduguDosya.id,
+                        etiket: [dosya.bagliOlduguDosya.dosyaNo, dosya.bagliOlduguDosya.konu]
+                          .filter(Boolean)
+                          .join(" · "),
+                      }
+                    : null
+                }
                 adaylar={anaDosyaAdaylari}
-                altDosyasiVar={dosya.altDosyalar.length > 0}
               />
             </DuzenlenebilirKart>
           </div>

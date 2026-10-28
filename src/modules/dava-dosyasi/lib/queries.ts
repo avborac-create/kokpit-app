@@ -665,13 +665,12 @@ export type AnaDosyaAdayi = {
 export async function anaDosyaAdaylariniGetir(dosyaId: string): Promise<AnaDosyaAdayi[]> {
   const dosya = await prisma.davaDosyasi.findUnique({
     where: { id: dosyaId },
-    select: { muvekkiller: { select: { musteriId: true } }, _count: { select: { altDosyalar: true } } },
+    select: { muvekkiller: { select: { musteriId: true } } },
   });
-  if (!dosya || dosya._count.altDosyalar > 0) return [];
+  if (!dosya) return [];
   const adaylar = await prisma.davaDosyasi.findMany({
     where: {
       id: { not: dosyaId },
-      anaDosyaId: null,
       muvekkiller: { some: { musteriId: { in: dosya.muvekkiller.map((m) => m.musteriId) } } },
     },
     select: {
