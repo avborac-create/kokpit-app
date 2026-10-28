@@ -189,6 +189,7 @@ const SECENEK_LISTELERI: {
       { kod: "hukuk", etiket: "Hukuk" },
       { kod: "ceza", etiket: "Ceza" },
       { kod: "idari", etiket: "İdari" },
+      { kod: "anayasa_mahkemesi", etiket: "Anayasa Mahkemesi" },
     ],
   },
   {

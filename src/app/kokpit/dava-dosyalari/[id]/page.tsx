@@ -120,7 +120,6 @@ export default async function DavaDosyasiDetaySayfasi({
     {
       anahtar: "turId",
       varsayilanEtiket: "Tür",
-      ipucu: "Dosya çeşidi (icra / dava / arabuluculuk / ihtarname dosyası gibi)",
       tip: "secim",
       deger: dosya.turId ?? "",
       gosterim: dosya.tur?.etiket ?? "—",
@@ -131,7 +130,6 @@ export default async function DavaDosyasiDetaySayfasi({
           {
             anahtar: "yargiKoluId",
             varsayilanEtiket: "Yargı Kolu",
-            ipucu: "Hukuk / Ceza / İdare / Anayasa Mahkemesi gibi",
             tip: "secim" as const,
             deger: dosya.yargiKoluId ?? "",
             gosterim: dosya.yargiKolu?.etiket ?? "—",
@@ -149,7 +147,6 @@ export default async function DavaDosyasiDetaySayfasi({
     {
       anahtar: "dosyaNo",
       varsayilanEtiket: "Dosya Numarası",
-      ipucu: "Tip: Esas / Talimat / Değişik İş / Soruşturma / İhbar vs.",
       tip: "metin",
       deger: dosya.dosyaNo ?? "",
       gosterim: dosya.dosyaNo ?? "—",
@@ -168,14 +165,12 @@ export default async function DavaDosyasiDetaySayfasi({
     {
       anahtar: "hukukDali",
       varsayilanEtiket: "Hukuk Dalı",
-      ipucu: "Nerede?",
       tip: "salt",
       gosterim: hukukDali?.etiket ?? "—",
     },
     {
       anahtar: "hukukiIliskiTuruId",
       varsayilanEtiket: "Dava Konusu",
-      ipucu: "Ne hakkında?",
       tip: "secim",
       deger: dosya.hukukiIliskiTuruId ?? "",
       gosterim: dosya.hukukiIliskiTuru?.etiket ?? "—",
@@ -190,7 +185,6 @@ export default async function DavaDosyasiDetaySayfasi({
     {
       anahtar: "talepSonucu",
       varsayilanEtiket: "Talep Sonucu / Takip Miktarı",
-      ipucu: "Mahkemeden ne istiyoruz?",
       tip: "cokSatir",
       deger: dosya.talepSonucu ?? "",
       gosterim: dosya.talepSonucu ? (

@@ -67,7 +67,7 @@ export function DosyaKimligiAlanlari({
       )}
       {dosyaNoGoster && (
         <Alan>
-          <Etiket htmlFor="dosyaNoYil" title="Tip: Esas / Talimat / Değişik İş / Soruşturma / İhbar vs.">{etiketler.dosyaNo}</Etiket>
+          <Etiket htmlFor="dosyaNoYil">{etiketler.dosyaNo}</Etiket>
           {eskiBicim ? (
             <>
               <Girdi value={eski} onChange={(e) => setEski(e.target.value)} aria-label="Dosya numarası (eski biçim)" />
@@ -98,7 +98,7 @@ export function DosyaKimligiAlanlari({
                 onChange={(e) => setSira(e.target.value.replace(/\D/g, ""))}
                 className="!w-28"
               />
-              <Secim value={tur} onChange={(e) => setTur(e.target.value)} aria-label="Dosya numarası tipi" title="Tip: Esas / Talimat / Değişik İş / Soruşturma / İhbar vs." className="!w-auto">
+              <Secim value={tur} onChange={(e) => setTur(e.target.value)} aria-label="Dosya numarası tipi" className="!w-auto">
                 {(DOSYA_NO_TURLERI as readonly string[]).includes(tur) ? null : <option value={tur}>{tur}</option>}
                 {DOSYA_NO_TURLERI.map((t) => (
                   <option key={t} value={t}>
