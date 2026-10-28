@@ -6,7 +6,7 @@ import { FormKarti } from "@/core/ui/form-karti";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import type { DavaDosyasiSonucu } from "@/modules/dava-dosyasi/lib/actions";
 import { MuvekkilSecici } from "./muvekkil-secici";
-import { UyusmazlikTuruSecici } from "./uyusmazlik-turu-secici";
+import { IcerikSiniflandirma } from "./icerik-siniflandirma";
 import { KarsiTarafEkleyici } from "./karsi-taraf-ekleyici";
 import { DosyaSinifiAlanlari } from "./dosya-sinifi-alanlari";
 import { TalepSonucuListesi } from "./talep-sonucu-listesi";
@@ -40,7 +40,7 @@ type DosyaDegerleri = {
 // istenir; gerisi "Ek bilgiler" altinda opsiyoneldir (dosya detayindan da
 // sonradan girilebilir).
 const KARTLAR: { baslik: string; alanlar: string[]; ekBilgi?: boolean }[] = [
-  { baslik: "İçerik Bilgileri", alanlar: ["hukukiIliskiTuruId", "talepSonucu"] },
+  { baslik: "İçerik Bilgileri", alanlar: ["davaTuruId", "hukukiIliskiTuruId", "talepSonucu"] },
   {
     baslik: "Ek Bilgiler (isteğe bağlı)",
     alanlar: ["buroNo"],
@@ -108,28 +108,30 @@ export function DavaDosyasiFormIcerik({
   const seciliIdlerGuncel = durum?.gonderilenMusteriIdleri ?? seciliIdler;
   const talepMaddeleriGuncel = durum?.gonderilenTalepMaddeleri ?? dosya?.talepSonucu?.split("\n") ?? [];
 
+  // Hukuk dali + dava turu + dava konusu tek blok olarak, ilk gorunen alanin
+  // yerinde cizilir (ortak dal secimini paylastiklari icin).
+  const siniflandirma = () => (
+    <IcerikSiniflandirma
+      hukukDallari={hukukDallari}
+      davaTurleri={davaTurleri}
+      hukukiIliskiTurleri={hukukiIliskiTurleri}
+      varsayilanDavaTuruId={g?.davaTuruId ?? dosya?.davaTuruId ?? ""}
+      varsayilanKonuId={g?.hukukiIliskiTuruId ?? dosya?.hukukiIliskiTuruId ?? ""}
+      varsayilanYeniTurEtiketi={g?.yeniDavaTuruEtiketi}
+      varsayilanYeniKonuEtiketi={g?.yeniHukukiIliskiTuruEtiketi}
+      turGoster={alanSirasi.includes("davaTuruId")}
+      konuGoster={alanSirasi.includes("hukukiIliskiTuruId")}
+      etiketler={{
+        tur: bilgi("davaTuruId", "Dava Türü (Nasıl yürüyecek?)"),
+        konu: bilgi("hukukiIliskiTuruId", "Dava Konusu (Ne hakkında?)"),
+      }}
+      yoneticiMi={yoneticiMi}
+    />
+  );
+
   const alanRenderHaritasi: Record<string, () => React.ReactNode> = {
-    hukukiIliskiTuruId: () => (
-      <UyusmazlikTuruSecici
-        etiket={bilgi("hukukiIliskiTuruId", "Dava Konusu (Ne hakkında?)")}
-        dallar={hukukDallari}
-        turler={hukukiIliskiTurleri}
-        varsayilanId={g?.hukukiIliskiTuruId ?? dosya?.hukukiIliskiTuruId ?? ""}
-        varsayilanYeniEtiket={g?.yeniHukukiIliskiTuruEtiketi}
-        yoneticiMi={yoneticiMi}
-      />
-    ),
-    davaTuruId: () => (
-      <UyusmazlikTuruSecici
-        turler={davaTurleri}
-        varsayilanId={g?.davaTuruId ?? dosya?.davaTuruId ?? ""}
-        varsayilanYeniEtiket={g?.yeniDavaTuruEtiketi}
-        alanAdi="davaTuruId"
-        yeniAlanAdi="yeniDavaTuruEtiketi"
-        etiket={bilgi("davaTuruId", "Davanın Türü (Talep Türü)")}
-        yoneticiMi={yoneticiMi}
-      />
-    ),
+    hukukiIliskiTuruId: siniflandirma,
+    davaTuruId: siniflandirma,
     birimAdi: () => (
       <Alan>
         <Etiket htmlFor="birimAdi">{bilgi("birimAdi", "Birim Adı (Mahkeme/İcra Dairesi)")}</Etiket>
@@ -174,7 +176,7 @@ export function DavaDosyasiFormIcerik({
         />
       </Alan>
     ),
-    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} etiket="Talep Sonucu / Takip Miktarı (Mahkemeden ne istiyoruz?)" />,
+    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} etiket="Dava Değeri (Netice ve Talep — mahkemeden ne istiyoruz?)" />,
   };
 
   // Yeni dosya acilisinda tek kart ve en az alan: muvekkil, karsi taraf,
@@ -197,7 +199,11 @@ export function DavaDosyasiFormIcerik({
     yoneticiMi,
   };
 
-  const yeniAlanlar = alanSirasi.filter((a) => KARTLAR[0].alanlar.includes(a));
+  const yeniAlanlar = alanSirasi
+    .filter((a) => KARTLAR[0].alanlar.includes(a))
+    // tur + konu tek blok: ikincisini atla
+    .filter((a, i, liste) => a !== "davaTuruId" || !liste.includes("hukukiIliskiTuruId") || liste.indexOf("hukukiIliskiTuruId") > i)
+    .filter((a, i, liste) => a !== "hukukiIliskiTuruId" || !liste.includes("davaTuruId") || liste.indexOf("davaTuruId") > i);
   const ekAlanlar = alanSirasi.filter((a) => KARTLAR[1].alanlar.includes(a));
   const ekDoluMu = Boolean(dosya?.buroNo);
 
@@ -243,7 +249,7 @@ export function DavaDosyasiFormIcerik({
           />
         </div>
       </FormKarti>
-      <FormKarti baslik="3 · İçerik Bilgileri (Hukuk Dalı · Dava Konusu · Talep Sonucu)">
+      <FormKarti baslik="3 · İçerik Bilgileri (Hukuk Dalı · Dava Türü · Dava Konusu · Dava Değeri)">
         <div key={`${anahtar}-b`}>
           {yeniAlanlar.map((a) => (
             <div key={a}>{alanRenderHaritasi[a]?.()}</div>

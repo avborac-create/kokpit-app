@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Etiket, Girdi } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
+import { davaDegeriHesapla, davaDegeriYaz } from "@/modules/dava-dosyasi/lib/dava-degeri";
 
 // Talep Sonucu tek bir serbest metin degil, davada istenen her kalemin
 // (ör. "170.000 TL kıdem tazminatı", "... hususunun tespiti") AYRI bir
@@ -41,6 +42,8 @@ export function TalepSonucuListesi({
   const [maddeler, setMaddeler] = useState<string[]>(
     baslangicMaddeler.length > 0 ? baslangicMaddeler : [""],
   );
+
+  const toplam = davaDegeriHesapla(maddeler);
 
   function guncelle(index: number, deger: string) {
     setMaddeler((liste) => liste.map((m, i) => (i === index ? deger : m)));
@@ -92,9 +95,17 @@ export function TalepSonucuListesi({
           </div>
         ))}
       </div>
-      <Dugme type="button" varyant="ikincil" className="mt-2" onClick={ekle}>
-        + Madde Ekle
-      </Dugme>
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        <Dugme type="button" varyant="ikincil" onClick={ekle}>
+          + Madde Ekle
+        </Dugme>
+        {toplam > 0 && (
+          <span className="text-sm text-white/70">
+            <span className="text-white/45">Dava değeri (toplam): </span>
+            <span className="font-semibold text-white">{davaDegeriYaz(toplam)}</span>
+          </span>
+        )}
+      </div>
     </div>
   );
 }

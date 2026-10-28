@@ -222,7 +222,7 @@ export async function davaDosyasiOlustur(
   formData: FormData,
 ): Promise<DavaDosyasiSonucu> {
   const musteriIdleri = musteriIdleriniAl(formData);
-  const davaTuruId = await manuelSecenekIdCozumle(formData, "davaTuruId", "yeniDavaTuruEtiketi", "dava_turu");
+  const davaTuruId = await manuelSecenekIdCozumle(formData, "davaTuruId", "yeniDavaTuruEtiketi", "dava_turu", metinYaAlNull(formData, "davaTuruUstId"));
   const talepSonucu = talepSonucuAl(formData);
   const gonderilenAlanlar = formVerileriniAl(formData);
   const gonderilenTalepMaddeleri = formData.getAll("talepMaddeleri").map(String);
@@ -313,7 +313,7 @@ export async function davaDosyasiGuncelle(
   formData: FormData,
 ): Promise<DavaDosyasiSonucu> {
   const musteriIdleri = musteriIdleriniAl(formData);
-  const davaTuruId = await manuelSecenekIdCozumle(formData, "davaTuruId", "yeniDavaTuruEtiketi", "dava_turu");
+  const davaTuruId = await manuelSecenekIdCozumle(formData, "davaTuruId", "yeniDavaTuruEtiketi", "dava_turu", metinYaAlNull(formData, "davaTuruUstId"));
   const talepSonucu = talepSonucuAl(formData);
   const gonderilenAlanlar = formVerileriniAl(formData);
   const gonderilenTalepMaddeleri = formData.getAll("talepMaddeleri").map(String);
@@ -594,8 +594,11 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
         const davaTuru = await prisma.secenekDegeri.findUnique({ where: { id: deger } });
         if (!davaTuru) throw new Error("Dava Türü bulunamadı.");
         data.davaTuruId = deger;
-        const mevcutKonu = await prisma.davaDosyasi.findUnique({ where: { id: dosyaId }, select: { davaKonusu: true } });
-        if (!mevcutKonu?.davaKonusu) data.konu = davaTuru.etiket;
+        const mevcutKonu = await prisma.davaDosyasi.findUnique({
+          where: { id: dosyaId },
+          select: { davaKonusu: true, hukukiIliskiTuruId: true },
+        });
+        if (!mevcutKonu?.davaKonusu && !mevcutKonu?.hukukiIliskiTuruId) data.konu = davaTuru.etiket;
         break;
       }
       case "davaKonusu":

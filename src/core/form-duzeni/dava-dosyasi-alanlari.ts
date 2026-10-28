@@ -13,11 +13,12 @@
 // listeden cikarildi - form-duzeni sayfasi bu listede olmayan eski DB
 // kayitlarini otomatik gizler (bkz. form-duzeni/page.tsx).
 export const DAVA_DOSYASI_ALAN_ETIKETLERI: Record<string, string> = {
+  davaTuruId: "Dava Türü",
   hukukiIliskiTuruId: "Dava Konusu",
   buroNo: "Büro No",
   dosyaNo: "Dosya No",
   birimAdi: "Birim Adı (Mahkeme/İcra Dairesi)",
-  talepSonucu: "Talep Sonucu",
+  talepSonucu: "Dava Değeri (Netice ve Talep)",
   dosyaSinifi: "Dosya Sınıfı (Tür / Yargı Kolu / Müvekkil Sıfatı)",
 };
 

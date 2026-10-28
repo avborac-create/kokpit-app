@@ -41,7 +41,7 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
   const alanSirasi = [
     ...kayitliAlanlar,
     ...Object.keys(DAVA_DOSYASI_ALAN_ETIKETLERI).filter((a) => !kayitliAlanlar.includes(a)),
-  ].filter((a) => !gizliAlanlar.has(a));
+  ].filter((a) => a === "davaTuruId" || !gizliAlanlar.has(a));
 
   return (
     <DavaDosyasiFormIcerik

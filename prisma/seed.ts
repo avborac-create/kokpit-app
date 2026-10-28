@@ -216,6 +216,8 @@ const SECENEK_LISTELERI: {
       { kod: "kira_alacagi_tahliye", etiket: "Kira Alacağı ve Tahliye", ustKod: "gayrimenkul_hukuku" },
       { kod: "sigortalilik_baslangic_suresi", etiket: "Sigortalılık Başlangıç Süresi", ustKod: "sgk_hukuku" },
       { kod: "senetten_dolayi_borcsuzluk", etiket: "Senetten Dolayı Borçsuzluk", ustKod: "borclar_hukuku" },
+      { kod: "fatura_alacagi", etiket: "Fatura Alacağı", ustKod: "ticaret_hukuku" },
+      { kod: "cezai_sart_kar_payi_alacagi", etiket: "Cezai Şart ve Kâr Payı Alacağı (Sözleşmeye Aykırılık)", ustKod: "borclar_hukuku" },
       { kod: "sozlesme_uyusmazligi", etiket: "Sözleşme Uyuşmazlığı" },
       { kod: "diger", etiket: "Diğer" },
     ],
@@ -291,8 +293,33 @@ const SECENEK_LISTELERI: {
       { kod: "insa", etiket: "İnşa (Yenilik Doğurucu) Dava" },
       { kod: "belirsiz_alacak", etiket: "Belirsiz Alacak Davası" },
       { kod: "menfi_tespit", etiket: "Menfi Tespit Davası" },
-      { kod: "iscilik_alacagi_davasi", etiket: "İşçilik Alacağı Davası" },
+      { kod: "iscilik_alacagi_davasi", etiket: "İşçilik Alacağı Davası", ustKod: "is_hukuku" },
       { kod: "icra_takibi", etiket: "İcra Takibi" },
+      // Usul bakimindan tur: yargilamanin seklini ve uygulanacak usul
+      // kurallarini belirler. Hukuk dalina bagli olanlar yalniz o dalda onerilir.
+      { kod: "itirazin_iptali_davasi", etiket: "İtirazın İptali Davası", ustKod: "icra_iflas_hukuku" },
+      { kod: "itirazin_kaldirilmasi", etiket: "İtirazın Kaldırılması (İİK m. 68)", ustKod: "icra_iflas_hukuku" },
+      { kod: "istihkak_davasi", etiket: "İstihkak Davası", ustKod: "icra_iflas_hukuku" },
+      { kod: "ise_iade_davasi", etiket: "İşe İade Davası", ustKod: "is_hukuku" },
+      { kod: "alacak_davasi", etiket: "Alacak Davası", ustKod: "borclar_hukuku" },
+      { kod: "bosanma_davasi", etiket: "Boşanma Davası", ustKod: "aile_hukuku" },
+      { kod: "tahliye_davasi", etiket: "Tahliye Davası", ustKod: "gayrimenkul_hukuku" },
+    ],
+  },
+  {
+    // Ust deger listesi: dava turu ve dava konusu bu dala gore suzulur.
+    anahtar: "hukuk_dali",
+    ad: "Hukuk Dalı",
+    degerler: [
+      { kod: "is_hukuku", etiket: "İş Hukuku" },
+      { kod: "borclar_hukuku", etiket: "Borçlar Hukuku" },
+      { kod: "ticaret_hukuku", etiket: "Ticaret Hukuku" },
+      { kod: "icra_iflas_hukuku", etiket: "İcra ve İflas Hukuku" },
+      { kod: "aile_hukuku", etiket: "Aile Hukuku" },
+      { kod: "gayrimenkul_hukuku", etiket: "Gayrimenkul / Eşya Hukuku" },
+      { kod: "sgk_hukuku", etiket: "Sosyal Güvenlik Hukuku" },
+      { kod: "tuketici_hukuku", etiket: "Tüketici Hukuku" },
+      { kod: "idare_hukuku", etiket: "İdare Hukuku" },
     ],
   },
   {

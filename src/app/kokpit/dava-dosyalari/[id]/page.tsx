@@ -10,6 +10,7 @@ import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { DavaDosyasiSekmeleri } from "@/modules/dava-dosyasi/components/dava-dosyasi-sekmeleri";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
+import { davaDegeriHesapla, davaDegeriYaz } from "@/modules/dava-dosyasi/lib/dava-degeri";
 import { DosyaBaglayici } from "@/modules/dava-dosyasi/components/dosya-baglayici";
 import { kokpitNoGoster, kayitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { Dugme } from "@/core/ui/button";
@@ -71,7 +72,7 @@ export default async function DavaDosyasiDetaySayfasi({
   const { id } = await params;
   const { sekme, alt } = await searchParams;
   const aktifSekme = sekme === "ekonomi" ? "ekonomi" : "genel";
-  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari] = await Promise.all([
+  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
     anaDosyaAdaylariniGetir(id),
@@ -81,6 +82,7 @@ export default async function DavaDosyasiDetaySayfasi({
     secenekleriGetir("hukuki_iliski_turu"),
     secenekleriGetir("hukuk_dali"),
     secenekleriGetir("muvekkil_sifati"),
+    secenekleriGetir("dava_turu"),
   ]);
   if (!dosya) notFound();
 
@@ -160,13 +162,29 @@ export default async function DavaDosyasiDetaySayfasi({
     },
   ];
   const konuSecenegi = uyusmazlikTurleri.find((t) => t.id === dosya.hukukiIliskiTuruId);
-  const hukukDali = hukukDallari.find((d) => d.id === konuSecenegi?.ustId);
+  const turSecenegi = davaTurleri.find((t) => t.id === dosya.davaTuruId);
+  const hukukDali = hukukDallari.find((d) => d.id === (konuSecenegi?.ustId ?? turSecenegi?.ustId));
+  const davaDegeri = davaDegeriHesapla((dosya.talepSonucu ?? "").split("\n").filter(Boolean));
   const icerikAlanlari: KartAlani[] = [
     {
       anahtar: "hukukDali",
       varsayilanEtiket: "Hukuk Dalı",
       tip: "salt",
       gosterim: hukukDali?.etiket ?? "—",
+    },
+    {
+      anahtar: "davaTuruId",
+      varsayilanEtiket: "Dava Türü",
+      tip: "secim",
+      deger: dosya.davaTuruId ?? "",
+      gosterim: dosya.davaTuru?.etiket ?? "—",
+      secenekler: [
+        { value: "", label: "—" },
+        ...davaTurleri.map((o) => {
+          const dal = hukukDallari.find((d) => d.id === o.ustId);
+          return { value: o.id, label: dal ? `${dal.etiket} › ${o.etiket}` : o.etiket };
+        }),
+      ],
     },
     {
       anahtar: "hukukiIliskiTuruId",
@@ -184,15 +202,23 @@ export default async function DavaDosyasiDetaySayfasi({
     },
     {
       anahtar: "talepSonucu",
-      varsayilanEtiket: "Talep Sonucu / Takip Miktarı",
+      varsayilanEtiket: "Dava Değeri (Netice ve Talep)",
       tip: "cokSatir",
       deger: dosya.talepSonucu ?? "",
       gosterim: dosya.talepSonucu ? (
+        <>
         <ol className="list-decimal space-y-0.5 pl-4">
           {dosya.talepSonucu.split("\n").map((madde, i) => (
             <li key={i}>{madde}</li>
           ))}
         </ol>
+        {davaDegeri > 0 && (
+          <p className="mt-1.5 text-sm">
+            <span className="text-white/50">Toplam dava değeri: </span>
+            <span className="font-semibold text-white">{davaDegeriYaz(davaDegeri)}</span>
+          </p>
+        )}
+        </>
       ) : (
         "—"
       ),

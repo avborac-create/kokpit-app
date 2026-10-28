@@ -24,6 +24,8 @@ export function UyusmazlikTuruSecici({
   yoneticiMi = false,
   listeAnahtari,
   dallar,
+  dalId,
+  dalAlanAdi,
 }: {
   turler: { id: string; etiket: string; ustId?: string | null }[];
   varsayilanId: string;
@@ -38,6 +40,10 @@ export function UyusmazlikTuruSecici({
   listeAnahtari?: string;
   // Verilirse yazilan/secilen listenin ustunde "Hukuk Dali" filtresi cikar.
   dallar?: { id: string; etiket: string }[];
+  // Hukuk dali disaridan (ortak) secilirse bu kutu kendi dal secimini cizmez;
+  // yalniz o dala gore suzer ve secili dali `dalAlanAdi` ile forma yazar.
+  dalId?: string;
+  dalAlanAdi?: string;
 }) {
   // Zorunlu (kisa, sabit) listeler acilir menu olarak kalir; istege bagli
   // uzun listeler tek kutuda "yaz ya da listeden sec" olur.
@@ -53,6 +59,8 @@ export function UyusmazlikTuruSecici({
         yoneticiMi={yoneticiMi}
         listeAnahtari={listeAnahtari}
         dallar={dallar}
+        dalId={dalId}
+        dalAlanAdi={dalAlanAdi}
       />
     );
   }
@@ -86,11 +94,15 @@ function YazVeSecKutusu({
   yoneticiMi = false,
   listeAnahtari,
   dallar,
+  dalId: disDalId,
+  dalAlanAdi = "hukukiIliskiTuruUstId",
 }: SeciciOzellikleri) {
   const baslangic =
     varsayilanYeniEtiket ?? turler.find((t) => t.id === varsayilanId)?.etiket ?? "";
   const [metin, setMetin] = useState(baslangic);
-  const [dalId, setDalId] = useState(turler.find((t) => t.id === varsayilanId)?.ustId ?? "");
+  const [icDalId, setDalId] = useState(turler.find((t) => t.id === varsayilanId)?.ustId ?? "");
+  const disaridanMi = disDalId !== undefined;
+  const dalId = disaridanMi ? disDalId : icDalId;
   const listeId = `${alanAdi}-liste`;
   // Dal secilince yalniz o dala bagli (ya da hicbir dala bagli olmayan) konular onerilir.
   const gorunenTurler = dalId ? turler.filter((t) => !t.ustId || t.ustId === dalId) : turler;
@@ -109,7 +121,8 @@ function YazVeSecKutusu({
           </Link>
         )}
       </div>
-      {dallar && (
+      {disaridanMi && <input type="hidden" name={dalAlanAdi} value={dalId} readOnly />}
+      {dallar && !disaridanMi && (
         <>
           <Secim
             value={dalId}
