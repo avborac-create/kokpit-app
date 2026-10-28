@@ -441,9 +441,11 @@ async function baslangicKullanicisiniOlustur() {
   const eposta = process.env.SEED_ADMIN_EPOSTA ?? "admin@eceshukuk.com";
   const sifre = process.env.SEED_ADMIN_SIFRE ?? "Degistir123!";
 
-  const mevcut = await prisma.kullanici.findUnique({ where: { eposta } });
-  if (mevcut) {
-    console.log(`✓ Yönetici kullanıcı zaten mevcut: ${eposta}`);
+  // Yalnizca veritabani tamamen bossa (ilk kurulum). Aksi halde bir yonetici
+  // e-postasini degistirdiginde/hesabi sildiginde her deploy'da varsayilan
+  // sifreyle yeni bir yonetici hesabi yeniden olusurdu.
+  if ((await prisma.kullanici.count()) > 0) {
+    console.log("✓ Kullanıcılar mevcut, başlangıç yöneticisi oluşturulmadı.");
     return;
   }
 
@@ -454,6 +456,7 @@ async function baslangicKullanicisiniOlustur() {
       eposta,
       sifreHash,
       rol: "YONETICI",
+      buroRolu: "YONETICI",
     },
   });
   console.log(`✓ Yönetici kullanıcı oluşturuldu: ${eposta} / ${sifre}`);
