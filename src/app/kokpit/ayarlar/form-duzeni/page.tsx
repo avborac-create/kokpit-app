@@ -63,12 +63,12 @@ export default async function FormDuzeniSayfasi() {
           <span className="text-xs text-white/30">Sabit</span>
         </div>
         <div className="flex items-center justify-between rounded-xl px-4 py-3">
-          <span className="text-sm font-medium text-white">Karşı Taraf(lar)</span>
+          <span className="text-sm font-medium text-white">Karşı Taraf</span>
           <span className="text-xs text-white/30">Sabit</span>
         </div>
       </div>
       <p className="mb-3 text-xs text-white/35">
-        Müvekkil ve Karşı Taraf(lar) her zaman en üstte, bu sırayla kalır — bunlar tekil
+        Müvekkil ve Karşı Taraf her zaman en üstte, bu sırayla kalır — bunlar tekil
         bir alan değil, kendi ekleme akışı olan seçiciler.
       </p>
 

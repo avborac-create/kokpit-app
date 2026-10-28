@@ -54,7 +54,7 @@ export default async function MusteriFinansAksiyonSayfasi({
                   <th className="px-4 py-3 font-medium">Dosya No</th>
                   <th className="px-4 py-3 font-medium">Tür</th>
                   <th className="px-4 py-3 font-medium">Konu</th>
-                  <th className="px-4 py-3 font-medium">Karşı Taraf(lar)</th>
+                  <th className="px-4 py-3 font-medium">Karşı Taraf</th>
                   <th className="px-4 py-3 font-medium">Durum</th>
                   <th className="px-4 py-3 font-medium">İşlemler</th>
                 </tr>

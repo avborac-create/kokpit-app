@@ -41,7 +41,7 @@ const SUTUN_ETIKETLERI: Record<SutunAnahtari, string> = {
   birim: "Birim",
   konu: "Konu",
   karsiTaraf: "Karşı Taraf",
-  muvekkiller: "Müvekkil(ler)",
+  muvekkiller: "Müvekkil",
   durum: "Durum",
   sorumluAvukat: "Sorumlu Avukat",
 };

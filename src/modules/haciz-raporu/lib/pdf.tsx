@@ -68,7 +68,7 @@ export function HacizRaporuBelgesi({ rapor }: { rapor: HacizRaporuDetay }) {
           <Text style={stiller.bolumBaslik}>Genel Bilgiler</Text>
           <Satir etiket="Avukat" deger={rapor.avukat.adSoyad} />
           <Satir etiket="Haciz Tarihi" deger={tarihFormatlayici.format(rapor.hacizTarihi)} />
-          <Satir etiket="Müvekkil(ler)" deger={muvekkiller} />
+          <Satir etiket="Müvekkil" deger={muvekkiller} />
           <Satir etiket="Dosya No" deger={rapor.davaDosyasi.dosyaNo ?? "—"} />
         </View>
 

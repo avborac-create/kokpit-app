@@ -27,7 +27,7 @@ export default async function HacizArtcilariSayfasi() {
             <tr>
               <th className="px-4 py-3 font-medium">Haciz Tarihi</th>
               <th className="px-4 py-3 font-medium">Dosya</th>
-              <th className="px-4 py-3 font-medium">Müvekkil(ler)</th>
+              <th className="px-4 py-3 font-medium">Müvekkil</th>
               <th className="px-4 py-3 font-medium">Avukat</th>
               <th className="px-4 py-3 font-medium">Tahsilat</th>
             </tr>

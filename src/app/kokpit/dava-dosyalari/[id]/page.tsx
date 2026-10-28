@@ -34,6 +34,21 @@ function Bilgi({ baslik, children }: { baslik: string; children: React.ReactNode
 
 // Birden fazla kisi/kurum varsa alt alta, sira numarali; tek ise duz metin;
 // hic yoksa "—". Taraflar kartinda kullanilir.
+// Tek taraf ise duz ad, birden fazlaysa "1. A  2. B" numarali satirlar.
+function NumaraliAdlar({ adlar }: { adlar: string[] }) {
+  if (adlar.length === 0) return <>—</>;
+  if (adlar.length === 1) return <>{adlar[0]}</>;
+  return (
+    <>
+      {adlar.map((ad, i) => (
+        <span key={i} className="mr-3 inline-block">
+          <span className="text-white/45">{i + 1}.</span> {ad}
+        </span>
+      ))}
+    </>
+  );
+}
+
 function SiraliListe({ children }: { children: React.ReactNode[] }) {
   if (children.length === 0) return <>—</>;
   if (children.length === 1) return <>{children[0]}</>;
@@ -187,7 +202,7 @@ export default async function DavaDosyasiDetaySayfasi({
   const taraflarAlanlari: KartAlani[] = [
     {
       anahtar: "muvekkiller",
-      varsayilanEtiket: "Müvekkil(ler)",
+      varsayilanEtiket: "Müvekkil",
       tip: "salt",
       gosterim: (
         <SiraliListe>
@@ -205,7 +220,7 @@ export default async function DavaDosyasiDetaySayfasi({
     },
     {
       anahtar: "karsiTaraflar",
-      varsayilanEtiket: "Karşı Taraf(lar)",
+      varsayilanEtiket: "Karşı Taraf",
       tip: "salt",
       gosterim: (
         <SiraliListe>{dosya.karsiTaraflar.map((kt) => <span key={kt.karsiTarafId}>{kt.karsiTaraf.ad}</span>)}</SiraliListe>
@@ -336,14 +351,14 @@ export default async function DavaDosyasiDetaySayfasi({
                   Müvekkil{dosya.muvekkilSifatiDegeri ? ` · ${dosya.muvekkilSifatiDegeri.etiket}` : ""}
                 </span>
                 <span className="text-white/90">
-                  {dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
+                  <NumaraliAdlar adlar={dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan)} />
                 </span>
               </div>
               <span className="self-center text-xs font-semibold uppercase tracking-widest text-white/30">karşı</span>
               <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5">
                 <span className="block text-[10px] font-semibold uppercase tracking-wider text-white/40">Karşı Taraf</span>
                 <span className="text-white/90">
-                  {dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—"}
+                  <NumaraliAdlar adlar={dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad)} />
                 </span>
               </div>
             </div>

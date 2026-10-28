@@ -27,7 +27,7 @@ function hacizRaporuBildirimHtmlOlustur(rapor: HacizRaporuDetay): string {
     satirHtml("Haciz Tarihi", tarihFormatlayici.format(rapor.hacizTarihi)),
     satirHtml("Avukat", rapor.avukat.adSoyad),
     satirHtml("Dosya", dosyaBilgisi),
-    satirHtml("Müvekkil(ler)", muvekkiller),
+    satirHtml("Müvekkil", muvekkiller),
     satirHtml("İşlem Yapılan Borçlular", rapor.islemYapilanBorclular),
     satirHtml("Muhafaza", HACIZ_ISLEMI_DURUMU_ETIKETLERI[rapor.muhafazaDurumu]),
     satirHtml("İstihkak", HACIZ_ISLEMI_DURUMU_ETIKETLERI[rapor.istihkakDurumu]),

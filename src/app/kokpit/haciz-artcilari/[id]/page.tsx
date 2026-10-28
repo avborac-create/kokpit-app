@@ -47,7 +47,7 @@ export default async function HacizRaporuDetaySayfasi({ params }: { params: Prom
           <p className="text-white">{rapor.avukat.adSoyad}</p>
         </div>
         <div>
-          <p className="text-white/45">Müvekkil(ler)</p>
+          <p className="text-white/45">Müvekkil</p>
           <p className="text-white">
             {rapor.davaDosyasi.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
           </p>

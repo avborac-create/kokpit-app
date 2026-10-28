@@ -40,7 +40,7 @@ export function KarsiTarafEkleyici({
 
   return (
     <Alan>
-      <Etiket htmlFor="karsiTarafGirdi">Karşı Taraf(lar)</Etiket>
+      <Etiket htmlFor="karsiTarafGirdi">Karşı Taraf</Etiket>
       <div className="flex gap-2">
         <Girdi
           id="karsiTarafGirdi"
