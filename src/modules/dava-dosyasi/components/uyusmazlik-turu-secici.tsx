@@ -116,7 +116,7 @@ function YazVeSecKutusu({
             aria-label="Hukuk Dalı (filtre)"
             className="mb-2"
           >
-            <option value="">Hukuk Dalı (filtre) — tümü</option>
+            <option value="">Diğer / hukuk dalı belirtilmiyor (tüm konular)</option>
             {dallar.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.etiket}
