@@ -274,80 +274,118 @@ export default async function DavaDosyasiDetaySayfasi({
 
   return (
     <div className="pt-3">
-      <KunyeSeridi className="mb-6 flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
-            <span className="text-white/45" title={dosya.anaDosya ? `Eski numarası: ${kayitNoGoster(dosya.kayitNo)}` : undefined}>
-              {kokpitNoGoster(dosya)}
-            </span>
-            {dosya.buroNo && (
-              <span title="OBJEKT BÜRO NO"> · {buroNoGoster(dosya.buroNo)}</span>
-            )}
-            {dosya.birimAdi || dosya.dosyaNo
-              ? ` · ${[dosya.birimAdi, dosya.dosyaNo].filter(Boolean).join(" ")}`
-              : ""}
-            {" — "}
-            {dosya.davaKonusu || dosya.konu}
-          </h1>
-          <p className="mt-1 text-sm text-white/75">
-            <span className="text-white/45">Müvekkil: </span>
-            {dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
-            <span className="text-white/45"> · Karşı Taraf: </span>
-            {dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—"}
-          </p>
-          <p className="mt-1 flex flex-wrap gap-2 text-sm text-white/55">
-            <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
-              {dosya.durum.etiket}
-            </span>
-            {dosya.tur && (
-              <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs text-white/70">
-                {dosya.tur.etiket}
+      <KunyeSeridi className="mb-6">
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span
+                className="rounded-md bg-white/[0.08] px-2 py-0.5 font-mono text-xs font-semibold tracking-wide text-white/85"
+                title={dosya.anaDosya ? `Eski numarası: ${kayitNoGoster(dosya.kayitNo)}` : "Kokpit No"}
+              >
+                {kokpitNoGoster(dosya)}
               </span>
-            )}
-            {(dosya.icraAltTuru ?? dosya.yargiKolu) && (
-              <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs text-white/70">
-                {(dosya.icraAltTuru ?? dosya.yargiKolu)!.etiket}
+              {dosya.buroNo && (
+                <span
+                  className="rounded-md bg-white/[0.08] px-2 py-0.5 font-mono text-xs font-semibold tracking-wide text-white/85"
+                  title="Objekt Büro No"
+                >
+                  {buroNoGoster(dosya.buroNo)}
+                </span>
+              )}
+              <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-medium text-[#6db8ff]">
+                {dosya.durum.etiket}
               </span>
+              {dosya.tur && (
+                <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs text-white/70">
+                  {dosya.tur.etiket}
+                </span>
+              )}
+              {(dosya.icraAltTuru ?? dosya.yargiKolu) && (
+                <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs text-white/70">
+                  {(dosya.icraAltTuru ?? dosya.yargiKolu)!.etiket}
+                </span>
+              )}
+              {dosya.hukukiIliskiTuru && (
+                <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs text-white/70">
+                  {dosya.hukukiIliskiTuru.etiket}
+                </span>
+              )}
+            </div>
+
+            <h1 className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+              {dosya.birimAdi || dosya.dosyaNo ? (
+                <>
+                  {dosya.birimAdi && <span>{dosya.birimAdi}</span>}
+                  {dosya.dosyaNo && (
+                    <span className="rounded-lg bg-[var(--accent-soft)] px-2.5 py-0.5 text-lg text-[#6db8ff]">
+                      {dosya.dosyaNo}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span>{dosya.davaKonusu || dosya.konu}</span>
+              )}
+            </h1>
+            {(dosya.birimAdi || dosya.dosyaNo) && (
+              <p className="mt-0.5 truncate text-sm text-white/55">{dosya.davaKonusu || dosya.konu}</p>
             )}
-            {dosya.hukukiIliskiTuru && (
-              <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs text-white/70">
-                {dosya.hukukiIliskiTuru.etiket}
-              </span>
-            )}
-            <span
-              className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                dosyaEkonomisi.net > 0
-                  ? "bg-[#ff7a70]/15 text-[#ff7a70]"
+
+            <div className="mt-3 flex flex-wrap items-stretch gap-2 text-sm">
+              <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5">
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-white/40">
+                  Müvekkil{dosya.muvekkilSifatiDegeri ? ` · ${dosya.muvekkilSifatiDegeri.etiket}` : ""}
+                </span>
+                <span className="text-white/90">
+                  {dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
+                </span>
+              </div>
+              <span className="self-center text-xs font-semibold uppercase tracking-widest text-white/30">karşı</span>
+              <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5">
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-white/40">Karşı Taraf</span>
+                <span className="text-white/90">
+                  {dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex gap-2">
+              <Link href={`/kokpit/dava-dosyalari/${id}/duzenle`}>
+                <Dugme varyant="ikincil">Düzenle</Dugme>
+              </Link>
+              {silmeYetkisiVar && (
+                <DavaDosyasiSilmeButonu dosyaId={id} sonrasindaYonlendir="/kokpit/dava-dosyalari" />
+              )}
+            </div>
+            <div className="flex flex-wrap justify-end gap-1.5">
+              <span
+                className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  dosyaEkonomisi.net > 0
+                    ? "bg-[#ff7a70]/15 text-[#ff7a70]"
+                    : dosyaEkonomisi.net < 0
+                      ? "bg-[#32d74b]/15 text-[#32d74b]"
+                      : "bg-white/[0.06] text-white/60"
+                }`}
+              >
+                {dosyaEkonomisi.net > 0
+                  ? `Müvekkil Borcu: ${paraFormatlayici.format(dosyaEkonomisi.net)}`
                   : dosyaEkonomisi.net < 0
-                    ? "bg-[#32d74b]/15 text-[#32d74b]"
-                    : "bg-white/[0.06] text-white/60"
-              }`}
-            >
-              {dosyaEkonomisi.net > 0
-                ? `Müvekkil Borcu: ${paraFormatlayici.format(dosyaEkonomisi.net)}`
-                : dosyaEkonomisi.net < 0
-                  ? `Müvekkil Lehine Fazla: ${paraFormatlayici.format(-dosyaEkonomisi.net)}`
-                  : "Bakiye yok"}
-            </span>
-            {dosyaEkonomisi.paraBakiyesi > 0 && (
-              <span className="whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2.5 py-0.5 text-xs font-medium text-[#6db8ff]">
-                Para trafiğinde bekleyen: {paraFormatlayici.format(dosyaEkonomisi.paraBakiyesi)}
+                    ? `Müvekkil Lehine Fazla: ${paraFormatlayici.format(-dosyaEkonomisi.net)}`
+                    : "Bakiye yok"}
               </span>
-            )}
-            {agacNet !== null && (
-              <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-medium text-white/70">
-                Alt dosyalar dahil net: {paraFormatlayici.format(agacNet)}
-              </span>
-            )}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/kokpit/dava-dosyalari/${id}/duzenle`}>
-            <Dugme varyant="ikincil">Düzenle</Dugme>
-          </Link>
-          {silmeYetkisiVar && (
-            <DavaDosyasiSilmeButonu dosyaId={id} sonrasindaYonlendir="/kokpit/dava-dosyalari" />
-          )}
+              {dosyaEkonomisi.paraBakiyesi > 0 && (
+                <span className="whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2.5 py-0.5 text-xs font-medium text-[#6db8ff]">
+                  Para trafiğinde bekleyen: {paraFormatlayici.format(dosyaEkonomisi.paraBakiyesi)}
+                </span>
+              )}
+              {agacNet !== null && (
+                <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-medium text-white/70">
+                  Alt dosyalar dahil net: {paraFormatlayici.format(agacNet)}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </KunyeSeridi>
 
