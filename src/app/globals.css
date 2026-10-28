@@ -4,7 +4,7 @@
    TEMA SISTEMI
    <html> uzerindeki uc nitelik gorunumu belirler (bkz. src/core/gorunum):
      data-tema   = acik | koyu          (sistem secimi betik tarafindan cozulur)
-     data-palet  = fume | bakir | petrol | lacivert
+     data-palet  = apple | fume | bakir | petrol | lacivert
      data-cam    = kapali | hafif | orta | yogun
    Arayuzdeki yuzlerce "text-white / bg-white/10 / border-white/10" sinifi
    Tailwind v4'te var(--color-white) uzerinden uretilir. Acik modda
@@ -83,6 +83,15 @@ html[data-palet="lacivert"][data-tema="koyu"] {
   --blob-1: #364783; --blob-2: #4d473a; --blob-3: #2e3e72;
 }
 
+/* Apple dili: saf siyah zemin, #1c1c1e kartlar, sistem mavisi, ince cizgiler. */
+html[data-palet="apple"][data-tema="koyu"] {
+  --background: #000000; --background-2: #1c1c1e; --yuzey: #1c1c1e;
+  --accent: #0a84ff; --accent-soft: rgba(10, 132, 255, 0.22); --link: #409cff;
+  --blob-1: #0a2a52; --blob-2: #1c1c1e; --blob-3: #0d1b30;
+  --glass-border: rgba(255, 255, 255, 0.08); --glass-cizgi: rgba(255, 255, 255, 0.1);
+  --glass-parilti: rgba(255, 255, 255, 0.07);
+}
+
 /* ---- Paletler: ACIK mod ---- */
 html[data-tema="acik"] {
   --color-white: var(--murekkep);
@@ -122,6 +131,21 @@ html[data-palet="lacivert"][data-tema="acik"] {
   --accent: #2d4a8a; --accent-soft: rgba(45, 74, 138, 0.14); --link: #243f78;
   --blob-1: #a4b6da; --blob-2: #ddd2b8; --blob-3: #7389bc;
 }
+
+html[data-palet="apple"][data-tema="acik"] {
+  --murekkep: #1c1c1e; --background: #f2f2f7; --background-2: #ffffff; --yuzey: #ffffff;
+  --accent: #007aff; --accent-soft: rgba(0, 122, 255, 0.12); --link: #0066d6;
+  --blob-1: #d8e4f7; --blob-2: #e5e5ea; --blob-3: #e6edf9;
+  --glass-border: rgba(60, 60, 67, 0.1); --glass-cizgi: rgba(60, 60, 67, 0.16);
+  --glass-parilti: rgba(255, 255, 255, 0.9); --glass-golge: rgba(0, 0, 0, 0.08);
+}
+html[data-palet="apple"] body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI Variable Text", "Segoe UI", var(--font-geist-sans), Arial, sans-serif;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+html[data-palet="apple"] .glass,
+html[data-palet="apple"] .glass-strong { backdrop-filter: blur(var(--cam-bulaniklik)) saturate(190%); -webkit-backdrop-filter: blur(var(--cam-bulaniklik)) saturate(190%); }
 
 /* ---- Cam kademeleri (bulaniklik ust siniri bilerek 20px: ekran karti yuku) ---- */
 html[data-cam="hafif"] { --cam-bulaniklik: 8px; }
