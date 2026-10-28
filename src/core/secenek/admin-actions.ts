@@ -54,15 +54,37 @@ export async function secenekDegeriEkle(listeId: string, formData: FormData) {
     _max: { siraNo: true },
   });
 
+  const ustId = String(formData.get("ustId") ?? "").trim() || null;
+
   await prisma.secenekDegeri.create({
     data: {
       listeId,
       kod,
       etiket,
       siraNo: (enBuyukSira._max.siraNo ?? -1) + 1,
+      ustId,
     },
   });
 
+  revalidatePath(AYARLAR_YOLU);
+  updateTag("secenek-listeleri");
+}
+
+// Dosya formundaki yerinde duzenleme paneli icin: liste anahtariyla ekler.
+export async function secenekDegeriEkleAnahtarla(listeAnahtari: string, etiket: string, ustId: string | null) {
+  await yetkiKontrolEt();
+  const liste = await prisma.secenekListesi.findUnique({ where: { anahtar: listeAnahtari } });
+  if (!liste) throw new Error("Liste bulunamadı.");
+  const fd = new FormData();
+  fd.set("etiket", etiket);
+  if (ustId) fd.set("ustId", ustId);
+  await secenekDegeriEkle(liste.id, fd);
+}
+
+// Bir degerin bagli oldugu ust degeri (ör. konunun hukuk dali) degistirir; null = hicbir dala bagli degil.
+export async function secenekDegeriUstDegistir(id: string, ustId: string | null) {
+  await yetkiKontrolEt();
+  await prisma.secenekDegeri.update({ where: { id }, data: { ustId } });
   revalidatePath(AYARLAR_YOLU);
   updateTag("secenek-listeleri");
 }

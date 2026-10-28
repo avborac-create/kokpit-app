@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
 import { SecenekYerindeDuzenle } from "./secenek-yerinde-duzenle";
+import { SecenekDuzenleyici } from "./secenek-duzenleyici";
 
 export const MANUEL_UYUSMAZLIK_DEGERI = "__manuel__";
 
@@ -123,6 +124,9 @@ function YazVeSecKutusu({
               </option>
             ))}
           </Secim>
+          {yoneticiMi && (
+            <SecenekDuzenleyici listeAnahtari="hukuk_dali" secenekler={dallar} baslik="Hukuk dallarını düzenle" />
+          )}
           <input type="hidden" name="hukukiIliskiTuruUstId" value={dalId} readOnly />
         </>
       )}
@@ -135,6 +139,14 @@ function YazVeSecKutusu({
         onChange={(e) => setMetin(e.target.value)}
         placeholder="Yazın ya da listeden seçin…"
       />
+      {yoneticiMi && (
+        <SecenekDuzenleyici
+          listeAnahtari={listeAnahtari ?? (alanAdi === "davaTuruId" ? "dava_turu" : "hukuki_iliski_turu")}
+          secenekler={turler}
+          dallar={dallar}
+          baslik="Seçenekleri düzenle"
+        />
+      )}
       <datalist id={listeId}>
         {gorunenTurler.map((t) => (
           <option key={t.id} value={t.etiket} />
