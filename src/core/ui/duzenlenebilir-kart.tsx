@@ -30,6 +30,7 @@ export function DuzenlenebilirKart({
   etiketDuzenleyebilir,
   onKaydet,
   children,
+  duz = false,
 }: {
   etiketOnEki: string; // ör. "dosya-detay.dosya-bilgileri"
   varsayilanBaslik: string;
@@ -38,6 +39,8 @@ export function DuzenlenebilirKart({
   etiketDuzenleyebilir: boolean;
   onKaydet?: (degerler: Record<string, string>) => Promise<void>;
   children?: React.ReactNode;
+  // true: ayri cam kart yerine ortak bir kartin icinde ince ayiracli bolum olarak cizilir.
+  duz?: boolean;
 }) {
   const router = useRouter();
   const [duzenleniyor, setDuzenleniyor] = useState(false);
@@ -101,8 +104,8 @@ export function DuzenlenebilirKart({
   }
 
   return (
-    <div className="glass mb-4 rounded-2xl p-4 sm:p-5">
-      <div className="mb-4 flex items-center justify-between gap-2">
+    <div className={duz ? "py-3.5 first:pt-1 last:pb-1" : "glass mb-4 rounded-2xl p-4 sm:p-5"}>
+      <div className={`${duz ? "mb-2" : "mb-4"} flex items-center justify-between gap-2`}>
         {duzenleniyor && etiketDuzenleyebilir ? (
           <input
             value={yeniEtiketler[baslikAnahtari] ?? ""}
@@ -111,7 +114,7 @@ export function DuzenlenebilirKart({
             className="w-full rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white outline-none focus:border-[var(--accent)]"
           />
         ) : (
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">{gecerliBaslik}</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-white/50">{gecerliBaslik}</h3>
         )}
         {!duzenleniyor && (etiketDuzenleyebilir || duzenlenebilirDeger) && (
           <button
@@ -124,8 +127,12 @@ export function DuzenlenebilirKart({
         )}
       </div>
 
+      <div className={`grid gap-x-6 ${duz ? "gap-y-2.5" : "gap-y-3"} sm:grid-cols-2 xl:grid-cols-3`}>
       {alanlar.map((a) => (
-        <div key={a.anahtar} className="mb-5 text-lg font-medium last:mb-0">
+        <div
+          key={a.anahtar}
+          className={`text-[15px] font-medium ${a.tip === "salt" || a.tip === "cokSatir" ? "sm:col-span-2 xl:col-span-3" : ""}`}
+        >
           {duzenleniyor ? (
             <>
               {etiketDuzenleyebilir ? (
@@ -177,6 +184,7 @@ export function DuzenlenebilirKart({
           )}
         </div>
       ))}
+      </div>
 
       {children}
 

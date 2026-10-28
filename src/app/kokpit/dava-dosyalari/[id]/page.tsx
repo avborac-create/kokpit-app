@@ -293,45 +293,45 @@ export default async function DavaDosyasiDetaySayfasi({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <span
-                className="rounded-md bg-white/[0.08] px-2 py-0.5 font-mono text-sm font-semibold tracking-wide text-white"
+                className="rounded-md bg-white/[0.08] px-2 py-0.5 font-mono text-xs font-semibold tracking-wide text-white"
                 title={dosya.anaDosya ? `Eski numarası: ${kayitNoGoster(dosya.kayitNo)}` : "Kokpit No"}
               >
                 {kokpitNoGoster(dosya)}
               </span>
               {dosya.buroNo && (
                 <span
-                  className="rounded-md bg-white/[0.08] px-2 py-0.5 font-mono text-sm font-semibold tracking-wide text-white"
+                  className="rounded-md bg-white/[0.08] px-2 py-0.5 font-mono text-xs font-semibold tracking-wide text-white"
                   title="Objekt Büro No"
                 >
                   {buroNoGoster(dosya.buroNo)}
                 </span>
               )}
-              <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-medium text-[#8fb4e8]">
+              <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-medium text-[#8fb4e8]">
                 {dosya.durum.etiket}
               </span>
               {dosya.tur && (
-                <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-3 py-1 text-sm text-white/90">
+                <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs text-white/90">
                   {dosya.tur.etiket}
                 </span>
               )}
               {(dosya.icraAltTuru ?? dosya.yargiKolu) && (
-                <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-3 py-1 text-sm text-white/90">
+                <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs text-white/90">
                   {(dosya.icraAltTuru ?? dosya.yargiKolu)!.etiket}
                 </span>
               )}
               {hukukDali && (
-                <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-3 py-1 text-sm text-white/90">
+                <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs text-white/90">
                   {hukukDali.etiket}
                 </span>
               )}
             </div>
 
-            <h1 className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            <h1 className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xl font-semibold tracking-tight text-white sm:text-2xl">
               {dosya.birimAdi || dosya.dosyaNo ? (
                 <>
                   {dosya.birimAdi && <span>{dosya.birimAdi}</span>}
                   {dosya.dosyaNo && (
-                    <span className="rounded-lg bg-[var(--accent-soft)] px-3 py-0.5 text-2xl text-[#8fb4e8]">
+                    <span className="rounded-lg bg-[var(--accent-soft)] px-2.5 py-0 text-xl text-[#8fb4e8]">
                       {dosya.dosyaNo}
                     </span>
                   )}
@@ -341,21 +341,21 @@ export default async function DavaDosyasiDetaySayfasi({
               )}
             </h1>
             {(dosya.birimAdi || dosya.dosyaNo) && (
-              <p className="mt-1 truncate text-base text-white/80">{dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}</p>
+              <p className="mt-0.5 truncate text-sm text-white/80">{dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}</p>
             )}
 
-            <div className="mt-3 flex flex-wrap items-stretch gap-2 text-base">
-              <div className="min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-3.5 py-2">
+            <div className="mt-2 flex flex-wrap items-stretch gap-2 text-sm">
+              <div className="min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-3 py-1">
                 <span className="block text-xs font-semibold uppercase tracking-wider text-[#8fb4e8]">
                   Müvekkil{dosya.muvekkilSifatiDegeri ? ` · ${dosya.muvekkilSifatiDegeri.etiket}` : ""}
                 </span>
-                <span className="text-lg font-medium text-white">
+                <span className="text-base font-medium text-white">
                   <NumaraliAdlar adlar={dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan)} />
                 </span>
               </div>
-              <div className="min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-3.5 py-2">
+              <div className="min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-3 py-1">
                 <span className="block text-xs font-semibold uppercase tracking-wider text-[#8fb4e8]">Karşı Taraf</span>
-                <span className="text-lg font-medium text-white">
+                <span className="text-base font-medium text-white">
                   <NumaraliAdlar adlar={dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad)} />
                 </span>
               </div>
@@ -373,7 +373,7 @@ export default async function DavaDosyasiDetaySayfasi({
             </div>
             <div className="flex flex-wrap justify-end gap-1.5">
               <span
-                className={`whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium ${
+                className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   dosyaEkonomisi.net > 0
                     ? "bg-[#ff7a70]/15 text-[#ff7a70]"
                     : dosyaEkonomisi.net < 0
@@ -388,12 +388,12 @@ export default async function DavaDosyasiDetaySayfasi({
                     : "Bakiye yok"}
               </span>
               {dosyaEkonomisi.paraBakiyesi > 0 && (
-                <span className="whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-3 py-1 text-sm font-medium text-[#8fb4e8]">
+                <span className="whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2.5 py-0.5 text-xs font-medium text-[#8fb4e8]">
                   Para trafiğinde bekleyen: {paraFormatlayici.format(dosyaEkonomisi.paraBakiyesi)}
                 </span>
               )}
               {agacNet !== null && (
-                <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-3 py-1 text-sm font-medium text-white/90">
+                <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs font-medium text-white/90">
                   Alt dosyalar dahil net: {paraFormatlayici.format(agacNet)}
                 </span>
               )}
@@ -408,8 +408,9 @@ export default async function DavaDosyasiDetaySayfasi({
 
       {aktifSekme === "genel" ? (
         <>
-          <div className="mb-8 max-w-2xl">
+          <div className="glass mb-6 max-w-5xl divide-y divide-white/10 rounded-2xl px-5 py-3">
             <DuzenlenebilirKart
+              duz
               etiketOnEki="dosya-detay.taraf-bilgileri"
               varsayilanBaslik="Taraf Bilgileri"
               etiketler={etiketler}
@@ -419,6 +420,7 @@ export default async function DavaDosyasiDetaySayfasi({
             />
 
             <DuzenlenebilirKart
+              duz
               etiketOnEki="dosya-detay.kunye"
               varsayilanBaslik="Künye (Tür · Birim · Dosya No)"
               etiketler={etiketler}
@@ -428,6 +430,7 @@ export default async function DavaDosyasiDetaySayfasi({
             />
 
             <DuzenlenebilirKart
+              duz
               etiketOnEki="dosya-detay.icerik"
               varsayilanBaslik="İçerik"
               etiketler={etiketler}
