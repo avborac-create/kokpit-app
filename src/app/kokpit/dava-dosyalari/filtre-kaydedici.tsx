@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DOSYA_FILTRE_COOKIE } from "./filtre-sabitleri";
+import { DOSYA_FILTRE_COOKIE, DOSYA_FILTRE_ZAMAN_ASIMI_SN } from "./filtre-sabitleri";
 
 const FILTRE_ANAHTARLARI = ["arama", "durum", "musteri"];
 
@@ -34,7 +34,7 @@ export function FiltreKaydedici() {
     }
     const metin = aktif.toString();
     document.cookie = metin
-      ? `${DOSYA_FILTRE_COOKIE}=${encodeURIComponent(metin)}; path=/; max-age=31536000; samesite=lax`
+      ? `${DOSYA_FILTRE_COOKIE}=${encodeURIComponent(metin)}; path=/; max-age=${DOSYA_FILTRE_ZAMAN_ASIMI_SN}; samesite=lax`
       : `${DOSYA_FILTRE_COOKIE}=; path=/; max-age=0; samesite=lax`;
   }, [arama, router]);
 
