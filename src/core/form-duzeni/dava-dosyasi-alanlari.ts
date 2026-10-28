@@ -14,11 +14,11 @@
 // kayitlarini otomatik gizler (bkz. form-duzeni/page.tsx).
 export const DAVA_DOSYASI_ALAN_ETIKETLERI: Record<string, string> = {
   hukukiIliskiTuruId: "Uyuşmazlık Türü",
-  davaTuruId: "Tür",
+  davaTuruId: "Davanın Türü",
   buroNo: "Büro No",
   dosyaNo: "Dosya No",
   birimAdi: "Birim Adı (Mahkeme/İcra Dairesi)",
-  davaKonusu: "Davanın / Takibin Konusu",
+  davaKonusu: "Davanın Konusu",
   talepSonucu: "Talep Sonucu",
   durusmaTarihi: "Duruşma Tarihi",
   dosyaSinifi: "Dosya Sınıfı (Tür / Yargı Kolu / Müvekkil Sıfatı)",

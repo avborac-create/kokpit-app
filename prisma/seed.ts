@@ -277,6 +277,9 @@ const SECENEK_LISTELERI: {
       // Sadelestirilmis Yeni Dosya formunun cekirdek alanlarindan biri -
       // somut dava sinifi (ör. "İşçilik Alacağı Davası"). Admin, Ayarlar >
       // Seçenek Listeleri'nden yeni degerler ekleyebilir.
+      { kod: "eda", etiket: "Eda (İfa) Davası" },
+      { kod: "tespit", etiket: "Tespit Davası" },
+      { kod: "insa", etiket: "İnşa (Yenilik Doğurucu) Dava" },
       { kod: "iscilik_alacagi_davasi", etiket: "İşçilik Alacağı Davası" },
       { kod: "icra_takibi", etiket: "İcra Takibi" },
     ],

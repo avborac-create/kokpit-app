@@ -39,10 +39,10 @@ type DosyaDegerleri = {
 // istenir; gerisi "Ek bilgiler" altinda opsiyoneldir (dosya detayindan da
 // sonradan girilebilir).
 const KARTLAR: { baslik: string; alanlar: string[]; ekBilgi?: boolean }[] = [
-  { baslik: "Dosya Bilgileri", alanlar: ["birimAdi", "dosyaNo", "davaKonusu"] },
+  { baslik: "Dosya Bilgileri", alanlar: ["birimAdi", "dosyaNo", "davaKonusu", "davaTuruId", "talepSonucu"] },
   {
     baslik: "Ek Bilgiler (isteğe bağlı)",
-    alanlar: ["hukukiIliskiTuruId", "davaTuruId", "buroNo", "talepSonucu", "durusmaTarihi"],
+    alanlar: ["hukukiIliskiTuruId", "buroNo", "durusmaTarihi"],
     ekBilgi: true,
   },
 ];
@@ -122,7 +122,7 @@ export function DavaDosyasiFormIcerik({
         varsayilanYeniEtiket={g?.yeniDavaTuruEtiketi}
         alanAdi="davaTuruId"
         yeniAlanAdi="yeniDavaTuruEtiketi"
-        etiket={bilgi("davaTuruId", "Tür")}
+        etiket={bilgi("davaTuruId", "Davanın Türü (Eda / Tespit / İnşa)")}
         yoneticiMi={yoneticiMi}
       />
     ),
@@ -139,11 +139,11 @@ export function DavaDosyasiFormIcerik({
     ),
     davaKonusu: () => (
       <Alan>
-        <Etiket htmlFor="davaKonusu">{bilgi("davaKonusu", "Davanın / Takibin Konusu")}</Etiket>
+        <Etiket htmlFor="davaKonusu">{bilgi("davaKonusu", "Davanın Konusu")}</Etiket>
         <Girdi
           id="davaKonusu"
           name="davaKonusu"
-          placeholder="ör. SİGORTALILIK BAŞLANGIÇ TESPİTİ · ÇEK - ÖRNEK NO 10"
+          placeholder="Ne isteniyor? ör. 1.000.000 TL para alacağı"
           defaultValue={g?.davaKonusu ?? dosya?.davaKonusu ?? ""}
         />
       </Alan>
@@ -170,7 +170,7 @@ export function DavaDosyasiFormIcerik({
         />
       </Alan>
     ),
-    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} etiket={talep("talepSonucu", "Talep Sonucu")} />,
+    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} etiket={talep("talepSonucu", "Talep Sonucu (netice ve talep)")} />,
     durusmaTarihi: () => (
       <Alan>
         <Etiket htmlFor="durusmaTarihi">{talep("durusmaTarihi", "Duruşma Tarihi")}</Etiket>
@@ -210,11 +210,9 @@ export function DavaDosyasiFormIcerik({
     </div>
   );
 
-  const yeniAlanlar = alanSirasi.filter((a) => a === "birimAdi" || a === "dosyaNo" || a === "davaKonusu");
+  const yeniAlanlar = alanSirasi.filter((a) => KARTLAR[0].alanlar.includes(a));
   const ekAlanlar = alanSirasi.filter((a) => KARTLAR[1].alanlar.includes(a));
-  const ekDoluMu = Boolean(
-    dosya?.davaTuruId || dosya?.talepSonucu || dosya?.hukukiIliskiTuruId || dosya?.buroNo || dosya?.durusmaTarihi,
-  );
+  const ekDoluMu = Boolean(dosya?.hukukiIliskiTuruId || dosya?.buroNo || dosya?.durusmaTarihi);
 
   return (
     <form action={formAction} className="max-w-2xl" autoComplete="off">

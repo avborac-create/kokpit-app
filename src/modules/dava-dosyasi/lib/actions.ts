@@ -246,7 +246,9 @@ export async function davaDosyasiOlustur(
   // zaten kendi kartinda ayrica gosterildigi icin ayni bilgi iki yerde
   // tekrar eder (bkz. kullanici geri bildirimi).
   // Dava turu girilmediyse konu dosya turunden turetilir.
-  const konu = davaTuru?.etiket ?? (await dosyaTuruEtiketi(turId));
+  // Davanin konusu girildiyse baslik o olur (ör. "1.000.000 TL para alacagi");
+  // dava turu (Eda/Tespit/Insa) hukuki korumanin niteligidir, baslik olmaz.
+  const konu = metinYaAlNull(formData, "davaKonusu") ?? davaTuru?.etiket ?? (await dosyaTuruEtiketi(turId));
 
   const dosya = await prisma.davaDosyasi.create({
     data: {
@@ -313,9 +315,12 @@ export async function davaDosyasiGuncelle(
     where: { id },
     select: { turId: true, konu: true },
   });
-  const konu = g("davaTuruId")
-    ? (davaTuru?.etiket ?? (await dosyaTuruEtiketi(sinif?.turId ?? mevcut.turId ?? (await varsayilanTurIdGetir()))))
-    : mevcut.konu;
+  const yeniDavaKonusu = g("davaKonusu") ? metinYaAlNull(formData, "davaKonusu") : null;
+  const konu =
+    yeniDavaKonusu ??
+    (g("davaTuruId")
+      ? (davaTuru?.etiket ?? (await dosyaTuruEtiketi(sinif?.turId ?? mevcut.turId ?? (await varsayilanTurIdGetir()))))
+      : mevcut.konu);
 
   // Iyimser kilitleme: form acildiginda gorulen surum. Alan yoksa/bozuksa
   // (eski sekme, elle gonderim) kontrol atlanmaz, cakisma sayilir.
@@ -534,9 +539,14 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
         const davaTuru = await prisma.secenekDegeri.findUnique({ where: { id: deger } });
         if (!davaTuru) throw new Error("Dava Türü bulunamadı.");
         data.davaTuruId = deger;
-        data.konu = davaTuru.etiket;
+        const mevcutKonu = await prisma.davaDosyasi.findUnique({ where: { id: dosyaId }, select: { davaKonusu: true } });
+        if (!mevcutKonu?.davaKonusu) data.konu = davaTuru.etiket;
         break;
       }
+      case "davaKonusu":
+        data.davaKonusu = deger || null;
+        if (deger) data.konu = deger;
+        break;
       case "yargiKoluId":
       case "hukukiIliskiTuruId":
         data[alan] = deger || null;

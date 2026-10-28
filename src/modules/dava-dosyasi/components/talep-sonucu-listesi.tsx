@@ -12,6 +12,25 @@ import { Dugme } from "@/core/ui/button";
 // serbestce yeniden yazilabilir). Sunucu tarafinda tum maddeler "\n" ile
 // birlestirilip mevcut `talepSonucu` sutununa yazilir (bkz. actions.ts) -
 // ayri bir tablo/migration gerektirmez.
+// Dilekceden yapistirilan tek paragraflik neticeyi maddelere boler: once
+// "1-", "2.", "3)", "(4)", "a)" gibi numaralandirmaya, numara yoksa satir
+// sonlarina, o da yoksa ";" ve cumle sonlarina gore. "1.000.000" gibi
+// binlik ayiracli sayilar numara sayilmaz (isaretten sonra bosluk sart).
+export function talebiMaddelereBol(metin: string): string[] {
+  const temiz = metin.replace(/\r/g, "").trim();
+  const isaret = /(?:^|[\s;:])(?:\(\d{1,2}\)|\d{1,2}\s*[-–.)]|[a-zçğıöşü]\s*\))\s+(?=\S)/giu;
+  let parcalar = temiz.split(isaret);
+  if (parcalar.filter((p) => p.trim()).length < 2) {
+    parcalar = temiz.split(/\n+/);
+  }
+  if (parcalar.filter((p) => p.trim()).length < 2) {
+    parcalar = temiz.split(/;\s*|(?<=[.])\s+(?=[A-ZÇĞİÖŞÜ])/u);
+  }
+  return parcalar
+    .map((p) => p.replace(/\s+/g, " ").trim().replace(/^[;,\-–.]+\s*|\s*;$/g, ""))
+    .filter((p) => p && !/^(açıklanan|yukarıda arz ve izah edilen) (nedenlerle|sebeplerle)$/iu.test(p));
+}
+
 export function TalepSonucuListesi({
   baslangicMaddeler = [],
   etiket = "Talep Sonucu",
@@ -25,6 +44,18 @@ export function TalepSonucuListesi({
 
   function guncelle(index: number, deger: string) {
     setMaddeler((liste) => liste.map((m, i) => (i === index ? deger : m)));
+  }
+
+  // Cok maddeli metin yapistirilirsa kutuya tek parca halinde degil, her
+  // madde ayri kutuya yazilir. Tek satirlik yapistirma normal davranir.
+  function yapistirildi(index: number, e: React.ClipboardEvent<HTMLInputElement>) {
+    const parcalar = talebiMaddelereBol(e.clipboardData.getData("text"));
+    if (parcalar.length < 2) return;
+    e.preventDefault();
+    setMaddeler((liste) => {
+      const bosMu = !liste[index]?.trim();
+      return [...liste.slice(0, bosMu ? index : index + 1), ...parcalar, ...liste.slice(index + 1)];
+    });
   }
 
   function ekle() {
@@ -46,7 +77,8 @@ export function TalepSonucuListesi({
               name="talepMaddeleri"
               value={madde}
               onChange={(e) => guncelle(index, e.target.value)}
-              placeholder="ör. 170.000 TL kıdem tazminatı"
+              onPaste={(e) => yapistirildi(index, e)}
+              placeholder={index === 0 ? "Netice ve talebi buraya yapıştırın; maddelere kendiliğinden ayrılır" : "Talep maddesi"}
               className="flex-1"
             />
             <button
