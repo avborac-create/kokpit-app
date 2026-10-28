@@ -208,6 +208,7 @@ const SECENEK_LISTELERI: {
       { kod: "ttok", etiket: "TTOK" },
       { kod: "is_hukuku_uyusmazligi", etiket: "İş Hukuku Uyuşmazlığı" },
       { kod: "kidem_ihbar_fazla_mesai", etiket: "Kıdem, İhbar ve Fazla Mesai Alacağı", ustKod: "is_hukuku" },
+      { kod: "iscilik_alacaklarinin_tahsili", etiket: "İşçilik Alacaklarının Tahsili", ustKod: "is_hukuku" },
       { kod: "bosanma", etiket: "Boşanma (Çekişmeli/Anlaşmalı)", ustKod: "aile_hukuku" },
       { kod: "fatura_alacagina_dayali_borc", etiket: "Fatura Alacağına Dayalı Borç", ustKod: "ticaret_hukuku" },
       { kod: "itirazin_iptali", etiket: "İcra Takibine İtirazın İptali", ustKod: "ticaret_hukuku" },

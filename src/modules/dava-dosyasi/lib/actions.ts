@@ -602,8 +602,15 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
         data.davaKonusu = deger || null;
         if (deger) data.konu = deger;
         break;
+      case "hukukiIliskiTuruId": {
+        data.hukukiIliskiTuruId = deger || null;
+        if (deger) {
+          const konu = await prisma.secenekDegeri.findUnique({ where: { id: deger }, select: { etiket: true } });
+          if (konu) data.konu = konu.etiket;
+        }
+        break;
+      }
       case "yargiKoluId":
-      case "hukukiIliskiTuruId":
         data[alan] = deger || null;
         break;
       case "durusmaTarihi":

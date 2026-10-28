@@ -114,10 +114,10 @@ function YazVeSecKutusu({
           <Secim
             value={dalId}
             onChange={(e) => setDalId(e.target.value)}
-            aria-label="Hukuk Dalı (filtre)"
+            aria-label="Hukuk Dalı"
             className="mb-2"
           >
-            <option value="">Diğer / hukuk dalı belirtilmiyor (tüm konular)</option>
+            <option value="">Hukuk Dalı (Nerede?) — Diğer / belirtilmiyor</option>
             {dallar.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.etiket}

@@ -40,7 +40,7 @@ type DosyaDegerleri = {
 // istenir; gerisi "Ek bilgiler" altinda opsiyoneldir (dosya detayindan da
 // sonradan girilebilir).
 const KARTLAR: { baslik: string; alanlar: string[]; ekBilgi?: boolean }[] = [
-  { baslik: "İçerik Bilgileri", alanlar: ["hukukiIliskiTuruId", "davaKonusu", "davaTuruId", "talepSonucu"] },
+  { baslik: "İçerik Bilgileri", alanlar: ["hukukiIliskiTuruId", "talepSonucu"] },
   {
     baslik: "Ek Bilgiler (isteğe bağlı)",
     alanlar: ["buroNo"],
@@ -111,7 +111,7 @@ export function DavaDosyasiFormIcerik({
   const alanRenderHaritasi: Record<string, () => React.ReactNode> = {
     hukukiIliskiTuruId: () => (
       <UyusmazlikTuruSecici
-        etiket={bilgi("hukukiIliskiTuruId", "Davanın Konusu (Maddi Hak)")}
+        etiket={bilgi("hukukiIliskiTuruId", "Dava Konusu (Ne hakkında?)")}
         dallar={hukukDallari}
         turler={hukukiIliskiTurleri}
         varsayilanId={g?.hukukiIliskiTuruId ?? dosya?.hukukiIliskiTuruId ?? ""}
@@ -174,7 +174,7 @@ export function DavaDosyasiFormIcerik({
         />
       </Alan>
     ),
-    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} etiket="Talep Sonucu / Takip Miktarı" />,
+    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} etiket="Talep Sonucu / Takip Miktarı (Mahkemeden ne istiyoruz?)" />,
   };
 
   // Yeni dosya acilisinda tek kart ve en az alan: muvekkil, karsi taraf,
@@ -243,7 +243,7 @@ export function DavaDosyasiFormIcerik({
           />
         </div>
       </FormKarti>
-      <FormKarti baslik="3 · İçerik Bilgileri (Hukuk Dalı · Konu · Tür)">
+      <FormKarti baslik="3 · İçerik Bilgileri (Hukuk Dalı · Dava Konusu · Talep Sonucu)">
         <div key={`${anahtar}-b`}>
           {yeniAlanlar.map((a) => (
             <div key={a}>{alanRenderHaritasi[a]?.()}</div>

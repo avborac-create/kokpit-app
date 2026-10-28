@@ -71,7 +71,7 @@ export default async function DavaDosyasiDetaySayfasi({
   const { id } = await params;
   const { sekme, alt } = await searchParams;
   const aktifSekme = sekme === "ekonomi" ? "ekonomi" : "genel";
-  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, davaTurleri, muvekkilSifatlari] = await Promise.all([
+  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
     anaDosyaAdaylariniGetir(id),
@@ -79,7 +79,7 @@ export default async function DavaDosyasiDetaySayfasi({
     secenekleriGetir("dosya_turu"),
     secenekleriGetir("yargi_kolu"),
     secenekleriGetir("hukuki_iliski_turu"),
-    secenekleriGetir("dava_turu"),
+    secenekleriGetir("hukuk_dali"),
     secenekleriGetir("muvekkil_sifati"),
   ]);
   if (!dosya) notFound();
@@ -162,33 +162,35 @@ export default async function DavaDosyasiDetaySayfasi({
       gosterim: buroNoGoster(dosya.buroNo),
     },
   ];
+  const konuSecenegi = uyusmazlikTurleri.find((t) => t.id === dosya.hukukiIliskiTuruId);
+  const hukukDali = hukukDallari.find((d) => d.id === konuSecenegi?.ustId);
   const icerikAlanlari: KartAlani[] = [
     {
+      anahtar: "hukukDali",
+      varsayilanEtiket: "Hukuk Dalı",
+      ipucu: "Nerede?",
+      tip: "salt",
+      gosterim: hukukDali?.etiket ?? "—",
+    },
+    {
       anahtar: "hukukiIliskiTuruId",
-      varsayilanEtiket: "Davanın Konusu (Maddi Hak)",
+      varsayilanEtiket: "Dava Konusu",
+      ipucu: "Ne hakkında?",
       tip: "secim",
       deger: dosya.hukukiIliskiTuruId ?? "",
       gosterim: dosya.hukukiIliskiTuru?.etiket ?? "—",
-      secenekler: bosSecenekli(uyusmazlikTurleri, "—"),
-    },
-    {
-      anahtar: "davaTuruId",
-      varsayilanEtiket: "Davanın Türü (Talep Türü)",
-      tip: "secim",
-      deger: dosya.davaTuruId ?? "",
-      gosterim: dosya.davaTuru?.etiket ?? "—",
-      secenekler: davaTurleri.map((o) => ({ value: o.id, label: o.etiket })),
-    },
-    {
-      anahtar: "davaKonusu",
-      varsayilanEtiket: "Konu Açıklaması",
-      tip: "metin",
-      deger: dosya.davaKonusu ?? "",
-      gosterim: dosya.davaKonusu ?? "—",
+      secenekler: [
+        { value: "", label: "—" },
+        ...uyusmazlikTurleri.map((o) => {
+          const dal = hukukDallari.find((d) => d.id === o.ustId);
+          return { value: o.id, label: dal ? `${dal.etiket} › ${o.etiket}` : o.etiket };
+        }),
+      ],
     },
     {
       anahtar: "talepSonucu",
       varsayilanEtiket: "Talep Sonucu / Takip Miktarı",
+      ipucu: "Mahkemeden ne istiyoruz?",
       tip: "cokSatir",
       deger: dosya.talepSonucu ?? "",
       gosterim: dosya.talepSonucu ? (
@@ -323,9 +325,9 @@ export default async function DavaDosyasiDetaySayfasi({
                   {(dosya.icraAltTuru ?? dosya.yargiKolu)!.etiket}
                 </span>
               )}
-              {dosya.hukukiIliskiTuru && (
+              {hukukDali && (
                 <span className="whitespace-nowrap rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs text-white/70">
-                  {dosya.hukukiIliskiTuru.etiket}
+                  {hukukDali.etiket}
                 </span>
               )}
             </div>
@@ -341,11 +343,11 @@ export default async function DavaDosyasiDetaySayfasi({
                   )}
                 </>
               ) : (
-                <span>{dosya.davaKonusu || dosya.konu}</span>
+                <span>{dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}</span>
               )}
             </h1>
             {(dosya.birimAdi || dosya.dosyaNo) && (
-              <p className="mt-0.5 truncate text-sm text-white/55">{dosya.davaKonusu || dosya.konu}</p>
+              <p className="mt-0.5 truncate text-sm text-white/55">{dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}</p>
             )}
 
             <div className="mt-3 flex flex-wrap items-stretch gap-2 text-sm">
