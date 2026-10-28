@@ -111,13 +111,13 @@ export function DuzenlenebilirKart({
             className="w-full rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white outline-none focus:border-[var(--accent)]"
           />
         ) : (
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-white/40">{gecerliBaslik}</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">{gecerliBaslik}</h3>
         )}
         {!duzenleniyor && (etiketDuzenleyebilir || duzenlenebilirDeger) && (
           <button
             type="button"
             onClick={ac}
-            className="shrink-0 rounded-full px-2.5 py-1 text-xs text-white/50 hover:bg-white/10 hover:text-white"
+            className="shrink-0 rounded-full px-2.5 py-1 text-sm text-white/65 hover:bg-white/10 hover:text-white"
           >
             Paneli düzenle
           </button>
@@ -125,7 +125,7 @@ export function DuzenlenebilirKart({
       </div>
 
       {alanlar.map((a) => (
-        <div key={a.anahtar} className="mb-4 text-sm last:mb-0">
+        <div key={a.anahtar} className="mb-4 text-base last:mb-0">
           {duzenleniyor ? (
             <>
               {etiketDuzenleyebilir ? (
@@ -136,9 +136,9 @@ export function DuzenlenebilirKart({
                   className="mb-1 w-full rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 text-xs text-white/70 outline-none focus:border-[var(--accent)]"
                 />
               ) : (
-                <p className="mb-1 text-white/65">
+                <p className="mb-1 text-sm font-medium text-white/65">
                   {gecerliEtiket(a)}
-                  {a.ipucu && <span className="ml-2 text-xs text-white/60">{a.ipucu}</span>}
+                  {a.ipucu && <span className="ml-2 text-sm font-normal text-white/60">{a.ipucu}</span>}
                 </p>
               )}
               {a.tip === "salt" ? (
@@ -170,9 +170,9 @@ export function DuzenlenebilirKart({
             </>
           ) : (
             <>
-              <p className="text-white/65">
+              <p className="text-sm font-medium text-white/65">
                 {gecerliEtiket(a)}
-                {a.ipucu && <span className="ml-2 text-xs text-white/60">{a.ipucu}</span>}
+                {a.ipucu && <span className="ml-2 text-sm font-normal text-white/60">{a.ipucu}</span>}
               </p>
               <div className="text-white">{a.gosterim}</div>
             </>

@@ -11,7 +11,7 @@ export function FormKarti({
 }) {
   return (
     <div className="glass mb-4 rounded-2xl p-4 sm:p-5">
-      <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-white/40">{baslik}</h3>
+      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/65">{baslik}</h3>
       {children}
     </div>
   );

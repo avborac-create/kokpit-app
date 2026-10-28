@@ -111,7 +111,7 @@ export function DosyaKimligiAlanlari({
           {!eskiBicim && (yilDokunuldu || yil.length === 4) && (yilHata || siraEksik) && (
             <p className="mt-1 text-xs text-[#ff7a70]">{yilHata || siraEksik}</p>
           )}
-          <p className="mt-1 text-xs text-white/60">Tip: Esas / Talimat / Değişik İş / Soruşturma / İhbar vs.</p>
+          <p className="mt-1 text-sm text-white/60">Tip: Esas / Talimat / Değişik İş / Soruşturma / İhbar vs.</p>
           <input type="hidden" name="dosyaNo" value={dosyaNoDegeri} readOnly />
         </Alan>
       )}
