@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -7,6 +8,7 @@ import { cikisYap } from "@/core/auth/actions";
 import { Dugme } from "@/core/ui/button";
 import { OneriButonu } from "@/core/oneri/oneri-butonu";
 import { GorunumMenusu } from "@/core/gorunum/gorunum-menusu";
+import { AsagiCekYenile } from "@/core/ui/asagi-cek-yenile";
 import { YenileButonu } from "@/core/ui/yenile-butonu";
 import { UYGULAMA_LOGOSU_YOLU } from "@/core/ui/marka";
 
@@ -32,6 +34,7 @@ export function KokpitKabuk({
   ustBilgi: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const anaAlanRef = useRef<HTMLElement>(null);
   const modulSeciliMi = pathname !== "/kokpit";
 
   return (
@@ -80,7 +83,10 @@ export function KokpitKabuk({
             </form>
           </div>
         </header>
-        <main className="min-w-0 flex-1 overflow-y-auto px-3 pb-6 md:px-6">{children}</main>
+        <main ref={anaAlanRef} className="min-w-0 flex-1 overflow-y-auto overscroll-y-contain px-3 pb-6 md:px-6">
+          {children}
+        </main>
+        <AsagiCekYenile hedef={anaAlanRef} />
       </div>
     </div>
   );
