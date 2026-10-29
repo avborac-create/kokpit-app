@@ -71,7 +71,7 @@ export function KokpitKabuk({
             </Link>
             {ustBilgi}
           </div>
-          <div className="flex items-center gap-0.5 max-md:rounded-full max-md:bg-white/[0.07] max-md:p-0.5 md:gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2">
             <YenileButonu />
             <OneriButonu />
             <GorunumMenusu />

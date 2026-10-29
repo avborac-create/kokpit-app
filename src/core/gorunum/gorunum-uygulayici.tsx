@@ -22,6 +22,20 @@ export function gorunumuUygula(tercih: GorunumTercihi) {
   kok.setAttribute("data-cam", tercih.cam);
   kok.setAttribute("data-palet", tercih.palet);
   kok.setAttribute("data-punto", tercih.punto);
+  durumCubugunuBoya(kok);
+}
+
+// iOS'ta saatin/pilin oldugu ust serit <meta theme-color> ile boyanir. Sabit
+// renk, secilen palete (ve acik/koyu temaya) uymayip ust sabit seritle arada
+// renk basamagi olusturuyordu; bu yuzden her gorunum degisiminde paletin
+// yuzey rengiyle guncellenir (acik/koyu ayri meta'lar tek renge indirilir).
+function durumCubugunuBoya(kok: HTMLElement) {
+  const renk = getComputedStyle(kok).getPropertyValue("--background-2").trim();
+  if (!renk) return;
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
+    m.removeAttribute("media");
+    m.setAttribute("content", renk);
+  });
 }
 
 export function gorunumCookiesiniYaz(tercih: GorunumTercihi) {

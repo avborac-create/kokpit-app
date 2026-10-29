@@ -114,7 +114,7 @@ export function DuzenlenebilirKart({
             className="w-full rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white outline-none focus:border-[var(--accent)]"
           />
         ) : (
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-white/50">{gecerliBaslik}</h3>
+          <h3 className="kart-baslik text-xs font-semibold uppercase tracking-widest text-white/50">{gecerliBaslik}</h3>
         )}
         {!duzenleniyor && (etiketDuzenleyebilir || duzenlenebilirDeger) && (
           <button
@@ -127,11 +127,11 @@ export function DuzenlenebilirKart({
         )}
       </div>
 
-      <div className={`grid grid-cols-2 gap-x-4 sm:gap-x-6 ${duz ? "gap-y-2 sm:gap-y-2.5" : "gap-y-3"} sm:grid-cols-2 xl:grid-cols-3`}>
+      <div className={`grid grid-cols-2 gap-x-4 sm:gap-x-6 ${duz ? "gap-y-2 sm:gap-y-2.5" : "gap-y-3"} max-sm:gap-2 sm:grid-cols-2 xl:grid-cols-3`}>
       {alanlar.map((a) => (
         <div
           key={a.anahtar}
-          className={`min-w-0 text-[15px] font-medium ${a.tip === "salt" || a.tip === "cokSatir" || duzenleniyor ? "col-span-2 sm:col-span-2 xl:col-span-3" : typeof a.gosterim === "string" && a.gosterim.length > 20 ? "col-span-2 sm:col-span-1" : ""}`}
+          className={`min-w-0 text-[15px] font-medium ${duzenleniyor ? "" : "alan-hucre"} ${a.tip === "salt" || a.tip === "cokSatir" || duzenleniyor ? "col-span-2 sm:col-span-2 xl:col-span-3" : typeof a.gosterim === "string" && a.gosterim.length > 20 ? "col-span-2 sm:col-span-1" : ""}`}
         >
           {duzenleniyor ? (
             <>
@@ -176,7 +176,7 @@ export function DuzenlenebilirKart({
             </>
           ) : (
             <>
-              <p className="mb-0.5 text-xs font-semibold uppercase tracking-wider text-[#8fb4e8]">
+              <p className="mb-0.5 text-xs font-semibold uppercase tracking-wider text-[var(--link)]">
                 {gecerliEtiket(a)}
               </p>
               <div className="text-white">{a.gosterim}</div>
