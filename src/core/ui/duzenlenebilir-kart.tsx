@@ -127,11 +127,11 @@ export function DuzenlenebilirKart({
         )}
       </div>
 
-      <div className={`grid gap-x-6 ${duz ? "gap-y-2.5" : "gap-y-3"} sm:grid-cols-2 xl:grid-cols-3`}>
+      <div className={`grid grid-cols-2 gap-x-4 sm:gap-x-6 ${duz ? "gap-y-2 sm:gap-y-2.5" : "gap-y-3"} sm:grid-cols-2 xl:grid-cols-3`}>
       {alanlar.map((a) => (
         <div
           key={a.anahtar}
-          className={`text-[15px] font-medium ${a.tip === "salt" || a.tip === "cokSatir" ? "sm:col-span-2 xl:col-span-3" : ""}`}
+          className={`min-w-0 text-[15px] font-medium ${a.tip === "salt" || a.tip === "cokSatir" || duzenleniyor ? "col-span-2 sm:col-span-2 xl:col-span-3" : typeof a.gosterim === "string" && a.gosterim.length > 20 ? "col-span-2 sm:col-span-1" : ""}`}
         >
           {duzenleniyor ? (
             <>

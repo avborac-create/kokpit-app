@@ -372,7 +372,7 @@ export default async function DavaDosyasiDetaySayfasi({
               <p className="mt-0.5 truncate text-sm text-white/80">{dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}</p>
             )}
 
-            <div className="mt-2 grid grid-cols-2 items-stretch gap-2 text-sm md:flex md:flex-wrap">
+            <div className="mt-2 grid grid-cols-1 items-stretch gap-1.5 text-sm md:flex md:flex-wrap md:gap-2">
               <div className="min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-2.5 py-1 sm:px-3">
                 <span className="block text-[11px] font-semibold uppercase tracking-wider text-[#8fb4e8] sm:text-xs">
                   Müvekkil{dosya.muvekkilSifatiDegeri ? ` · ${dosya.muvekkilSifatiDegeri.etiket}` : ""}
