@@ -217,6 +217,75 @@ html[data-palet="hiperekran"] .tikon-karsi { background: radial-gradient(circle 
 html[data-palet="gumus"] .tsatir { background: none; border: 0; border-bottom: 1px solid; border-image: linear-gradient(90deg, transparent, var(--glass-cizgi) 25%, var(--glass-cizgi) 75%, transparent) 1; border-radius: 0; padding-inline: 0.125rem; }
 html[data-palet="gumus"] .tikon { border-radius: 9999px; background: none; border: 1px solid var(--accent); color: var(--link); }
 
+/* Gece mavisi: derin lacivert, keskin kose, secili/uzerine gelinen kartin beyaz parlamasi. */
+html[data-palet="gece"][data-tema="koyu"] {
+  --background: #00123a; --background-2: #0a2050; --yuzey: #0a2050;
+  --accent: #0070d1; --accent-soft: rgba(0, 112, 209, 0.3); --link: #6fb3ff;
+  --blob-1: #0a3a8a; --blob-2: #0a1a44; --blob-3: #002a6e;
+  --glass-border: rgba(255, 255, 255, 0.16); --glass-cizgi: rgba(255, 255, 255, 0.16);
+}
+html[data-palet="gece"][data-tema="acik"] {
+  --murekkep: #0a1c3f; --background: #e8effa; --background-2: #ffffff; --yuzey: #f5f8fd;
+  --accent: #0064bd; --accent-soft: rgba(0, 100, 189, 0.12); --link: #004f97;
+  --blob-1: #b7d0f5; --blob-2: #d8e3f3; --blob-3: #c6dbf7;
+}
+html[data-palet="gece"] .glass, html[data-palet="gece"] .glass-strong { border-radius: 0.5rem; }
+html[data-palet="gece"] .tsatir, html[data-palet="gece"] .alan-hucre { border-radius: 0.375rem; transition: transform 0.15s, box-shadow 0.15s; }
+html[data-palet="gece"] .alan-hucre:hover, html[data-palet="gece"] .tsatir:hover { transform: scale(1.02); box-shadow: 0 0 0 1px rgb(255 255 255 / 0.7), 0 6px 22px color-mix(in srgb, var(--accent) 55%, transparent); }
+html[data-palet="gece"] .tikon { border-radius: 0.25rem; }
+
+/* Zumrut: koyu yesil-siyah, duz keskin kutular, canli yesil vurgu. */
+html[data-palet="zumrut"][data-tema="koyu"] {
+  --background: #0a110a; --background-2: #152015; --yuzey: #152015;
+  --accent: #107c10; --accent-soft: rgba(16, 124, 16, 0.32); --link: #6ede6e;
+  --blob-1: #0e3a0e; --blob-2: #101810; --blob-3: #0a280a;
+  --glass-border: rgba(110, 222, 110, 0.18); --glass-cizgi: rgba(110, 222, 110, 0.2);
+  --glass-parilti: rgba(110, 222, 110, 0.05);
+}
+html[data-palet="zumrut"][data-tema="acik"] {
+  --murekkep: #0f1f0f; --background: #e9f3e9; --background-2: #ffffff; --yuzey: #f5faf5;
+  --accent: #0e6b0e; --accent-soft: rgba(14, 107, 14, 0.12); --link: #0b560b;
+  --blob-1: #bfe3bf; --blob-2: #d9e6d9; --blob-3: #cbe8cb;
+}
+html[data-palet="zumrut"] .glass, html[data-palet="zumrut"] .glass-strong { border-radius: 0.25rem; }
+html[data-palet="zumrut"] .tsatir, html[data-palet="zumrut"] .alan-hucre { border-radius: 0.125rem; background: color-mix(in srgb, var(--accent) 10%, transparent); }
+html[data-palet="zumrut"] .tikon { border-radius: 0.125rem; background: var(--accent); color: #fff; }
+
+/* Mat siyah: saf siyah, sade, kirmizi tek vurgu cizgisi, alt kenar cizgili hucreler. */
+html[data-palet="matsiyah"][data-tema="koyu"] {
+  --background: #0f0f10; --background-2: #1a1a1b; --yuzey: #1a1a1b;
+  --accent: #e82127; --accent-soft: rgba(232, 33, 39, 0.22); --link: #a9a9ae;
+  --blob-1: #1c1c1e; --blob-2: #141414; --blob-3: #1a1a1a;
+  --glass-border: rgba(255, 255, 255, 0.07); --glass-cizgi: rgba(255, 255, 255, 0.1);
+  --glass-parilti: rgba(255, 255, 255, 0.03);
+}
+html[data-palet="matsiyah"][data-tema="acik"] {
+  --murekkep: #151516; --background: #f0f0f1; --background-2: #ffffff; --yuzey: #fafafa;
+  --accent: #d11a20; --accent-soft: rgba(209, 26, 32, 0.1); --link: #5c5c61;
+  --blob-1: #e4e4e6; --blob-2: #ececee; --blob-3: #e8e8ea;
+}
+html[data-palet="matsiyah"] .glass, html[data-palet="matsiyah"] .glass-strong { border-radius: 0.75rem; box-shadow: none; }
+html[data-palet="matsiyah"] .tsatir, html[data-palet="matsiyah"] .alan-hucre { border: 0; border-bottom: 2px solid var(--accent); border-radius: 0.625rem; background: rgb(255 255 255 / 0.05); }
+html[data-palet="matsiyah"] .tikon { background: none; color: var(--accent); }
+html[data-palet="matsiyah"] body { letter-spacing: -0.005em; }
+
+/* Yesil sahne: siyah zemin, yesil bulut, yuvarlak yumusak kartlar. */
+html[data-palet="sahne"][data-tema="koyu"] {
+  --background: #121212; --background-2: #1f1f1f; --yuzey: #1f1f1f;
+  --accent: #1ed760; --accent-soft: rgba(30, 215, 96, 0.2); --link: #1ed760;
+  --blob-1: #1e4d33; --blob-2: #181818; --blob-3: #163826;
+  --glass-border: rgba(255, 255, 255, 0.06); --glass-cizgi: rgba(255, 255, 255, 0.1);
+  --glass-parilti: rgba(255, 255, 255, 0.03);
+}
+html[data-palet="sahne"][data-tema="acik"] {
+  --murekkep: #121212; --background: #eaf4ee; --background-2: #ffffff; --yuzey: #f6fbf8;
+  --accent: #14a74c; --accent-soft: rgba(20, 167, 76, 0.13); --link: #0e7e38;
+  --blob-1: #b6e6c9; --blob-2: #dbe8e0; --blob-3: #c4ecd4;
+}
+html[data-palet="sahne"] .tsatir, html[data-palet="sahne"] .alan-hucre { border-color: transparent; border-radius: 0.5rem; background: rgb(255 255 255 / 0.07); }
+html[data-palet="sahne"] .alan-hucre:hover, html[data-palet="sahne"] .tsatir:hover { background: rgb(255 255 255 / 0.13); }
+html[data-palet="sahne"] .tikon { border-radius: 9999px; background: var(--accent); color: #000; }
+
 /* Kart alan hucreleri (Kunye/Icerik vb.): tema dilinde ince cerceveli hucre. */
 .alan-hucre {
   border: 1px solid var(--glass-cizgi); background: rgb(255 255 255 / 0.04);
