@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { KunyeSeridi } from "@/core/ui/kunye-seridi";
+import { MobilSabitBaslik } from "@/core/ui/mobil-sabit-baslik";
 import { notFound } from "next/navigation";
 import { davaDosyasiGetir, anaDosyaAdaylariniGetir } from "@/modules/dava-dosyasi/lib/queries";
 import { dosyaAlanlariniGuncelle } from "@/modules/dava-dosyasi/lib/actions";
@@ -331,7 +332,12 @@ export default async function DavaDosyasiDetaySayfasi({
 
   return (
     <div className="pt-2 md:pt-3">
-      <KunyeSeridi className="mb-4 md:mb-6">
+      <MobilSabitBaslik hedefId="dosya-kunye">
+        {kokpitNoGoster(dosya)}
+        {dosya.birimAdi ? ` · ${dosya.birimAdi}` : ""}
+        {dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}
+      </MobilSabitBaslik>
+      <KunyeSeridi id="dosya-kunye" className="mb-4 md:mb-6">
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
