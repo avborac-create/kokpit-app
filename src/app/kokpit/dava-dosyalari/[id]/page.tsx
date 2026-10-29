@@ -333,9 +333,16 @@ export default async function DavaDosyasiDetaySayfasi({
   return (
     <div className="pt-2 md:pt-3">
       <MobilSabitBaslik hedefId="dosya-kunye">
-        {kokpitNoGoster(dosya)}
-        {dosya.birimAdi ? ` · ${dosya.birimAdi}` : ""}
-        {dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}
+        <p className="truncate">
+          {kokpitNoGoster(dosya)}
+          {dosya.birimAdi ? ` · ${dosya.birimAdi}` : ""}
+          {dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}
+        </p>
+        <p className="truncate text-xs font-normal text-white/70">
+          {dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
+          {" ↔ "}
+          {dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—"}
+        </p>
       </MobilSabitBaslik>
       <KunyeSeridi id="dosya-kunye" className="mb-4 md:mb-6">
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
