@@ -83,7 +83,7 @@ export default async function DavaDosyalariSayfasi({
             <SutunDuzeniPaneli tabloAnahtari="dava-dosyalari" ogeler={sutunPaneliOgeleri} />
           )}
           <Link href={`/kokpit/dava-dosyalari/yeni${params.musteri ? `?musteriId=${params.musteri}` : ""}`}>
-            <Dugme>+ Yeni Dosya</Dugme>
+            <Dugme className="whitespace-nowrap">+ Yeni Dosya</Dugme>
           </Link>
         </div>
       </div>

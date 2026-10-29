@@ -35,15 +35,23 @@ export function SutunDuzeniPaneli({
 
   return (
     <div ref={dugmeKabiRef} className="relative">
-      <Dugme type="button" varyant="ikincil" onClick={degistir}>
-        Sütunları Düzenle
+      <Dugme
+        type="button"
+        varyant="ikincil"
+        onClick={degistir}
+        aria-label="Sütunları Düzenle"
+        title="Sütunları Düzenle"
+        className="whitespace-nowrap max-md:!h-10 max-md:!w-10 max-md:!p-0"
+      >
+        <svg viewBox="0 0 24 24" className="h-5 w-5 md:hidden" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M9 4v16M15 4v16" /></svg>
+        <span className="hidden md:inline">Sütunları Düzenle</span>
       </Dugme>
       {konum &&
         createPortal(
           <>
             <div className="fixed inset-0 z-[100]" onClick={() => setKonum(null)} />
             <div
-              className="popover fixed z-[101] max-h-[80vh] w-80 overflow-y-auto rounded-2xl p-3"
+              className="popover fixed z-[101] max-h-[80vh] w-[min(20rem,calc(100vw-1.5rem))] overflow-y-auto rounded-2xl p-3"
               style={{ top: konum.top, right: konum.right }}
             >
               <p className="mb-2 px-1 text-xs text-white/55">
