@@ -7,6 +7,7 @@ import { cikisYap } from "@/core/auth/actions";
 import { Dugme } from "@/core/ui/button";
 import { OneriButonu } from "@/core/oneri/oneri-butonu";
 import { GorunumMenusu } from "@/core/gorunum/gorunum-menusu";
+import { YenileButonu } from "@/core/ui/yenile-butonu";
 import { UYGULAMA_LOGOSU_YOLU } from "@/core/ui/marka";
 
 // Apple'in kendi uygulamalarindaki (Ayarlar, Mail) master-detail deseni:
@@ -68,6 +69,7 @@ export function KokpitKabuk({
             {ustBilgi}
           </div>
           <div className="flex items-center gap-0.5 max-md:rounded-full max-md:bg-white/[0.07] max-md:p-0.5 md:gap-2">
+            <YenileButonu />
             <OneriButonu />
             <GorunumMenusu />
             <form action={cikisYap}>
