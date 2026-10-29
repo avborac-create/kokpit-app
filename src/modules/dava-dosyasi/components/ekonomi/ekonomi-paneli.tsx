@@ -418,13 +418,13 @@ async function OzetSekmesi({
   return (
     <div>
       <div className="glass overflow-x-auto rounded-2xl">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-xs md:text-sm">
           <thead className="text-white/50">
             <tr>
-              <th className="px-4 py-3 font-medium">Hesap</th>
-              <th className="px-4 py-3 text-right font-medium text-[#ff7a70]/85">Borç</th>
-              <th className="px-4 py-3 text-right font-medium text-[#32d74b]/85">Alacak</th>
-              <th className="px-4 py-3 text-right font-medium">Bakiye</th>
+              <th className="px-2 py-2 md:px-4 md:py-3 font-medium">Hesap</th>
+              <th className="px-2 py-2 md:px-4 md:py-3 whitespace-nowrap text-right font-medium text-[#ff7a70]/85">Borç</th>
+              <th className="px-2 py-2 md:px-4 md:py-3 whitespace-nowrap text-right font-medium text-[#32d74b]/85">Alacak</th>
+              <th className="px-2 py-2 md:px-4 md:py-3 whitespace-nowrap text-right font-medium">Bakiye</th>
             </tr>
           </thead>
           <tbody>
@@ -438,9 +438,9 @@ async function OzetSekmesi({
                   acilabilir={Boolean(hesapNesnesi) && (hareketVar || hesapNesnesi!.paraHesabiMi)}
                   hucreler={
                     <>
-                      <td className="px-4 py-3 text-right text-white/85">{h.borc ? para.format(h.borc) : "—"}</td>
-                      <td className="px-4 py-3 text-right text-white/85">{h.alacak ? para.format(h.alacak) : "—"}</td>
-                      <td className="px-4 py-3 text-right font-medium">
+                      <td className="px-2 py-2 md:px-4 md:py-3 whitespace-nowrap text-right text-white/85">{h.borc ? para.format(h.borc) : "—"}</td>
+                      <td className="px-2 py-2 md:px-4 md:py-3 whitespace-nowrap text-right text-white/85">{h.alacak ? para.format(h.alacak) : "—"}</td>
+                      <td className="px-2 py-2 md:px-4 md:py-3 whitespace-nowrap text-right font-medium">
                         {h.paraHesabiMi || h.tutulanHesapMi ? <span className="text-[#6db8ff]">{para.format(h.bakiye)}</span> : <Bakiye b={h.bakiye} />}
                       </td>
                     </>
@@ -463,9 +463,9 @@ async function OzetSekmesi({
               );
             })}
             <tr className="border-t border-white/10 font-medium">
-              <td className="px-4 py-3 text-white">Net (diğer hesaplar − para trafiği)</td>
+              <td className="px-2 py-2 md:px-4 md:py-3 text-white">Net (diğer hesaplar − para trafiği)</td>
               <td colSpan={2} />
-              <td className="px-4 py-3 text-right">
+              <td className="px-2 py-2 md:px-4 md:py-3 whitespace-nowrap text-right">
                 <Bakiye b={ozet.net} />
               </td>
             </tr>
