@@ -4,7 +4,7 @@
    TEMA SISTEMI
    <html> uzerindeki uc nitelik gorunumu belirler (bkz. src/core/gorunum):
      data-tema   = acik | koyu          (sistem secimi betik tarafindan cozulur)
-     data-palet  = apple | fume | bakir | petrol | lacivert
+     data-palet  = bmw | hiperekran | gumus | apple | fume | bakir | petrol | lacivert
      data-cam    = kapali | hafif | orta | yogun
    Arayuzdeki yuzlerce "text-white / bg-white/10 / border-white/10" sinifi
    Tailwind v4'te var(--color-white) uzerinden uretilir. Acik modda
@@ -146,6 +146,76 @@ html[data-palet="apple"] body {
 }
 html[data-palet="apple"] .glass,
 html[data-palet="apple"] .glass-strong { backdrop-filter: blur(var(--cam-bulaniklik)) saturate(190%); -webkit-backdrop-filter: blur(var(--cam-bulaniklik)) saturate(190%); }
+
+/* BMW iDrive 8: mavi parlak zemin, yuvarlak cam, BMW mavisi vurgu. */
+html[data-palet="bmw"][data-tema="koyu"] {
+  --background: #0a0d12; --background-2: #151a22; --yuzey: #151a22;
+  --accent: #1c69d4; --accent-soft: rgba(28, 105, 212, 0.26); --link: #7aaef2;
+  --blob-1: #12356b; --blob-2: #1b2433; --blob-3: #0b2547;
+  --glass-border: rgba(120, 170, 255, 0.2); --glass-cizgi: rgba(120, 170, 255, 0.18);
+  --glass-parilti: rgba(140, 190, 255, 0.1);
+}
+html[data-palet="bmw"][data-tema="acik"] {
+  --murekkep: #111a2b; --background: #eef2f8; --background-2: #ffffff; --yuzey: #f8fafd;
+  --accent: #1c69d4; --accent-soft: rgba(28, 105, 212, 0.12); --link: #1456ae;
+  --blob-1: #c4d8f6; --blob-2: #dfe5ee; --blob-3: #d3e2f8;
+  --glass-border: rgba(28, 105, 212, 0.14); --glass-cizgi: rgba(20, 50, 100, 0.16);
+}
+/* Mercedes Hiperekran: turkuaz parlayan cam, ince acik cerceve. */
+html[data-palet="hiperekran"][data-tema="koyu"] {
+  --background: #090b10; --background-2: #121821; --yuzey: #121821;
+  --accent: #00adef; --accent-soft: rgba(0, 173, 239, 0.22); --link: #6fd2f7;
+  --blob-1: #0c2a44; --blob-2: #151c26; --blob-3: #08283a;
+  --glass-border: rgba(140, 200, 255, 0.22); --glass-cizgi: rgba(140, 200, 255, 0.18);
+  --glass-parilti: rgba(0, 173, 239, 0.12);
+}
+html[data-palet="hiperekran"][data-tema="acik"] {
+  --murekkep: #0f1c26; --background: #eaf1f6; --background-2: #ffffff; --yuzey: #f6fafc;
+  --accent: #0a8fc4; --accent-soft: rgba(10, 143, 196, 0.12); --link: #07739f;
+  --blob-1: #b8e0f2; --blob-2: #d9e2ea; --blob-3: #c5e7f5;
+  --glass-border: rgba(10, 143, 196, 0.16); --glass-cizgi: rgba(15, 50, 80, 0.16);
+}
+/* Mercedes Gumus: koyu antrasit, ince gumus cizgiler, hafif yazi. */
+html[data-palet="gumus"][data-tema="koyu"] {
+  --background: #0d1015; --background-2: #171b22; --yuzey: #171b22;
+  --accent: #aab4c2; --accent-soft: rgba(170, 180, 194, 0.18); --link: #c9d1db;
+  --blob-1: #1c222c; --blob-2: #14181f; --blob-3: #1a2028;
+  --glass-border: rgba(201, 209, 219, 0.2); --glass-cizgi: rgba(201, 209, 219, 0.2);
+  --glass-parilti: rgba(255, 255, 255, 0.06);
+}
+html[data-palet="gumus"][data-tema="acik"] {
+  --murekkep: #14181f; --background: #eef0f3; --background-2: #ffffff; --yuzey: #f8f9fb;
+  --accent: #5d6878; --accent-soft: rgba(93, 104, 120, 0.12); --link: #3f4958;
+  --blob-1: #d9dee6; --blob-2: #e6e9ee; --blob-3: #dfe3ea;
+  --glass-border: rgba(93, 104, 120, 0.18); --glass-cizgi: rgba(20, 30, 50, 0.16);
+}
+html[data-palet="gumus"] body,
+html[data-palet="hiperekran"] body { font-family: "Segoe UI Variable Text", "Segoe UI", var(--font-geist-sans), Arial, sans-serif; font-weight: 300; letter-spacing: 0.01em; }
+html[data-palet="gumus"] strong, html[data-palet="gumus"] h1, html[data-palet="gumus"] h2,
+html[data-palet="hiperekran"] strong, html[data-palet="hiperekran"] h1, html[data-palet="hiperekran"] h2 { font-weight: 500; }
+html[data-palet="bmw"] .glass, html[data-palet="bmw"] .glass-strong,
+html[data-palet="hiperekran"] .glass, html[data-palet="hiperekran"] .glass-strong {
+  box-shadow: inset 0 0 22px color-mix(in srgb, var(--accent) 10%, transparent), 0 0 14px -4px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+/* Dosya karti taraf satirlari (MS2 duzeni): simgeli, sagda ok; tema boyar. */
+.tsatir {
+  display: flex; align-items: center; gap: 0.625rem; min-width: 0;
+  border: 1px solid var(--glass-cizgi); background: rgb(255 255 255 / 0.05);
+  border-radius: 0.75rem; padding: 0.5rem 0.75rem;
+}
+.tikon {
+  display: grid; place-items: center; flex: none; width: 1.875rem; height: 1.875rem;
+  border-radius: 0.5rem; font-size: 0.8rem; background: var(--accent-soft); color: var(--link);
+}
+html[data-palet="bmw"] .tsatir { border-radius: 1.25rem; box-shadow: inset 0 0 18px color-mix(in srgb, var(--accent) 8%, transparent); }
+html[data-palet="bmw"] .tikon { border-radius: 0.75rem; color: #fff; background: linear-gradient(135deg, #1c69d4, #0653b6); box-shadow: 0 0 12px rgba(28, 105, 212, 0.4); }
+html[data-palet="bmw"] .tikon-karsi { background: linear-gradient(135deg, #d12a2a, #7a1a1a); box-shadow: 0 0 12px rgba(209, 42, 42, 0.4); }
+html[data-palet="hiperekran"] .tsatir { border-radius: 1rem; box-shadow: inset 0 0 20px rgba(0, 173, 239, 0.08), 0 0 12px rgba(0, 173, 239, 0.07); }
+html[data-palet="hiperekran"] .tikon { border-radius: 9999px; color: #fff; background: radial-gradient(circle at 35% 30%, #2fc6ff, #0a5f87); box-shadow: 0 0 10px rgba(0, 173, 239, 0.5); }
+html[data-palet="hiperekran"] .tikon-karsi { background: radial-gradient(circle at 35% 30%, #ff8a80, #7a2a24); box-shadow: 0 0 10px rgba(255, 106, 94, 0.5); }
+html[data-palet="gumus"] .tsatir { background: none; border: 0; border-bottom: 1px solid; border-image: linear-gradient(90deg, transparent, var(--glass-cizgi) 25%, var(--glass-cizgi) 75%, transparent) 1; border-radius: 0; padding-inline: 0.125rem; }
+html[data-palet="gumus"] .tikon { border-radius: 9999px; background: none; border: 1px solid var(--accent); color: var(--link); }
 
 /* ---- Cam kademeleri (bulaniklik ust siniri bilerek 20px: ekran karti yuku) ---- */
 html[data-cam="hafif"] { --cam-bulaniklik: 8px; }

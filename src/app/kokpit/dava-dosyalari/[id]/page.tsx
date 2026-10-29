@@ -345,9 +345,9 @@ export default async function DavaDosyasiDetaySayfasi({
         </p>
       </MobilSabitBaslik>
       <KunyeSeridi id="dosya-kunye" className="mb-4 md:mb-6">
-        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
+        <div className="relative flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 max-md:pr-28">
               <span
                 className="rounded-md bg-white/[0.08] px-2 py-0.5 font-mono text-xs font-semibold tracking-wide text-white"
                 title={dosya.anaDosya ? `Eski numarası: ${kayitNoGoster(dosya.kayitNo)}` : "Kokpit No"}
@@ -386,25 +386,31 @@ export default async function DavaDosyasiDetaySayfasi({
             )}
 
             <div className="mt-2 grid grid-cols-1 items-stretch gap-1.5 text-sm md:flex md:flex-wrap md:gap-2">
-              <div className="min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-2.5 py-1 sm:px-3">
-                <span className="block text-[11px] font-semibold uppercase tracking-wider text-[#8fb4e8] sm:text-xs">
-                  Müvekkil{dosya.muvekkilSifatiDegeri ? ` · ${dosya.muvekkilSifatiDegeri.etiket}` : ""}
-                </span>
-                <span className="break-words text-sm font-medium text-white sm:text-base">
-                  <MuvekkilAdlari muvekkiller={dosya.muvekkiller.map((m) => ({ id: m.musteriId, ad: m.musteri.adSoyadUnvan }))} />
-                </span>
+              <div className="tsatir">
+                <span className="tikon" aria-hidden>👤</span>
+                <div className="min-w-0 flex-1">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">
+                    Müvekkil{dosya.muvekkilSifatiDegeri ? ` · ${dosya.muvekkilSifatiDegeri.etiket}` : ""}
+                  </span>
+                  <span className="break-words text-sm font-medium text-white sm:text-base">
+                    <MuvekkilAdlari muvekkiller={dosya.muvekkiller.map((m) => ({ id: m.musteriId, ad: m.musteri.adSoyadUnvan }))} />
+                  </span>
+                </div>
               </div>
-              <div className="min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-2.5 py-1 sm:px-3">
-                <span className="block text-[11px] font-semibold uppercase tracking-wider text-[#8fb4e8] sm:text-xs">Karşı Taraf</span>
-                <span className="break-words text-sm font-medium text-white sm:text-base">
-                  <NumaraliAdlar adlar={dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad)} />
-                </span>
+              <div className="tsatir">
+                <span className="tikon tikon-karsi" aria-hidden>⚖</span>
+                <div className="min-w-0 flex-1">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">Karşı Taraf</span>
+                  <span className="break-words text-sm font-medium text-white sm:text-base">
+                    <NumaraliAdlar adlar={dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad)} />
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex gap-2">
+          <div className="flex flex-col items-end gap-2 max-md:contents">
+            <div className="flex gap-2 max-md:absolute max-md:right-0 max-md:top-0">
               <Link href={`/kokpit/dava-dosyalari/${id}/duzenle`}>
                 <Dugme varyant="ikincil" className="!px-3 !py-1 !text-xs md:!px-4 md:!py-2 md:!text-sm">Düzenle</Dugme>
               </Link>
@@ -412,7 +418,7 @@ export default async function DavaDosyasiDetaySayfasi({
                 <DavaDosyasiSilmeButonu dosyaId={id} sonrasindaYonlendir="/kokpit/dava-dosyalari" boyut="kompakt" />
               )}
             </div>
-            <div className="flex flex-wrap justify-end gap-1.5">
+            <div className="flex flex-wrap justify-end gap-1.5 max-md:basis-full max-md:justify-start">
               {dosyaEkonomisi.net !== 0 && <span
                 className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   dosyaEkonomisi.net > 0
