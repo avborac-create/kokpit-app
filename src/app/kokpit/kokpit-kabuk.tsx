@@ -56,27 +56,29 @@ export function KokpitKabuk({
         {kenarCubugu}
       </aside>
       <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
-        <header className="glass relative z-30 m-3 flex items-center justify-between rounded-2xl px-4 py-3 md:px-6">
+        <header className="glass-strong relative z-30 flex h-12 shrink-0 items-center justify-between max-md:!rounded-none max-md:!border-x-0 max-md:!border-t-0 px-3 md:m-3 md:h-auto md:rounded-2xl md:px-6 md:py-3">
           <div className="flex items-center gap-3">
             <Link
               href="/kokpit"
-              className="-ml-1 rounded-full px-2 py-1 text-sm font-medium text-[#6db8ff] hover:bg-white/10 md:hidden"
+              className="-ml-1 inline-flex items-center gap-0.5 rounded-full py-1 pl-0.5 pr-2 text-[17px] font-normal tracking-tight text-[var(--link)] active:opacity-60 md:hidden"
             >
-              ‹ Ana Sayfa
+              <svg viewBox="0 0 12 20" className="h-[18px] w-[11px]" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 2 2 10l8 8" /></svg>
+              Ana Sayfa
             </Link>
             {ustBilgi}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5 max-md:rounded-full max-md:bg-white/[0.07] max-md:p-0.5 md:gap-2">
             <OneriButonu />
             <GorunumMenusu />
             <form action={cikisYap}>
-              <Dugme type="submit" varyant="ikincil">
-                Çıkış Yap
+              <Dugme type="submit" varyant="ikincil" aria-label="Çıkış Yap" title="Çıkış Yap" className="!h-8 !w-8 !p-0  md:!h-auto md:!w-auto md:!px-4 md:!py-2">
+                <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] md:hidden" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11" /></svg>
+                <span className="hidden md:inline">Çıkış Yap</span>
               </Dugme>
             </form>
           </div>
         </header>
-        <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-6 md:px-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-y-auto px-3 pb-6 md:px-6">{children}</main>
       </div>
     </div>
   );

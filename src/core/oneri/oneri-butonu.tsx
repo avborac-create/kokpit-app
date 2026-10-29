@@ -114,6 +114,9 @@ export function OneriButonu() {
       <Dugme
         type="button"
         varyant="ikincil"
+        aria-label="Öneri Yolla"
+        title="Öneri Yolla"
+        className="!h-8 !w-8 !p-0  md:!h-auto md:!w-auto md:!px-4 md:!py-2"
         onClick={() => {
           // Sayfada acik kalmis native bir <select>/input odagi, tarayicinin
           // kendi acilir kutusunu (native popup) her zaman en ustte,
@@ -124,7 +127,8 @@ export function OneriButonu() {
           setAsama("seciliyor");
         }}
       >
-        Öneri Yolla
+        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] md:hidden" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z" /></svg>
+        <span className="hidden md:inline">Öneri Yolla</span>
       </Dugme>
 
       {asama === "seciliyor" &&

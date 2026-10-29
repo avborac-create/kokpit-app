@@ -50,6 +50,22 @@ function NumaraliAdlar({ adlar }: { adlar: string[] }) {
   );
 }
 
+function MuvekkilAdlari({ muvekkiller }: { muvekkiller: { id: string; ad: string }[] }) {
+  if (muvekkiller.length === 0) return <>—</>;
+  return (
+    <>
+      {muvekkiller.map((m, i) => (
+        <span key={m.id} className="mr-3 inline-block">
+          {muvekkiller.length > 1 && <span className="text-white/45">{i + 1}. </span>}
+          <Link href={`/kokpit/musteriler/${m.id}`} className="hover:text-[#6db8ff] hover:underline">
+            {m.ad}
+          </Link>
+        </span>
+      ))}
+    </>
+  );
+}
+
 function SiraliListe({ children }: { children: React.ReactNode[] }) {
   if (children.length === 0) return <>—</>;
   if (children.length === 1) return <>{children[0]}</>;
@@ -118,7 +134,44 @@ export default async function DavaDosyasiDetaySayfasi({
     { value: "", label: bosEtiket },
     ...liste.map((o) => ({ value: o.id, label: o.etiket })),
   ];
+  const taraflarAlanlari: KartAlani[] = [
+    {
+      anahtar: "muvekkiller",
+      varsayilanEtiket: "Müvekkil",
+      tip: "salt",
+      gosterim: (
+        <SiraliListe>
+          {dosya.muvekkiller.map((m) => (
+            <Link
+              key={m.musteriId}
+              href={`/kokpit/musteriler/${m.musteriId}`}
+              className="hover:text-[#6db8ff] hover:underline"
+            >
+              {m.musteri.adSoyadUnvan}
+            </Link>
+          ))}
+        </SiraliListe>
+      ),
+    },
+    {
+      anahtar: "karsiTaraflar",
+      varsayilanEtiket: "Karşı Taraf",
+      tip: "salt",
+      gosterim: (
+        <SiraliListe>{dosya.karsiTaraflar.map((kt) => <span key={kt.karsiTarafId}>{kt.karsiTaraf.ad}</span>)}</SiraliListe>
+      ),
+    },
+    {
+      anahtar: "muvekkilSifatiId",
+      varsayilanEtiket: "Müvekkil Sıfatı",
+      tip: "secim",
+      deger: dosya.muvekkilSifatiId ?? "",
+      gosterim: dosya.muvekkilSifatiDegeri?.etiket ?? { ALACAKLI: "Alacaklı", BORCLU: "Borçlu", DIGER: "3. kişi" }[dosya.muvekkilSifati],
+      secenekler: muvekkilSifatlari.map((o) => ({ value: o.id, label: o.etiket })),
+    },
+  ];
   const kunyeAlanlari: KartAlani[] = [
+    taraflarAlanlari[2],
     {
       anahtar: "turId",
       varsayilanEtiket: "Tür",
@@ -224,42 +277,6 @@ export default async function DavaDosyasiDetaySayfasi({
       ),
     },
   ];
-  const taraflarAlanlari: KartAlani[] = [
-    {
-      anahtar: "muvekkiller",
-      varsayilanEtiket: "Müvekkil",
-      tip: "salt",
-      gosterim: (
-        <SiraliListe>
-          {dosya.muvekkiller.map((m) => (
-            <Link
-              key={m.musteriId}
-              href={`/kokpit/musteriler/${m.musteriId}`}
-              className="hover:text-[#6db8ff] hover:underline"
-            >
-              {m.musteri.adSoyadUnvan}
-            </Link>
-          ))}
-        </SiraliListe>
-      ),
-    },
-    {
-      anahtar: "karsiTaraflar",
-      varsayilanEtiket: "Karşı Taraf",
-      tip: "salt",
-      gosterim: (
-        <SiraliListe>{dosya.karsiTaraflar.map((kt) => <span key={kt.karsiTarafId}>{kt.karsiTaraf.ad}</span>)}</SiraliListe>
-      ),
-    },
-    {
-      anahtar: "muvekkilSifatiId",
-      varsayilanEtiket: "Müvekkil Sıfatı",
-      tip: "secim",
-      deger: dosya.muvekkilSifatiId ?? "",
-      gosterim: dosya.muvekkilSifatiDegeri?.etiket ?? { ALACAKLI: "Alacaklı", BORCLU: "Borçlu", DIGER: "3. kişi" }[dosya.muvekkilSifati],
-      secenekler: muvekkilSifatlari.map((o) => ({ value: o.id, label: o.etiket })),
-    },
-  ];
   const agacAlanlari: KartAlani[] = [
     ...(dosya.anaDosya
       ? [
@@ -313,9 +330,9 @@ export default async function DavaDosyasiDetaySayfasi({
   ];
 
   return (
-    <div className="pt-3">
-      <KunyeSeridi className="mb-6">
-        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+    <div className="pt-2 md:pt-3">
+      <KunyeSeridi className="mb-4 md:mb-6">
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <span
@@ -335,29 +352,14 @@ export default async function DavaDosyasiDetaySayfasi({
               <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-medium text-[#8fb4e8]">
                 {dosya.durum.etiket}
               </span>
-              {dosya.tur && (
-                <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs text-white/90">
-                  {dosya.tur.etiket}
-                </span>
-              )}
-              {(dosya.icraAltTuru ?? dosya.yargiKolu) && (
-                <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs text-white/90">
-                  {(dosya.icraAltTuru ?? dosya.yargiKolu)!.etiket}
-                </span>
-              )}
-              {hukukDali && (
-                <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs text-white/90">
-                  {hukukDali.etiket}
-                </span>
-              )}
             </div>
 
-            <h1 className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+            <h1 className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-lg font-semibold tracking-tight text-white sm:text-2xl">
               {dosya.birimAdi || dosya.dosyaNo ? (
                 <>
                   {dosya.birimAdi && <span>{dosya.birimAdi}</span>}
                   {dosya.dosyaNo && (
-                    <span className="rounded-lg bg-[var(--accent-soft)] px-2.5 py-0 text-xl text-[#8fb4e8]">
+                    <span className="rounded-lg bg-[var(--accent-soft)] px-2 py-0 text-lg text-[#8fb4e8] sm:px-2.5 sm:text-xl">
                       {dosya.dosyaNo}
                     </span>
                   )}
@@ -370,18 +372,18 @@ export default async function DavaDosyasiDetaySayfasi({
               <p className="mt-0.5 truncate text-sm text-white/80">{dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}</p>
             )}
 
-            <div className="mt-2 flex flex-wrap items-stretch gap-2 text-sm">
-              <div className="min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-3 py-1">
-                <span className="block text-xs font-semibold uppercase tracking-wider text-[#8fb4e8]">
+            <div className="mt-2 grid grid-cols-2 items-stretch gap-2 text-sm md:flex md:flex-wrap">
+              <div className="min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-2.5 py-1 sm:px-3">
+                <span className="block text-[11px] font-semibold uppercase tracking-wider text-[#8fb4e8] sm:text-xs">
                   Müvekkil{dosya.muvekkilSifatiDegeri ? ` · ${dosya.muvekkilSifatiDegeri.etiket}` : ""}
                 </span>
-                <span className="text-base font-medium text-white">
-                  <NumaraliAdlar adlar={dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan)} />
+                <span className="break-words text-sm font-medium text-white sm:text-base">
+                  <MuvekkilAdlari muvekkiller={dosya.muvekkiller.map((m) => ({ id: m.musteriId, ad: m.musteri.adSoyadUnvan }))} />
                 </span>
               </div>
-              <div className="min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-3 py-1">
-                <span className="block text-xs font-semibold uppercase tracking-wider text-[#8fb4e8]">Karşı Taraf</span>
-                <span className="text-base font-medium text-white">
+              <div className="min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-2.5 py-1 sm:px-3">
+                <span className="block text-[11px] font-semibold uppercase tracking-wider text-[#8fb4e8] sm:text-xs">Karşı Taraf</span>
+                <span className="break-words text-sm font-medium text-white sm:text-base">
                   <NumaraliAdlar adlar={dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad)} />
                 </span>
               </div>
@@ -391,14 +393,14 @@ export default async function DavaDosyasiDetaySayfasi({
           <div className="flex flex-col items-end gap-2">
             <div className="flex gap-2">
               <Link href={`/kokpit/dava-dosyalari/${id}/duzenle`}>
-                <Dugme varyant="ikincil">Düzenle</Dugme>
+                <Dugme varyant="ikincil" className="!px-3 !py-1 !text-xs md:!px-4 md:!py-2 md:!text-sm">Düzenle</Dugme>
               </Link>
               {silmeYetkisiVar && (
-                <DavaDosyasiSilmeButonu dosyaId={id} sonrasindaYonlendir="/kokpit/dava-dosyalari" />
+                <DavaDosyasiSilmeButonu dosyaId={id} sonrasindaYonlendir="/kokpit/dava-dosyalari" boyut="kompakt" />
               )}
             </div>
             <div className="flex flex-wrap justify-end gap-1.5">
-              <span
+              {dosyaEkonomisi.net !== 0 && <span
                 className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   dosyaEkonomisi.net > 0
                     ? "bg-[#ff7a70]/15 text-[#ff7a70]"
@@ -411,8 +413,8 @@ export default async function DavaDosyasiDetaySayfasi({
                   ? `Müvekkil Borcu: ${paraFormatlayici.format(dosyaEkonomisi.net)}`
                   : dosyaEkonomisi.net < 0
                     ? `Müvekkil Lehine Fazla: ${paraFormatlayici.format(-dosyaEkonomisi.net)}`
-                    : "Bakiye yok"}
-              </span>
+                    : ""}
+              </span>}
               {dosyaEkonomisi.paraBakiyesi > 0 && (
                 <span className="whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2.5 py-0.5 text-xs font-medium text-[#8fb4e8]">
                   Para trafiğinde bekleyen: {paraFormatlayici.format(dosyaEkonomisi.paraBakiyesi)}
@@ -437,18 +439,8 @@ export default async function DavaDosyasiDetaySayfasi({
           <div className="glass mb-6 max-w-5xl divide-y divide-white/10 rounded-2xl px-5 py-3">
             <DuzenlenebilirKart
               duz
-              etiketOnEki="dosya-detay.taraf-bilgileri"
-              varsayilanBaslik="Taraf Bilgileri"
-              etiketler={etiketler}
-              alanlar={taraflarAlanlari}
-              etiketDuzenleyebilir={etiketDuzenleyebilir}
-              onKaydet={dosyaAlanlariniGuncelle.bind(null, id)}
-            />
-
-            <DuzenlenebilirKart
-              duz
               etiketOnEki="dosya-detay.kunye"
-              varsayilanBaslik="Künye (Tür · Birim · Dosya No)"
+              varsayilanBaslik="Künye"
               etiketler={etiketler}
               alanlar={kunyeAlanlari}
               etiketDuzenleyebilir={etiketDuzenleyebilir}
