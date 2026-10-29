@@ -9,7 +9,9 @@ export const SAYFA_EK_CSS = `
 .sayfa{max-width:none}
 body.akici{padding:0;background:#fff}
 body.akici .sayfa{width:auto;min-height:0;box-shadow:none;padding:14px 14px 28px!important}
-body.akici p{text-align:left!important;text-indent:0!important;margin-left:0!important;tab-size:2;line-height:1.45}
+html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body.akici p{text-align:left!important;text-indent:0!important;margin-left:0!important;tab-size:2}
+body.akici p,body.akici p span{line-height:1.5!important;font-size:max(1em,15px)!important}
 #mod-dugme{position:fixed;top:8px;right:8px;z-index:5;border:0;border-radius:999px;padding:7px 14px;font:600 13px system-ui,sans-serif;background:rgba(10,132,255,.92);color:#fff}
 @media (min-width:830px){#mod-dugme{display:none}}
 `;
@@ -20,7 +22,7 @@ export const SAYFA_DUGME_VE_BETIK = `
 (function(){
   var b=document.body,d=document.getElementById('mod-dugme'),SAYFA_PX=793.34;
   function sigdir(){
-    if(b.classList.contains('akici')){b.style.zoom='';return;}
+    if(b.classList.contains('akici')){b.style.removeProperty('zoom');b.style.padding='';return;}
     var w=document.documentElement.clientWidth;
     b.style.zoom=w<SAYFA_PX+32?Math.max(0.3,(w-4)/(SAYFA_PX+0)):'';
     if(w<SAYFA_PX+32){b.style.padding='0';}else{b.style.padding='';}
