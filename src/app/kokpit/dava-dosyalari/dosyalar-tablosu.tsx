@@ -6,7 +6,6 @@ import type { ReactNode } from "react";
 import type { davaDosyalariniListele } from "@/modules/dava-dosyasi/lib/queries";
 import { DAVA_DOSYALARI_SUTUN_ACIKLAMALARI } from "@/core/tablo-duzeni/dava-dosyalari-sutunlari";
 import { kokpitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
-import { Dugme } from "@/core/ui/button";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 
 type Dosya = Awaited<ReturnType<typeof davaDosyalariniListele>>[number];
@@ -304,7 +303,7 @@ export function DosyalarTablosu({
     <div className="glass overflow-x-auto rounded-2xl">
       <table className="w-full table-fixed text-left text-sm">
         <colgroup>
-          <col style={{ width: 24 }} />
+          <col style={{ width: 68 }} />
           {gorunurSutunlar.map((anahtar) => (
             <col key={anahtar} style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }} />
           ))}
@@ -312,7 +311,7 @@ export function DosyalarTablosu({
         </colgroup>
         <thead className="text-white/50">
           <tr>
-            <th className="w-6 p-0" aria-label="Aç" />
+            <th className="w-[68px] p-0" aria-label="Aç" />
             {gorunurSutunlar.map((anahtar) => (
               <SutunBasligi
                 key={anahtar}
@@ -335,16 +334,18 @@ export function DosyalarTablosu({
               key={dosya.id}
               className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${seviye === 0 && altSayisi > 0 ? "bg-white/[0.03]" : ""}`}
             >
-              <td className="p-0">
-                {/* Satir cubugu: tiklaninca dosya acilir; satirin uzerine gelince kalinlasir. */}
-                <Link
-                  href={`/kokpit/dava-dosyalari/${dosya.id}`}
-                  title="Dosyayı aç"
-                  aria-label="Dosyayı aç"
-                  className="flex h-9 w-full items-center justify-center"
-                >
-                  <span className="h-6 w-1 rounded-full bg-[var(--accent)] opacity-50 transition-all group-hover/satir:w-1.5 group-hover/satir:opacity-100" />
-                </Link>
+              <td className="py-0 pl-1.5 pr-1">
+                {/* Sol cubuk satirin uzerine gelince kalinlasir; "Aç" dugmesi dosyayi acar. */}
+                <div className="flex h-9 items-center gap-1.5">
+                  <span className="h-6 w-1 shrink-0 rounded-full bg-[var(--accent)] opacity-50 transition-all group-hover/satir:w-1.5 group-hover/satir:opacity-100" />
+                  <Link
+                    href={`/kokpit/dava-dosyalari/${dosya.id}`}
+                    title="Dosyayı aç"
+                    className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-semibold text-[#8fb4e8] hover:bg-[var(--accent)] hover:text-white"
+                  >
+                    Aç
+                  </Link>
+                </div>
               </td>
               {gorunurSutunlar.map((anahtar, sutunIndex) => (
                 <td
