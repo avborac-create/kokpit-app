@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Dugme } from "@/core/ui/button";
 import { Girdi } from "@/core/ui/form";
-import { evrakGuncelle, evrakSil, evrakYukle } from "@/modules/cmk-dosyalari/lib/evrak-actions";
+import { evrakGuncelle, evrakSil, evrakYukle, type EvrakHedefi } from "@/modules/cmk-dosyalari/lib/evrak-actions";
 
 export type EvrakKaydi = {
   id: string;
@@ -16,7 +16,9 @@ export type EvrakKaydi = {
   ozel: boolean; // true: yalniz giris yapan avukatin gorebildigi evrak
 };
 
-const KLASOR_SIRASI = ["İddianame", "Duruşma Zabıtları", "İfadeler", "Tutanaklar", "Şikayet"];
+const CMK_KLASORLERI = ["İddianame", "Duruşma Zabıtları", "İfadeler", "Tutanaklar", "Şikayet"];
+const DAVA_KLASORLERI = ["Dilekçeler", "Cevap ve Savunma", "Delil ve Bilirkişi", "Tutanaklar", "Ara Kararlar", "Karar", "Vekâletname"];
+const HEDEF_KLASORLERI = { cmk: CMK_KLASORLERI, dava: DAVA_KLASORLERI };
 
 function tarihYaz(t: string | null) {
   if (!t) return "Tarihsiz";
@@ -30,7 +32,7 @@ function boyutYaz(b: number) {
 
 // CMK dosyasi evrak alani: solda klasor agaci (evrak bazinda) ya da tarih
 // sirali liste, sagda secili evrakin onizlemesi.
-export function EvrakPaneli({ dosyaId, evraklar }: { dosyaId: string; evraklar: EvrakKaydi[] }) {
+export function EvrakPaneli({ dosyaId, evraklar, hedef = "cmk" }: { dosyaId: string; evraklar: EvrakKaydi[]; hedef?: EvrakHedefi }) {
   const [alan, setAlan] = useState<"dosya" | "ozel">("dosya");
   const dosyaEvraklari = evraklar.filter((e) => !e.ozel);
   const ozelEvraklar = evraklar.filter((e) => e.ozel);
@@ -66,6 +68,7 @@ export function EvrakPaneli({ dosyaId, evraklar }: { dosyaId: string; evraklar: 
       <EvrakAlani
         key={alan}
         dosyaId={dosyaId}
+        hedef={hedef}
         evraklar={alan === "dosya" ? dosyaEvraklari : ozelEvraklar}
         ozel={alan === "ozel"}
       />
@@ -75,8 +78,8 @@ export function EvrakPaneli({ dosyaId, evraklar }: { dosyaId: string; evraklar: 
 
 type Siralama = "tarih" | "tur";
 
-function turSirasi(klasor: string) {
-  const i = KLASOR_SIRASI.indexOf(klasor);
+function turSirasi(klasor: string, sira: string[]) {
+  const i = sira.indexOf(klasor);
   return i === -1 ? 99 : i;
 }
 
@@ -88,19 +91,20 @@ function yalnizTarih(a: EvrakKaydi, b: EvrakKaydi, artan: boolean) {
   return artan ? a.evrakTarihi.localeCompare(b.evrakTarihi) : b.evrakTarihi.localeCompare(a.evrakTarihi);
 }
 
-function evrakSirala(a: EvrakKaydi, b: EvrakKaydi, siralama: Siralama, artan: boolean) {
-  const tur = turSirasi(a.klasor) - turSirasi(b.klasor) || a.klasor.localeCompare(b.klasor, "tr");
+function evrakSirala(a: EvrakKaydi, b: EvrakKaydi, siralama: Siralama, artan: boolean, sira: string[]) {
+  const tur = turSirasi(a.klasor, sira) - turSirasi(b.klasor, sira) || a.klasor.localeCompare(b.klasor, "tr");
   const tarih = yalnizTarih(a, b, artan);
   return (siralama === "tur" ? tur || tarih : tarih || tur) || a.ad.localeCompare(b.ad, "tr");
 }
 
-function EvrakAlani({ dosyaId, evraklar, ozel }: { dosyaId: string; evraklar: EvrakKaydi[]; ozel: boolean }) {
+function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evraklar: EvrakKaydi[]; ozel: boolean; hedef: EvrakHedefi }) {
+  const KLASOR_SIRASI = HEDEF_KLASORLERI[hedef];
   const [gorunum, setGorunum] = useState<"klasor" | "tarih">("klasor");
   const [siralama, setSiralama] = useState<Siralama>("tur");
   const [artan, setArtan] = useState(true);
   const [arama, setArama] = useState("");
   const [seciliId, setSeciliId] = useState<string | null>(() => {
-    const sirali = [...evraklar].sort((a, b) => evrakSirala(a, b, "tur", true));
+    const sirali = [...evraklar].sort((a, b) => evrakSirala(a, b, "tur", true, KLASOR_SIRASI));
     return sirali[0]?.id ?? null;
   });
   const [kapaliKlasorler, setKapaliKlasorler] = useState<Set<string>>(new Set());
@@ -116,16 +120,16 @@ function EvrakAlani({ dosyaId, evraklar, ozel }: { dosyaId: string; evraklar: Ev
   const gruplar = useMemo(() => {
     const harita = new Map<string, EvrakKaydi[]>();
     for (const e of filtreli) harita.set(e.klasor, [...(harita.get(e.klasor) ?? []), e]);
-    const listeler = [...harita.entries()].map(([klasor, liste]) => [klasor, [...liste].sort((x, y) => evrakSirala(x, y, siralama, artan))] as const);
+    const listeler = [...harita.entries()].map(([klasor, liste]) => [klasor, [...liste].sort((x, y) => evrakSirala(x, y, siralama, artan, KLASOR_SIRASI))] as const);
     // "Tur" sirasinda klasorler sabit tur sirasiyla; "Tarih" sirasinda en erken/gec tarihli evrakin klasoru once gelir.
     return listeler.sort(([ka, la], [kb, lb]) =>
       siralama === "tur"
-        ? turSirasi(ka) - turSirasi(kb) || ka.localeCompare(kb, "tr")
-        : yalnizTarih(la[0], lb[0], artan) || turSirasi(ka) - turSirasi(kb),
+        ? turSirasi(ka, KLASOR_SIRASI) - turSirasi(kb, KLASOR_SIRASI) || ka.localeCompare(kb, "tr")
+        : yalnizTarih(la[0], lb[0], artan) || turSirasi(ka, KLASOR_SIRASI) - turSirasi(kb, KLASOR_SIRASI),
     );
-  }, [filtreli, siralama, artan]);
+  }, [filtreli, siralama, artan, KLASOR_SIRASI]);
 
-  const duzListe = useMemo(() => [...filtreli].sort((x, y) => evrakSirala(x, y, siralama, artan)), [filtreli, siralama, artan]);
+  const duzListe = useMemo(() => [...filtreli].sort((x, y) => evrakSirala(x, y, siralama, artan, KLASOR_SIRASI)), [filtreli, siralama, artan, KLASOR_SIRASI]);
   const secili = evraklar.find((e) => e.id === seciliId) ?? null;
   const klasorler = [...new Set(evraklar.map((e) => e.klasor).concat(KLASOR_SIRASI))];
 
@@ -239,7 +243,7 @@ function EvrakAlani({ dosyaId, evraklar, ozel }: { dosyaId: string; evraklar: Ev
           <button type="button" onClick={() => setYonetimAcik((a) => !a)} className="py-2 text-xs text-[#6db8ff] hover:underline">
             {yonetimAcik ? "Evrak ekle ▲" : "+ Evrak ekle ▼"}
           </button>
-          {yonetimAcik && <YuklemeFormu dosyaId={dosyaId} klasorler={klasorler} ozel={ozel} />}
+          {yonetimAcik && <YuklemeFormu dosyaId={dosyaId} klasorler={klasorler} ozel={ozel} hedef={hedef} />}
         </div>
       </div>
 
@@ -250,6 +254,7 @@ function EvrakAlani({ dosyaId, evraklar, ozel }: { dosyaId: string; evraklar: Ev
             dosyaId={dosyaId}
             evrak={secili}
             klasorler={klasorler}
+            hedef={hedef}
             listeyeDon={() => listeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
           />
         ) : (
@@ -260,7 +265,7 @@ function EvrakAlani({ dosyaId, evraklar, ozel }: { dosyaId: string; evraklar: Ev
   );
 }
 
-function YuklemeFormu({ dosyaId, klasorler, ozel }: { dosyaId: string; klasorler: string[]; ozel: boolean }) {
+function YuklemeFormu({ dosyaId, klasorler, ozel, hedef }: { dosyaId: string; klasorler: string[]; ozel: boolean; hedef: EvrakHedefi }) {
   const [hata, setHata] = useState("");
   const [bekliyor, basla] = useTransition();
   return (
@@ -270,7 +275,7 @@ function YuklemeFormu({ dosyaId, klasorler, ozel }: { dosyaId: string; klasorler
         setHata("");
         basla(async () => {
           try {
-            await evrakYukle(dosyaId, fd);
+            await evrakYukle(dosyaId, fd, hedef);
           } catch (e) {
             setHata(e instanceof Error ? e.message : "Yüklenemedi.");
           }
@@ -299,11 +304,13 @@ function Onizleme({
   dosyaId,
   evrak,
   klasorler,
+  hedef,
   listeyeDon,
 }: {
   dosyaId: string;
   evrak: EvrakKaydi;
   klasorler: string[];
+  hedef: EvrakHedefi;
   listeyeDon: () => void;
 }) {
   const [duzenle, setDuzenle] = useState(false);
@@ -337,7 +344,7 @@ function Onizleme({
             boyut="kompakt"
             disabled={bekliyor}
             onClick={() => {
-              if (window.confirm(`"${evrak.ad}" evrakı silinsin mi?`)) basla(() => evrakSil(dosyaId, evrak.id));
+              if (window.confirm(`"${evrak.ad}" evrakı silinsin mi?`)) basla(() => evrakSil(dosyaId, evrak.id, hedef));
             }}
           >
             Sil
@@ -350,7 +357,7 @@ function Onizleme({
           className="mb-3 grid grid-cols-1 gap-2 rounded-xl border border-white/10 p-3 sm:grid-cols-4"
           action={(fd) => {
             basla(async () => {
-              await evrakGuncelle(dosyaId, evrak.id, fd);
+              await evrakGuncelle(dosyaId, evrak.id, fd, hedef);
               setDuzenle(false);
             });
           }}

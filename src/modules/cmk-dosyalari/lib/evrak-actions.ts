@@ -19,11 +19,15 @@ async function evrakErisimiKontrolEt(evrakId: string, kullaniciId: string) {
   }
 }
 
+export type EvrakHedefi = "cmk" | "dava";
+const sayfaYolu = (hedef: EvrakHedefi, id: string) =>
+  hedef === "dava" ? `/kokpit/dava-dosyalari/${id}?sekme=evrak` : `/kokpit/cmk-dosyalari/${id}`;
+
 const IZIN_VERILEN_BOYUT = 4 * 1024 * 1024;
 
 // Bir ya da birden fazla evraki yukler. Tarih bos birakilirsa dosya adindan
 // (ör. ..._16_10_2025) yakalanmaya calisilir.
-export async function evrakYukle(cmkDosyasiId: string, formData: FormData) {
+export async function evrakYukle(cmkDosyasiId: string, formData: FormData, hedef: EvrakHedefi = "cmk") {
   const kullanici = await oturumSart();
   const ozel = String(formData.get("ozel") ?? "") === "1";
   const klasor = String(formData.get("klasor") ?? "").trim() || "Diğer";
@@ -40,7 +44,7 @@ export async function evrakYukle(cmkDosyasiId: string, formData: FormData) {
     const tarih = tarihMetni ? new Date(`${tarihMetni}T12:00:00Z`) : adindanTarihBul(dosya.name);
     await prisma.cMKEvrak.create({
       data: {
-        cmkDosyasiId,
+        ...(hedef === "dava" ? { davaDosyasiId: cmkDosyasiId } : { cmkDosyasiId }),
         ozelKullaniciId: ozel ? kullanici.kullaniciId : null,
         klasor,
         ad: gorunenAdUret(dosya.name),
@@ -60,10 +64,10 @@ export async function evrakYukle(cmkDosyasiId: string, formData: FormData) {
       },
     });
   }
-  revalidatePath(`/kokpit/cmk-dosyalari/${cmkDosyasiId}`);
+  revalidatePath(sayfaYolu(hedef, cmkDosyasiId));
 }
 
-export async function evrakGuncelle(cmkDosyasiId: string, evrakId: string, formData: FormData) {
+export async function evrakGuncelle(cmkDosyasiId: string, evrakId: string, formData: FormData, hedef: EvrakHedefi = "cmk") {
   const kullanici = await oturumSart();
   await evrakErisimiKontrolEt(evrakId, kullanici.kullaniciId);
   const ad = String(formData.get("ad") ?? "").trim();
@@ -74,12 +78,12 @@ export async function evrakGuncelle(cmkDosyasiId: string, evrakId: string, formD
     where: { id: evrakId },
     data: { ad, klasor, evrakTarihi: tarihMetni ? new Date(`${tarihMetni}T12:00:00Z`) : null },
   });
-  revalidatePath(`/kokpit/cmk-dosyalari/${cmkDosyasiId}`);
+  revalidatePath(sayfaYolu(hedef, cmkDosyasiId));
 }
 
-export async function evrakSil(cmkDosyasiId: string, evrakId: string) {
+export async function evrakSil(cmkDosyasiId: string, evrakId: string, hedef: EvrakHedefi = "cmk") {
   const kullanici = await oturumSart();
   await evrakErisimiKontrolEt(evrakId, kullanici.kullaniciId);
   await prisma.cMKEvrak.delete({ where: { id: evrakId } });
-  revalidatePath(`/kokpit/cmk-dosyalari/${cmkDosyasiId}`);
+  revalidatePath(sayfaYolu(hedef, cmkDosyasiId));
 }

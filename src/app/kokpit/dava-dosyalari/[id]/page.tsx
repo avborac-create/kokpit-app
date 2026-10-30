@@ -13,6 +13,8 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { davaDegeriHesapla, davaDegeriYaz } from "@/modules/dava-dosyasi/lib/dava-degeri";
 import { VekilPaneli } from "@/modules/dava-dosyasi/components/vekil-paneli";
+import { prisma } from "@/core/db/prisma";
+import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
 import { DosyaBaglayici } from "@/modules/dava-dosyasi/components/dosya-baglayici";
 import { kokpitNoGoster, kayitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { Dugme } from "@/core/ui/button";
@@ -89,7 +91,7 @@ export default async function DavaDosyasiDetaySayfasi({
 }) {
   const { id } = await params;
   const { sekme, alt } = await searchParams;
-  const aktifSekme = sekme === "ekonomi" ? "ekonomi" : "genel";
+  const aktifSekme = sekme === "ekonomi" || sekme === "evrak" || sekme === "gorevler" ? sekme : "genel";
   const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri, vekilAdaylari] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
@@ -104,6 +106,21 @@ export default async function DavaDosyasiDetaySayfasi({
     vekilAdaylariniGetir(),
   ]);
   if (!dosya) notFound();
+
+  // Dosya Evrakları sekmesi: baska avukatların "avukata özel" evrakları hiç çekilmez.
+  let evrakKayitlari: EvrakKaydi[] = [];
+  if (aktifSekme === "evrak") {
+    const evraklar = await prisma.cMKEvrak.findMany({
+      where: { davaDosyasiId: id, OR: [{ ozelKullaniciId: null }, { ozelKullaniciId: kullanici?.kullaniciId ?? "-" }] },
+      select: { id: true, ad: true, klasor: true, evrakTarihi: true, mimeTipi: true, boyutBayt: true, onizlemeTuru: true, ozelKullaniciId: true },
+    });
+    evrakKayitlari = evraklar.map(({ ozelKullaniciId, ...e }) => ({
+      ...e,
+      ozel: ozelKullaniciId !== null,
+      evrakTarihi: e.evrakTarihi ? e.evrakTarihi.toISOString().slice(0, 10) : null,
+      onizlemeTuru: e.onizlemeTuru as EvrakKaydi["onizlemeTuru"],
+    }));
+  }
 
   // Ana dosyaysa: kendisi + alt dosyalari (Dosya Ekonomisi > Ozet sekmesinde
   // her birinin net durumu ve toplami gosterilir).
@@ -462,7 +479,43 @@ export default async function DavaDosyasiDetaySayfasi({
 
       <DavaDosyasiSekmeleri dosyaId={id} aktif={aktifSekme} />
 
-      {aktifSekme === "genel" ? (
+      {aktifSekme === "evrak" ? (
+        <EvrakPaneli dosyaId={id} evraklar={evrakKayitlari} hedef="dava" />
+      ) : aktifSekme === "gorevler" ? (
+        <div className="glass max-w-5xl rounded-2xl p-5">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <h2 className="text-base font-semibold text-white">Dosya Görevleri</h2>
+            <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] text-white/60">Prototip</span>
+          </div>
+          <p className="mb-4 text-sm text-white/55">
+            Ara karar dahil bu dosyayla ilgili her türlü iş buradan takip edilecek. Panel henüz tasarım aşamasında;
+            şimdilik dosyaya girilmiş mevcut işler (Avukat Şapkası) listeleniyor.
+          </p>
+          {dosya.hukukiMudahaleler.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-white/15 px-4 py-8 text-center text-sm text-white/40">
+              Bu dosya için görev yok.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {dosya.hukukiMudahaleler.map((g) => (
+                <li key={g.id} className="alan-hucre flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <div className="min-w-0">
+                    <p className="font-medium text-white">{g.baslik}</p>
+                    <p className="text-xs text-white/50">
+                      {[g.mudahaleTuru?.etiket, g.sorumluAvukat?.adSoyad, g.sonTarih ? `Son tarih: ${tarihFormatlayici.format(g.sonTarih)}` : null]
+                        .filter(Boolean)
+                        .join(" · ") || "—"}
+                    </p>
+                  </div>
+                  <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-xs text-[#8fb4e8]">
+                    {({ BEKLEMEDE: "Beklemede", DEVAM_EDIYOR: "Devam ediyor", TAMAMLANDI: "Tamamlandı", IPTAL_EDILDI: "İptal" } as Record<string, string>)[g.durum]}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : aktifSekme === "genel" ? (
         <>
           <div className="glass mb-6 max-w-5xl divide-y divide-white/10 rounded-2xl px-5 py-3">
             <DuzenlenebilirKart

@@ -605,6 +605,7 @@ model DavaDosyasi {
   gidenAvansAktarimlari  DosyaAvansAktarimi[]    @relation("AvansAktarimiKaynak")
   gelenAvansAktarimlari  DosyaAvansAktarimi[]    @relation("AvansAktarimiHedef")
   uyapVekilleri          DosyaUyapVekili[]
+  evraklar               CMKEvrak[]
 
   @@index([buroNo])
   @@index([durumId])
@@ -1074,9 +1075,12 @@ model CMKDosyasi {
 // liste sorgulari agir baytlari cekmesin. Onizleme: PDF/resim dogrudan, TIF
 // PNG'ye cevrilmis halde, UDF (UYAP) metne cevrilmis halde sunulur.
 model CMKEvrak {
-  id           String     @id @default(cuid())
-  cmkDosyasiId String
-  cmkDosyasi   CMKDosyasi @relation(fields: [cmkDosyasiId], references: [id], onDelete: Cascade)
+  id            String       @id @default(cuid())
+  // Evrak ya CMK dosyasina ya da dava dosyasina baglidir (ikisinden biri dolu).
+  cmkDosyasiId  String?
+  cmkDosyasi    CMKDosyasi?  @relation(fields: [cmkDosyasiId], references: [id], onDelete: Cascade)
+  davaDosyasiId String?
+  davaDosyasi   DavaDosyasi? @relation(fields: [davaDosyasiId], references: [id], onDelete: Cascade)
 
   klasor       String // "Iddianame", "Durusma Zabitlari", "Ifadeler"...
   ad           String
@@ -1094,6 +1098,7 @@ model CMKEvrak {
   icerik CMKEvrakIcerik?
 
   @@index([cmkDosyasiId])
+  @@index([davaDosyasiId])
   @@index([ozelKullaniciId])
   @@map("cmk_evraklari")
 }
