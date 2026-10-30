@@ -26,9 +26,18 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
   buroNo: (dosya) => buroNoGoster(dosya.buroNo),
   dosyaNo: (dosya) => dosya.dosyaNo ?? "—",
   tur: (dosya) => {
-    const tur = dosya.tur?.etiket.replace(/ Dosyası$/, "");
-    const turMetni = [tur, dosya.yargiKolu?.etiket].filter(Boolean).join(" › ");
-    const metin = [turMetni, dosya.hukukiIliskiTuru?.etiket].filter(Boolean).join(" · ") || "—";
+    // Tür sütunu kısa tutulur: Hukuk / Ceza / İdari / İcra / AYM.
+    // Konu ayrı sütunda; diğer dosya türleri (İhtar vb.) kendi adıyla görünür.
+    const kod = dosya.tur?.kod;
+    const yargi = dosya.yargiKolu?.etiket;
+    const metin =
+      kod === "icra_dosyasi"
+        ? "İcra"
+        : kod === "dava_dosyasi" && yargi
+          ? yargi === "Anayasa Mahkemesi"
+            ? "AYM"
+            : yargi
+          : (dosya.tur?.etiket.replace(/ Dosyası$/, "") ?? "—");
     return (
       <span className="flex items-center gap-1.5">
         <span className="truncate">{metin}</span>
