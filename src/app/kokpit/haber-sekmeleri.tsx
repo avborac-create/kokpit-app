@@ -10,8 +10,20 @@ export function HaberSekmeleri({ kaynaklar }: { kaynaklar: HaberKaynagi[] }) {
   const [secili, setSecili] = useState(kaynaklar[0]?.kod ?? "");
   const kaynak = kaynaklar.find((k) => k.kod === secili) ?? kaynaklar[0];
   if (!kaynak) return null;
+  const liste = (
+    <ul>
+      {kaynak.kalemler.map((h) => (
+        <li key={h.baglanti} className="border-b border-white/[0.07] py-2">
+          <a href={h.baglanti} target="_blank" rel="noopener noreferrer" className="block text-white/90 hover:text-[#6db8ff]">
+            <span className="text-sm font-medium leading-snug">{h.baslik}</span>
+            {h.ek && <span className="mt-0.5 block text-xs text-white/40">{h.ek}</span>}
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
   return (
-    <section className="glass flex min-w-0 flex-col rounded-3xl p-5">
+    <section className="glass flex h-full min-w-0 flex-col rounded-3xl p-5">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-white/50">Hukuk gündemi</h2>
         <div className="flex gap-1" role="tablist">
@@ -32,16 +44,17 @@ export function HaberSekmeleri({ kaynaklar }: { kaynaklar: HaberKaynagi[] }) {
         </div>
       </div>
       <p className="mb-1 text-xs text-white/40">{kaynak.alt}</p>
-      <ul className="max-h-60 min-h-0 flex-1 overflow-y-auto">
-        {kaynak.kalemler.map((h) => (
-          <li key={h.baglanti} className="border-b border-white/[0.07] py-2 last:border-0">
-            <a href={h.baglanti} target="_blank" rel="noopener noreferrer" className="block text-white/90 hover:text-[#6db8ff]">
-              <span className="text-sm font-medium leading-snug">{h.baslik}</span>
-              {h.ek && <span className="mt-0.5 block text-xs text-white/40">{h.ek}</span>}
-            </a>
-          </li>
-        ))}
-      </ul>
+      {/* Yukari kayan akis (uzerine gelince durur); yukseklik yandaki panele esitlenir. */}
+      <div className="relative min-h-60 flex-1">
+        <div key={kaynak.kod} className="haber-akisi absolute inset-0 overflow-hidden motion-reduce:overflow-y-auto">
+          <div className="haber-akisi-ic">
+            {liste}
+            <div aria-hidden="true" className="motion-reduce:hidden">
+              {liste}
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

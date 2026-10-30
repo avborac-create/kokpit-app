@@ -87,11 +87,11 @@ export function AnaSayfaDuzeni({
         </div>
       )}
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
         {gorunen.map((kod, i) => {
           const genis = duzen.genis.includes(kod);
           return (
-            <div key={kod} className={`relative min-w-0 ${genis ? "lg:col-span-2" : ""} ${duzenleniyor ? "rounded-3xl ring-2 ring-[var(--accent)]/60" : ""}`}>
+            <div key={kod} className={`relative flex min-w-0 flex-col [&>*]:flex-1 ${genis ? "lg:col-span-2" : ""} ${duzenleniyor ? "rounded-3xl ring-2 ring-[var(--accent)]/60" : ""}`}>
               {duzenleniyor && (
                 <div className="absolute right-3 top-3 z-10 flex items-center gap-1">
                   <button type="button" className={dugme} disabled={i === 0} onClick={() => tasi(kod, -1)} aria-label="Öne al" title="Öne al">

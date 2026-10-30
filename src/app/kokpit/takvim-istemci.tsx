@@ -92,7 +92,7 @@ export function TakvimIstemci({
   const gezinti = "rounded-full px-2.5 py-1 text-sm text-white/70 hover:bg-white/10 hover:text-white";
 
   return (
-    <section className="glass flex min-w-0 flex-col rounded-3xl p-5">
+    <section className="glass flex h-full min-w-0 flex-col rounded-3xl p-5">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-white/50">Takvim</h2>
         <div className="flex items-center gap-1">
