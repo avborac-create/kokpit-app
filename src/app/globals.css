@@ -179,7 +179,7 @@ html[data-palet="hiperekran"][data-tema="acik"] {
 /* Mercedes Gumus: koyu antrasit, ince gumus cizgiler, hafif yazi. */
 html[data-palet="gumus"][data-tema="koyu"] {
   --background: #252b37; --background-2: #323947; --yuzey: #323947;
-  --accent: #aab4c2; --accent-soft: rgba(170, 180, 194, 0.18); --link: #c9d1db;
+  --accent: #4f9fe0; --accent-soft: rgba(79, 159, 224, 0.24); --link: #8dc4f2;
   --blob-1: #2e3644; --blob-2: #232a35; --blob-3: #2a323f;
   --glass-border: rgba(201, 209, 219, 0.2); --glass-cizgi: rgba(201, 209, 219, 0.2);
   --foreground: rgba(255, 255, 255, 0.95); --foreground-muted: rgba(255, 255, 255, 0.72);
@@ -187,10 +187,21 @@ html[data-palet="gumus"][data-tema="koyu"] {
 }
 html[data-palet="gumus"][data-tema="acik"] {
   --murekkep: #14181f; --background: #eef0f3; --background-2: #ffffff; --yuzey: #f8f9fb;
-  --accent: #5d6878; --accent-soft: rgba(93, 104, 120, 0.12); --link: #3f4958;
+  --accent: #2f7fc4; --accent-soft: rgba(47, 127, 196, 0.14); --link: #1f66a8;
   --blob-1: #d9dee6; --blob-2: #e6e9ee; --blob-3: #dfe3ea;
   --glass-border: rgba(93, 104, 120, 0.18); --glass-cizgi: rgba(20, 30, 50, 0.16);
 }
+/* Gumus: gri zemine kontrollu renk dokunuslari (panel basliklari, ust cizgi, sol menu, sekmeler). */
+html[data-palet="gumus"] .glass h2.uppercase::before {
+  content: ""; display: inline-block; width: 0.45rem; height: 0.45rem; margin-right: 0.55rem;
+  border-radius: 9999px; background: var(--accent); vertical-align: 0.08em;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+html[data-palet="gumus"] .glass {
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--accent) 38%, transparent), 0 14px 34px -18px var(--glass-golge);
+}
+html[data-palet="gumus"] nav a[aria-current="page"] { background: var(--accent-soft); color: var(--link); }
+html[data-palet="gumus"] h1 { background: linear-gradient(90deg, var(--foreground), var(--link)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 html[data-palet="gumus"] body,
 html[data-palet="hiperekran"] body { font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif; font-weight: 400; letter-spacing: 0; -webkit-font-smoothing: antialiased; }
 html[data-palet="gumus"] strong, html[data-palet="gumus"] h1, html[data-palet="gumus"] h2,
