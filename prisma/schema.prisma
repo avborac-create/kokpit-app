@@ -92,6 +92,7 @@ model Kullanici {
   hacizRaporlari                 HacizRaporu[]      @relation("HacizRaporuAvukat")
   uyapVekilOlduguDosyalar        DosyaUyapVekili[]
   olusturduguTakvimOgeleri       TakvimOgesi[]
+  sorumluTakvimOgeleri           TakvimOgesi[]      @relation("TakvimSorumlusu")
 
   @@map("kullanicilar")
 }
@@ -1598,6 +1599,19 @@ model TakvimOgesi {
   olusturanId     String?
   olusturan       Kullanici?   @relation(fields: [olusturanId], references: [id], onDelete: SetNull)
   olusturmaTarihi DateTime     @default(now())
+  // Gelismis ajanda alanlari
+  takvim          String       @default("IS") // IS | KISISEL | DURUSMA | ICRA (renkli takvim)
+  bitisTarihi     DateTime?    @db.Date // cok gunluk aralik
+  bitisSaati      String?
+  yer             String?
+  meetBaglantisi  String?
+  sorumluId       String?
+  sorumlu         Kullanici?   @relation("TakvimSorumlusu", fields: [sorumluId], references: [id], onDelete: SetNull)
+  etiketler       String[]
+  durum           String       @default("BEKLIYOR") // BEKLIYOR | DEVAM | TAMAM (pano sutunu)
+  icerik          String? // zengin sayfa govdesi (basit isaretleme, - [ ] onay kutulari)
+  tekrar          String? // GUNLUK | HAFTALIK | AYLIK
+  tekrarBitis     DateTime?    @db.Date
 
   @@index([tarih])
   @@index([davaDosyasiId])

@@ -153,7 +153,11 @@ export function TakvimIstemci({
   return (
     <section className="glass flex h-full min-w-0 flex-col rounded-3xl p-5">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-white/50">Büro takvimi</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-white/50">
+          <Link href="/kokpit/takvim" className="hover:text-white" title="Tam ekran takvim, ajanda ve pano">
+            Büro takvimi ›
+          </Link>
+        </h2>
         <div className="flex items-center gap-1">
           <Link href={`/kokpit?ay=${oncekiAy}`} className={gezinti} aria-label="Önceki ay">
             ‹

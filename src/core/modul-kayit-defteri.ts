@@ -30,6 +30,7 @@ export type ModulTanimi = {
 // rolune) tasindi - bkz. ayarlar/ayarlar-sekmeleri.tsx.
 export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
   { anahtar: "ana-sayfa", ad: "Ana Sayfa", yol: "/kokpit", aktif: true },
+  { anahtar: "buro-takvimi", ad: "Büro Takvimi", yol: "/kokpit/takvim", aktif: true },
   { anahtar: "musteriler", ad: "Müvekkiller", yol: "/kokpit/musteriler", aktif: true },
   { anahtar: "dava-dosyalari", ad: "Yargı Dosyaları", yol: "/kokpit/dava-dosyalari", aktif: true },
   { anahtar: "cmk-dosyalari", ad: "CMK Dosyaları", yol: "/kokpit/cmk-dosyalari", aktif: true },

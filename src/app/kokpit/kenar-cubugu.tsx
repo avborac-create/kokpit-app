@@ -7,6 +7,7 @@ import type { BuroRolu, KullaniciRolu } from "@prisma/client";
 import { MODUL_KAYIT_DEFTERI, type ModulTanimi } from "@/core/modul-kayit-defteri";
 import {
   AnaSayfaIkonu,
+  TakvimIkonu,
   MuvekkillerIkonu,
   DosyalarIkonu,
   HukukDosyalariIkonu,
@@ -106,6 +107,7 @@ export function KenarCubugu({
     <div className="flex min-h-0 flex-1 flex-col">
       <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-3">
         <MenuBagi modul={anaSayfa} ikon={AnaSayfaIkonu} seciliMi={yol === "/kokpit"} />
+        {gorunurMu("buro-takvimi") && <MenuBagi modul={modulHaritasi.get("buro-takvimi")!} ikon={TakvimIkonu} seciliMi={yol.startsWith("/kokpit/takvim")} />}
 
         {(gorunurMu("musteriler") ||
           gorunurMu("dava-dosyalari") ||
