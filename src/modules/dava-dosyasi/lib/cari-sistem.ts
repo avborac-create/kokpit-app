@@ -222,16 +222,18 @@ export async function kapsamOzeti(kapsam: Kapsam): Promise<KapsamOzeti> {
 // Virman satirinin okunur aciklamasi. Kayitta "<no>-<AD> VİRMAN[ — not]" yazar ve
 // diger taraftaki hesabi gosterir: ALACAK satirinda para o hesaptan GELMISTIR,
 // BORC satirinda o hesaba AKTARILMISTIR. Eski ve yeni kayitlar ayni sekilde cozulur.
-function virmanAciklamasi(ham: string, yon: string): string {
-  const e = ham.match(/^(.+?) VİRMAN(?: — ([\s\S]*))?$/);
+function virmanAciklamasi(ham: string, yon: string, buHesap: string): string {
+  const e = ham.match(/^(.+?) v[iİ]rman(?: — ([\s\S]*))?$/i);
   if (!e) return ham;
-  const yonMetni = yon === "ALACAK" ? "hesabından geldi" : "hesabına aktarıldı";
-  return `VİRMAN: ${e[1]} ${yonMetni}${e[2] ? `
+  // Kaynak -> hedef: BORC satirinda para bu hesaptan cikar, ALACAK satirinda bu hesaba gelir.
+  const yonMetni = yon === "ALACAK" ? `${e[1]} → ${buHesap}` : `${buHesap} → ${e[1]}`;
+  return `VİRMAN: ${yonMetni}${e[2] ? `
 ${e[2]}` : ""}`;
 }
 
 // Tek hesabin defteri: kapsamdaki tum satirlar (kronolojik siralanmak uzere).
-export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesabiMi: boolean; eskiKod: string | null }) {
+export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesabiMi: boolean; eskiKod: string | null; no?: number | string; ad?: string }) {
+  const buHesapAdi = hesap.ad ? `${hesap.no}-${hesap.ad.toLocaleUpperCase("tr-TR")}` : "BU HESAP";
   const dosyaIdleri = await kapsamDosyaIdleri(kapsam);
   const hareketKosulu = {
     musteriId: kapsam.musteriId,
@@ -308,7 +310,7 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
       tarih: h.tarih,
       dosyaId: h.dosyaId,
       dosyaEtiketi: etiket(h.dosya),
-      aciklama: virmanMi ? virmanAciklamasi(h.aciklama ?? "", h.yon) : (h.aciklama ?? ""),
+      aciklama: virmanMi ? virmanAciklamasi(h.aciklama ?? "", h.yon, buHesapAdi) : (h.aciklama ?? ""),
       odemeYontemi: h.odemeYontemi?.etiket,
       borcludan: h.borcludanMi,
       borc: h.yon === "BORC" ? sayi(h.tutar) : 0,

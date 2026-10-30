@@ -91,12 +91,12 @@ export function Defter({
     <div>
       <Sarmal>
       <div className={kompakt ? "overflow-x-auto" : "glass overflow-x-auto rounded-2xl"}>
-        <table className={kompakt ? "w-full text-left text-[13px] [&_td]:!py-1.5 [&_th]:!py-1.5" : "w-full text-left text-sm"}>
+        <table className={kompakt ? "w-full text-left text-[13px] [&_td]:!px-2 [&_td]:!py-1.5 [&_th]:!px-2 [&_th]:!py-1.5 md:[&_td]:!px-3 md:[&_th]:!px-3" : "w-full text-left text-sm"}>
           <thead className="text-white/50">
             <tr>
               {silmeYetkisiVar && <th className="w-8 px-3 py-3" />}
-              <th className="px-4 py-3 font-medium">Tarih</th>
-              {dosyaSutunu && <th className="px-4 py-3 font-medium">Dosya</th>}
+              {!kompakt && <th className="px-4 py-3 font-medium">Tarih</th>}
+              {dosyaSutunu && !kompakt && <th className="px-4 py-3 font-medium">Dosya</th>}
               <th className="px-4 py-3 font-medium">Açıklama</th>
               <th className="px-4 py-3 text-right font-medium text-[#ff7a70]/85">Borç</th>
               <th className="px-4 py-3 text-right font-medium text-[#32d74b]/85">Alacak</th>
@@ -119,8 +119,8 @@ export function Defter({
                     )}
                   </td>
                 )}
-                <td className="whitespace-nowrap px-4 py-3 text-white/60">{tarihBicimi.format(s.tarih)}</td>
-                {dosyaSutunu && (
+                {!kompakt && <td className="whitespace-nowrap px-4 py-3 text-white/60">{tarihBicimi.format(s.tarih)}</td>}
+                {dosyaSutunu && !kompakt && (
                   <td className="px-4 py-3">
                     {s.dosyaEtiketi ? (
                       <span className="whitespace-nowrap rounded-full bg-white/[0.07] px-2.5 py-0.5 text-xs text-white/75">
@@ -131,8 +131,16 @@ export function Defter({
                     )}
                   </td>
                 )}
-                <td className="whitespace-pre-line px-4 py-3 text-white/85">
-                  {s.aciklama}
+                <td className={`px-4 py-3 text-white/85 ${kompakt ? "min-w-[12rem]" : ""}`}>
+                  {kompakt && (
+                    <span className="mb-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-white/45">
+                      {tarihBicimi.format(s.tarih)}
+                      {dosyaSutunu && (
+                        <span className="rounded-full bg-white/[0.07] px-2 text-white/70">{s.dosyaEtiketi ?? "havuz"}</span>
+                      )}
+                    </span>
+                  )}
+                  <span className="whitespace-pre-line">{s.aciklama}</span>
                   {s.borcludan && (
                     <span className="ml-2 whitespace-nowrap rounded-full bg-[#ffb340]/15 px-2 py-0.5 text-[11px] text-[#ffb340]">
                       Borçludan
@@ -148,7 +156,7 @@ export function Defter({
                 <td className="whitespace-nowrap px-4 py-3 text-right text-white/85">{s.alacak > 0 ? para.format(s.alacak) : "—"}</td>
                 <td className={`whitespace-nowrap px-4 py-3 text-right font-medium ${renk(s.bakiye)}`}>{para.format(s.bakiye)}</td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-2">
+                  <div className={`flex items-center justify-end gap-2 ${kompakt ? "[&_button]:!px-2 [&_button]:!py-0.5 [&_button]:!text-[11px]" : ""}`}>
                     {s.duzenle && (s.duzenle.tip === "hareket" || silmeYetkisiVar) ? (
                       <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} />
                     ) : (
@@ -164,7 +172,7 @@ export function Defter({
               </tr>
             ))}
             <tr className="border-t border-white/10 font-medium">
-              <td className="px-4 py-3 text-white" colSpan={(dosyaSutunu ? 3 : 2) + (silmeYetkisiVar ? 1 : 0)}>
+              <td className="px-4 py-3 text-white" colSpan={(kompakt ? 1 : dosyaSutunu ? 3 : 2) + (silmeYetkisiVar ? 1 : 0)}>
                 Toplam
               </td>
               <td className="px-4 py-3 text-right text-white">{para.format(toplamBorc)}</td>

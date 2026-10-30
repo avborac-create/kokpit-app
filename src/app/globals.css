@@ -149,9 +149,9 @@ html[data-palet="apple"] .glass-strong { backdrop-filter: blur(var(--cam-bulanik
 
 /* BMW iDrive 8: mavi parlak zemin, yuvarlak cam, BMW mavisi vurgu. */
 html[data-palet="bmw"][data-tema="koyu"] {
-  --background: #0a0d12; --background-2: #151a22; --yuzey: #151a22;
+  --background: #151c27; --background-2: #212a38; --yuzey: #212a38;
   --accent: #1c69d4; --accent-soft: rgba(28, 105, 212, 0.26); --link: #7aaef2;
-  --blob-1: #12356b; --blob-2: #1b2433; --blob-3: #0b2547;
+  --blob-1: #1d4f9a; --blob-2: #2a3650; --blob-3: #17407a;
   --glass-border: rgba(120, 170, 255, 0.2); --glass-cizgi: rgba(120, 170, 255, 0.18);
   --glass-parilti: rgba(140, 190, 255, 0.1);
 }
@@ -163,9 +163,9 @@ html[data-palet="bmw"][data-tema="acik"] {
 }
 /* Mercedes Hiperekran: turkuaz parlayan cam, ince acik cerceve. */
 html[data-palet="hiperekran"][data-tema="koyu"] {
-  --background: #090b10; --background-2: #121821; --yuzey: #121821;
+  --background: #141c27; --background-2: #1f2a38; --yuzey: #1f2a38;
   --accent: #00adef; --accent-soft: rgba(0, 173, 239, 0.22); --link: #6fd2f7;
-  --blob-1: #0c2a44; --blob-2: #151c26; --blob-3: #08283a;
+  --blob-1: #14507a; --blob-2: #222f3f; --blob-3: #10435f;
   --glass-border: rgba(140, 200, 255, 0.22); --glass-cizgi: rgba(140, 200, 255, 0.18);
   --glass-parilti: rgba(0, 173, 239, 0.12);
 }
@@ -177,9 +177,9 @@ html[data-palet="hiperekran"][data-tema="acik"] {
 }
 /* Mercedes Gumus: koyu antrasit, ince gumus cizgiler, hafif yazi. */
 html[data-palet="gumus"][data-tema="koyu"] {
-  --background: #0d1015; --background-2: #171b22; --yuzey: #171b22;
+  --background: #1b2029; --background-2: #272d38; --yuzey: #272d38;
   --accent: #aab4c2; --accent-soft: rgba(170, 180, 194, 0.18); --link: #c9d1db;
-  --blob-1: #1c222c; --blob-2: #14181f; --blob-3: #1a2028;
+  --blob-1: #2e3644; --blob-2: #232a35; --blob-3: #2a323f;
   --glass-border: rgba(201, 209, 219, 0.2); --glass-cizgi: rgba(201, 209, 219, 0.2);
   --glass-parilti: rgba(255, 255, 255, 0.06);
 }
@@ -219,9 +219,9 @@ html[data-palet="gumus"] .tikon { border-radius: 9999px; background: none; borde
 
 /* Gece mavisi: derin lacivert, keskin kose, secili/uzerine gelinen kartin beyaz parlamasi. */
 html[data-palet="gece"][data-tema="koyu"] {
-  --background: #00123a; --background-2: #0a2050; --yuzey: #0a2050;
+  --background: #08215e; --background-2: #14336f; --yuzey: #14336f;
   --accent: #0070d1; --accent-soft: rgba(0, 112, 209, 0.3); --link: #6fb3ff;
-  --blob-1: #0a3a8a; --blob-2: #0a1a44; --blob-3: #002a6e;
+  --blob-1: #1250b0; --blob-2: #132a5e; --blob-3: #0a3a8c;
   --glass-border: rgba(255, 255, 255, 0.16); --glass-cizgi: rgba(255, 255, 255, 0.16);
 }
 html[data-palet="gece"][data-tema="acik"] {
@@ -236,9 +236,9 @@ html[data-palet="gece"] .tikon { border-radius: 0.25rem; }
 
 /* Zumrut: koyu yesil-siyah, duz keskin kutular, canli yesil vurgu. */
 html[data-palet="zumrut"][data-tema="koyu"] {
-  --background: #0a110a; --background-2: #152015; --yuzey: #152015;
+  --background: #132213; --background-2: #1e331e; --yuzey: #1e331e;
   --accent: #107c10; --accent-soft: rgba(16, 124, 16, 0.32); --link: #6ede6e;
-  --blob-1: #0e3a0e; --blob-2: #101810; --blob-3: #0a280a;
+  --blob-1: #176617; --blob-2: #1a2c1a; --blob-3: #0f4a0f;
   --glass-border: rgba(110, 222, 110, 0.18); --glass-cizgi: rgba(110, 222, 110, 0.2);
   --glass-parilti: rgba(110, 222, 110, 0.05);
 }
@@ -253,9 +253,9 @@ html[data-palet="zumrut"] .tikon { border-radius: 0.125rem; background: var(--ac
 
 /* Mat siyah: saf siyah, sade, kirmizi tek vurgu cizgisi, alt kenar cizgili hucreler. */
 html[data-palet="matsiyah"][data-tema="koyu"] {
-  --background: #0f0f10; --background-2: #1a1a1b; --yuzey: #1a1a1b;
+  --background: #1c1c1e; --background-2: #29292c; --yuzey: #29292c;
   --accent: #e82127; --accent-soft: rgba(232, 33, 39, 0.22); --link: #a9a9ae;
-  --blob-1: #1c1c1e; --blob-2: #141414; --blob-3: #1a1a1a;
+  --blob-1: #333336; --blob-2: #262628; --blob-3: #2e2e31;
   --glass-border: rgba(255, 255, 255, 0.07); --glass-cizgi: rgba(255, 255, 255, 0.1);
   --glass-parilti: rgba(255, 255, 255, 0.03);
 }
@@ -271,9 +271,9 @@ html[data-palet="matsiyah"] body { letter-spacing: -0.005em; }
 
 /* Yesil sahne: siyah zemin, yesil bulut, yuvarlak yumusak kartlar. */
 html[data-palet="sahne"][data-tema="koyu"] {
-  --background: #121212; --background-2: #1f1f1f; --yuzey: #1f1f1f;
+  --background: #1d1d1f; --background-2: #2b2b2e; --yuzey: #2b2b2e;
   --accent: #1ed760; --accent-soft: rgba(30, 215, 96, 0.2); --link: #1ed760;
-  --blob-1: #1e4d33; --blob-2: #181818; --blob-3: #163826;
+  --blob-1: #266b46; --blob-2: #262628; --blob-3: #1f5037;
   --glass-border: rgba(255, 255, 255, 0.06); --glass-cizgi: rgba(255, 255, 255, 0.1);
   --glass-parilti: rgba(255, 255, 255, 0.03);
 }

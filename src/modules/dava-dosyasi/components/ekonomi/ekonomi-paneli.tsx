@@ -583,7 +583,7 @@ async function HesapSekmesi({
     : digerKaynaklar.length > 0
       ? [{ deger: "havuz", etiket: `Para Trafiği — müvekkil havuzu (${para.format(paraBakiyesi)})` }, ...digerKaynaklar]
       : undefined;
-  const satirlar = await hesapDefteri(kapsam, hesap);
+  const satirlar = await hesapDefteri(kapsam, { ...hesap, no: hesap.no, ad: hesap.ad });
   // Para Trafigi: odeme yontemleri (Nakit / Banka / ...), yoneticiye yerinde duzenleme penceresi
   const yontemler = hesap.paraHesabiMi
     ? (await secenekleriGetir("odeme_yontemi")).map((y) => ({ id: y.id, etiket: y.etiket }))
