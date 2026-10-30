@@ -40,7 +40,7 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
     return (
       <span className="flex items-center gap-1.5">
         <span className="truncate">{metin}</span>
-        {dosya.muvekkilSifati === "BORCLU" && (
+        {dosya.muvekkilSifati === "BORCLU" && dosya.tur?.kod === "icra_dosyasi" && (
           <span className="shrink-0 rounded-full bg-[var(--danger-soft)] px-1.5 py-0.5 text-[11px] text-[#ff7a70]">
             Borçlu
           </span>

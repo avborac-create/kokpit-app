@@ -59,11 +59,11 @@ async function dosyaSinifiniAl(formData: FormData) {
   return { turId, yargiKoluId, muvekkilSifati, muvekkilSifatiId: secilenSifatId, muvekkilSifatiDiger: null };
 }
 
-// Dava dosyasinda taraflar davaci/davali (ya da 3. kisi) olur; "borclu" icra/takip
-// terimidir, dava dosyasinda muvekkil sifati olarak secilemez.
+// "Borclu" icra/takip terimidir: yalnizca icra dosyasinda muvekkil sifati olabilir.
+// Dava dosyasinda Davaci/Davali, diger dosya turlerinde ilgili sifat secilir.
 function sifatTurUyumunuDenetle(turKodu: string | null | undefined, sifatKodu: string | null | undefined) {
-  if (turKodu === "dava_dosyasi" && sifatKodu === "borclu") {
-    throw new Error("Dava dosyasında müvekkil sıfatı Borçlu olamaz; Davacı veya Davalı seçin.");
+  if (sifatKodu === "borclu" && turKodu !== "icra_dosyasi") {
+    throw new Error("Borçlu sıfatı yalnızca icra dosyalarında seçilebilir. Dava dosyasında Davacı veya Davalı seçin.");
   }
 }
 

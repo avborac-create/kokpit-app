@@ -34,6 +34,7 @@ export function DosyaSinifiAlanlari({
 }) {
   const [turId, setTurId] = useState(varsayilanTurId);
   const davaMi = turler.find((t) => t.id === turId)?.kod === "dava_dosyasi";
+  const icraMi = turler.find((t) => t.id === turId)?.kod === "icra_dosyasi";
 
   const turGoster = bolum !== "sifat";
   const sifatGoster = bolum !== "tur";
@@ -69,11 +70,11 @@ export function DosyaSinifiAlanlari({
       )}
       {sifatGoster && (
       <UyusmazlikTuruSecici
-        key={davaMi ? "dava" : "diger"}
+        key={icraMi ? "icra" : "diger"}
         etiket="Müvekkil Sıfatı"
-        // Dava dosyasinda "Borçlu" secilemez (borclu icra/takip terimidir).
-        turler={davaMi ? sifatlar.filter((s) => s.kod !== "borclu") : sifatlar}
-        varsayilanId={davaMi && sifatlar.find((s) => s.id === varsayilanSifatId)?.kod === "borclu" ? "" : varsayilanSifatId}
+        // "Borçlu" yalnizca icra dosyasinda secilebilir (icra/takip terimidir).
+        turler={!icraMi ? sifatlar.filter((s) => s.kod !== "borclu") : sifatlar}
+        varsayilanId={!icraMi && sifatlar.find((s) => s.id === varsayilanSifatId)?.kod === "borclu" ? "" : varsayilanSifatId}
         varsayilanYeniEtiket={varsayilanYeniSifatEtiketi}
         alanAdi="muvekkilSifatiId"
         yeniAlanAdi="yeniMuvekkilSifatiEtiketi"

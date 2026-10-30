@@ -190,7 +190,7 @@ export default async function DavaDosyasiDetaySayfasi({
       gosterim: dosya.muvekkilSifatiDegeri?.etiket ?? { ALACAKLI: "Alacaklı", BORCLU: "Borçlu", DIGER: "3. kişi" }[dosya.muvekkilSifati],
       // Dava dosyasinda "Borçlu" secilemez (mevcut deger bozulmasin diye secili ise listede kalir).
       secenekler: muvekkilSifatlari
-        .filter((o) => !(davaMi && o.kod === "borclu" && o.id !== dosya.muvekkilSifatiId))
+        .filter((o) => !(dosya.tur?.kod !== "icra_dosyasi" && o.kod === "borclu" && o.id !== dosya.muvekkilSifatiId))
         .map((o) => ({ value: o.id, label: o.etiket })),
     },
   ];
@@ -420,7 +420,7 @@ export default async function DavaDosyasiDetaySayfasi({
                 <span className="tikon" aria-hidden>👤</span>
                 <div className="min-w-0 flex-1">
                   <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">
-                    Müvekkil{dosya.muvekkilSifatiDegeri ? ` · ${dosya.muvekkilSifatiDegeri.etiket}` : ""}
+                    Müvekkil{dosya.muvekkilSifatiDegeri && !(dosya.muvekkilSifati === "BORCLU" && dosya.tur?.kod !== "icra_dosyasi") ? ` · ${dosya.muvekkilSifatiDegeri.etiket}` : ""}
                   </span>
                   <span className="break-words text-sm font-medium text-white sm:text-base">
                     <MuvekkilAdlari muvekkiller={dosya.muvekkiller.map((m) => ({ id: m.musteriId, ad: m.musteri.adSoyadUnvan }))} />
