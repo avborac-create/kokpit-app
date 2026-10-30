@@ -462,6 +462,26 @@ html[data-tema="koyu"]:not([data-cam="kapali"]) body {
 /* Veri tablolari (yatay kayan cam kutular) okunurluk icin her zaman opak kalir. */
 html[data-tema="koyu"] .glass.overflow-x-auto { background: var(--yuzey); backdrop-filter: none; -webkit-backdrop-filter: none; }
 
+/* Telefon: iOS "background-attachment: fixed" desteklemez, uzun sayfada renk bulutlari
+   tum sayfaya gerilip her yeri parlak maviye boyuyordu. Burada zemin sayfayla birlikte
+   kayar, bulutlar kucuk ve soluk tutulur; cam yuzeyler daha opak, bulaniklik hafiftir
+   (hem okunurluk hem pil/akicilik icin). */
+@media (max-width: 768px) {
+  body { background-attachment: scroll; }
+  html[data-tema="koyu"]:not([data-cam="kapali"]) body {
+    background-image:
+      radial-gradient(560px 340px at 90% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 72%),
+      radial-gradient(520px 380px at 0% 42%, color-mix(in srgb, var(--blob-1) 38%, transparent), transparent 72%),
+      radial-gradient(520px 360px at 100% 80%, color-mix(in srgb, var(--blob-3) 40%, transparent), transparent 72%);
+  }
+  @media not (prefers-reduced-transparency: reduce) {
+    html[data-tema="koyu"][data-cam="hafif"] { --cam-yuzey: 86%; --cam-yuzey-guclu: 92%; }
+    html[data-tema="koyu"][data-cam="orta"] { --cam-yuzey: 80%; --cam-yuzey-guclu: 88%; }
+    html[data-tema="koyu"][data-cam="yogun"] { --cam-yuzey: 72%; --cam-yuzey-guclu: 82%; }
+  }
+  html[data-cam="hafif"], html[data-cam="orta"], html[data-cam="yogun"] { --cam-bulaniklik: 12px; }
+}
+
 /* Dolgulu (vurgu renkli) zeminlerin ustundeki "text-white" acik modda da
    BEYAZ kalmali; murekkep rengine donmemeli. Degisken eleman kapsamina
    yeniden yazilir, cocuklar da miras alir. */
