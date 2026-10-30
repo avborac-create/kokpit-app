@@ -542,8 +542,10 @@ html[data-tema="acik"] .text-\[\#6e6e73\] { color: #5c6678; }
 /* Telefon: ust cubuk (geri baglantisi + yenile/oneri/gorunum/cikis dugmeleri) opak kalir; arkasindaki
    renk bulutu ile dugmeler ic ice gecip bulanik gorunmesin. */
 @media (max-width: 767px) {
+  header.glass-strong,
   html[data-cam] header.glass-strong {
     background: var(--yuzey) !important;
+    filter: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     box-shadow: 0 1px 0 var(--glass-cizgi) !important;

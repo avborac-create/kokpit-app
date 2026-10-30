@@ -444,14 +444,15 @@ export function DosyalarTablosu({
   return (
     <>
       <div className="mb-2 flex justify-end gap-2 text-xs">
-        <button
-          type="button"
-          onClick={secimModunuDegistir}
-          aria-pressed={secimModu}
-          className={`rounded-full px-3 py-1 ${secimModu ? "bg-[var(--accent)] text-white" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
-        >
-          {secimModu ? "Seçimi kapat" : "Seç"}
-        </button>
+        {secimModu && (
+          <button
+            type="button"
+            onClick={secimModunuDegistir}
+            className="rounded-full bg-[var(--accent)] px-3 py-1 text-white"
+          >
+            Seçimi kapat
+          </button>
+        )}
         <details className="relative">
           <summary className="cursor-pointer list-none rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
             Sütunlar{gizliSutunlar.length > 0 ? ` (${gizliSutunlar.length} gizli)` : ""}
@@ -518,21 +519,17 @@ export function DosyalarTablosu({
           <thead className="text-white/50">
             <tr>
               <th className="p-0 pl-2.5">
-                {secimModu && (
-                  <input
-                    type="checkbox"
-                    checked={hepsiSecili}
-                    ref={(el) => {
-                      if (el)
-                        el.indeterminate =
-                          seciliIdler.length > 0 && !hepsiSecili;
-                    }}
-                    onChange={hepsiniDegistir}
-                    aria-label="Tümünü seç"
-                    title="Tümünü seç"
-                    className="onay-kutusu"
-                  />
-                )}
+                <input
+                  type="checkbox"
+                  checked={secimModu && hepsiSecili}
+                  ref={(el) => {
+                    if (el) el.indeterminate = secimModu && seciliIdler.length > 0 && !hepsiSecili;
+                  }}
+                  onChange={() => (secimModu ? hepsiniDegistir() : setSecimModu(true))}
+                  aria-label={secimModu ? "Tümünü seç" : "Seçim modunu aç"}
+                  title={secimModu ? "Tümünü seç" : "Dosya seçmek için tıklayın"}
+                  className="onay-kutusu"
+                />
               </th>
               {gorunurSutunlar.map((anahtar) => (
                 <SutunBasligi
