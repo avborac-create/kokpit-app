@@ -693,10 +693,10 @@ export async function anaDosyaAdaylariniGetir(dosyaId: string): Promise<AnaDosya
   }));
 }
 
-// Dosya kartindaki vekil panelinde secilebilecek avukatlar (aktif avukat/yonetici).
+// Dosya kartindaki vekil panelinde secilebilecek avukatlar (buro rolu Avukat olan aktif kullanicilar).
 export async function vekilAdaylariniGetir() {
   return prisma.kullanici.findMany({
-    where: { aktifMi: true, buroRolu: { in: ["AVUKAT", "YONETICI"] } },
+    where: { aktifMi: true, buroRolu: "AVUKAT" },
     select: { id: true, adSoyad: true },
     orderBy: { adSoyad: "asc" },
   });

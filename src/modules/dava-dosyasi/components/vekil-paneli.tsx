@@ -135,9 +135,9 @@ export function VekilPaneli({
         </div>
         <div className="alan-hucre">
           <span className={etiket}>UYAP’ta vekil kayıtlı avukatlar</span>
-          <p className="mb-1 mt-2 text-[11px] text-white/45">Büro avukatları</p>
+          <p className="mb-1 mt-3 text-xs font-semibold text-white/75">Bünye Avukatları</p>
           {avukatlar.length === 0 ? (
-            <p className="text-sm text-white/55">Tanımlı avukat yok.</p>
+            <p className="text-sm text-white/55">Bünyede avukat sıfatlı kullanıcı yok.</p>
           ) : (
             <div className="flex flex-wrap gap-x-5 gap-y-1.5">
               {avukatlar.map((a) => (
@@ -154,7 +154,7 @@ export function VekilPaneli({
             </div>
           )}
 
-          <p className="mb-1 mt-3 text-[11px] text-white/45">Çalışılan avukatlar (dış büro)</p>
+          <p className="mb-1 mt-4 border-t border-white/10 pt-3 text-xs font-semibold text-white/75">Dış Avukatlar</p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
             {disListe.map((a) => (
               <span key={a.id} className="group flex items-center gap-2 text-sm text-white">
