@@ -256,8 +256,10 @@ function SutunBasligi({
   genislik,
   suruklemeBaslat,
   ilk,
+  bas,
 }: {
   ilk?: boolean;
+  bas?: ReactNode;
   etiket: string;
   aciklama?: string;
   genislik: number;
@@ -268,8 +270,11 @@ function SutunBasligi({
       className={`relative select-none whitespace-nowrap py-2 text-left text-[13px] font-medium ${ilk ? "pl-0.5 pr-2.5" : "px-2.5"}`}
       style={{ width: genislik }}
     >
-      <div className="truncate pr-2" title={aciklama ?? etiket}>
-        {etiket}
+      <div className="flex items-center gap-2 pr-2">
+        {bas}
+        <span className="truncate" title={aciklama ?? etiket}>
+          {etiket}
+        </span>
       </div>
       {/* Sutun kenarindan surukleyerek genislik ayarlama tutamaci - drag&drop
           (HTML5 draggable) ile karismasin diye ayri bir pointer temelli
@@ -370,7 +375,8 @@ export function DosyalarTablosu({
   const acmaStili = useSyncExternalStore(acmaStiliAbone, acmaStiliniOku, () => VARSAYILAN_ACMA_STILI);
   const acmaGenisligi = ACMA_STILLERI.find((x) => x.kod === acmaStili)?.genislik ?? 0;
   // 14px dolgu + (secim kutusu 18px + bosluk) + (acma dugmesi + bosluk)
-  const ilkSutun = Math.max(34, 12 + (secimModu ? 26 : 0) + (acmaGenisligi ? acmaGenisligi + 8 : 0));
+  // Ilk sutunun basina giren oge payi: secim kutusu (18px + bosluk) ve varsa acma dugmesi.
+  const ilkEk = 26 + (acmaGenisligi ? acmaGenisligi + 8 : 0);
   function secimModunuDegistir() {
     setSecim(new Set());
     setSecimModu((m) => !m);
@@ -412,12 +418,12 @@ export function DosyalarTablosu({
   const otomatik: Record<string, number> = {};
   gorunurSutunlar.forEach((anahtar, i) => {
     const olcu = OLCU_METINLERI[anahtar];
-    const ust = VARSAYILAN_GENISLIKLER[anahtar] ?? VARSAYILAN_GENISLIK;
+    const ust = (VARSAYILAN_GENISLIKLER[anahtar] ?? VARSAYILAN_GENISLIK) + (i === 0 ? ilkEk : 0);
     if (!olcu) return;
     let enUzun = (sutunEtiketleri[anahtar] ?? anahtar).length;
     for (const { dosya } of satirlar)
       enUzun = Math.max(enUzun, olcu(dosya).length);
-    const ek = 28 + (i === 0 ? 44 : 0) + (anahtar === "durum" ? 16 : 0);
+    const ek = 28 + (i === 0 ? 44 + ilkEk : 0) + (anahtar === "durum" ? 16 : 0);
     otomatik[anahtar] = Math.min(
       ust,
       Math.max(MIN_GENISLIK, Math.ceil(enUzun * KARAKTER_GENISLIGI + ek)),
@@ -430,7 +436,6 @@ export function DosyalarTablosu({
     ...taslakGenislikler,
   };
   const toplamGenislik =
-    ilkSutun +
     gorunurSutunlar.reduce(
       (t, a) => t + (genislikler[a] ?? VARSAYILAN_GENISLIK),
       0,
@@ -556,7 +561,6 @@ export function DosyalarTablosu({
           style={{ width: toplamGenislik }}
         >
           <colgroup>
-            <col style={{ width: ilkSutun }} />
             {gorunurSutunlar.map((anahtar) => (
               <col
                 key={anahtar}
@@ -571,8 +575,12 @@ export function DosyalarTablosu({
           </colgroup>
           <thead className="text-white/50">
             <tr>
-              <th className="p-0 pl-2">
-                <input
+              {gorunurSutunlar.map((anahtar) => (
+                <SutunBasligi
+                  key={anahtar}
+                  ilk={anahtar === gorunurSutunlar[0]}
+                  bas={anahtar === gorunurSutunlar[0] ? (
+                    <input
                   type="checkbox"
                   checked={secimModu && hepsiSecili}
                   ref={(el) => {
@@ -583,11 +591,7 @@ export function DosyalarTablosu({
                   title={secimModu ? "Tümünü seç" : "Dosya seçmek için tıklayın"}
                   className="onay-kutusu"
                 />
-              </th>
-              {gorunurSutunlar.map((anahtar) => (
-                <SutunBasligi
-                  key={anahtar}
-                  ilk={anahtar === gorunurSutunlar[0]}
+                  ) : undefined}
                   etiket={sutunEtiketleri[anahtar] ?? anahtar}
                   aciklama={DAVA_DOSYALARI_SUTUN_ACIKLAMALARI[anahtar]}
                   genislik={genislikler[anahtar] ?? VARSAYILAN_GENISLIK}
@@ -614,31 +618,25 @@ export function DosyalarTablosu({
               }}
               className={`group/satir select-none border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
               >
-                <td className="py-0 pl-2 pr-0">
-                  {/* Dosya; Kokpit No baglantisi, secilen acma dugmesi veya satira cift tiklayarak acilir. */}
-                  <div className="flex h-9 items-center gap-2">
-                    {secimModu && (
-                      <input
-                        type="checkbox"
-                        checked={secim.has(dosya.id)}
-                        onChange={() => secimiDegistir(dosya.id)}
-                        aria-label="Dosyayı seç"
-                        className="onay-kutusu"
-                      />
-                    )}
-                    <AcmaDugmesi stil={acmaStili} href={`/kokpit/dava-dosyalari/${dosya.id}`} />
-                  </div>
-                </td>
                 {gorunurSutunlar.map((anahtar, sutunIndex) => (
                   <td
                     key={anahtar}
                     className={`${sutunIndex === 0 ? "pl-0.5 pr-2.5" : "px-2.5"} py-1.5 ${anahtar === "konu" ? "text-white/85" : "text-white/60"}`}
                   >
                     {sutunIndex === 0 ? (
-                      <div
-                        className="flex items-center gap-1"
-                        style={{ paddingLeft: seviye * 18 }}
-                      >
+                      <div className="flex items-center gap-1">
+                        {secimModu && (
+                          <input
+                            type="checkbox"
+                            checked={secim.has(dosya.id)}
+                            onChange={() => secimiDegistir(dosya.id)}
+                            aria-label="Dosyayı seç"
+                            className="onay-kutusu mr-1"
+                          />
+                        )}
+                        {!secimModu && <span className="w-[26px] shrink-0" aria-hidden="true" />}
+                        <AcmaDugmesi stil={acmaStili} href={`/kokpit/dava-dosyalari/${dosya.id}`} />
+                        <span className="shrink-0" style={{ width: seviye * 18 }} />
                         {seviye === 1 ? (
                           <span className="w-3.5 shrink-0 text-white/35">└</span>
                         ) : altSayisi > 0 ? (
@@ -691,7 +689,7 @@ export function DosyalarTablosu({
             {dosyalar.length === 0 && (
               <tr>
                 <td
-                  colSpan={gorunurSutunlar.length + 2}
+                  colSpan={gorunurSutunlar.length + 1}
                   className="px-4 py-8 text-center text-white/40"
                 >
                   Kayıt bulunamadı.
