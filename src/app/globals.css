@@ -586,13 +586,3 @@ html[data-tema="acik"] .text-\[\#6e6e73\] { color: #5c6678; }
   background-color: var(--accent);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E");
 }
-
-/* Onay kutusu normalde gorunmez; satirin ustune gelince veya secim varken belirir.
-   Gorunmezken de tiklanabilir kalir (dokunmatik cihazlarda secim yapilabilsin). */
-.onay-kutusu { opacity: 0; transition: opacity 0.15s; }
-.onay-kutusu:checked,
-.onay-kutusu:indeterminate,
-.onay-kutusu:focus-visible,
-tr:hover .onay-kutusu,
-.glass:hover thead .onay-kutusu,
-.secim-acik .onay-kutusu { opacity: 1; }

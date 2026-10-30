@@ -5,7 +5,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { davaDosyalariniListele } from "@/modules/dava-dosyasi/lib/queries";
 import { DAVA_DOSYALARI_SUTUN_ACIKLAMALARI } from "@/core/tablo-duzeni/dava-dosyalari-sutunlari";
-import { kokpitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
+import {
+  kokpitNoGoster,
+  buroNoGoster,
+} from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { TopluIslemCubugu } from "./toplu-islem-cubugu";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 
@@ -36,8 +39,10 @@ const OLCU_METINLERI: Record<string, (dosya: Dosya) => string> = {
   tur: (d) => turMetni(d),
   birimAdi: (d) => d.birimAdi ?? "—",
   konu: (d) => d.konu ?? "",
-  karsiTaraflar: (d) => d.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—",
-  muvekkiller: (d) => d.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—",
+  karsiTaraflar: (d) =>
+    d.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—",
+  muvekkiller: (d) =>
+    d.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—",
   durum: (d) => d.durum.etiket,
   sorumluAvukat: (d) => d.sorumluAvukat?.adSoyad ?? "—",
 };
@@ -60,18 +65,22 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
     return (
       <span className="flex items-center gap-1.5">
         <span className="truncate">{metin}</span>
-        {dosya.muvekkilSifati === "BORCLU" && dosya.tur?.kod === "icra_dosyasi" && (
-          <span className="shrink-0 rounded-full bg-[var(--danger-soft)] px-1.5 py-0.5 text-[11px] text-[#ff7a70]">
-            Borçlu
-          </span>
-        )}
+        {dosya.muvekkilSifati === "BORCLU" &&
+          dosya.tur?.kod === "icra_dosyasi" && (
+            <span className="shrink-0 rounded-full bg-[var(--danger-soft)] px-1.5 py-0.5 text-[11px] text-[#ff7a70]">
+              Borçlu
+            </span>
+          )}
       </span>
     );
   },
   birimAdi: (dosya) => dosya.birimAdi ?? "—",
   karsiTaraflar: (dosya) =>
-    dosya.karsiTaraflar.length > 0 ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") : "—",
-  muvekkiller: (dosya) => dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—",
+    dosya.karsiTaraflar.length > 0
+      ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ")
+      : "—",
+  muvekkiller: (dosya) =>
+    dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—",
   durum: (dosya) => (
     <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-xs text-[#6db8ff]">
       {dosya.durum.etiket}
@@ -97,6 +106,7 @@ const VARSAYILAN_GENISLIKLER: Record<string, number> = {
 
 const MIN_GENISLIK = 56;
 const ILK_SUTUN_GENISLIGI = 72;
+const ILK_SUTUN_GENISLIGI_SECIMSIZ = 52;
 
 // Bu ekrana ozel, tarayici basina (localStorage) bir tercih - "kullanici
 // sutun genisliklerini elle ayarlayabilsin" talebi geregi kisiye ozel kalir
@@ -128,7 +138,11 @@ function genislikleriOku(): Record<string, number> | null {
       const ayristirilan = JSON.parse(ham) as Record<string, unknown>;
       const gecerli: Record<string, number> = {};
       for (const [anahtar, deger] of Object.entries(ayristirilan)) {
-        if (typeof deger === "number" && Number.isFinite(deger) && deger >= MIN_GENISLIK) {
+        if (
+          typeof deger === "number" &&
+          Number.isFinite(deger) &&
+          deger >= MIN_GENISLIK
+        ) {
           gecerli[anahtar] = deger;
         }
       }
@@ -232,10 +246,13 @@ function agacSatirlari(dosyalar: Dosya[], daraltilmis: Set<string>): Satir[] {
   const satirlar: Satir[] = [];
   for (const d of dosyalar) {
     if (d.anaDosya && idler.has(d.anaDosya.id)) continue;
-    const cocuklar = (altlar.get(d.id) ?? []).sort((a, b) => (a.altSiraNo ?? 0) - (b.altSiraNo ?? 0));
+    const cocuklar = (altlar.get(d.id) ?? []).sort(
+      (a, b) => (a.altSiraNo ?? 0) - (b.altSiraNo ?? 0),
+    );
     satirlar.push({ dosya: d, seviye: 0, altSayisi: cocuklar.length });
     if (!daraltilmis.has(d.id)) {
-      for (const c of cocuklar) satirlar.push({ dosya: c, seviye: 1, altSayisi: 0 });
+      for (const c of cocuklar)
+        satirlar.push({ dosya: c, seviye: 1, altSayisi: 0 });
     }
   }
   return satirlar;
@@ -256,17 +273,33 @@ export function DosyalarTablosu({
   durumlar: { id: string; etiket: string }[];
   avukatlar: { id: string; adSoyad: string }[];
 }) {
-  const kayitliGenislikler = useSyncExternalStore(genislikleriAbone, genislikleriOku, () => null);
+  const kayitliGenislikler = useSyncExternalStore(
+    genislikleriAbone,
+    genislikleriOku,
+    () => null,
+  );
   // Surukleme SIRASINDA canli onizleme icin gecici state; birak (mouseup)
   // aninda kalici hale (localStorage) yazilir.
-  const [taslakGenislikler, setTaslakGenislikler] = useState<Record<string, number> | null>(null);
+  const [taslakGenislikler, setTaslakGenislikler] = useState<Record<
+    string,
+    number
+  > | null>(null);
   const [daraltilmis, setDaraltilmis] = useState<Set<string>>(new Set());
   const satirlar = agacSatirlari(dosyalar, daraltilmis);
   // Toplu secim: yalnizca listede gorunen satirlar gecerlidir (silinen/filtrelenen kayitlar otomatik duser).
   const [secim, setSecim] = useState<Set<string>>(new Set());
+  const [secimModu, setSecimModu] = useState(false);
+  const ilkSutun = secimModu
+    ? ILK_SUTUN_GENISLIGI
+    : ILK_SUTUN_GENISLIGI_SECIMSIZ;
+  function secimModunuDegistir() {
+    setSecim(new Set());
+    setSecimModu((m) => !m);
+  }
   const gorunenIdler = satirlar.map((s) => s.dosya.id);
   const seciliIdler = gorunenIdler.filter((id) => secim.has(id));
-  const hepsiSecili = gorunenIdler.length > 0 && seciliIdler.length === gorunenIdler.length;
+  const hepsiSecili =
+    gorunenIdler.length > 0 && seciliIdler.length === gorunenIdler.length;
   function secimiDegistir(id: string) {
     setSecim((o) => {
       const y = new Set(o);
@@ -277,7 +310,9 @@ export function DosyalarTablosu({
   function hepsiniDegistir() {
     setSecim(hepsiSecili ? new Set() : new Set(gorunenIdler));
   }
-  const anaDosyaIdleri = satirlar.filter((s) => s.altSayisi > 0).map((s) => s.dosya.id);
+  const anaDosyaIdleri = satirlar
+    .filter((s) => s.altSayisi > 0)
+    .map((s) => s.dosya.id);
   // Daraltilmis ana dosyalarin da listesi (satirlar daraltilinca alt satirlari
   // icermez ama ana satirin kendisi hep vardir).
   function tumunuGenislet() {
@@ -301,24 +336,49 @@ export function DosyalarTablosu({
     const ust = VARSAYILAN_GENISLIKLER[anahtar] ?? VARSAYILAN_GENISLIK;
     if (!olcu) return;
     let enUzun = (sutunEtiketleri[anahtar] ?? anahtar).length;
-    for (const { dosya } of satirlar) enUzun = Math.max(enUzun, olcu(dosya).length);
+    for (const { dosya } of satirlar)
+      enUzun = Math.max(enUzun, olcu(dosya).length);
     const ek = 28 + (i === 0 ? 44 : 0) + (anahtar === "durum" ? 16 : 0);
-    otomatik[anahtar] = Math.min(ust, Math.max(MIN_GENISLIK, Math.ceil(enUzun * KARAKTER_GENISLIGI + ek)));
+    otomatik[anahtar] = Math.min(
+      ust,
+      Math.max(MIN_GENISLIK, Math.ceil(enUzun * KARAKTER_GENISLIGI + ek)),
+    );
   });
-  const genislikler = { ...VARSAYILAN_GENISLIKLER, ...otomatik, ...kayitliGenislikler, ...taslakGenislikler };
+  const genislikler = {
+    ...VARSAYILAN_GENISLIKLER,
+    ...otomatik,
+    ...kayitliGenislikler,
+    ...taslakGenislikler,
+  };
   const toplamGenislik =
-    ILK_SUTUN_GENISLIGI +
-    gorunurSutunlar.reduce((t, a) => t + (genislikler[a] ?? VARSAYILAN_GENISLIK), 0) +
+    ilkSutun +
+    gorunurSutunlar.reduce(
+      (t, a) => t + (genislikler[a] ?? VARSAYILAN_GENISLIK),
+      0,
+    ) +
     (genislikler.islemler ?? VARSAYILAN_GENISLIKLER.islemler);
 
-  function genislikSuruklemeBaslat(anahtar: string, baslangicE: React.PointerEvent) {
+  function genislikSuruklemeBaslat(
+    anahtar: string,
+    baslangicE: React.PointerEvent,
+  ) {
     const baslangicX = baslangicE.clientX;
     const baslangicGenislik = genislikler[anahtar] ?? VARSAYILAN_GENISLIK;
-    const temel = { ...VARSAYILAN_GENISLIKLER, ...otomatik, ...kayitliGenislikler };
+    const temel = {
+      ...VARSAYILAN_GENISLIKLER,
+      ...otomatik,
+      ...kayitliGenislikler,
+    };
 
     function hareket(e: PointerEvent) {
-      const yeni = Math.max(MIN_GENISLIK, baslangicGenislik + (e.clientX - baslangicX));
-      setTaslakGenislikler((onceki) => ({ ...(onceki ?? temel), [anahtar]: yeni }));
+      const yeni = Math.max(
+        MIN_GENISLIK,
+        baslangicGenislik + (e.clientX - baslangicX),
+      );
+      setTaslakGenislikler((onceki) => ({
+        ...(onceki ?? temel),
+        [anahtar]: yeni,
+      }));
     }
     function birak() {
       window.removeEventListener("pointermove", hareket);
@@ -336,149 +396,213 @@ export function DosyalarTablosu({
 
   return (
     <>
-      {anaDosyaIdleri.length > 0 && (
-        <div className="mb-2 flex justify-end gap-2 text-xs">
-          <button
-            type="button"
-            onClick={tumunuGenislet}
-            disabled={daraltilmis.size === 0}
-            className="rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:hover:bg-transparent"
-          >
-            Tümünü genişlet
-          </button>
-          <button
-            type="button"
-            onClick={tumunuDaralt}
-            disabled={daraltilmis.size >= anaDosyaIdleri.length}
-            className="rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:hover:bg-transparent"
-          >
-            Tümünü daralt
-          </button>
-        </div>
-      )}
-    <div className={`glass overflow-x-auto rounded-2xl ${seciliIdler.length > 0 ? "secim-acik" : ""}`}>
-      <table className="table-fixed text-left text-sm" style={{ width: toplamGenislik }}>
-        <colgroup>
-          <col style={{ width: ILK_SUTUN_GENISLIGI }} />
-          {gorunurSutunlar.map((anahtar) => (
-            <col key={anahtar} style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }} />
-          ))}
-          <col style={{ width: genislikler.islemler ?? VARSAYILAN_GENISLIKLER.islemler }} />
-        </colgroup>
-        <thead className="text-white/50">
-          <tr>
-            <th className="p-0 pl-2.5">
-              <input
-                type="checkbox"
-                checked={hepsiSecili}
-                ref={(el) => {
-                  if (el) el.indeterminate = seciliIdler.length > 0 && !hepsiSecili;
-                }}
-                onChange={hepsiniDegistir}
-                aria-label="Tümünü seç"
-                title="Tümünü seç"
-                className="onay-kutusu"
-              />
-            </th>
+      <div className="mb-2 flex justify-end gap-2 text-xs">
+        <button
+          type="button"
+          onClick={secimModunuDegistir}
+          aria-pressed={secimModu}
+          className={`rounded-full px-3 py-1 ${secimModu ? "bg-[var(--accent)] text-white" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
+        >
+          {secimModu ? "Seçimi kapat" : "Seç"}
+        </button>
+        {anaDosyaIdleri.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={tumunuGenislet}
+              disabled={daraltilmis.size === 0}
+              className="rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              Tümünü genişlet
+            </button>
+            <button
+              type="button"
+              onClick={tumunuDaralt}
+              disabled={daraltilmis.size >= anaDosyaIdleri.length}
+              className="rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              Tümünü daralt
+            </button>
+          </>
+        )}
+      </div>
+      <div className={`glass overflow-x-auto rounded-2xl`}>
+        <table
+          className="table-fixed text-left text-sm"
+          style={{ width: toplamGenislik }}
+        >
+          <colgroup>
+            <col style={{ width: ilkSutun }} />
             {gorunurSutunlar.map((anahtar) => (
-              <SutunBasligi
+              <col
                 key={anahtar}
-                etiket={sutunEtiketleri[anahtar] ?? anahtar}
-                aciklama={DAVA_DOSYALARI_SUTUN_ACIKLAMALARI[anahtar]}
-                genislik={genislikler[anahtar] ?? VARSAYILAN_GENISLIK}
-                suruklemeBaslat={(e) => genislikSuruklemeBaslat(anahtar, e)}
+                style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }}
               />
             ))}
-            <SutunBasligi
-              etiket="İşlemler"
-              genislik={genislikler.islemler ?? VARSAYILAN_GENISLIKLER.islemler}
-              suruklemeBaslat={(e) => genislikSuruklemeBaslat("islemler", e)}
+            <col
+              style={{
+                width: genislikler.islemler ?? VARSAYILAN_GENISLIKLER.islemler,
+              }}
             />
-          </tr>
-        </thead>
-        <tbody>
-          {satirlar.map(({ dosya, seviye, altSayisi }) => (
-            <tr
-              key={dosya.id}
-              className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
-            >
-              <td className="py-0 pl-2.5 pr-1">
-                {/* Sol cubuk satirin uzerine gelince kalinlasir; simge dugmesi dosyayi acar. */}
-                <div className="flex h-9 items-center gap-2">
+          </colgroup>
+          <thead className="text-white/50">
+            <tr>
+              <th className="p-0 pl-2.5">
+                {secimModu && (
                   <input
                     type="checkbox"
-                    checked={secim.has(dosya.id)}
-                    onChange={() => secimiDegistir(dosya.id)}
-                    aria-label="Dosyayı seç"
+                    checked={hepsiSecili}
+                    ref={(el) => {
+                      if (el)
+                        el.indeterminate =
+                          seciliIdler.length > 0 && !hepsiSecili;
+                    }}
+                    onChange={hepsiniDegistir}
+                    aria-label="Tümünü seç"
+                    title="Tümünü seç"
                     className="onay-kutusu"
                   />
-                  <span className="hidden h-6 w-1 shrink-0 rounded-full md:block bg-[var(--accent)] opacity-50 transition-all group-hover/satir:w-1.5 group-hover/satir:opacity-100" />
-                  <Link
-                    href={`/kokpit/dava-dosyalari/${dosya.id}`}
-                    title="Dosyayı aç"
-                    aria-label="Dosyayı aç"
-                    className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[var(--accent-soft)] text-[#8fb4e8] hover:bg-[var(--accent)] hover:text-white"
-                  >
-                    <svg viewBox="0 0 24 24" className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M14 4h6v6M20 4l-9 9" />
-                      <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
-                    </svg>
-                  </Link>
-                </div>
-              </td>
-              {gorunurSutunlar.map((anahtar, sutunIndex) => (
-                <td
+                )}
+              </th>
+              {gorunurSutunlar.map((anahtar) => (
+                <SutunBasligi
                   key={anahtar}
-                  className={`px-2.5 py-1.5 ${anahtar === "konu" ? "text-white/85" : "text-white/60"}`}
-                >
-                  {sutunIndex === 0 ? (
-                    <div className="flex items-center gap-1" style={{ paddingLeft: seviye * 18 }}>
-                      {seviye === 1 ? (
-                        <span className="w-4 shrink-0 text-white/35">└</span>
-                      ) : altSayisi > 0 ? (
-                        <button
-                          type="button"
-                          onClick={() => agaciDegistir(dosya.id)}
-                          aria-label={daraltilmis.has(dosya.id) ? "Alt dosyaları göster" : "Alt dosyaları gizle"}
-                          className="flex h-4 w-4 shrink-0 items-center justify-center rounded text-white/60 hover:bg-white/10"
-                        >
-                          <span className={`text-[10px] transition-transform ${daraltilmis.has(dosya.id) ? "-rotate-90" : ""}`}>
-                            ▼
-                          </span>
-                        </button>
-                      ) : (
-                        <span className="w-4 shrink-0" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <Hucre>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
-                      </div>
-                      {altSayisi > 0 && <span className="shrink-0 text-[11px] text-white/40">{altSayisi} alt</span>}
-                    </div>
-                  ) : (
-                    <Hucre>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
-                  )}
-                </td>
+                  etiket={sutunEtiketleri[anahtar] ?? anahtar}
+                  aciklama={DAVA_DOSYALARI_SUTUN_ACIKLAMALARI[anahtar]}
+                  genislik={genislikler[anahtar] ?? VARSAYILAN_GENISLIK}
+                  suruklemeBaslat={(e) => genislikSuruklemeBaslat(anahtar, e)}
+                />
               ))}
-              <td className="px-2.5 py-1.5">
-                <div className="flex items-center justify-end gap-1 opacity-70 transition-opacity group-hover/satir:opacity-100 [@media(hover:none)]:opacity-100">
-                  {silmeYetkisiVar && <DavaDosyasiSilmeButonu dosyaId={dosya.id} boyut="kompakt" simge />}
-                </div>
-              </td>
+              <SutunBasligi
+                etiket="İşlemler"
+                genislik={
+                  genislikler.islemler ?? VARSAYILAN_GENISLIKLER.islemler
+                }
+                suruklemeBaslat={(e) => genislikSuruklemeBaslat("islemler", e)}
+              />
             </tr>
-          ))}
-          {dosyalar.length === 0 && (
-            <tr>
-              <td colSpan={gorunurSutunlar.length + 2} className="px-4 py-8 text-center text-white/40">
-                Kayıt bulunamadı.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {satirlar.map(({ dosya, seviye, altSayisi }) => (
+              <tr
+                key={dosya.id}
+                className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
+              >
+                <td className="py-0 pl-2.5 pr-1">
+                  {/* Sol cubuk satirin uzerine gelince kalinlasir; simge dugmesi dosyayi acar. */}
+                  <div className="flex h-9 items-center gap-2">
+                    {secimModu && (
+                      <input
+                        type="checkbox"
+                        checked={secim.has(dosya.id)}
+                        onChange={() => secimiDegistir(dosya.id)}
+                        aria-label="Dosyayı seç"
+                        className="onay-kutusu"
+                      />
+                    )}
+                    <span className="hidden h-6 w-1 shrink-0 rounded-full md:block bg-[var(--accent)] opacity-50 transition-all group-hover/satir:w-1.5 group-hover/satir:opacity-100" />
+                    <Link
+                      href={`/kokpit/dava-dosyalari/${dosya.id}`}
+                      title="Dosyayı aç"
+                      aria-label="Dosyayı aç"
+                      className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[var(--accent-soft)] text-[#8fb4e8] hover:bg-[var(--accent)] hover:text-white"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-[15px] w-[15px]"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M14 4h6v6M20 4l-9 9" />
+                        <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
+                      </svg>
+                    </Link>
+                  </div>
+                </td>
+                {gorunurSutunlar.map((anahtar, sutunIndex) => (
+                  <td
+                    key={anahtar}
+                    className={`px-2.5 py-1.5 ${anahtar === "konu" ? "text-white/85" : "text-white/60"}`}
+                  >
+                    {sutunIndex === 0 ? (
+                      <div
+                        className="flex items-center gap-1"
+                        style={{ paddingLeft: seviye * 18 }}
+                      >
+                        {seviye === 1 ? (
+                          <span className="w-4 shrink-0 text-white/35">└</span>
+                        ) : altSayisi > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => agaciDegistir(dosya.id)}
+                            aria-label={
+                              daraltilmis.has(dosya.id)
+                                ? "Alt dosyaları göster"
+                                : "Alt dosyaları gizle"
+                            }
+                            className="flex h-4 w-4 shrink-0 items-center justify-center rounded text-white/60 hover:bg-white/10"
+                          >
+                            <span
+                              className={`text-[10px] transition-transform ${daraltilmis.has(dosya.id) ? "-rotate-90" : ""}`}
+                            >
+                              ▼
+                            </span>
+                          </button>
+                        ) : (
+                          <span className="w-4 shrink-0" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <Hucre>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
+                        </div>
+                        {altSayisi > 0 && (
+                          <span className="shrink-0 text-[11px] text-white/40">
+                            {altSayisi} alt
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <Hucre>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
+                    )}
+                  </td>
+                ))}
+                <td className="px-2.5 py-1.5">
+                  <div className="flex items-center justify-end gap-1 opacity-70 transition-opacity group-hover/satir:opacity-100 [@media(hover:none)]:opacity-100">
+                    {silmeYetkisiVar && (
+                      <DavaDosyasiSilmeButonu
+                        dosyaId={dosya.id}
+                        boyut="kompakt"
+                        simge
+                      />
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {dosyalar.length === 0 && (
+              <tr>
+                <td
+                  colSpan={gorunurSutunlar.length + 2}
+                  className="px-4 py-8 text-center text-white/40"
+                >
+                  Kayıt bulunamadı.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
       {seciliIdler.length > 0 && (
         <TopluIslemCubugu
-          secililer={seciliIdler.map((id) => ({ id, etiket: kokpitNoGoster(satirlar.find((s) => s.dosya.id === id)!.dosya) }))}
+          secililer={seciliIdler.map((id) => ({
+            id,
+            etiket: kokpitNoGoster(
+              satirlar.find((s) => s.dosya.id === id)!.dosya,
+            ),
+          }))}
           durumlar={durumlar}
           avukatlar={avukatlar}
           silmeYetkisiVar={silmeYetkisiVar}
