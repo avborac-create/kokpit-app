@@ -226,7 +226,8 @@ function virmanAciklamasi(ham: string, yon: string, buHesap: string): string {
   const e = ham.match(/^(.+?) v[iİ]rman(?: — ([\s\S]*))?$/i);
   if (!e) return ham;
   // Kaynak -> hedef: BORC satirinda para bu hesaptan cikar, ALACAK satirinda bu hesaba gelir.
-  const yonMetni = yon === "ALACAK" ? `${e[1]} → ${buHesap}` : `${buHesap} → ${e[1]}`;
+  const karsi = e[1].toLocaleUpperCase("tr-TR");
+  const yonMetni = yon === "ALACAK" ? `${karsi} → ${buHesap}` : `${buHesap} → ${karsi}`;
   return `VİRMAN: ${yonMetni}${e[2] ? `
 ${e[2]}` : ""}`;
 }
