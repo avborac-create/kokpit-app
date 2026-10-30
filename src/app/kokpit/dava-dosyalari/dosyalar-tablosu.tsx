@@ -368,7 +368,7 @@ export function DosyalarTablosu({
   const acmaStili = useSyncExternalStore(acmaStiliAbone, acmaStiliniOku, () => VARSAYILAN_ACMA_STILI);
   const acmaGenisligi = ACMA_STILLERI.find((x) => x.kod === acmaStili)?.genislik ?? 0;
   // 14px dolgu + (secim kutusu 18px + bosluk) + (acma dugmesi + bosluk)
-  const ilkSutun = Math.max(40, 14 + (secimModu ? 26 : 0) + (acmaGenisligi ? acmaGenisligi + 8 : 0));
+  const ilkSutun = Math.max(34, 12 + (secimModu ? 26 : 0) + (acmaGenisligi ? acmaGenisligi + 8 : 0));
   function secimModunuDegistir() {
     setSecim(new Set());
     setSecimModu((m) => !m);
@@ -569,7 +569,7 @@ export function DosyalarTablosu({
           </colgroup>
           <thead className="text-white/50">
             <tr>
-              <th className="p-0 pl-2.5">
+              <th className="p-0 pl-2">
                 <input
                   type="checkbox"
                   checked={secimModu && hepsiSecili}
@@ -611,7 +611,7 @@ export function DosyalarTablosu({
               }}
               className={`group/satir select-none border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
               >
-                <td className="py-0 pl-2.5 pr-1">
+                <td className="py-0 pl-2 pr-0">
                   {/* Dosya; Kokpit No baglantisi, secilen acma dugmesi veya satira cift tiklayarak acilir. */}
                   <div className="flex h-9 items-center gap-2">
                     {secimModu && (
@@ -637,7 +637,7 @@ export function DosyalarTablosu({
                         style={{ paddingLeft: seviye * 18 }}
                       >
                         {seviye === 1 ? (
-                          <span className="w-4 shrink-0 text-white/35">└</span>
+                          <span className="w-3.5 shrink-0 text-white/35">└</span>
                         ) : altSayisi > 0 ? (
                           <button
                             type="button"
@@ -647,7 +647,7 @@ export function DosyalarTablosu({
                                 ? "Alt dosyaları göster"
                                 : "Alt dosyaları gizle"
                             }
-                            className="flex h-4 w-4 shrink-0 items-center justify-center rounded text-white/60 hover:bg-white/10"
+                            className="flex h-4 w-3.5 shrink-0 items-center justify-center rounded text-white/60 hover:bg-white/10"
                           >
                             <span
                               className={`text-[10px] transition-transform ${daraltilmis.has(dosya.id) ? "-rotate-90" : ""}`}
@@ -656,7 +656,7 @@ export function DosyalarTablosu({
                             </span>
                           </button>
                         ) : (
-                          <span className="w-4 shrink-0" />
+                          <span className="w-3.5 shrink-0" />
                         )}
                         <div className="min-w-0 flex-1">
                           <Hucre>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
