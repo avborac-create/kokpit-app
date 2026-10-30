@@ -26,8 +26,33 @@ function zamanDamgasi() {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}`;
 }
 
+// Her yayinda yedek almak veritabani islem kotasini yiyor (yedek basina ~45 sorgu).
+// Son yedek bundan tazeyse yeni yedek alinmaz; zorla icin: --zorla
+// (canli veriyi silen/donusturen islemlerden once MUTLAKA --zorla kullanilir).
+const TAZE_YEDEK_SAATI = 12;
+
+function sonYedegiBul() {
+  if (!existsSync(YEDEK_KLASORU)) return null;
+  let enSon = null;
+  for (const dosya of readdirSync(YEDEK_KLASORU)) {
+    if (!dosya.startsWith("kokpit-yedek-")) continue;
+    const m = statSync(path.join(YEDEK_KLASORU, dosya)).mtimeMs;
+    if (!enSon || m > enSon.mtimeMs) enSon = { dosya, mtimeMs: m };
+  }
+  return enSon;
+}
+
 async function main() {
   mkdirSync(YEDEK_KLASORU, { recursive: true });
+
+  if (!process.argv.includes("--zorla")) {
+    const son = sonYedegiBul();
+    const yasSaat = son ? (Date.now() - son.mtimeMs) / 3_600_000 : Infinity;
+    if (yasSaat < TAZE_YEDEK_SAATI) {
+      console.log(`Son yedek taze (${yasSaat.toFixed(1)} saat once: ${son.dosya}); yeni yedek alinmadi. Zorlamak icin --zorla.`);
+      return;
+    }
+  }
 
   const modelAnahtarlari = Object.keys(prisma).filter(
     (k) => !k.startsWith("$") && !k.startsWith("_") && typeof prisma[k]?.findMany === "function",
