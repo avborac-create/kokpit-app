@@ -625,16 +625,33 @@ model DavaDosyasi {
 
 // Dosyada UYAP'ta vekil olarak kayitli avukatlar (dosya kartindaki onay kutusu paneli).
 model DosyaUyapVekili {
-  id              String      @id @default(cuid())
-  davaDosyasiId   String
-  davaDosyasi     DavaDosyasi @relation(fields: [davaDosyasiId], references: [id], onDelete: Cascade)
-  kullaniciId     String
-  kullanici       Kullanici   @relation(fields: [kullaniciId], references: [id], onDelete: Cascade)
-  olusturmaTarihi DateTime    @default(now())
+  id                String           @id @default(cuid())
+  davaDosyasiId     String
+  davaDosyasi       DavaDosyasi      @relation(fields: [davaDosyasiId], references: [id], onDelete: Cascade)
+  // Vekil ya buro kullanicisidir ya da "calisilan avukat" (dis buro) listesinden biridir.
+  kullaniciId       String?
+  kullanici         Kullanici?       @relation(fields: [kullaniciId], references: [id], onDelete: Cascade)
+  calisilanAvukatId String?
+  calisilanAvukat   CalisilanAvukat? @relation(fields: [calisilanAvukatId], references: [id], onDelete: Cascade)
+  olusturmaTarihi   DateTime         @default(now())
 
   @@unique([davaDosyasiId, kullaniciId])
+  @@unique([davaDosyasiId, calisilanAvukatId])
   @@index([kullaniciId])
+  @@index([calisilanAvukatId])
   @@map("dosya_uyap_vekilleri")
+}
+
+// Buro kullanicisi olmayan, birlikte calisilan (dis buro) avukatlar.
+model CalisilanAvukat {
+  id              String            @id @default(cuid())
+  adSoyad         String
+  buro            String?
+  aktifMi         Boolean           @default(true)
+  olusturmaTarihi DateTime          @default(now())
+  vekillikler     DosyaUyapVekili[]
+
+  @@map("calisilan_avukatlar")
 }
 
 // Muvekkilden gelen para (tasnif/masraf sistemi) ile KARISTIRILMAMALI: bu,

@@ -1235,17 +1235,45 @@ export async function sorumluAvukatiGuncelle(dosyaId: string, avukatId: string) 
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
 
-export async function uyapVekilDurumunuGuncelle(dosyaId: string, avukatId: string, kayitli: boolean) {
+// tur: "kullanici" (buro kullanicisi) ya da "dis" (calisilan avukat listesi).
+export async function uyapVekilDurumunuGuncelle(
+  dosyaId: string,
+  avukatId: string,
+  kayitli: boolean,
+  tur: "kullanici" | "dis" = "kullanici",
+) {
   const kullanici = await mevcutKullanici();
   if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+  const anahtar = tur === "dis" ? { calisilanAvukatId: avukatId } : { kullaniciId: avukatId };
   if (kayitli) {
-    await prisma.dosyaUyapVekili.upsert({
-      where: { davaDosyasiId_kullaniciId: { davaDosyasiId: dosyaId, kullaniciId: avukatId } },
-      create: { davaDosyasiId: dosyaId, kullaniciId: avukatId },
-      update: {},
-    });
+    const var_ = await prisma.dosyaUyapVekili.findFirst({ where: { davaDosyasiId: dosyaId, ...anahtar } });
+    if (!var_) await prisma.dosyaUyapVekili.create({ data: { davaDosyasiId: dosyaId, ...anahtar } });
   } else {
-    await prisma.dosyaUyapVekili.deleteMany({ where: { davaDosyasiId: dosyaId, kullaniciId: avukatId } });
+    await prisma.dosyaUyapVekili.deleteMany({ where: { davaDosyasiId: dosyaId, ...anahtar } });
   }
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+// Calisilan (dis buro) avukat ekler; ayni adli aktif kayit varsa onu dondurur.
+export async function calisilanAvukatEkle(adSoyad: string, buro: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+  const ad = adSoyad.trim();
+  if (!ad) throw new Error("Avukat adı boş olamaz.");
+  const mevcut = await prisma.calisilanAvukat.findFirst({
+    where: { aktifMi: true, adSoyad: { equals: ad, mode: "insensitive" } },
+    select: { id: true, adSoyad: true, buro: true },
+  });
+  if (mevcut) return mevcut;
+  return prisma.calisilanAvukat.create({
+    data: { adSoyad: ad, buro: buro.trim() || null },
+    select: { id: true, adSoyad: true, buro: true },
+  });
+}
+
+// Listeden kaldirir (pasife alir); gecmis dosyalardaki vekil kaydi silinmez ama listede gorunmez.
+export async function calisilanAvukatKaldir(avukatId: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+  await prisma.calisilanAvukat.update({ where: { id: avukatId }, data: { aktifMi: false } });
 }

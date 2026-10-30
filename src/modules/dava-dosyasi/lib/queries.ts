@@ -92,7 +92,7 @@ export async function davaDosyasiGetir(id: string) {
       davaTuru: true,
       muvekkilSifatiDegeri: true,
       sorumluAvukat: true,
-      uyapVekilleri: { select: { kullaniciId: true } },
+      uyapVekilleri: { select: { kullaniciId: true, calisilanAvukatId: true } },
       karsiTaraflar: { include: { karsiTaraf: true } },
       uyusmazlikGrubu: true,
       bagliOlduguDosya: true,
@@ -698,6 +698,15 @@ export async function vekilAdaylariniGetir() {
   return prisma.kullanici.findMany({
     where: { aktifMi: true, buroRolu: { in: ["AVUKAT", "YONETICI"] } },
     select: { id: true, adSoyad: true },
+    orderBy: { adSoyad: "asc" },
+  });
+}
+
+// "Calisilan avukatlar": buro kullanicisi olmayan dis buro avukatlari.
+export async function calisilanAvukatlariGetir() {
+  return prisma.calisilanAvukat.findMany({
+    where: { aktifMi: true },
+    select: { id: true, adSoyad: true, buro: true },
     orderBy: { adSoyad: "asc" },
   });
 }

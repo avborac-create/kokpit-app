@@ -2,7 +2,7 @@ import Link from "next/link";
 import { KunyeSeridi } from "@/core/ui/kunye-seridi";
 import { MobilSabitBaslik } from "@/core/ui/mobil-sabit-baslik";
 import { notFound } from "next/navigation";
-import { davaDosyasiGetir, anaDosyaAdaylariniGetir, vekilAdaylariniGetir } from "@/modules/dava-dosyasi/lib/queries";
+import { davaDosyasiGetir, anaDosyaAdaylariniGetir, vekilAdaylariniGetir, calisilanAvukatlariGetir } from "@/modules/dava-dosyasi/lib/queries";
 import { dosyaAlanlariniGuncelle } from "@/modules/dava-dosyasi/lib/actions";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 import { EkonomiPaneli } from "@/modules/dava-dosyasi/components/ekonomi/ekonomi-paneli";
@@ -92,7 +92,7 @@ export default async function DavaDosyasiDetaySayfasi({
   const { id } = await params;
   const { sekme, alt } = await searchParams;
   const aktifSekme = sekme === "ekonomi" || sekme === "evrak" || sekme === "gorevler" ? sekme : "genel";
-  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri, vekilAdaylari] = await Promise.all([
+  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri, vekilAdaylari, calisilanAvukatlar] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
     anaDosyaAdaylariniGetir(id),
@@ -104,6 +104,7 @@ export default async function DavaDosyasiDetaySayfasi({
     secenekleriGetir("muvekkil_sifati"),
     secenekleriGetir("dava_turu"),
     vekilAdaylariniGetir(),
+    calisilanAvukatlariGetir(),
   ]);
   if (!dosya) notFound();
 
@@ -549,7 +550,9 @@ export default async function DavaDosyasiDetaySayfasi({
                     : vekilAdaylari
                 }
                 sorumluAvukatId={dosya.sorumluAvukatId}
-                uyapVekilIdleri={dosya.uyapVekilleri.map((v) => v.kullaniciId)}
+                uyapVekilIdleri={dosya.uyapVekilleri.flatMap((v) => (v.kullaniciId ? [v.kullaniciId] : []))}
+                disAvukatlar={calisilanAvukatlar}
+                disVekilIdleri={dosya.uyapVekilleri.flatMap((v) => (v.calisilanAvukatId ? [v.calisilanAvukatId] : []))}
               />
             </FormKarti>
           </div>
