@@ -582,7 +582,7 @@ export function DosyalarTablosu({
                 />
               ))}
               <th className="sticky right-0 z-10 bg-[var(--yuzey,#1c2432)] p-0">
-                <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center gap-2">
                   <input
                     type="checkbox"
                     checked={secimModu && hepsiSecili}
@@ -594,6 +594,8 @@ export function DosyalarTablosu({
                     title={secimModu ? "Tümünü seç" : "Dosya seçmek için tıklayın"}
                     className="onay-kutusu"
                   />
+                  {/* Satirlardaki giris dugmesiyle ayni genislikte bos pay: kutular alt alta hizalanir. */}
+                  <span className="shrink-0" style={{ width: acmaGenisligi }} aria-hidden="true" />
                 </div>
               </th>
             </tr>
@@ -653,7 +655,7 @@ export function DosyalarTablosu({
                     )}
                   </td>
                 ))}
-                <td className="sticky right-0 z-10 border-t border-white/[0.06] bg-[var(--yuzey,#1c2432)] p-0">
+                <td className={`sticky right-0 z-10 border-t border-white/[0.06] p-0 ${secim.has(dosya.id) ? "bg-[color-mix(in_srgb,var(--yuzey,#1c2432),var(--accent)_22%)]" : "bg-[var(--yuzey,#1c2432)]"}`}>
                   <div className="flex h-12 items-center justify-center gap-2">
                     {secimModu && (
                       <input
