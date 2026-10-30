@@ -252,11 +252,11 @@ export async function EkonomiPaneli({
   // Katlar: genel / muvekkil (100'ler) / borclu (200'ler) / adliye (300'ler)
   const genelKat: Sekme[] = [
     { anahtar: "ozet", etiket: "Özet" },
-    { anahtar: "anlasma", etiket: "🤝 Anlaşma" },
+    { anahtar: "anlasma", etiket: "Anlaşma" },
     ...(musteriDuzeyi
-      ? [{ anahtar: "dosyalar", etiket: "📂 Dosyaları Seç", rozet: disindakiSayisi > 0 ? `${disindakiSayisi} dışında` : undefined }]
+      ? [{ anahtar: "dosyalar", etiket: "Dosyaları Seç", rozet: disindakiSayisi > 0 ? `${disindakiSayisi} dışında` : undefined }]
       : []),
-    ...(silmeYetkisiVar ? [{ anahtar: "yonet", etiket: "⚙ Hesapları Yönet" }] : []),
+    ...(silmeYetkisiVar ? [{ anahtar: "yonet", etiket: "Hesapları Yönet" }] : []),
   ];
   const katlar: { baslik: string; sekmeler: Sekme[] }[] = [
     { baslik: "", sekmeler: genelKat },
@@ -319,28 +319,47 @@ export async function EkonomiPaneli({
       )}
       <DurumSeridi ozet={ozet} hrefYaz={hrefYaz} havuzBakiyesi={havuzBakiyesi} paraHesapNo={aktifHesaplar.find((h) => h.paraHesabiMi)?.no} />
 
-      <div className="mb-5 space-y-2 border-b border-white/[0.08] pb-4">
-        {katlar.map((kat, i) => (
-          <div key={i} className="flex flex-wrap items-center gap-1.5">
-            {kat.baslik && (
-              <span className="mr-1 w-32 shrink-0 text-[11px] font-semibold tracking-wide text-white/35">{kat.baslik}</span>
-            )}
-            {kat.sekmeler.map((sk) => (
-              <Link
-                key={sk.anahtar}
-                href={hrefYaz({ alt: sk.anahtar })}
-                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
-                  sk.anahtar === aktif
-                    ? "border-[var(--accent)] bg-[var(--accent-soft)] text-white"
-                    : "border-white/10 text-white/60 hover:bg-white/[0.06] hover:text-white"
-                }`}
-              >
-                {sk.etiket}
-                {sk.rozet && <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-white/70">{sk.rozet}</span>}
-              </Link>
-            ))}
-          </div>
-        ))}
+      <div className="mb-5 border-b border-white/[0.08] pb-4">
+        {katlar.map((kat, i) =>
+          !kat.baslik ? (
+            <div key={i} className="mb-3 inline-flex flex-wrap gap-0.5 rounded-xl border border-white/10 bg-white/[0.04] p-0.5">
+              {kat.sekmeler.map((sk) => (
+                <Link
+                  key={sk.anahtar}
+                  href={hrefYaz({ alt: sk.anahtar })}
+                  className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                    sk.anahtar === aktif
+                      ? "bg-[var(--accent)] text-white shadow-sm"
+                      : "text-white/65 hover:bg-white/[0.08] hover:text-white"
+                  }`}
+                >
+                  {sk.etiket}
+                  {sk.rozet && <span className="rounded-full bg-white/15 px-1.5 py-0.5 text-[10px]">{sk.rozet}</span>}
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div key={i} className="grid grid-cols-1 gap-x-4 gap-y-1.5 border-t border-white/[0.06] py-2.5 first-of-type:border-t-0 md:grid-cols-[8.5rem_1fr]">
+              <span className="pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] opacity-80">{kat.baslik}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {kat.sekmeler.map((sk) => (
+                  <Link
+                    key={sk.anahtar}
+                    href={hrefYaz({ alt: sk.anahtar })}
+                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[13px] transition-colors ${
+                      sk.anahtar === aktif
+                        ? "border-[var(--accent)] bg-[var(--accent-soft)] font-medium text-white"
+                        : "border-white/10 text-white/65 hover:border-white/25 hover:bg-white/[0.06] hover:text-white"
+                    }`}
+                  >
+                    {sk.etiket}
+                    {sk.rozet && <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-white/70">{sk.rozet}</span>}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ),
+        )}
       </div>
 
       {aktif === "ozet" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyaSecenekleri} hesapNesneleri={aktifHesaplar} silmeYetkisiVar={silmeYetkisiVar} havuzBakiyesi={havuzBakiyesi} hrefYaz={hrefYaz} />}
