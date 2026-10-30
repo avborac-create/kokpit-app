@@ -1226,3 +1226,26 @@ export async function adliBirimHareketiSil(id: string, dosyaId: string, sifre?: 
   await prisma.adliBirimHareketi.delete({ where: { id } });
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
+
+// Dosya kartindaki vekil paneli: sorumlu avukat secimi ve UYAP vekil onay kutulari.
+export async function sorumluAvukatiGuncelle(dosyaId: string, avukatId: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+  await prisma.davaDosyasi.update({ where: { id: dosyaId }, data: { sorumluAvukatId: avukatId || null } });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
+export async function uyapVekilDurumunuGuncelle(dosyaId: string, avukatId: string, kayitli: boolean) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+  if (kayitli) {
+    await prisma.dosyaUyapVekili.upsert({
+      where: { davaDosyasiId_kullaniciId: { davaDosyasiId: dosyaId, kullaniciId: avukatId } },
+      create: { davaDosyasiId: dosyaId, kullaniciId: avukatId },
+      update: {},
+    });
+  } else {
+    await prisma.dosyaUyapVekili.deleteMany({ where: { davaDosyasiId: dosyaId, kullaniciId: avukatId } });
+  }
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}

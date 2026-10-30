@@ -92,6 +92,7 @@ export async function davaDosyasiGetir(id: string) {
       davaTuru: true,
       muvekkilSifatiDegeri: true,
       sorumluAvukat: true,
+      uyapVekilleri: { select: { kullaniciId: true } },
       karsiTaraflar: { include: { karsiTaraf: true } },
       uyusmazlikGrubu: true,
       bagliOlduguDosya: true,
@@ -690,4 +691,13 @@ export async function anaDosyaAdaylariniGetir(dosyaId: string): Promise<AnaDosya
     muvekkiller: muvekkiller.map((m) => m.musteri.adSoyadUnvan),
     karsiTaraflar: karsiTaraflar.map((k) => k.karsiTaraf.ad),
   }));
+}
+
+// Dosya kartindaki vekil panelinde secilebilecek avukatlar (aktif avukat/yonetici).
+export async function vekilAdaylariniGetir() {
+  return prisma.kullanici.findMany({
+    where: { aktifMi: true, buroRolu: { in: ["AVUKAT", "YONETICI"] } },
+    select: { id: true, adSoyad: true },
+    orderBy: { adSoyad: "asc" },
+  });
 }

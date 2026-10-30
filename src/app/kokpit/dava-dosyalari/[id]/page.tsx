@@ -2,7 +2,7 @@ import Link from "next/link";
 import { KunyeSeridi } from "@/core/ui/kunye-seridi";
 import { MobilSabitBaslik } from "@/core/ui/mobil-sabit-baslik";
 import { notFound } from "next/navigation";
-import { davaDosyasiGetir, anaDosyaAdaylariniGetir } from "@/modules/dava-dosyasi/lib/queries";
+import { davaDosyasiGetir, anaDosyaAdaylariniGetir, vekilAdaylariniGetir } from "@/modules/dava-dosyasi/lib/queries";
 import { dosyaAlanlariniGuncelle } from "@/modules/dava-dosyasi/lib/actions";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 import { EkonomiPaneli } from "@/modules/dava-dosyasi/components/ekonomi/ekonomi-paneli";
@@ -12,6 +12,7 @@ import { DavaDosyasiSekmeleri } from "@/modules/dava-dosyasi/components/dava-dos
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { davaDegeriHesapla, davaDegeriYaz } from "@/modules/dava-dosyasi/lib/dava-degeri";
+import { VekilPaneli } from "@/modules/dava-dosyasi/components/vekil-paneli";
 import { DosyaBaglayici } from "@/modules/dava-dosyasi/components/dosya-baglayici";
 import { kokpitNoGoster, kayitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { Dugme } from "@/core/ui/button";
@@ -89,7 +90,7 @@ export default async function DavaDosyasiDetaySayfasi({
   const { id } = await params;
   const { sekme, alt } = await searchParams;
   const aktifSekme = sekme === "ekonomi" ? "ekonomi" : "genel";
-  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri] = await Promise.all([
+  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri, vekilAdaylari] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
     anaDosyaAdaylariniGetir(id),
@@ -100,6 +101,7 @@ export default async function DavaDosyasiDetaySayfasi({
     secenekleriGetir("hukuk_dali"),
     secenekleriGetir("muvekkil_sifati"),
     secenekleriGetir("dava_turu"),
+    vekilAdaylariniGetir(),
   ]);
   if (!dosya) notFound();
 
@@ -381,11 +383,18 @@ export default async function DavaDosyasiDetaySayfasi({
                 <span>{dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}</span>
               )}
             </h1>
-            {(dosya.birimAdi || dosya.dosyaNo) && (
-              <p className="mt-0.5 truncate text-sm text-white/80">{dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}</p>
-            )}
-
             <div className="mt-2 grid grid-cols-1 items-stretch gap-1.5 text-sm md:flex md:flex-wrap md:gap-2">
+              {(dosya.birimAdi || dosya.dosyaNo) && (
+                <div className="tsatir">
+                  <span className="tikon tikon-konu" aria-hidden>§</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">Konu</span>
+                    <span className="break-words text-sm font-medium text-white sm:text-base">
+                      {dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}
+                    </span>
+                  </div>
+                </div>
+              )}
               <div className="tsatir">
                 <span className="tikon" aria-hidden>👤</span>
                 <div className="min-w-0 flex-1">
@@ -475,6 +484,21 @@ export default async function DavaDosyasiDetaySayfasi({
               etiketDuzenleyebilir={etiketDuzenleyebilir}
               onKaydet={dosyaAlanlariniGuncelle.bind(null, id)}
             />
+          </div>
+
+          <div className="mb-6 max-w-5xl">
+            <FormKarti baslik="Vekil Bilgileri">
+              <VekilPaneli
+                dosyaId={id}
+                avukatlar={
+                  dosya.sorumluAvukat && !vekilAdaylari.some((a) => a.id === dosya.sorumluAvukat!.id)
+                    ? [...vekilAdaylari, { id: dosya.sorumluAvukat.id, adSoyad: dosya.sorumluAvukat.adSoyad }]
+                    : vekilAdaylari
+                }
+                sorumluAvukatId={dosya.sorumluAvukatId}
+                uyapVekilIdleri={dosya.uyapVekilleri.map((v) => v.kullaniciId)}
+              />
+            </FormKarti>
           </div>
 
           <div className="mb-8 max-w-5xl">

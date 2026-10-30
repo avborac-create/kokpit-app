@@ -86,6 +86,7 @@ model Kullanici {
   gonderdigiGelistirmeTalepleri  GelistirmeTalebi[]
   sorumluOlduguHukukiMudahaleler HukukiMudahale[]   @relation("HukukiMudahaleSorumluAvukat")
   hacizRaporlari                 HacizRaporu[]      @relation("HacizRaporuAvukat")
+  uyapVekilOlduguDosyalar        DosyaUyapVekili[]
 
   @@map("kullanicilar")
 }
@@ -603,6 +604,7 @@ model DavaDosyasi {
   adliBirimHareketleri   AdliBirimHareketi[]
   gidenAvansAktarimlari  DosyaAvansAktarimi[]    @relation("AvansAktarimiKaynak")
   gelenAvansAktarimlari  DosyaAvansAktarimi[]    @relation("AvansAktarimiHedef")
+  uyapVekilleri          DosyaUyapVekili[]
 
   @@index([buroNo])
   @@index([durumId])
@@ -618,6 +620,20 @@ model DavaDosyasi {
   @@index([dosyaEvresi])
   @@index([anaDosyaId])
   @@map("dava_dosyalari")
+}
+
+// Dosyada UYAP'ta vekil olarak kayitli avukatlar (dosya kartindaki onay kutusu paneli).
+model DosyaUyapVekili {
+  id              String      @id @default(cuid())
+  davaDosyasiId   String
+  davaDosyasi     DavaDosyasi @relation(fields: [davaDosyasiId], references: [id], onDelete: Cascade)
+  kullaniciId     String
+  kullanici       Kullanici   @relation(fields: [kullaniciId], references: [id], onDelete: Cascade)
+  olusturmaTarihi DateTime    @default(now())
+
+  @@unique([davaDosyasiId, kullaniciId])
+  @@index([kullaniciId])
+  @@map("dosya_uyap_vekilleri")
 }
 
 // Muvekkilden gelen para (tasnif/masraf sistemi) ile KARISTIRILMAMALI: bu,
