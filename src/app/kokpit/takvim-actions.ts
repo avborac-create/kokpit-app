@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import type { TakvimTuru } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
@@ -33,7 +32,8 @@ export async function takvimOgesiEkle(giris: {
   const saat = /^\d{2}:\d{2}$/.test(giris.saat) ? giris.saat : null;
   const tarih = gunTarihi(giris.tarih);
   const sonSira = await prisma.takvimOgesi.aggregate({ where: { tarih }, _max: { sira: true } });
-  await prisma.takvimOgesi.create({
+  const yeni = await prisma.takvimOgesi.create({
+    select: { id: true },
     data: {
       tarih,
       saat,
@@ -46,19 +46,17 @@ export async function takvimOgesiEkle(giris: {
       olusturanId: k.kullaniciId,
     },
   });
-  revalidatePath("/kokpit");
+  return yeni.id;
 }
 
 export async function takvimOgesiSil(id: string) {
   await oturumSart();
   await prisma.takvimOgesi.delete({ where: { id } });
-  revalidatePath("/kokpit");
 }
 
 export async function takvimOgesiTamamla(id: string, tamam: boolean) {
   await oturumSart();
   await prisma.takvimOgesi.update({ where: { id }, data: { tamamlandiMi: tamam } });
-  revalidatePath("/kokpit");
 }
 
 // Ogeyi baska bir gune otele (gunun sonuna eklenir).
@@ -68,26 +66,26 @@ export async function takvimOgesiOtele(id: string, yeniTarih: string) {
   const tarih = gunTarihi(yeniTarih);
   const sonSira = await prisma.takvimOgesi.aggregate({ where: { tarih }, _max: { sira: true } });
   await prisma.takvimOgesi.update({ where: { id }, data: { tarih, sira: (sonSira._max.sira ?? 0) + 1 } });
-  revalidatePath("/kokpit");
 }
 
-// Gun icinde bir adim yukari/asagi tasir: ayni gundeki komsu ile sirayi degistirir.
-export async function takvimOgesiSirala(id: string, yon: "yukari" | "asagi") {
+// Bir gunun elle girilen ogelerinin yeni sirasini tek seferde kaydeder.
+export async function takvimGunSirasiKaydet(idler: string[]) {
   await oturumSart();
-  const oge = await prisma.takvimOgesi.findUnique({ where: { id }, select: { tarih: true } });
-  if (!oge) return;
-  const gununOgeleri = await prisma.takvimOgesi.findMany({
-    where: { tarih: oge.tarih },
-    orderBy: [{ sira: "asc" }, { saat: "asc" }, { olusturmaTarihi: "asc" }],
-    select: { id: true },
-  });
-  const i = gununOgeleri.findIndex((o) => o.id === id);
-  const j = yon === "yukari" ? i - 1 : i + 1;
-  if (i < 0 || j < 0 || j >= gununOgeleri.length) return;
-  const yeniSira = gununOgeleri.map((o) => o.id);
-  [yeniSira[i], yeniSira[j]] = [yeniSira[j], yeniSira[i]];
-  await prisma.$transaction(yeniSira.map((oid, sira) => prisma.takvimOgesi.update({ where: { id: oid }, data: { sira } })));
-  revalidatePath("/kokpit");
+  if (idler.length === 0 || idler.length > 200) return;
+  await prisma.$transaction(idler.map((id, sira) => prisma.takvimOgesi.update({ where: { id }, data: { sira }, select: { id: true } })));
+}
+
+// Dosya secenekleri (duruşma girişinde dosya seçmek için); form açılınca bir kez istenir.
+export async function takvimDosyaSecenekleri() {
+  await oturumSart();
+  const [davalar, cmkler] = await Promise.all([
+    prisma.davaDosyasi.findMany({ orderBy: { olusturmaTarihi: "desc" }, take: 300, select: { id: true, birimAdi: true, dosyaNo: true } }),
+    prisma.cMKDosyasi.findMany({ orderBy: { id: "desc" }, take: 300, select: { id: true, birim: true, dosyaNo: true } }),
+  ]);
+  return [
+    ...davalar.map((d) => ({ deger: `d:${d.id}`, etiket: [d.birimAdi, d.dosyaNo].filter(Boolean).join(" · ") || "Dava dosyası" })),
+    ...cmkler.map((d) => ({ deger: `c:${d.id}`, etiket: ["CMK", d.birim, d.dosyaNo].filter(Boolean).join(" · ") })),
+  ];
 }
 
 // Dosya kaydindaki (eski) durusma tarihini otele: saat korunur.
@@ -104,7 +102,6 @@ export async function dosyaDurusmasiniOtele(tur: "dava" | "cmk", dosyaId: string
   const yeni = new Date(gunTarihi(yeniTarih).getTime() + saatMs - 3 * 3600000);
   if (tur === "dava") await prisma.davaDosyasi.update({ where: { id: dosyaId }, data: { durusmaTarihi: yeni } });
   else await prisma.cMKDosyasi.update({ where: { id: dosyaId }, data: { durusmaTarihi: yeni } });
-  revalidatePath("/kokpit");
 }
 
 // Kullanicinin ana sayfa panel duzeni (JSON: sira / gizli / genis).
@@ -114,5 +111,4 @@ export async function anaSayfaDuzeniKaydet(duzen: { sira: string[]; gizli: strin
     where: { id: k.kullaniciId },
     data: { anaSayfaDuzeni: duzen ? JSON.stringify(duzen) : null },
   });
-  revalidatePath("/kokpit");
 }

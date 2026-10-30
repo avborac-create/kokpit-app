@@ -1,5 +1,5 @@
 import { prisma } from "@/core/db/prisma";
-import { TakvimIstemci, type DosyaSecenegi, type TakvimOgeVeri } from "./takvim-istemci";
+import { TakvimIstemci, type TakvimOgeVeri } from "./takvim-istemci";
 
 const ZONE = "Europe/Istanbul";
 const AY_ADLARI = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
@@ -33,7 +33,7 @@ export async function TakvimPaneli({ ayParam }: { ayParam?: string }) {
   const bas = new Date(Date.UTC(yil, ay, 1, -3));
   const son = new Date(Date.UTC(yil, ay + 1, 1, -3));
 
-  const [davalar, cmkler, ekip, kayitlar, davaSecenekleri, cmkSecenekleri] = await Promise.all([
+  const [davalar, cmkler, ekip, kayitlar] = await Promise.all([
     prisma.davaDosyasi.findMany({
       where: { durusmaTarihi: { gte: bas, lt: son } },
       select: { id: true, durusmaTarihi: true, birimAdi: true, dosyaNo: true, konu: true },
@@ -49,16 +49,6 @@ export async function TakvimPaneli({ ayParam }: { ayParam?: string }) {
     prisma.takvimOgesi.findMany({
       where: { tarih: { gte: new Date(Date.UTC(yil, ay, 1)), lt: new Date(Date.UTC(yil, ay + 1, 1)) } },
       orderBy: [{ sira: "asc" }, { olusturmaTarihi: "asc" }],
-    }),
-    prisma.davaDosyasi.findMany({
-      orderBy: { olusturmaTarihi: "desc" },
-      take: 300,
-      select: { id: true, birimAdi: true, dosyaNo: true },
-    }),
-    prisma.cMKDosyasi.findMany({
-      orderBy: { id: "desc" },
-      take: 300,
-      select: { id: true, birim: true, dosyaNo: true },
     }),
   ]);
 
@@ -130,11 +120,6 @@ export async function TakvimPaneli({ ayParam }: { ayParam?: string }) {
   const dogumlar = ogeler.filter((o) => o.kaynak === "dogum");
   const sirali = [...turetilmis, ...elle, ...dogumlar];
 
-  const dosyalar: DosyaSecenegi[] = [
-    ...davaSecenekleri.map((d) => ({ deger: `d:${d.id}`, etiket: [d.birimAdi, d.dosyaNo].filter(Boolean).join(" · ") || "Dava dosyası" })),
-    ...cmkSecenekleri.map((d) => ({ deger: `c:${d.id}`, etiket: ["CMK", d.birim, d.dosyaNo].filter(Boolean).join(" · ") })),
-  ];
-
   const onceki = ayAnahtari(ay === 0 ? yil - 1 : yil, ay === 0 ? 11 : ay - 1);
   const sonraki = ayAnahtari(ay === 11 ? yil + 1 : yil, ay === 11 ? 0 : ay + 1);
   const buAyMi = yil === bugun.yil && ay === bugun.ay;
@@ -149,7 +134,6 @@ export async function TakvimPaneli({ ayParam }: { ayParam?: string }) {
       sonrakiAy={sonraki}
       buAyMi={buAyMi}
       ogeler={sirali}
-      dosyalar={dosyalar}
     />
   );
 }

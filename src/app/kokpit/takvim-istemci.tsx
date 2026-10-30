@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   dosyaDurusmasiniOtele,
   takvimOgesiEkle,
   takvimOgesiOtele,
   takvimOgesiSil,
-  takvimOgesiSirala,
+  takvimDosyaSecenekleri,
+  takvimGunSirasiKaydet,
   takvimOgesiTamamla,
 } from "./takvim-actions";
 
@@ -48,8 +49,7 @@ export function TakvimIstemci({
   oncekiAy,
   sonrakiAy,
   buAyMi,
-  ogeler,
-  dosyalar,
+  ogeler: ilkOgeler,
 }: {
   yil: number;
   ay: number;
@@ -58,19 +58,20 @@ export function TakvimIstemci({
   sonrakiAy: string;
   buAyMi: boolean;
   ogeler: TakvimOgeVeri[];
-  dosyalar: DosyaSecenegi[];
 }) {
   const gunSayisi = new Date(Date.UTC(yil, ay + 1, 0)).getUTCDate();
   const ilkGun = (new Date(Date.UTC(yil, ay, 1)).getUTCDay() + 6) % 7;
   const hucreler: (number | null)[] = [...Array(ilkGun).fill(null), ...Array.from({ length: gunSayisi }, (_, i) => i + 1)];
   while (hucreler.length % 7 !== 0) hucreler.push(null);
 
-  const [secili, setSecili] = useState<number>(buAyMi ? bugun.gun : (ogeler[0]?.gun ?? 1));
+  const [secili, setSecili] = useState<number>(buAyMi ? bugun.gun : (ilkOgeler[0]?.gun ?? 1));
   const [ekleAcik, setEkleAcik] = useState(false);
   const [oteleId, setOteleId] = useState<string | null>(null);
   const [oteleTarih, setOteleTarih] = useState("");
   const [hata, setHata] = useState("");
-  const [bekliyor, basla] = useTransition();
+  // Liste istemcide tutulur: her islem aninda ekrana yansir, sunucuya arka planda gider.
+  const [ogeler, setOgeler] = useState<TakvimOgeVeri[]>(ilkOgeler);
+  const [dosyalar, setDosyalar] = useState<DosyaSecenegi[] | null>(null);
 
   const gunTarihi = (g: number) => `${yil}-${iki(ay + 1)}-${iki(g)}`;
   const gununOgeleri = ogeler.filter((o) => o.gun === secili);
@@ -78,15 +79,73 @@ export function TakvimIstemci({
   const digerleri = gununOgeleri.filter((o) => o.tur !== "DOGUM");
   const duzenlenebilirler = digerleri.filter((o) => o.kaynak === "oge");
 
-  function calistir(is: () => Promise<void>) {
+  // Aninda uygula; sunucu hata verirse eski listeye don.
+  function iyimser(uygula: (l: TakvimOgeVeri[]) => TakvimOgeVeri[], is: () => Promise<unknown>) {
+    const onceki = ogeler;
     setHata("");
-    basla(async () => {
-      try {
-        await is();
-      } catch (e) {
-        setHata(e instanceof Error ? e.message : "İşlem yapılamadı.");
-      }
+    setOgeler(uygula);
+    is().catch((e) => {
+      setOgeler(onceki);
+      setHata(e instanceof Error ? e.message : "İşlem yapılamadı.");
     });
+  }
+
+  function dosyalariYukle() {
+    if (dosyalar) return;
+    takvimDosyaSecenekleri().then(setDosyalar).catch(() => setDosyalar([]));
+  }
+
+  function ekle(giris: { tarih: string; saat: string; baslik: string; tur: string; dosya: string; notlar: string }) {
+    const gecici = `t-${Date.now()}`;
+    const yeni: TakvimOgeVeri = {
+      key: gecici,
+      kaynak: "oge",
+      id: gecici,
+      gun: secili,
+      saat: giris.saat || null,
+      baslik: giris.baslik,
+      tur: giris.tur as TakvimOgeVeri["tur"],
+      tamam: false,
+    };
+    const onceki = ogeler;
+    setHata("");
+    setOgeler((l) => [...l, yeni]);
+    takvimOgesiEkle(giris)
+      .then((id) => setOgeler((l) => l.map((o) => (o.key === gecici ? { ...o, key: `o-${id}`, id } : o))))
+      .catch((e) => {
+        setOgeler(onceki);
+        setHata(e instanceof Error ? e.message : "Kaydedilemedi.");
+      });
+  }
+
+  function sirala(o: TakvimOgeVeri, yon: -1 | 1) {
+    const idler = duzenlenebilirler.map((x) => x.key);
+    const i = idler.indexOf(o.key);
+    const j = i + yon;
+    if (i < 0 || j < 0 || j >= idler.length) return;
+    [idler[i], idler[j]] = [idler[j], idler[i]];
+    iyimser(
+      (l) => {
+        // Ayni gunun elle girilen ogeleri, listede kapladiklari yerlere yeni sirayla yerlesir.
+        const yerler = l.flatMap((x, k) => (x.gun === secili && x.kaynak === "oge" ? [k] : []));
+        const harita = new Map(l.map((x) => [x.key, x]));
+        const kopya = [...l];
+        yerler.forEach((yer, n) => (kopya[yer] = harita.get(idler[n])!));
+        return kopya;
+      },
+      () => takvimGunSirasiKaydet(idler.map((k) => k.replace(/^o-/, ""))),
+    );
+  }
+
+  function ote(o: TakvimOgeVeri, tarih: string) {
+    const [y, m, g] = tarih.split("-").map(Number);
+    const ayniAy = y === yil && m === ay + 1;
+    iyimser(
+      (l) => (ayniAy ? l.map((x) => (x.key === o.key ? { ...x, gun: g } : x)) : l.filter((x) => x.key !== o.key)),
+      () => (o.kaynak === "oge" ? takvimOgesiOtele(o.id, tarih) : dosyaDurusmasiniOtele(o.kaynak as "dava" | "cmk", o.id, tarih)),
+    );
+    if (ayniAy) setSecili(g);
+    setOteleId(null);
   }
 
   const gezinti = "rounded-full px-2.5 py-1 text-sm text-white/70 hover:bg-white/10 hover:text-white";
@@ -94,7 +153,7 @@ export function TakvimIstemci({
   return (
     <section className="glass flex h-full min-w-0 flex-col rounded-3xl p-5">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-white/50">Takvim</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-white/50">Büro takvimi</h2>
         <div className="flex items-center gap-1">
           <Link href={`/kokpit?ay=${oncekiAy}`} className={gezinti} aria-label="Önceki ay">
             ‹
@@ -177,19 +236,7 @@ export function TakvimIstemci({
           </button>
         </div>
 
-        {ekleAcik && (
-          <EkleFormu
-            tarih={gunTarihi(secili)}
-            dosyalar={dosyalar}
-            bekliyor={bekliyor}
-            onEkle={(giris) =>
-              calistir(async () => {
-                await takvimOgesiEkle(giris);
-                setEkleAcik(false);
-              })
-            }
-          />
-        )}
+        {ekleAcik && <EkleFormu tarih={gunTarihi(secili)} dosyalar={dosyalar} dosyalariYukle={dosyalariYukle} onEkle={ekle} />}
 
         <div className="max-h-44 min-h-0 flex-1 overflow-y-auto">
           {gununOgeleri.length === 0 && !ekleAcik ? (
@@ -205,8 +252,10 @@ export function TakvimIstemci({
                         <input
                           type="checkbox"
                           checked={o.tamam}
-                          disabled={bekliyor}
-                          onChange={(e) => calistir(() => takvimOgesiTamamla(o.id, e.target.checked))}
+                          onChange={(e) => {
+                            const tamam = e.target.checked;
+                            iyimser((l) => l.map((x) => (x.key === o.key ? { ...x, tamam } : x)), () => takvimOgesiTamamla(o.id, tamam));
+                          }}
                           aria-label="Tamamlandı"
                           className="h-3.5 w-3.5 shrink-0 accent-[var(--accent)]"
                         />
@@ -224,8 +273,8 @@ export function TakvimIstemci({
                             <button
                               type="button"
                               className={simgeDugme}
-                              disabled={bekliyor || sira <= 0}
-                              onClick={() => calistir(() => takvimOgesiSirala(o.id, "yukari"))}
+                              disabled={sira <= 0}
+                              onClick={() => sirala(o, -1)}
                               aria-label="Yukarı taşı"
                               title="Yukarı taşı"
                             >
@@ -234,8 +283,8 @@ export function TakvimIstemci({
                             <button
                               type="button"
                               className={simgeDugme}
-                              disabled={bekliyor || sira < 0 || sira >= duzenlenebilirler.length - 1}
-                              onClick={() => calistir(() => takvimOgesiSirala(o.id, "asagi"))}
+                              disabled={sira < 0 || sira >= duzenlenebilirler.length - 1}
+                              onClick={() => sirala(o, 1)}
                               aria-label="Aşağı taşı"
                               title="Aşağı taşı"
                             >
@@ -259,8 +308,7 @@ export function TakvimIstemci({
                           <button
                             type="button"
                             className={simgeDugme}
-                            disabled={bekliyor}
-                            onClick={() => calistir(() => takvimOgesiSil(o.id))}
+                            onClick={() => iyimser((l) => l.filter((x) => x.key !== o.key), () => takvimOgesiSil(o.id))}
                             aria-label="Sil"
                             title="Sil"
                           >
@@ -275,14 +323,8 @@ export function TakvimIstemci({
                         <button
                           type="button"
                           className="rounded-lg bg-[var(--accent)] px-2.5 py-1 text-xs font-medium text-white disabled:opacity-40"
-                          disabled={bekliyor || !oteleTarih}
-                          onClick={() =>
-                            calistir(async () => {
-                              if (o.kaynak === "oge") await takvimOgesiOtele(o.id, oteleTarih);
-                              else if (o.kaynak !== "dogum") await dosyaDurusmasiniOtele(o.kaynak, o.id, oteleTarih);
-                              setOteleId(null);
-                            })
-                          }
+                          disabled={!oteleTarih}
+                          onClick={() => ote(o, oteleTarih)}
                         >
                           Ötele
                         </button>
@@ -310,21 +352,40 @@ export function TakvimIstemci({
 function EkleFormu({
   tarih,
   dosyalar,
-  bekliyor,
+  dosyalariYukle,
   onEkle,
 }: {
   tarih: string;
-  dosyalar: DosyaSecenegi[];
-  bekliyor: boolean;
+  dosyalar: DosyaSecenegi[] | null;
+  dosyalariYukle: () => void;
   onEkle: (g: { tarih: string; saat: string; baslik: string; tur: string; dosya: string; notlar: string }) => void;
 }) {
   const [tur, setTur] = useState("DURUSMA");
   const [saat, setSaat] = useState("");
   const [baslik, setBaslik] = useState("");
   const [dosya, setDosya] = useState("");
+  const baslikKutusu = useRef<HTMLInputElement>(null);
 
-  const dosyaEtiketi = dosyalar.find((d) => d.deger === dosya)?.etiket ?? "";
+  useEffect(() => {
+    baslikKutusu.current?.focus();
+  }, []);
+  useEffect(() => {
+    if (tur === "DURUSMA") dosyalariYukle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tur]);
+
+  const dosyaEtiketi = dosyalar?.find((d) => d.deger === dosya)?.etiket ?? "";
   const sonBaslik = baslik.trim() || (tur === "DURUSMA" && dosyaEtiketi ? `Duruşma · ${dosyaEtiketi}` : "");
+
+  // Kaydeder ve formu acik birakir: art arda giris hizli olsun.
+  function gonder() {
+    if (!sonBaslik) return;
+    onEkle({ tarih, saat, baslik: sonBaslik, tur, dosya: tur === "DURUSMA" ? dosya : "", notlar: "" });
+    setBaslik("");
+    setSaat("");
+    setDosya("");
+    baslikKutusu.current?.focus();
+  }
 
   return (
     <div className="mb-2 flex flex-col gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] p-2">
@@ -338,8 +399,8 @@ function EkleFormu({
         <input type="time" value={saat} onChange={(e) => setSaat(e.target.value)} className={alan} aria-label="Saat" />
         {tur === "DURUSMA" && (
           <select value={dosya} onChange={(e) => setDosya(e.target.value)} className={`${alan} min-w-0 flex-1`} aria-label="Dosya">
-            <option value="">Dosya seçin (isteğe bağlı)</option>
-            {dosyalar.map((d) => (
+            <option value="">{dosyalar ? "Dosya seçin (isteğe bağlı)" : "Dosyalar yükleniyor…"}</option>
+            {(dosyalar ?? []).map((d) => (
               <option key={d.deger} value={d.deger}>
                 {d.etiket}
               </option>
@@ -349,15 +410,22 @@ function EkleFormu({
       </div>
       <div className="flex gap-1.5">
         <input
+          ref={baslikKutusu}
           value={baslik}
           onChange={(e) => setBaslik(e.target.value)}
-          placeholder={tur === "DURUSMA" ? "Başlık (boşsa dosyadan alınır)" : "Başlık"}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              gonder();
+            }
+          }}
+          placeholder={tur === "DURUSMA" ? "Başlık, Enter ile kaydet (boşsa dosyadan alınır)" : "Başlık, Enter ile kaydet"}
           className={`${alan} min-w-0 flex-1`}
         />
         <button
           type="button"
-          disabled={bekliyor || !sonBaslik}
-          onClick={() => onEkle({ tarih, saat, baslik: sonBaslik, tur, dosya: tur === "DURUSMA" ? dosya : "", notlar: "" })}
+          disabled={!sonBaslik}
+          onClick={gonder}
           className="rounded-lg bg-[var(--accent)] px-3 py-1 text-sm font-medium text-white disabled:opacity-40"
         >
           Kaydet

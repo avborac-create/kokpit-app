@@ -39,7 +39,7 @@ export default async function KokpitAnaSayfa({ searchParams }: { searchParams: P
 
       <AnaSayfaDuzeni
         tanimlar={[
-          { kod: "takvim", ad: "Takvim" },
+          { kod: "takvim", ad: "Büro takvimi" },
           { kod: "haber", ad: "Hukuk gündemi" },
           { kod: "kur", ad: "Döviz kurları" },
           { kod: "ekip", ad: "Ekibimiz" },
