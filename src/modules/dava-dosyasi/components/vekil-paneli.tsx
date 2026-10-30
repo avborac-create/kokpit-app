@@ -134,7 +134,7 @@ export function VekilPaneli({
           </select>
         </div>
         <div className="alan-hucre">
-          <span className={etiket}>UYAP’ta vekil kayıtlı avukatlar</span>
+          <span className={etiket}>UYAP’a kayıtlı vekiller</span>
           <p className="mb-1 mt-3 text-xs font-semibold text-white/75">Bünye Avukatları</p>
           {avukatlar.length === 0 ? (
             <p className="text-sm text-white/55">Bünyede avukat sıfatlı kullanıcı yok.</p>
