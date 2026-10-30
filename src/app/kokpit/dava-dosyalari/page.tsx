@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { davaDosyalariniListele } from "@/modules/dava-dosyasi/lib/queries";
+import { davaDosyalariniListele, vekilAdaylariniGetir } from "@/modules/dava-dosyasi/lib/queries";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { Dugme } from "@/core/ui/button";
 import { Girdi, Secim } from "@/core/ui/form";
@@ -37,6 +37,7 @@ export default async function DavaDosyalariSayfasi({
     if (kayitli) redirect(`/kokpit/dava-dosyalari?${decodeURIComponent(kayitli)}`);
   }
   const filtreAktif = Boolean(params.arama || params.durum || params.musteri);
+  const avukatlar = await vekilAdaylariniGetir();
   const [dosyalar, durumlar, kullanici, sutunDuzeni, filtreMusteri] = await Promise.all([
     davaDosyalariniListele({ arama: params.arama, durumKod: params.durum, musteriId: params.musteri }),
     secenekleriGetir("dava_dosyasi_durumu"),
@@ -143,6 +144,8 @@ export default async function DavaDosyalariSayfasi({
         gorunurSutunlar={gorunurSutunlar}
         sutunEtiketleri={DAVA_DOSYALARI_SUTUN_ETIKETLERI}
         silmeYetkisiVar={silmeYetkisiVar}
+        durumlar={durumlar.map((d) => ({ id: d.id, etiket: d.etiket }))}
+        avukatlar={avukatlar.map((a) => ({ id: a.id, adSoyad: a.adSoyad }))}
       />
     </div>
   );

@@ -452,7 +452,7 @@ export async function davaDosyasiGuncelle(
   redirect(`/kokpit/dava-dosyalari/${id}`);
 }
 
-async function davaDosyasiSilIc(id: string, sifre?: string, paraTrafiginiDeSil = false) {
+async function davaDosyasiSilIc(id: string, sifre?: string, paraTrafiginiDeSil = false, sifreDogrulandi = false) {
   const kullanici = await mevcutKullanici();
   if (!kullanici || !silebilirMi(kullanici.rol)) {
     throw new Error("Bu işlem için yetkiniz yok.");
@@ -460,7 +460,7 @@ async function davaDosyasiSilIc(id: string, sifre?: string, paraTrafiginiDeSil =
   if (paraTrafiginiDeSil && !sistemYoneticisiMi(kullanici.rol)) {
     throw new Error("Para trafiği kayıtlarını silme yetkisi yalnızca sistem yöneticisindedir.");
   }
-  await silmeSifresiniDogrula(sifre);
+  if (!sifreDogrulandi) await silmeSifresiniDogrula(sifre);
 
   // Finansal kaydi olan bir dosya artik dogrudan silinemez - yanlislikla
   // gercek para hareketi/masraf/alacak kaydini yok etmemek icin. Bunun
@@ -551,6 +551,72 @@ export async function davaDosyasiSil(
     return {};
   } catch (e) {
     return { hata: e instanceof Error ? e.message : "Silme işlemi başarısız oldu." };
+  }
+}
+
+// ---- Toplu islemler (Dosyalar listesinde secilen dosyalar) ----
+const TOPLU_SINIR = 200;
+
+// Tek sifre dogrulamasiyla secili dosyalari siler. Alt dosyalar once silinir; silinemeyenler
+// (finansal kaydi olan, alt dosyasi bulunan vb.) nedenleriyle birlikte dondurulur.
+export async function davaDosyalariTopluSil(
+  idler: string[],
+  sifre?: string,
+): Promise<{ hata?: string; silinen: number; hatalar: { id: string; hata: string }[] }> {
+  try {
+    const kullanici = await mevcutKullanici();
+    if (!kullanici || !silebilirMi(kullanici.rol)) throw new Error("Bu işlem için yetkiniz yok.");
+    if (idler.length === 0 || idler.length > TOPLU_SINIR) throw new Error(`En fazla ${TOPLU_SINIR} dosya seçilebilir.`);
+    await silmeSifresiniDogrula(sifre);
+    const kayitlar = await prisma.davaDosyasi.findMany({ where: { id: { in: idler } }, select: { id: true, anaDosyaId: true } });
+    // Alt dosyalar (anaDosyaId dolu) ana dosyalardan once silinir.
+    const sirali = [...kayitlar].sort((a, b) => Number(Boolean(b.anaDosyaId)) - Number(Boolean(a.anaDosyaId)));
+    let silinen = 0;
+    const hatalar: { id: string; hata: string }[] = [];
+    for (const k of sirali) {
+      try {
+        await davaDosyasiSilIc(k.id, undefined, false, true);
+        silinen++;
+      } catch (e) {
+        hatalar.push({ id: k.id, hata: e instanceof Error ? e.message : "silinemedi" });
+      }
+    }
+    revalidatePath("/kokpit/dava-dosyalari");
+    return { silinen, hatalar };
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "Toplu silme başarısız oldu.", silinen: 0, hatalar: [] };
+  }
+}
+
+export async function davaDosyalariTopluDurum(idler: string[], durumId: string): Promise<{ hata?: string; mesaj?: string }> {
+  try {
+    const kullanici = await mevcutKullanici();
+    if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+    if (idler.length === 0 || idler.length > TOPLU_SINIR) throw new Error(`En fazla ${TOPLU_SINIR} dosya seçilebilir.`);
+    const durum = await prisma.secenekDegeri.findUnique({ where: { id: durumId }, select: { etiket: true } });
+    if (!durum) throw new Error("Durum bulunamadı.");
+    const sonuc = await prisma.davaDosyasi.updateMany({ where: { id: { in: idler } }, data: { durumId, surum: { increment: 1 } } });
+    revalidatePath("/kokpit/dava-dosyalari");
+    return { mesaj: `${sonuc.count} dosyanın durumu “${durum.etiket}” yapıldı.` };
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "İşlem başarısız oldu." };
+  }
+}
+
+export async function davaDosyalariTopluSorumlu(idler: string[], avukatId: string | null): Promise<{ hata?: string; mesaj?: string }> {
+  try {
+    const kullanici = await mevcutKullanici();
+    if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+    if (idler.length === 0 || idler.length > TOPLU_SINIR) throw new Error(`En fazla ${TOPLU_SINIR} dosya seçilebilir.`);
+    if (avukatId) {
+      const a = await prisma.kullanici.findUnique({ where: { id: avukatId }, select: { aktifMi: true } });
+      if (!a?.aktifMi) throw new Error("Avukat bulunamadı.");
+    }
+    const sonuc = await prisma.davaDosyasi.updateMany({ where: { id: { in: idler } }, data: { sorumluAvukatId: avukatId, surum: { increment: 1 } } });
+    revalidatePath("/kokpit/dava-dosyalari");
+    return { mesaj: `${sonuc.count} dosyanın sorumlu avukatı ${avukatId ? "atandı" : "kaldırıldı"}.` };
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "İşlem başarısız oldu." };
   }
 }
 

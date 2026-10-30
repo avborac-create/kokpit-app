@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import type { davaDosyalariniListele } from "@/modules/dava-dosyasi/lib/queries";
 import { DAVA_DOSYALARI_SUTUN_ACIKLAMALARI } from "@/core/tablo-duzeni/dava-dosyalari-sutunlari";
 import { kokpitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
+import { TopluIslemCubugu } from "./toplu-islem-cubugu";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 
 type Dosya = Awaited<ReturnType<typeof davaDosyalariniListele>>[number];
@@ -225,11 +226,15 @@ export function DosyalarTablosu({
   gorunurSutunlar,
   sutunEtiketleri,
   silmeYetkisiVar,
+  durumlar,
+  avukatlar,
 }: {
   dosyalar: Dosya[];
   gorunurSutunlar: string[];
   sutunEtiketleri: Record<string, string>;
   silmeYetkisiVar: boolean;
+  durumlar: { id: string; etiket: string }[];
+  avukatlar: { id: string; adSoyad: string }[];
 }) {
   const kayitliGenislikler = useSyncExternalStore(genislikleriAbone, genislikleriOku, () => null);
   // Surukleme SIRASINDA canli onizleme icin gecici state; birak (mouseup)
@@ -237,6 +242,21 @@ export function DosyalarTablosu({
   const [taslakGenislikler, setTaslakGenislikler] = useState<Record<string, number> | null>(null);
   const [daraltilmis, setDaraltilmis] = useState<Set<string>>(new Set());
   const satirlar = agacSatirlari(dosyalar, daraltilmis);
+  // Toplu secim: yalnizca listede gorunen satirlar gecerlidir (silinen/filtrelenen kayitlar otomatik duser).
+  const [secim, setSecim] = useState<Set<string>>(new Set());
+  const gorunenIdler = satirlar.map((s) => s.dosya.id);
+  const seciliIdler = gorunenIdler.filter((id) => secim.has(id));
+  const hepsiSecili = gorunenIdler.length > 0 && seciliIdler.length === gorunenIdler.length;
+  function secimiDegistir(id: string) {
+    setSecim((o) => {
+      const y = new Set(o);
+      if (!y.delete(id)) y.add(id);
+      return y;
+    });
+  }
+  function hepsiniDegistir() {
+    setSecim(hepsiSecili ? new Set() : new Set(gorunenIdler));
+  }
   const anaDosyaIdleri = satirlar.filter((s) => s.altSayisi > 0).map((s) => s.dosya.id);
   // Daraltilmis ana dosyalarin da listesi (satirlar daraltilinca alt satirlari
   // icermez ama ana satirin kendisi hep vardir).
@@ -303,7 +323,7 @@ export function DosyalarTablosu({
     <div className="glass overflow-x-auto rounded-2xl">
       <table className="w-full table-fixed text-left text-sm">
         <colgroup>
-          <col style={{ width: 56 }} />
+          <col style={{ width: 88 }} />
           {gorunurSutunlar.map((anahtar) => (
             <col key={anahtar} style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }} />
           ))}
@@ -311,7 +331,19 @@ export function DosyalarTablosu({
         </colgroup>
         <thead className="text-white/50">
           <tr>
-            <th className="w-14 p-0" aria-label="Aç" />
+            <th className="p-0 pl-2">
+              <input
+                type="checkbox"
+                checked={hepsiSecili}
+                ref={(el) => {
+                  if (el) el.indeterminate = seciliIdler.length > 0 && !hepsiSecili;
+                }}
+                onChange={hepsiniDegistir}
+                aria-label="Tümünü seç"
+                title="Tümünü seç"
+                className="h-4 w-4 cursor-pointer accent-[var(--accent)]"
+              />
+            </th>
             {gorunurSutunlar.map((anahtar) => (
               <SutunBasligi
                 key={anahtar}
@@ -332,11 +364,18 @@ export function DosyalarTablosu({
           {satirlar.map(({ dosya, seviye, altSayisi }) => (
             <tr
               key={dosya.id}
-              className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04]`}
+              className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
             >
               <td className="py-0 pl-1.5 pr-1">
                 {/* Sol cubuk satirin uzerine gelince kalinlasir; simge dugmesi dosyayi acar. */}
                 <div className="flex h-9 items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    checked={secim.has(dosya.id)}
+                    onChange={() => secimiDegistir(dosya.id)}
+                    aria-label="Dosyayı seç"
+                    className="h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)]"
+                  />
                   <span className="h-6 w-1 shrink-0 rounded-full bg-[var(--accent)] opacity-50 transition-all group-hover/satir:w-1.5 group-hover/satir:opacity-100" />
                   <Link
                     href={`/kokpit/dava-dosyalari/${dosya.id}`}
@@ -401,6 +440,15 @@ export function DosyalarTablosu({
         </tbody>
       </table>
     </div>
+      {seciliIdler.length > 0 && (
+        <TopluIslemCubugu
+          secililer={seciliIdler.map((id) => ({ id, etiket: kokpitNoGoster(satirlar.find((s) => s.dosya.id === id)!.dosya) }))}
+          durumlar={durumlar}
+          avukatlar={avukatlar}
+          silmeYetkisiVar={silmeYetkisiVar}
+          temizle={() => setSecim(new Set())}
+        />
+      )}
     </>
   );
 }
