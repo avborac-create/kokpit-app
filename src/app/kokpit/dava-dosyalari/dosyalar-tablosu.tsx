@@ -255,7 +255,9 @@ function SutunBasligi({
   aciklama,
   genislik,
   suruklemeBaslat,
+  ilk,
 }: {
+  ilk?: boolean;
   etiket: string;
   aciklama?: string;
   genislik: number;
@@ -263,7 +265,7 @@ function SutunBasligi({
 }) {
   return (
     <th
-      className="relative select-none whitespace-nowrap px-2.5 py-2 text-left text-[13px] font-medium"
+      className={`relative select-none whitespace-nowrap py-2 text-left text-[13px] font-medium ${ilk ? "pl-0.5 pr-2.5" : "px-2.5"}`}
       style={{ width: genislik }}
     >
       <div className="truncate pr-2" title={aciklama ?? etiket}>
@@ -585,6 +587,7 @@ export function DosyalarTablosu({
               {gorunurSutunlar.map((anahtar) => (
                 <SutunBasligi
                   key={anahtar}
+                  ilk={anahtar === gorunurSutunlar[0]}
                   etiket={sutunEtiketleri[anahtar] ?? anahtar}
                   aciklama={DAVA_DOSYALARI_SUTUN_ACIKLAMALARI[anahtar]}
                   genislik={genislikler[anahtar] ?? VARSAYILAN_GENISLIK}
@@ -629,7 +632,7 @@ export function DosyalarTablosu({
                 {gorunurSutunlar.map((anahtar, sutunIndex) => (
                   <td
                     key={anahtar}
-                    className={`px-2.5 py-1.5 ${anahtar === "konu" ? "text-white/85" : "text-white/60"}`}
+                    className={`${sutunIndex === 0 ? "pl-0.5 pr-2.5" : "px-2.5"} py-1.5 ${anahtar === "konu" ? "text-white/85" : "text-white/60"}`}
                   >
                     {sutunIndex === 0 ? (
                       <div
