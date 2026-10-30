@@ -18,12 +18,14 @@ export function KullaniciDuzenleButonu({
   eposta,
   uygulamaRolu,
   buroRolu,
+  dogumTarihi,
 }: {
   id: string;
   adSoyad: string;
   eposta: string;
   uygulamaRolu: UygulamaRolu;
   buroRolu: BuroRolu;
+  dogumTarihi?: string;
 }) {
   const router = useRouter();
   const [beklemede, baslat] = useTransition();
@@ -33,6 +35,7 @@ export function KullaniciDuzenleButonu({
   const [sifre, setSifre] = useState("");
   const [rol, setRol] = useState<UygulamaRolu>(uygulamaRolu);
   const [buro, setBuro] = useState<BuroRolu>(buroRolu);
+  const [dogum, setDogum] = useState(dogumTarihi ?? "");
   const [hata, setHata] = useState<string | null>(null);
 
   function ac() {
@@ -40,6 +43,7 @@ export function KullaniciDuzenleButonu({
     setPosta(eposta);
     setRol(uygulamaRolu);
     setBuro(buroRolu);
+    setDogum(dogumTarihi ?? "");
     setSifre("");
     setHata(null);
     setAcik(true);
@@ -49,7 +53,7 @@ export function KullaniciDuzenleButonu({
     setHata(null);
     baslat(async () => {
       try {
-        await kullaniciGuncelle(id, ad, posta, sifre, rol, buro);
+        await kullaniciGuncelle(id, ad, posta, sifre, rol, buro, dogum);
         setAcik(false);
         router.refresh();
       } catch (e) {
@@ -145,6 +149,16 @@ export function KullaniciDuzenleButonu({
                   </select>
                 </div>
               </div>
+              <label htmlFor="duzenle-dogum" className="mb-1 mt-3 block text-xs text-white/55">
+                Doğum günü (ana sayfadaki takvimde görünür, isteğe bağlı)
+              </label>
+              <input
+                id="duzenle-dogum"
+                type="date"
+                value={dogum}
+                onChange={(e) => setDogum(e.target.value)}
+                className={girdiSinifi}
+              />
               <p className="mt-2 text-[11px] text-white/40">
                 Rol değişikliği, kişi bir sonraki girişinde etkinleşir.
               </p>

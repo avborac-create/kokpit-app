@@ -69,6 +69,8 @@ model Kullanici {
   rol              KullaniciRolu @default(PERSONEL)
   buroRolu         BuroRolu      @default(PERSONEL)
   aktifMi          Boolean       @default(true)
+  // Ana sayfadaki takvim/dogum gunu paneli icin (yalniz gun ve ay kullanilir).
+  dogumTarihi      DateTime?     @db.Date
   olusturmaTarihi  DateTime      @default(now())
   guncellemeTarihi DateTime      @updatedAt
 

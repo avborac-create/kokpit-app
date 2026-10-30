@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { dovizKurlari, hukukHaberleri } from "@/core/ana-sayfa/veri";
+import { DogumGunuPaneli, TakvimPaneli } from "./takvim-paneli";
 
 const TR = "tr-TR";
 const ZONE = "Europe/Istanbul";
@@ -13,7 +14,8 @@ function selam(saat: number) {
   return "İyi akşamlar";
 }
 
-export default async function KokpitAnaSayfa() {
+export default async function KokpitAnaSayfa({ searchParams }: { searchParams: Promise<{ ay?: string }> }) {
+  const { ay } = await searchParams;
   const kullanici = await mevcutKullanici();
   const simdi = new Date();
   const saat = Number(new Intl.DateTimeFormat(TR, { hour: "numeric", hour12: false, timeZone: ZONE }).format(simdi));
@@ -21,25 +23,31 @@ export default async function KokpitAnaSayfa() {
   const ad = kullanici?.adSoyad?.trim().split(/\s+/)[0] ?? "";
 
   return (
-    <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-      <div className="flex min-w-0 flex-col gap-4">
-        <section className="glass rounded-3xl p-7">
-          <p className="text-sm text-white/50">{tarih}</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-white">
-            {selam(saat)}
-            {ad ? `, ${ad}` : ""}
-          </h1>
-          <p className="mt-2 text-white/60">Kokpit’e hoş geldiniz. Çalışmaya sol menüden devam edebilirsiniz.</p>
-        </section>
+    <div className="mt-3 flex flex-col gap-4">
+      <section className="glass rounded-3xl p-7">
+        <p className="text-sm text-white/50">{tarih}</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-white">
+          {selam(saat)}
+          {ad ? `, ${ad}` : ""}
+        </h1>
+        <p className="mt-2 text-white/60">Kokpit’e hoş geldiniz. Çalışmaya sol menüden devam edebilirsiniz.</p>
+      </section>
 
+      {/* Paneller ikili satırlar halinde, her satırda eşit yükseklikte. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <Suspense fallback={<div className="glass h-[32rem] animate-pulse rounded-3xl" />}>
+          <TakvimPaneli ayParam={ay} />
+        </Suspense>
+        <Suspense fallback={<div className="glass h-[32rem] animate-pulse rounded-3xl" />}>
+          <HaberPaneli />
+        </Suspense>
         <Suspense fallback={<div className="glass h-44 animate-pulse rounded-3xl" />}>
           <KurPaneli />
         </Suspense>
+        <Suspense fallback={<div className="glass h-44 animate-pulse rounded-3xl" />}>
+          <DogumGunuPaneli />
+        </Suspense>
       </div>
-
-      <Suspense fallback={<div className="glass h-80 animate-pulse rounded-3xl" />}>
-        <HaberPaneli />
-      </Suspense>
     </div>
   );
 }
@@ -95,7 +103,7 @@ async function HaberPaneli() {
         <span className="text-xs text-white/40">hukukihaber.net</span>
       </div>
       {/* Asagidan yukari kayan akis; uzerine gelince durur. Hareket azaltma ayarinda normal kaydirmali liste. */}
-      <div className="haber-akisi relative h-[26rem] overflow-hidden motion-reduce:overflow-y-auto">
+      <div className="haber-akisi relative h-[26rem] flex-1 overflow-hidden motion-reduce:overflow-y-auto">
         <div className="haber-akisi-ic">
           {liste}
           <div aria-hidden="true" className="motion-reduce:hidden">

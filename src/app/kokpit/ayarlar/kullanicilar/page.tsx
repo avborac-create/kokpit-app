@@ -68,6 +68,7 @@ export default async function KullanicilarSayfasi() {
                         eposta={k.eposta}
                         uygulamaRolu={uygulamaRoluOf(k.rol)}
                         buroRolu={k.buroRolu}
+                        dogumTarihi={k.dogumTarihi ? k.dogumTarihi.toISOString().slice(0, 10) : ""}
                       />
                     )}
                     {k.id !== kullanici.kullaniciId && (

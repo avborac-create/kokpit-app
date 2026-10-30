@@ -73,6 +73,7 @@ export async function kullaniciGuncelle(
   yeniSifre: string,
   uygulamaRolu: UygulamaRolu,
   buroRolu: string,
+  dogumTarihi = "",
 ): Promise<void> {
   const islemiYapan = await yetkiliKullaniciyiGetir();
 
@@ -113,6 +114,7 @@ export async function kullaniciGuncelle(
       eposta: posta,
       rol: uygulamaRoluDbDegeri(uygulamaRolu),
       buroRolu,
+      dogumTarihi: /^\d{4}-\d{2}-\d{2}$/.test(dogumTarihi) ? new Date(`${dogumTarihi}T00:00:00Z`) : null,
       ...(yeniSifre ? { sifreHash: await sifreyiHashle(yeniSifre) } : {}),
     },
   });

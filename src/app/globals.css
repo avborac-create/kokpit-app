@@ -351,7 +351,7 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   background-color: var(--background);
   background-image:
-    radial-gradient(540px 440px at 80% 36%, color-mix(in srgb, var(--accent) 42%, transparent), transparent 70%),
+    radial-gradient(540px 440px at 80% 36%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 70%),
     radial-gradient(500px 400px at 20% 66%, color-mix(in srgb, var(--blob-1) 70%, transparent), transparent 70%),
     radial-gradient(1100px 600px at 12% -10%, color-mix(in srgb, var(--blob-1) 80%, transparent), transparent 60%),
     radial-gradient(900px 500px at 110% 10%, color-mix(in srgb, var(--blob-2) 65%, transparent), transparent 55%),
@@ -411,6 +411,30 @@ html[data-cam="kapali"] .glass-strong {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     transform: none;
+  }
+}
+
+/* Koyu temada cam: beyaz sis yerine temanin kendi koyu yuzeyi (--yuzey) yari saydam
+   kullanilir. Beyaz dolgu, arkadaki renk bulutlariyla karisip tablolarda lekeli/
+   bulanik bir renk tonu veriyordu; koyu yuzey "kapali" gorunumun temizligini korur,
+   kademeler yalnizca saydamligi ve bulaniklagi artirir (iOS "material" mantigi). */
+@media not (prefers-reduced-transparency: reduce) {
+  html[data-tema="koyu"][data-cam="hafif"] { --cam-yuzey: 90%; --cam-yuzey-guclu: 95%; }
+  html[data-tema="koyu"][data-cam="orta"] { --cam-yuzey: 78%; --cam-yuzey-guclu: 88%; }
+  html[data-tema="koyu"][data-cam="yogun"] { --cam-yuzey: 64%; --cam-yuzey-guclu: 78%; }
+  html[data-tema="koyu"]:not([data-cam="kapali"]) .glass {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, white 5%, color-mix(in srgb, var(--yuzey) var(--cam-yuzey), transparent)),
+      color-mix(in srgb, var(--yuzey) var(--cam-yuzey), transparent)
+    );
+  }
+  html[data-tema="koyu"]:not([data-cam="kapali"]) .glass-strong {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, white 6%, color-mix(in srgb, var(--yuzey) var(--cam-yuzey-guclu), transparent)),
+      color-mix(in srgb, var(--yuzey) var(--cam-yuzey-guclu), transparent)
+    );
   }
 }
 
