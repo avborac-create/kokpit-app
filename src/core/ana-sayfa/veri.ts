@@ -61,3 +61,29 @@ export async function hukukHaberleri(adet = 14): Promise<Haber[] | null> {
   }
   return haberler.length > 0 ? haberler : null;
 }
+
+export type GazeteKalemi = { baslik: string; baglanti: string; grup: string };
+
+// Resmi Gazete'nin bugunku fihristi (ana sayfa HTML'i). Yargi bolumu one alinir;
+// icerik hukuken kesin kaynaktir, baglanti gazetenin kendi sayfasina gider.
+export async function resmiGazeteFihristi(adet = 20): Promise<{ kalemler: GazeteKalemi[]; sayi: number } | null> {
+  const html = await metinGetir("https://www.resmigazete.gov.tr/", 1800);
+  if (!html) return null;
+  const alan = html.slice(html.indexOf('id="html-content"'));
+  if (alan.length < 20) return null;
+  const kalemler: GazeteKalemi[] = [];
+  let bolum = "";
+  let altBaslik = "";
+  for (const m of alan.matchAll(/<div class="card-title html-title"[^>]*>([\s\S]*?)<\/div>|<div class="html-subtitle"[^>]*>([\s\S]*?)<\/div>|<div class="fihrist-item[^"]*"><a href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)) {
+    if (m[1] !== undefined) bolum = sadeMetin(m[1]);
+    else if (m[2] !== undefined) altBaslik = sadeMetin(m[2]);
+    else if (m[3]) {
+      const baslik = sadeMetin(m[4].replace(/<[^>]+>/g, "")).replace(/^[^\p{L}\p{N}]+/u, "");
+      if (baslik && /^https:\/\/www\.resmigazete\.gov\.tr\//.test(m[3])) kalemler.push({ baslik, baglanti: m[3], grup: altBaslik || bolum });
+    }
+  }
+  if (kalemler.length === 0) return null;
+  const yargi = (k: GazeteKalemi) => /karar|yarg|mahkeme|ilan/i.test(k.grup) ? 0 : 1;
+  const sirali = [...kalemler].sort((a, b) => yargi(a) - yargi(b));
+  return { kalemler: sirali.slice(0, adet), sayi: kalemler.length };
+}

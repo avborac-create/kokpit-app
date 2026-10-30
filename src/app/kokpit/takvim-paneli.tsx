@@ -1,12 +1,9 @@
-import Link from "next/link";
 import { prisma } from "@/core/db/prisma";
+import { TakvimIstemci, type DosyaSecenegi, type TakvimOgeVeri } from "./takvim-istemci";
 
 const ZONE = "Europe/Istanbul";
 const AY_ADLARI = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-const GUN_ADLARI = ["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"];
 const saatBicimi = new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit", timeZone: ZONE });
-
-type Olay = { gun: number; tur: "durusma" | "dogum"; metin: string; saat?: string };
 
 // Istanbul saatine gore bugun (yil, ay 0-11, gun).
 export function bugunIstanbul() {
@@ -24,7 +21,8 @@ function ayAnahtari(yil: number, ay: number) {
   return `${yil}-${String(ay + 1).padStart(2, "0")}`;
 }
 
-// Ana sayfadaki takvim: secili ayin durusmalari (dava + CMK) ve ekip uyelerinin dogum gunleri.
+// Ana sayfadaki takvim: secili ayin duruşmaları (dosya kayıtları + elle girilenler), görev/toplantı/not
+// ve ekip uyelerinin doğum günleri. Etkilesim istemci bileşeninde (takvim-istemci).
 export async function TakvimPaneli({ ayParam }: { ayParam?: string }) {
   const bugun = bugunIstanbul();
   const eslesme = /^(\d{4})-(\d{2})$/.exec(ayParam ?? "");
@@ -35,137 +33,124 @@ export async function TakvimPaneli({ ayParam }: { ayParam?: string }) {
   const bas = new Date(Date.UTC(yil, ay, 1, -3));
   const son = new Date(Date.UTC(yil, ay + 1, 1, -3));
 
-  const [davalar, cmkler, ekip] = await Promise.all([
+  const [davalar, cmkler, ekip, kayitlar, davaSecenekleri, cmkSecenekleri] = await Promise.all([
     prisma.davaDosyasi.findMany({
       where: { durusmaTarihi: { gte: bas, lt: son } },
-      select: { durusmaTarihi: true, birimAdi: true, dosyaNo: true, konu: true },
+      select: { id: true, durusmaTarihi: true, birimAdi: true, dosyaNo: true, konu: true },
     }),
     prisma.cMKDosyasi.findMany({
       where: { durusmaTarihi: { gte: bas, lt: son } },
-      select: { durusmaTarihi: true, birim: true, dosyaNo: true },
+      select: { id: true, durusmaTarihi: true, birim: true, dosyaNo: true },
     }),
     prisma.kullanici.findMany({
       where: { aktifMi: true, dogumTarihi: { not: null } },
-      select: { adSoyad: true, dogumTarihi: true },
+      select: { id: true, adSoyad: true, dogumTarihi: true },
+    }),
+    prisma.takvimOgesi.findMany({
+      where: { tarih: { gte: new Date(Date.UTC(yil, ay, 1)), lt: new Date(Date.UTC(yil, ay + 1, 1)) } },
+      orderBy: [{ sira: "asc" }, { olusturmaTarihi: "asc" }],
+    }),
+    prisma.davaDosyasi.findMany({
+      orderBy: { olusturmaTarihi: "desc" },
+      take: 300,
+      select: { id: true, birimAdi: true, dosyaNo: true },
+    }),
+    prisma.cMKDosyasi.findMany({
+      orderBy: { id: "desc" },
+      take: 300,
+      select: { id: true, birim: true, dosyaNo: true },
     }),
   ]);
 
-  const olaylar: Olay[] = [];
+  const ogeler: TakvimOgeVeri[] = [];
+  // Ayni dosya + ayni gun icin elle duruşma girilmisse dosya kaydindaki turetilmis satir gizlenir.
+  const girilmis = new Set(
+    kayitlar
+      .filter((k) => k.tur === "DURUSMA")
+      .map((k) => `${k.davaDosyasiId ? "d" + k.davaDosyasiId : k.cmkDosyasiId ? "c" + k.cmkDosyasiId : ""}|${k.tarih.getUTCDate()}`),
+  );
+  for (const k of kayitlar) {
+    ogeler.push({
+      key: `o-${k.id}`,
+      kaynak: "oge",
+      id: k.id,
+      gun: k.tarih.getUTCDate(),
+      saat: k.saat,
+      baslik: k.baslik,
+      tur: k.tur,
+      tamam: k.tamamlandiMi,
+    });
+  }
   for (const d of davalar) {
     if (!d.durusmaTarihi) continue;
-    olaylar.push({
-      gun: gunuIstanbul(d.durusmaTarihi),
-      tur: "durusma",
+    const gun = gunuIstanbul(d.durusmaTarihi);
+    if (girilmis.has(`d${d.id}|${gun}`)) continue;
+    ogeler.push({
+      key: `d-${d.id}`,
+      kaynak: "dava",
+      id: d.id,
+      gun,
       saat: saatBicimi.format(d.durusmaTarihi),
-      metin: [d.birimAdi ?? d.konu, d.dosyaNo].filter(Boolean).join(" · "),
+      baslik: "Duruşma · " + [d.birimAdi ?? d.konu, d.dosyaNo].filter(Boolean).join(" · "),
+      tur: "DURUSMA",
+      tamam: false,
     });
   }
   for (const d of cmkler) {
     if (!d.durusmaTarihi) continue;
-    olaylar.push({
-      gun: gunuIstanbul(d.durusmaTarihi),
-      tur: "durusma",
+    const gun = gunuIstanbul(d.durusmaTarihi);
+    if (girilmis.has(`c${d.id}|${gun}`)) continue;
+    ogeler.push({
+      key: `c-${d.id}`,
+      kaynak: "cmk",
+      id: d.id,
+      gun,
       saat: saatBicimi.format(d.durusmaTarihi),
-      metin: ["CMK", d.birim, d.dosyaNo].filter(Boolean).join(" · "),
+      baslik: "Duruşma · " + ["CMK", d.birim, d.dosyaNo].filter(Boolean).join(" · "),
+      tur: "DURUSMA",
+      tamam: false,
     });
   }
   for (const k of ekip) {
     if (!k.dogumTarihi || k.dogumTarihi.getUTCMonth() !== ay) continue;
-    olaylar.push({ gun: k.dogumTarihi.getUTCDate(), tur: "dogum", metin: `${k.adSoyad} · doğum günü` });
+    ogeler.push({
+      key: `b-${k.id}`,
+      kaynak: "dogum",
+      id: k.id,
+      gun: k.dogumTarihi.getUTCDate(),
+      saat: null,
+      baslik: `${k.adSoyad} · doğum günü`,
+      tur: "DOGUM",
+      tamam: false,
+    });
   }
-  olaylar.sort((a, b) => a.gun - b.gun || (a.saat ?? "").localeCompare(b.saat ?? ""));
+  // Dosya kaynakli duruşmalar saate gore, elle girilenler kendi sirasiyla (kayitlar zaten sira ile geldi).
+  const turetilmis = ogeler.filter((o) => o.kaynak === "dava" || o.kaynak === "cmk").sort((a, b) => (a.saat ?? "").localeCompare(b.saat ?? ""));
+  const elle = ogeler.filter((o) => o.kaynak === "oge");
+  const dogumlar = ogeler.filter((o) => o.kaynak === "dogum");
+  const sirali = [...turetilmis, ...elle, ...dogumlar];
 
-  const gunSayisi = new Date(Date.UTC(yil, ay + 1, 0)).getUTCDate();
-  const ilkGun = (new Date(Date.UTC(yil, ay, 1)).getUTCDay() + 6) % 7; // Pazartesi = 0
-  const hucreler: (number | null)[] = [...Array(ilkGun).fill(null), ...Array.from({ length: gunSayisi }, (_, i) => i + 1)];
-  while (hucreler.length % 7 !== 0) hucreler.push(null);
+  const dosyalar: DosyaSecenegi[] = [
+    ...davaSecenekleri.map((d) => ({ deger: `d:${d.id}`, etiket: [d.birimAdi, d.dosyaNo].filter(Boolean).join(" · ") || "Dava dosyası" })),
+    ...cmkSecenekleri.map((d) => ({ deger: `c:${d.id}`, etiket: ["CMK", d.birim, d.dosyaNo].filter(Boolean).join(" · ") })),
+  ];
 
   const onceki = ayAnahtari(ay === 0 ? yil - 1 : yil, ay === 0 ? 11 : ay - 1);
   const sonraki = ayAnahtari(ay === 11 ? yil + 1 : yil, ay === 11 ? 0 : ay + 1);
   const buAyMi = yil === bugun.yil && ay === bugun.ay;
-  const gunTurleri = (g: number) => new Set(olaylar.filter((o) => o.gun === g).map((o) => o.tur));
-
-  const gezinti = "rounded-full px-2.5 py-1 text-sm text-white/70 hover:bg-white/10 hover:text-white";
 
   return (
-    <section className="glass flex min-w-0 flex-col rounded-3xl p-6">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-white/50">Takvim</h2>
-        <div className="flex items-center gap-1">
-          <Link href={`/kokpit?ay=${onceki}`} className={gezinti} aria-label="Önceki ay">
-            ‹
-          </Link>
-          <span className="min-w-28 text-center text-sm font-medium text-white">
-            {AY_ADLARI[ay]} {yil}
-          </span>
-          <Link href={`/kokpit?ay=${sonraki}`} className={gezinti} aria-label="Sonraki ay">
-            ›
-          </Link>
-          {!buAyMi && (
-            <Link href="/kokpit" className="ml-1 rounded-full px-2.5 py-1 text-xs text-[var(--link)] hover:bg-white/10">
-              Bugün
-            </Link>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-7 gap-y-1 text-center text-xs">
-        {GUN_ADLARI.map((g) => (
-          <div key={g} className="pb-1 text-white/40">
-            {g}
-          </div>
-        ))}
-        {hucreler.map((g, i) => {
-          if (g === null) return <div key={i} />;
-          const turler = gunTurleri(g);
-          const bugunMu = buAyMi && g === bugun.gun;
-          return (
-            <div key={i} className="flex flex-col items-center gap-0.5 py-0.5">
-              <span
-                className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
-                  bugunMu ? "bg-[var(--accent)] font-semibold text-white" : "text-white/85"
-                }`}
-              >
-                {g}
-              </span>
-              <span className="flex h-1.5 gap-0.5">
-                {turler.has("durusma") && <span className="h-1.5 w-1.5 rounded-full bg-[#6db8ff]" />}
-                {turler.has("dogum") && <span className="h-1.5 w-1.5 rounded-full bg-[#ff9f43]" />}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="mt-3 flex items-center gap-4 text-[11px] text-white/45">
-        <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#6db8ff]" /> Duruşma
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#ff9f43]" /> Doğum günü
-        </span>
-      </div>
-
-      <div className="mt-3 min-h-0 flex-1 overflow-y-auto border-t border-white/[0.08] pt-3">
-        {olaylar.length === 0 ? (
-          <p className="text-sm text-white/40">Bu ay için kayıtlı duruşma veya doğum günü yok.</p>
-        ) : (
-          <ul className="flex flex-col gap-1.5">
-            {olaylar.map((o, i) => (
-              <li key={i} className="flex items-baseline gap-3 text-sm">
-                <span className="w-12 shrink-0 text-white/50">
-                  {o.gun} {AY_ADLARI[ay].slice(0, 3)}
-                </span>
-                <span className={`min-w-0 flex-1 truncate ${o.tur === "dogum" ? "text-[#ffb870]" : "text-white/85"}`}>
-                  {o.saat && o.saat !== "00:00" ? `${o.saat} · ` : ""}
-                  {o.metin}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </section>
+    <TakvimIstemci
+      key={ayAnahtari(yil, ay)}
+      yil={yil}
+      ay={ay}
+      bugun={bugun}
+      oncekiAy={onceki}
+      sonrakiAy={sonraki}
+      buAyMi={buAyMi}
+      ogeler={sirali}
+      dosyalar={dosyalar}
+    />
   );
 }
 

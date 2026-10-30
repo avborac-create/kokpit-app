@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
-import { dovizKurlari, hukukHaberleri } from "@/core/ana-sayfa/veri";
+import { prisma } from "@/core/db/prisma";
+import { dovizKurlari, hukukHaberleri, resmiGazeteFihristi } from "@/core/ana-sayfa/veri";
+import { AnaSayfaDuzeni, type Duzen } from "./ana-sayfa-duzeni";
+import { HaberSekmeleri, type HaberKaynagi } from "./haber-sekmeleri";
 import { DogumGunuPaneli, TakvimPaneli } from "./takvim-paneli";
 
 const TR = "tr-TR";
@@ -21,6 +24,7 @@ export default async function KokpitAnaSayfa({ searchParams }: { searchParams: P
   const saat = Number(new Intl.DateTimeFormat(TR, { hour: "numeric", hour12: false, timeZone: ZONE }).format(simdi));
   const tarih = new Intl.DateTimeFormat(TR, { day: "numeric", month: "long", year: "numeric", weekday: "long", timeZone: ZONE }).format(simdi);
   const ad = kullanici?.adSoyad?.trim().split(/\s+/)[0] ?? "";
+  const duzen = await kayitliDuzen(kullanici?.kullaniciId);
 
   return (
     <div className="mt-3 flex flex-col gap-4">
@@ -33,21 +37,37 @@ export default async function KokpitAnaSayfa({ searchParams }: { searchParams: P
         <p className="mt-2 text-white/60">Kokpit’e hoş geldiniz. Çalışmaya sol menüden devam edebilirsiniz.</p>
       </section>
 
-      {/* Paneller ikili satırlar halinde, her satırda eşit yükseklikte. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
-        <Suspense fallback={<div className="glass h-[32rem] animate-pulse rounded-3xl" />}>
-          <TakvimPaneli ayParam={ay} />
-        </Suspense>
-        <Suspense fallback={<div className="glass h-[32rem] animate-pulse rounded-3xl" />}>
-          <HaberPaneli />
-        </Suspense>
-        <Suspense fallback={<div className="glass h-44 animate-pulse rounded-3xl" />}>
-          <KurPaneli />
-        </Suspense>
-        <Suspense fallback={<div className="glass h-44 animate-pulse rounded-3xl" />}>
-          <DogumGunuPaneli />
-        </Suspense>
-      </div>
+      <AnaSayfaDuzeni
+        tanimlar={[
+          { kod: "takvim", ad: "Takvim" },
+          { kod: "haber", ad: "Hukuk gündemi" },
+          { kod: "kur", ad: "Döviz kurları" },
+          { kod: "ekip", ad: "Ekibimiz" },
+        ]}
+        baslangic={duzen}
+        paneller={{
+          takvim: (
+            <Suspense fallback={<div className="glass h-[30rem] animate-pulse rounded-3xl" />}>
+              <TakvimPaneli ayParam={ay} />
+            </Suspense>
+          ),
+          haber: (
+            <Suspense fallback={<div className="glass h-80 animate-pulse rounded-3xl" />}>
+              <HaberPaneli />
+            </Suspense>
+          ),
+          kur: (
+            <Suspense fallback={<div className="glass h-44 animate-pulse rounded-3xl" />}>
+              <KurPaneli />
+            </Suspense>
+          ),
+          ekip: (
+            <Suspense fallback={<div className="glass h-44 animate-pulse rounded-3xl" />}>
+              <DogumGunuPaneli />
+            </Suspense>
+          ),
+        }}
+      />
     </div>
   );
 }
@@ -80,37 +100,37 @@ async function KurPaneli() {
   );
 }
 
+async function kayitliDuzen(kullaniciId?: string): Promise<Duzen> {
+  const bos: Duzen = { sira: [], gizli: [], genis: [] };
+  if (!kullaniciId) return bos;
+  try {
+    const k = await prisma.kullanici.findUnique({ where: { id: kullaniciId }, select: { anaSayfaDuzeni: true } });
+    const j = k?.anaSayfaDuzeni ? JSON.parse(k.anaSayfaDuzeni) : null;
+    const dizi = (x: unknown) => (Array.isArray(x) ? x.filter((e): e is string => typeof e === "string") : []);
+    return j ? { sira: dizi(j.sira), gizli: dizi(j.gizli), genis: dizi(j.genis) } : bos;
+  } catch {
+    return bos;
+  }
+}
+
 async function HaberPaneli() {
-  const haberler = await hukukHaberleri();
-  if (!haberler) return null;
+  const [haberler, gazete] = await Promise.all([hukukHaberleri(), resmiGazeteFihristi()]);
   const saatBicimi = new Intl.DateTimeFormat(TR, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: ZONE });
-  const liste = (
-    <ul className="flex flex-col">
-      {haberler.map((h) => (
-        <li key={h.baglanti} className="border-b border-white/[0.07] py-3">
-          <a href={h.baglanti} target="_blank" rel="noopener noreferrer" className="block text-white/90 hover:text-[#6db8ff]">
-            <span className="text-[15px] font-medium leading-snug">{h.baslik}</span>
-            {h.tarih && <span className="mt-0.5 block text-xs text-white/40">{saatBicimi.format(h.tarih)}</span>}
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
-  return (
-    <section className="glass flex min-w-0 flex-col rounded-3xl p-6">
-      <div className="mb-3 flex items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-white/50">Hukuk gündemi</h2>
-        <span className="text-xs text-white/40">hukukihaber.net</span>
-      </div>
-      {/* Asagidan yukari kayan akis; uzerine gelince durur. Hareket azaltma ayarinda normal kaydirmali liste. */}
-      <div className="haber-akisi relative h-[26rem] flex-1 overflow-hidden motion-reduce:overflow-y-auto">
-        <div className="haber-akisi-ic">
-          {liste}
-          <div aria-hidden="true" className="motion-reduce:hidden">
-            {liste}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+  const kaynaklar: HaberKaynagi[] = [];
+  if (haberler)
+    kaynaklar.push({
+      kod: "haber",
+      ad: "Hukuki Haber",
+      alt: "hukukihaber.net · son haberler",
+      kalemler: haberler.map((h) => ({ baslik: h.baslik, baglanti: h.baglanti, ek: h.tarih ? saatBicimi.format(h.tarih) : undefined })),
+    });
+  if (gazete)
+    kaynaklar.push({
+      kod: "gazete",
+      ad: "Resmî Gazete",
+      alt: `resmigazete.gov.tr · bugünkü fihrist (${gazete.sayi} kalem), yargı kararları önce`,
+      kalemler: gazete.kalemler.map((k) => ({ baslik: k.baslik, baglanti: k.baglanti, ek: k.grup })),
+    });
+  if (kaynaklar.length === 0) return null;
+  return <HaberSekmeleri kaynaklar={kaynaklar} />;
 }

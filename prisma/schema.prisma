@@ -71,6 +71,8 @@ model Kullanici {
   aktifMi          Boolean       @default(true)
   // Ana sayfadaki takvim/dogum gunu paneli icin (yalniz gun ve ay kullanilir).
   dogumTarihi      DateTime?     @db.Date
+  // Ana sayfa panel duzeni (JSON: sira / gizli / genis); bos = varsayilan.
+  anaSayfaDuzeni   String?
   olusturmaTarihi  DateTime      @default(now())
   guncellemeTarihi DateTime      @updatedAt
 
@@ -89,6 +91,7 @@ model Kullanici {
   sorumluOlduguHukukiMudahaleler HukukiMudahale[]   @relation("HukukiMudahaleSorumluAvukat")
   hacizRaporlari                 HacizRaporu[]      @relation("HacizRaporuAvukat")
   uyapVekilOlduguDosyalar        DosyaUyapVekili[]
+  olusturduguTakvimOgeleri       TakvimOgesi[]
 
   @@map("kullanicilar")
 }
@@ -608,6 +611,7 @@ model DavaDosyasi {
   gelenAvansAktarimlari  DosyaAvansAktarimi[]    @relation("AvansAktarimiHedef")
   uyapVekilleri          DosyaUyapVekili[]
   evraklar               CMKEvrak[]
+  takvimOgeleri          TakvimOgesi[]
 
   @@index([buroNo])
   @@index([durumId])
@@ -1073,7 +1077,8 @@ model CMKDosyasi {
 
   notlar String?
 
-  evraklar CMKEvrak[]
+  evraklar      CMKEvrak[]
+  takvimOgeleri TakvimOgesi[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1563,4 +1568,38 @@ model DosyaNabzi {
   @@id([dosyaId, kullaniciId])
   @@index([sonGorulme])
   @@map("dosya_nabizlari")
+}
+
+enum TakvimTuru {
+  DURUSMA
+  GOREV
+  TOPLANTI
+  NOT
+
+  @@map("takvim_turu")
+}
+
+// Ana sayfadaki takvimin ogeleri (durusma, gorev, toplanti, not). Gun icinde
+// `sira` ile elle siralanir, baska bir gune otelenebilir. Buronun ortak takvimidir.
+model TakvimOgesi {
+  id              String       @id @default(cuid())
+  tarih           DateTime     @db.Date
+  saat            String? // "HH:MM"
+  baslik          String
+  tur             TakvimTuru   @default(GOREV)
+  notlar          String?
+  sira            Int          @default(0)
+  tamamlandiMi    Boolean      @default(false)
+  davaDosyasiId   String?
+  davaDosyasi     DavaDosyasi? @relation(fields: [davaDosyasiId], references: [id], onDelete: SetNull)
+  cmkDosyasiId    String?
+  cmkDosyasi      CMKDosyasi?  @relation(fields: [cmkDosyasiId], references: [id], onDelete: SetNull)
+  olusturanId     String?
+  olusturan       Kullanici?   @relation(fields: [olusturanId], references: [id], onDelete: SetNull)
+  olusturmaTarihi DateTime     @default(now())
+
+  @@index([tarih])
+  @@index([davaDosyasiId])
+  @@index([cmkDosyasiId])
+  @@map("takvim_ogeleri")
 }
