@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 // Dosyalar listesindeki "dosyayi ac" dugmesi stilleri (kisiye ozel secilir).
-// "dugmesiz": dugme yok, dosya Kokpit No baglantisina dokunarak / satira cift tiklayarak acilir.
+// Dugme satirin en sagindaki sabit sutunda durur. "dugmesiz": dugme yok, dosya Kokpit No
+// baglantisina dokunarak / satira cift tiklayarak acilir.
 export const ACMA_STILLERI = [
   { kod: "dugmesiz", ad: "Düğmesiz", not: "KN numarasına dokununca açılır", genislik: 0 },
   { kod: "apple", ad: "Apple", not: "İnce ok, çerçevesiz", genislik: 30 },
@@ -16,7 +17,7 @@ export const ACMA_STILLERI = [
 ] as const;
 
 export type AcmaStili = (typeof ACMA_STILLERI)[number]["kod"];
-export const VARSAYILAN_ACMA_STILI: AcmaStili = "dugmesiz";
+export const VARSAYILAN_ACMA_STILI: AcmaStili = "bmw";
 
 export function acmaStiliGecerliMi(x: unknown): x is AcmaStili {
   return ACMA_STILLERI.some((s) => s.kod === x);

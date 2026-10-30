@@ -12,7 +12,6 @@ import {
 } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { ACMA_STILLERI, AcmaDugmesi, VARSAYILAN_ACMA_STILI, acmaStiliGecerliMi, type AcmaStili } from "./acma-dugmesi";
 import { TopluIslemCubugu } from "./toplu-islem-cubugu";
-import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 
 type Dosya = Awaited<ReturnType<typeof davaDosyalariniListele>>[number];
 
@@ -103,7 +102,6 @@ const VARSAYILAN_GENISLIKLER: Record<string, number> = {
   muvekkiller: 150,
   durum: 96,
   sorumluAvukat: 120,
-  islemler: 52,
 };
 
 const MIN_GENISLIK = 56;
@@ -376,7 +374,9 @@ export function DosyalarTablosu({
   const acmaGenisligi = ACMA_STILLERI.find((x) => x.kod === acmaStili)?.genislik ?? 0;
   // 14px dolgu + (secim kutusu 18px + bosluk) + (acma dugmesi + bosluk)
   // Ilk sutunun basina giren oge payi: secim kutusu (18px + bosluk) ve varsa acma dugmesi.
-  const ilkEk = 26 + (acmaGenisligi ? acmaGenisligi + 8 : 0);
+  const ilkEk = 26;
+  // Sagda sabit duran giris dugmesi sutunu.
+  const sonSutun = acmaGenisligi ? acmaGenisligi + 20 : 12;
   function secimModunuDegistir() {
     setSecim(new Set());
     setSecimModu((m) => !m);
@@ -440,7 +440,7 @@ export function DosyalarTablosu({
       (t, a) => t + (genislikler[a] ?? VARSAYILAN_GENISLIK),
       0,
     ) +
-    (genislikler.islemler ?? VARSAYILAN_GENISLIKLER.islemler);
+    sonSutun;
 
   function genislikSuruklemeBaslat(
     anahtar: string,
@@ -567,11 +567,7 @@ export function DosyalarTablosu({
                 style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }}
               />
             ))}
-            <col
-              style={{
-                width: genislikler.islemler ?? VARSAYILAN_GENISLIKLER.islemler,
-              }}
-            />
+            <col style={{ width: sonSutun }} />
           </colgroup>
           <thead className="text-white/50">
             <tr>
@@ -598,13 +594,7 @@ export function DosyalarTablosu({
                   suruklemeBaslat={(e) => genislikSuruklemeBaslat(anahtar, e)}
                 />
               ))}
-              <SutunBasligi
-                etiket="İşlemler"
-                genislik={
-                  genislikler.islemler ?? VARSAYILAN_GENISLIKLER.islemler
-                }
-                suruklemeBaslat={(e) => genislikSuruklemeBaslat("islemler", e)}
-              />
+              <th className="sticky right-0 z-10 bg-[var(--yuzey,#1c2432)] p-0" aria-label="Dosyayı aç" />
             </tr>
           </thead>
           <tbody>
@@ -635,7 +625,6 @@ export function DosyalarTablosu({
                           />
                         )}
                         {!secimModu && <span className="w-[26px] shrink-0" aria-hidden="true" />}
-                        <AcmaDugmesi stil={acmaStili} href={`/kokpit/dava-dosyalari/${dosya.id}`} />
                         <span className="shrink-0" style={{ width: seviye * 18 }} />
                         {seviye === 1 ? (
                           <span className="w-3.5 shrink-0 text-white/35">└</span>
@@ -673,15 +662,9 @@ export function DosyalarTablosu({
                     )}
                   </td>
                 ))}
-                <td className="px-2.5 py-1.5">
-                  <div className="flex items-center justify-end gap-1 opacity-70 transition-opacity group-hover/satir:opacity-100 [@media(hover:none)]:opacity-100">
-                    {silmeYetkisiVar && (
-                      <DavaDosyasiSilmeButonu
-                        dosyaId={dosya.id}
-                        boyut="kompakt"
-                        simge
-                      />
-                    )}
+                <td className="sticky right-0 z-10 bg-[var(--yuzey,#1c2432)] p-0">
+                  <div className="flex h-12 items-center justify-center">
+                    <AcmaDugmesi stil={acmaStili} href={`/kokpit/dava-dosyalari/${dosya.id}`} />
                   </div>
                 </td>
               </tr>

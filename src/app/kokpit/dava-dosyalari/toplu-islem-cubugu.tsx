@@ -9,7 +9,7 @@ import {
 } from "@/modules/dava-dosyasi/lib/actions";
 import { OnayliButon } from "@/core/ui/onayli-buton";
 
-const kutu = "rounded-lg border border-white/20 bg-white/[0.08] px-2 py-1.5 text-sm text-white outline-none focus:border-[var(--accent)]";
+const kutu = "rounded-none border border-white/20 bg-white/[0.08] px-2 py-1.5 text-sm text-white outline-none focus:border-[var(--accent)]";
 
 // Secili dosyalar icin toplu islem cubugu: durum degistir, sorumlu avukat ata, sil.
 export function TopluIslemCubugu({
@@ -44,11 +44,11 @@ export function TopluIslemCubugu({
 
   return (
     <div
-      className="fixed inset-x-0 bottom-4 z-40 mx-auto flex w-fit max-w-[calc(100vw-2rem)] flex-wrap items-center gap-2 rounded-2xl border border-white/20 bg-[var(--yuzey,#1c2432)] px-4 py-3 shadow-2xl"
+      className="fixed inset-x-0 bottom-0 z-40 flex flex-wrap items-center gap-2 border-t-[3px] border-[#1c69d4] bg-[var(--yuzey,#1c2432)] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
       role="region"
       aria-label="Toplu işlemler"
     >
-      <span className="text-sm font-semibold text-white">{secililer.length} dosya seçili</span>
+      <span className="text-sm font-semibold uppercase tracking-wide text-white">{secililer.length} dosya seçili</span>
 
       <select
         className={kutu}
@@ -91,6 +91,7 @@ export function TopluIslemCubugu({
         <OnayliButon
           sifreIste
           boyut="kompakt"
+          className="!rounded-none !bg-[#c0392b] !font-bold !uppercase !tracking-wide !text-white hover:!bg-[#d04a3b]"
           mesaj={`Seçili ${secililer.length} dosya silinecek. Finansal kaydı olan veya alt dosyası bulunan dosyalar silinmez; bunlar işlem sonunda listelenir. Devam etmek için şifrenizi girin.`}
           eylem={async (sifre) => {
             const s = await davaDosyalariTopluSil(idler, sifre);
@@ -109,7 +110,7 @@ export function TopluIslemCubugu({
         </OnayliButon>
       )}
 
-      <button type="button" onClick={temizle} className="rounded-lg px-3 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white">
+      <button type="button" onClick={temizle} className="px-3 py-1.5 text-sm uppercase tracking-wide text-white/70 hover:bg-white/10 hover:text-white">
         Seçimi temizle
       </button>
       {mesaj && <span className="basis-full text-xs text-white/70">{mesaj}</span>}
