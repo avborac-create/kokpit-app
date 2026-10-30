@@ -128,7 +128,7 @@ export function GorunumMenusu() {
             sec={(punto) => degistir({ punto })}
           />
 
-          <Baslik className="mt-4">Cam efekti</Baslik>
+          <Baslik className="mt-4">Saydamlık</Baslik>
           <Segment
             degerler={CAM_KADEMELERI}
             etiketler={CAM_ETIKETLERI}
@@ -136,7 +136,7 @@ export function GorunumMenusu() {
             sec={(cam) => degistir({ cam })}
           />
           <p className="mt-2 text-xs leading-snug text-white/50">
-            Bilgisayarınız yavaşlıyorsa ya da uzak masaüstüyle bağlanıyorsanız “Kapalı” seçin.
+            Yüzeylerin ne kadar saydam olacağını belirler. “Kapalı” tam opaktır; en sade ve okunaklı görünüm budur.
           </p>
         </div>
       )}

@@ -516,3 +516,25 @@ html[data-tema="acik"] .text-\[\#6e6e73\] { color: #5c6678; }
 @media (prefers-reduced-motion: reduce) {
   .haber-akisi-ic { animation: none; }
 }
+
+/* SAYDAMLIK (cam yerine): bulaniklik, doygunluk ve beyaz parlama yok; yuzey, temanin kendi
+   rengi (--yuzey) belirli oranda saydam. Arkadaki renk hafifce sezilir, metin hep okunur.
+   Kapali = tam opak. Tablolar (yatay kayan kutular) her zaman opak kalir. */
+@media not (prefers-reduced-transparency: reduce) {
+  html[data-cam="hafif"] { --say: 94%; --say-guclu: 97%; }
+  html[data-cam="orta"] { --say: 86%; --say-guclu: 92%; }
+  html[data-cam="yogun"] { --say: 74%; --say-guclu: 84%; }
+  html[data-cam]:not([data-cam="kapali"]) .glass:not(.overflow-x-auto),
+  html[data-cam]:not([data-cam="kapali"]) .glass-strong:not(.overflow-x-auto) {
+    background: color-mix(in srgb, var(--yuzey) var(--say), transparent);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transform: none;
+    isolation: auto;
+    border: 1px solid var(--glass-cizgi);
+    box-shadow: 0 10px 28px -20px var(--glass-golge);
+  }
+  html[data-cam]:not([data-cam="kapali"]) .glass-strong:not(.overflow-x-auto) {
+    background: color-mix(in srgb, var(--yuzey) var(--say-guclu), transparent);
+  }
+}
