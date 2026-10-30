@@ -54,8 +54,17 @@ async function dosyaSinifiniAl(formData: FormData) {
   const secilenSifat = secilenSifatId
     ? await prisma.secenekDegeri.findUnique({ where: { id: secilenSifatId }, select: { kod: true } })
     : null;
+  sifatTurUyumunuDenetle(tur?.kod, secilenSifat?.kod);
   const muvekkilSifati = sifatEnumuYaz(secilenSifat?.kod);
   return { turId, yargiKoluId, muvekkilSifati, muvekkilSifatiId: secilenSifatId, muvekkilSifatiDiger: null };
+}
+
+// Dava dosyasinda taraflar davaci/davali (ya da 3. kisi) olur; "borclu" icra/takip
+// terimidir, dava dosyasinda muvekkil sifati olarak secilemez.
+function sifatTurUyumunuDenetle(turKodu: string | null | undefined, sifatKodu: string | null | undefined) {
+  if (turKodu === "dava_dosyasi" && sifatKodu === "borclu") {
+    throw new Error("Dava dosyasında müvekkil sıfatı Borçlu olamaz; Davacı veya Davalı seçin.");
+  }
 }
 
 // Liste degerinin koduna gore eski enum'u turetir (alacakli/borclu disindakiler DIGER sayilir).
@@ -635,6 +644,17 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
   if (turId) {
     const tur = await prisma.secenekDegeri.findUnique({ where: { id: turId }, select: { kod: true } });
     if (tur && tur.kod !== "dava_dosyasi") data.yargiKoluId = null;
+    // Tur ya da sifat bu kayitta degisiyorsa Dava + Borclu kombinasyonu engellenir
+    // (eski kayitlarda yalniz baska bir alan duzenlenirken engellenmez).
+    if (data.turId !== undefined || data.muvekkilSifatiId !== undefined) {
+      const sifatId =
+        (data.muvekkilSifatiId as string | undefined) ??
+        (await prisma.davaDosyasi.findUnique({ where: { id: dosyaId }, select: { muvekkilSifatiId: true } }))?.muvekkilSifatiId;
+      const sifat = sifatId
+        ? await prisma.secenekDegeri.findUnique({ where: { id: sifatId }, select: { kod: true } })
+        : null;
+      sifatTurUyumunuDenetle(tur?.kod, sifat?.kod);
+    }
   }
 
   // surum artar: ayni anda ana formu acik tutan biri kaydederken bu

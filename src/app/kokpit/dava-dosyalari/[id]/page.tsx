@@ -188,7 +188,10 @@ export default async function DavaDosyasiDetaySayfasi({
       tip: "secim",
       deger: dosya.muvekkilSifatiId ?? "",
       gosterim: dosya.muvekkilSifatiDegeri?.etiket ?? { ALACAKLI: "Alacaklı", BORCLU: "Borçlu", DIGER: "3. kişi" }[dosya.muvekkilSifati],
-      secenekler: muvekkilSifatlari.map((o) => ({ value: o.id, label: o.etiket })),
+      // Dava dosyasinda "Borçlu" secilemez (mevcut deger bozulmasin diye secili ise listede kalir).
+      secenekler: muvekkilSifatlari
+        .filter((o) => !(davaMi && o.kod === "borclu" && o.id !== dosya.muvekkilSifatiId))
+        .map((o) => ({ value: o.id, label: o.etiket })),
     },
   ];
   const kunyeAlanlari: KartAlani[] = [

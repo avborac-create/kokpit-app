@@ -69,9 +69,11 @@ export function DosyaSinifiAlanlari({
       )}
       {sifatGoster && (
       <UyusmazlikTuruSecici
+        key={davaMi ? "dava" : "diger"}
         etiket="Müvekkil Sıfatı"
-        turler={sifatlar}
-        varsayilanId={varsayilanSifatId}
+        // Dava dosyasinda "Borçlu" secilemez (borclu icra/takip terimidir).
+        turler={davaMi ? sifatlar.filter((s) => s.kod !== "borclu") : sifatlar}
+        varsayilanId={davaMi && sifatlar.find((s) => s.id === varsayilanSifatId)?.kod === "borclu" ? "" : varsayilanSifatId}
         varsayilanYeniEtiket={varsayilanYeniSifatEtiketi}
         alanAdi="muvekkilSifatiId"
         yeniAlanAdi="yeniMuvekkilSifatiEtiketi"
