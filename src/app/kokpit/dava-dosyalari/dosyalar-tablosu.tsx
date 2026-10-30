@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import type { davaDosyalariniListele } from "@/modules/dava-dosyasi/lib/queries";
 import { DAVA_DOSYALARI_SUTUN_ACIKLAMALARI } from "@/core/tablo-duzeni/dava-dosyalari-sutunlari";
@@ -73,7 +74,7 @@ const VARSAYILAN_GENISLIKLER: Record<string, number> = {
   muvekkiller: 150,
   durum: 96,
   sorumluAvukat: 120,
-  islemler: 148,
+  islemler: 84,
 };
 
 const MIN_GENISLIK = 56;
@@ -232,6 +233,7 @@ export function DosyalarTablosu({
   sutunEtiketleri: Record<string, string>;
   silmeYetkisiVar: boolean;
 }) {
+  const router = useRouter();
   const kayitliGenislikler = useSyncExternalStore(genislikleriAbone, genislikleriOku, () => null);
   // Surukleme SIRASINDA canli onizleme icin gecici state; birak (mouseup)
   // aninda kalici hale (localStorage) yazilir.
@@ -331,7 +333,14 @@ export function DosyalarTablosu({
           {satirlar.map(({ dosya, seviye, altSayisi }) => (
             <tr
               key={dosya.id}
-              className={`border-t border-white/[0.06] hover:bg-white/[0.04] ${seviye === 0 && altSayisi > 0 ? "bg-white/[0.03]" : ""}`}
+              // Satira cift tiklayinca dosya acilir; dugme/baglanti/alan uzerindeki
+              // ve acilir pencereden (portal) gelen tiklar sayilmaz.
+              onDoubleClick={(e) => {
+                const hedef = e.target as HTMLElement;
+                if (!e.currentTarget.contains(hedef) || hedef.closest("a,button,input,select,textarea")) return;
+                router.push(`/kokpit/dava-dosyalari/${dosya.id}`);
+              }}
+              className={`group/satir cursor-default border-t border-white/[0.06] hover:bg-white/[0.04] ${seviye === 0 && altSayisi > 0 ? "bg-white/[0.03]" : ""}`}
             >
               {gorunurSutunlar.map((anahtar, sutunIndex) => (
                 <td
@@ -367,13 +376,14 @@ export function DosyalarTablosu({
                 </td>
               ))}
               <td className="px-2.5 py-1.5">
-                <div className="flex items-center gap-1.5">
-                  <Link href={`/kokpit/dava-dosyalari/${dosya.id}`}>
-                    <Dugme type="button" varyant="ikincil" boyut="kompakt">
-                      Aç
+                <div className="flex items-center justify-end gap-1 opacity-70 transition-opacity group-hover/satir:opacity-100 [@media(hover:none)]:opacity-100">
+                  <Link href={`/kokpit/dava-dosyalari/${dosya.id}`} title="Dosyayı aç (satıra çift tıklayarak da açılır)">
+                    <Dugme type="button" varyant="ikincil" boyut="kompakt" className="!px-2">
+                      <span aria-hidden>↗</span>
+                      <span className="sr-only">Aç</span>
                     </Dugme>
                   </Link>
-                  {silmeYetkisiVar && <DavaDosyasiSilmeButonu dosyaId={dosya.id} boyut="kompakt" />}
+                  {silmeYetkisiVar && <DavaDosyasiSilmeButonu dosyaId={dosya.id} boyut="kompakt" simge />}
                 </div>
               </td>
             </tr>
