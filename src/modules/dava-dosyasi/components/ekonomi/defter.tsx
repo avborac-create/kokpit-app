@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { OnayliButon } from "@/core/ui/onayli-buton";
+import { DefterGorunumSecici } from "@/modules/dava-dosyasi/components/ekonomi/defter-gorunum-secici";
 import { TopluSecim } from "@/modules/dava-dosyasi/components/ekonomi/toplu-secim";
 import { YerindeDuzenle } from "@/modules/dava-dosyasi/components/ekonomi/yerinde-duzenle";
 import type { DefterSatiri } from "@/modules/dava-dosyasi/lib/cari-sistem";
@@ -87,9 +88,165 @@ export function Defter({
     tersBakiye ? (b > 0 ? "text-[#6db8ff]" : "text-white/60") : b > 0 ? "text-[#ff7a70]" : b < 0 ? "text-[#32d74b]" : "text-white/60";
 
   const Sarmal = silmeYetkisiVar ? TopluSecim : Fragment;
-  return (
-    <div>
-      <Sarmal>
+  type Satir = (typeof hesaplanan)[number];
+  const ay = new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" });
+  const gunAy = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", year: "numeric" });
+  // Tek "tutar": hesabin kendi bakiye yonunde artis +, azalis -.
+  const tutarOf = (s: { borc: number; alacak: number }) => (tersBakiye ? s.alacak - s.borc : s.borc - s.alacak);
+  // Giren/odenen yesil, cikan/borclanan kirmizi.
+  const iyiMi = (t: number) => (tersBakiye ? t > 0 : t < 0);
+  const tutarRenk = (t: number) => (t === 0 ? "text-white/60" : iyiMi(t) ? "text-[#32d74b]" : "text-[#ff7a70]");
+  const tutarYaz = (t: number) => `${t > 0 ? "+" : t < 0 ? "−" : ""}${para.format(Math.abs(t))}`;
+  const virmanMi = (s: Satir) => s.aciklama.startsWith("VİRMAN");
+  const simge = (s: Satir) =>
+    virmanMi(s) || s.turetilmis
+      ? { m: "⇄", c: "bg-violet-500/25" }
+      : iyiMi(tutarOf(s))
+        ? { m: "↓", c: "bg-[#32d74b]/20" }
+        : { m: "↑", c: "bg-[#ff7a70]/20" };
+
+  const islemler = (s: Satir) => {
+    const duzenleBolumu =
+      s.duzenle && (s.duzenle.tip === "hareket" || silmeYetkisiVar) ? (
+        <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} />
+      ) : (
+        s.duzenleHref && (
+          <Link href={s.duzenleHref} className="text-xs text-[#6db8ff] hover:underline">
+            Düzenle
+          </Link>
+        )
+      );
+    const silBolumu = silmeYetkisiVar && s.silme ? <SilButonu satir={s} /> : null;
+    if (!duzenleBolumu && !silBolumu) return null;
+    return (
+      <details className="relative">
+        <summary className="cursor-pointer list-none rounded-md px-2 py-0.5 text-white/55 hover:bg-white/10 hover:text-white" aria-label="İşlemler">
+          ⋯
+        </summary>
+        <div className="popover absolute right-0 top-full z-20 mt-1 flex items-center gap-2 rounded-xl px-3 py-2">
+          {duzenleBolumu}
+          {silBolumu}
+        </div>
+      </details>
+    );
+  };
+  const kutu = (s: Satir) =>
+    silmeYetkisiVar && s.duzenle ? (
+      <input
+        type="checkbox"
+        data-toplu={`${s.duzenle.tip}:${s.duzenle.id}`}
+        aria-label="Kaydı seç"
+        className="h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)] opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+      />
+    ) : null;
+  const etiketler = (s: Satir) => (
+    <>
+      {s.borcludan && <span className="ml-2 whitespace-nowrap rounded-full bg-[#ffb340]/15 px-2 py-0.5 text-[11px] text-[#ffb340]">Borçludan</span>}
+      {s.odemeYontemi && <span className="ml-2 whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2 py-0.5 text-[11px] text-[#6db8ff]">{s.odemeYontemi}</span>}
+    </>
+  );
+  const altBilgi = (s: Satir) => `${gunAy.format(s.tarih)}${dosyaSutunu ? ` · ${s.dosyaEtiketi ?? "havuz"}` : ""}`;
+  const kalanSatiri = (
+    <div className="mx-1 mt-3 flex items-center justify-between text-sm">
+      <span className="text-white/55">{tutulanHesapMi ? "Şu an duran tutar" : paraHesabiMi ? "Kalan (dağıtılmamış para)" : "Kalan"}</span>
+      <span className={`font-semibold tabular-nums ${renk(birikim)}`}>{para.format(birikim)}</span>
+    </div>
+  );
+
+  // A) Akis: ay basliklari altinda yuvarlak simgeli satirlar
+  const aylar: { baslik: string; satirlar: Satir[] }[] = [];
+  for (const s of [...hesaplanan].reverse()) {
+    const b = ay.format(s.tarih);
+    const son = aylar[aylar.length - 1];
+    if (son && son.baslik === b) son.satirlar.push(s);
+    else aylar.push({ baslik: b, satirlar: [s] });
+  }
+  const akis = (
+    <div className={kompakt ? "" : "glass rounded-2xl p-3"}>
+      {aylar.map((a) => (
+        <div key={a.baslik} className="mb-2">
+          <p className="mx-1 mb-1 mt-2 text-[11px] font-semibold uppercase tracking-wider text-white/45">{a.baslik}</p>
+          <div className="rounded-2xl bg-white/[0.05] px-2.5">
+            {a.satirlar.map((s) => {
+              const t = tutarOf(s);
+              const ik = simge(s);
+              return (
+                <div key={s.id} className={`group flex items-center gap-2.5 border-t border-white/[0.07] py-2.5 first:border-t-0 ${s.turetilmis ? "italic opacity-70" : ""}`}>
+                  {kutu(s)}
+                  <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm ${ik.c}`} aria-hidden>
+                    {ik.m}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span className="block whitespace-pre-line text-[13px] leading-snug text-white/90">
+                      {s.aciklama}
+                      {etiketler(s)}
+                    </span>
+                    <span className="block text-[11px] text-white/45">{altBilgi(s)}</span>
+                  </div>
+                  <span className={`whitespace-nowrap text-sm font-semibold tabular-nums ${tutarRenk(t)}`}>{tutarYaz(t)}</span>
+                  {islemler(s)}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      {kalanSatiri}
+    </div>
+  );
+
+  // E) Gosterge: uc kadran + kenari renkli satirlar
+  const yuzde = (pay: number, bolen: number) => (bolen > 0 ? Math.max(0, Math.min(100, (pay / bolen) * 100)) : 0);
+  const kisalt = (n: number) => (Math.abs(n) >= 1000 ? `${(Math.abs(n) / 1000).toFixed(1).replace(".0", "")}B` : String(Math.round(Math.abs(n))));
+  const kadranlar = tersBakiye
+    ? [
+        { e: tutulanHesapMi ? "Giren" : "Gelen", v: toplamAlacak, p: 100, c: "#32d74b" },
+        { e: tutulanHesapMi ? "İade" : "Dağıtılan", v: toplamBorc, p: yuzde(toplamBorc, toplamAlacak), c: "#ff7a70" },
+        { e: "Kalan", v: birikim, p: yuzde(birikim, toplamAlacak), c: "#1c69d4" },
+      ]
+    : [
+        { e: "Borçlandırılan", v: toplamBorc, p: 100, c: "#ff7a70" },
+        { e: "Ödenen", v: toplamAlacak, p: yuzde(toplamAlacak, toplamBorc), c: "#32d74b" },
+        { e: "Kalan", v: birikim, p: yuzde(birikim, toplamBorc), c: "#1c69d4" },
+      ];
+  const gosterge = (
+    <div className={kompakt ? "" : "glass rounded-2xl p-3"}>
+      <div className="mb-3 grid grid-cols-3 gap-2">
+        {kadranlar.map((k) => (
+          <div key={k.e} className="rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5 text-center">
+            <div className="mx-auto mb-1.5 grid h-11 w-11 place-items-center rounded-full" style={{ background: `conic-gradient(${k.c} 0 ${k.p}%, rgb(255 255 255 / 0.12) 0)` }}>
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--background-2)] text-[10px] font-bold">{kisalt(k.v)}</span>
+            </div>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--link)]">{k.e}</p>
+            <p className="text-xs font-semibold tabular-nums">{para.format(k.v)}</p>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-1.5">
+        {[...hesaplanan].reverse().map((s) => {
+          const t = tutarOf(s);
+          const kenar = virmanMi(s) || s.turetilmis ? "#8b5cf6" : iyiMi(t) ? "#32d74b" : "#ff7a70";
+          return (
+            <div key={s.id} className={`group flex items-center gap-2.5 rounded-md border-l-[3px] bg-white/[0.05] px-2.5 py-2 ${s.turetilmis ? "italic opacity-70" : ""}`} style={{ borderLeftColor: kenar }}>
+              {kutu(s)}
+              <div className="min-w-0 flex-1">
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--link)]">{altBilgi(s)}</span>
+                <span className="block whitespace-pre-line text-[13px] leading-snug text-white/90">
+                  {s.aciklama}
+                  {etiketler(s)}
+                </span>
+              </div>
+              <span className={`whitespace-nowrap text-sm font-semibold tabular-nums ${tutarRenk(t)}`}>{tutarYaz(t)}</span>
+              {islemler(s)}
+            </div>
+          );
+        })}
+      </div>
+      {kalanSatiri}
+    </div>
+  );
+
+  const tablo = (
       <div className={kompakt ? "overflow-x-auto" : "glass overflow-x-auto rounded-2xl"}>
         <table className={kompakt ? "w-full text-left text-[13px] [&_td]:!px-2 [&_td]:!py-1.5 [&_th]:!px-2 [&_th]:!py-1.5 md:[&_td]:!px-3 md:[&_th]:!px-3" : "w-full text-left text-sm"}>
           <thead className="text-white/50">
@@ -183,6 +340,11 @@ export function Defter({
           </tbody>
         </table>
       </div>
+  );
+  return (
+    <div>
+      <Sarmal>
+        <DefterGorunumSecici akis={akis} gosterge={gosterge} tablo={tablo} />
       </Sarmal>
       <p className="mt-2 text-xs text-white/35">
         {tutulanHesapMi
