@@ -356,7 +356,7 @@ export function DosyalarTablosu({
           </button>
         </div>
       )}
-    <div className="glass overflow-x-auto rounded-2xl">
+    <div className={`glass overflow-x-auto rounded-2xl ${seciliIdler.length > 0 ? "secim-acik" : ""}`}>
       <table className="table-fixed text-left text-sm" style={{ width: toplamGenislik }}>
         <colgroup>
           <col style={{ width: ILK_SUTUN_GENISLIGI }} />
