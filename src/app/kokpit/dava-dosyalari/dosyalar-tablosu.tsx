@@ -332,7 +332,7 @@ export function DosyalarTablosu({
           {satirlar.map(({ dosya, seviye, altSayisi }) => (
             <tr
               key={dosya.id}
-              className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${seviye === 0 && altSayisi > 0 ? "bg-white/[0.03]" : ""}`}
+              className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04]`}
             >
               <td className="py-0 pl-1.5 pr-1">
                 {/* Sol cubuk satirin uzerine gelince kalinlasir; simge dugmesi dosyayi acar. */}
