@@ -318,10 +318,10 @@ export function TakvimUygulamasi({
           setPencere({ oge: o.oge, tarih: o.oge.tarih });
         }}
         title={[o.oge.baslik, o.oge.yer, sorumlu && `Sorumlu: ${sorumlu}`].filter(Boolean).join(" · ")}
-        className={`flex cursor-grab items-center gap-1.5 rounded-md border-l-[3px] bg-white/[0.07] px-1.5 text-white/90 hover:bg-white/[0.13] active:cursor-grabbing ${
-          kompakt ? "py-0.5 text-[11px]" : "py-1 text-sm"
-        } ${ustunde === o.key ? "ring-1 ring-[var(--accent)]" : ""} ${o.oge.tamam ? "opacity-50" : ""}`}
-        style={{ borderLeftColor: renk }}
+        className={`flex cursor-grab items-center gap-1.5 rounded-md border-l-[4px] px-2 font-medium text-white hover:brightness-125 active:cursor-grabbing ${
+          kompakt ? "py-1 text-[13px] leading-tight" : "py-1.5 text-sm"
+        } ${ustunde === o.key ? "ring-1 ring-[var(--accent)]" : ""} ${o.oge.tamam ? "opacity-65" : ""}`}
+        style={{ borderLeftColor: renk, background: `color-mix(in srgb, ${renk} 26%, transparent)` }}
       >
         {!o.oge.turetilmis && !kompakt && (
           <input
@@ -334,11 +334,11 @@ export function TakvimUygulamasi({
           />
         )}
         <span className={`min-w-0 flex-1 truncate ${o.oge.tamam ? "line-through" : ""}`}>
-          {o.oge.saat && !kompakt && <span className="mr-1 text-white/50">{o.oge.saat}</span>}
-          {o.oge.saat && kompakt && <span className="mr-0.5 text-white/50">{o.oge.saat}</span>}
+          {o.oge.saat && !kompakt && <span className="mr-1.5 font-semibold text-white/85">{o.oge.saat}</span>}
+          {o.oge.saat && kompakt && <span className="mr-1 font-semibold text-white/85">{o.oge.saat}</span>}
           {o.oge.baslik}
         </span>
-        {!kompakt && sorumlu && <span className="shrink-0 text-[10px] text-white/40">{sorumlu}</span>}
+        {!kompakt && sorumlu && <span className="shrink-0 text-xs text-white/70">{sorumlu}</span>}
         {o.oge.tekrar && <span className="shrink-0 text-[10px] text-white/40" title="Tekrarlanan">↻</span>}
         {!o.ilkGun && <span className="shrink-0 text-[10px] text-white/40">↦</span>}
       </div>
@@ -362,7 +362,7 @@ export function TakvimUygulamasi({
         className={`flex min-h-0 flex-col gap-1 ${ustunde === `gun-${g}` ? "rounded-lg bg-[var(--accent)]/10" : ""}`}
       >
         {gorunen.map((o) => rozet(o, kompakt))}
-        {maks && liste.length > maks && <span className="px-1 text-[10px] text-white/45">+{liste.length - maks} daha</span>}
+        {maks && liste.length > maks && <span className="px-1 text-xs font-medium text-white/70">+{liste.length - maks} daha</span>}
       </div>
     );
   }
@@ -371,7 +371,7 @@ export function TakvimUygulamasi({
   const ayGorunumu = (
     <div className="grid grid-cols-7 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10">
       {GUN_ADLARI.map((g) => (
-        <div key={g} className="bg-[var(--yuzey,#1c2432)] py-1.5 text-center text-xs text-white/45">
+        <div key={g} className="bg-[var(--yuzey,#1c2432)] py-2 text-center text-sm font-medium text-white/75">
           {g}
         </div>
       ))}
@@ -381,13 +381,13 @@ export function TakvimUygulamasi({
           <div
             key={g}
             onDoubleClick={() => setPencere({ oge: null, tarih: g })}
-            className={`min-h-24 bg-[var(--yuzey,#1c2432)] p-1 ${buAy ? "" : "opacity-45"}`}
+            className={`min-h-28 bg-[var(--yuzey,#1c2432)] p-1.5 ${buAy ? "" : "bg-black/20"}`}
           >
             <div className="mb-0.5 flex items-center justify-between">
-              <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs ${g === bugun ? "bg-[var(--accent)] font-semibold text-white" : "text-white/70"}`}>
+              <span className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-sm ${g === bugun ? "bg-[var(--accent)] font-semibold text-white" : buAy ? "font-medium text-white" : "text-white/45"}`}>
                 {Number(g.slice(8))}
               </span>
-              <button type="button" onClick={() => setPencere({ oge: null, tarih: g })} className="rounded px-1 text-xs text-white/30 hover:bg-white/10 hover:text-white" aria-label="Bu güne ekle">
+              <button type="button" onClick={() => setPencere({ oge: null, tarih: g })} className="rounded px-1.5 text-sm text-white/55 hover:bg-white/10 hover:text-white" aria-label="Bu güne ekle">
                 +
               </button>
             </div>
@@ -403,10 +403,10 @@ export function TakvimUygulamasi({
       {Array.from({ length: 7 }, (_, i) => gunEkle(bas, i)).map((g, i) => (
         <div key={g} onDoubleClick={() => setPencere({ oge: null, tarih: g })} className="flex min-h-60 flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-2">
           <div className="mb-2 flex items-center justify-between">
-            <span className={`text-sm ${g === bugun ? "font-semibold text-[var(--accent)]" : "text-white/70"}`}>
+            <span className={`text-sm ${g === bugun ? "font-semibold text-[var(--link)]" : "font-medium text-white/85"}`}>
               {GUN_ADLARI[i]} {Number(g.slice(8))}
             </span>
-            <button type="button" onClick={() => setPencere({ oge: null, tarih: g })} className="rounded px-1.5 text-sm text-white/35 hover:bg-white/10 hover:text-white" aria-label="Bu güne ekle">
+            <button type="button" onClick={() => setPencere({ oge: null, tarih: g })} className="rounded px-1.5 text-base text-white/55 hover:bg-white/10 hover:text-white" aria-label="Bu güne ekle">
               +
             </button>
           </div>
@@ -427,11 +427,11 @@ export function TakvimUygulamasi({
         return (
           <div key={g} className="grid grid-cols-[5.5rem_1fr] gap-3">
             <div className="pt-1 text-sm">
-              <div className={g === bugun ? "font-semibold text-[var(--accent)]" : "text-white/80"}>{Number(g.slice(8))} {AY_ADLARI[Number(g.slice(5, 7)) - 1].slice(0, 3)}</div>
-              <div className="text-xs text-white/40">{GUN_ADLARI_UZUN[gunNo]}</div>
+              <div className={g === bugun ? "font-semibold text-[var(--link)]" : "font-medium text-white"}>{Number(g.slice(8))} {AY_ADLARI[Number(g.slice(5, 7)) - 1].slice(0, 3)}</div>
+              <div className="text-xs text-white/65">{GUN_ADLARI_UZUN[gunNo]}</div>
             </div>
             <div className="min-h-8 rounded-xl border border-white/10 bg-white/[0.03] p-2">
-              {(gunlere.get(g)?.length ?? 0) === 0 ? <span className="text-xs text-white/35">Kayıt yok</span> : gunKutusu(g)}
+              {(gunlere.get(g)?.length ?? 0) === 0 ? <span className="text-xs text-white/55">Kayıt yok</span> : gunKutusu(g)}
             </div>
           </div>
         );
@@ -458,8 +458,8 @@ export function TakvimUygulamasi({
   );
   const tabloGorunumu = (
     <div className="overflow-x-auto rounded-2xl border border-white/10">
-      <table className="w-full min-w-[44rem] text-sm text-white/85">
-        <thead className="bg-white/[0.05] text-xs uppercase tracking-wider text-white/45">
+      <table className="w-full min-w-[44rem] text-sm text-white">
+        <thead className="bg-white/[0.07] text-xs uppercase tracking-wider text-white/70">
           <tr>
             <th className="w-8 px-2 py-2" />
             {baslikHucre("baslik", "Başlık")}
@@ -500,7 +500,7 @@ export function TakvimUygulamasi({
               </td>
               <td className="px-2 py-1.5">{kisiler.find((k) => k.id === o.sorumluId)?.ad ?? "—"}</td>
               <td className="px-2 py-1.5">{DURUMLAR.find((d) => d.kod === o.durum)?.ad}</td>
-              <td className="px-2 py-1.5 text-white/55">{o.etiketler.join(", ")}</td>
+              <td className="px-2 py-1.5 text-white/75">{o.etiketler.join(", ")}</td>
             </tr>
           ))}
           {tabloOgeleri.length === 0 && (
@@ -534,7 +534,7 @@ export function TakvimUygulamasi({
           }}
           className={`flex min-h-48 flex-col gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-2 ${ustunde === `p-${s.kod}` ? "bg-[var(--accent)]/10" : ""}`}
         >
-          <div className="flex items-center justify-between px-1 text-xs font-medium uppercase tracking-wider text-white/50">
+          <div className="flex items-center justify-between px-1 text-xs font-semibold uppercase tracking-wider text-white/75">
             <span>{s.ad}</span>
             <span>{s.liste.length}</span>
           </div>
@@ -558,7 +558,7 @@ export function TakvimUygulamasi({
               style={{ borderLeftColor: takvimRengi(o.takvim) }}
             >
               <div className={o.tamam ? "line-through opacity-60" : ""}>{o.baslik}</div>
-              <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-white/45">
+              <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-white/70">
                 <span>{kisaTarih(o.tarih)}</span>
                 {o.saat && <span>{o.saat}</span>}
                 {o.sorumluId && <span>{kisiler.find((k) => k.id === o.sorumluId)?.ad.split(" ")[0]}</span>}
@@ -622,10 +622,10 @@ export function TakvimUygulamasi({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[14rem_minmax(0,1fr)]">
         <aside className="glass flex flex-col gap-4 self-start rounded-3xl p-4 text-sm">
           <div>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/45">Takvimler</h2>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/70">Takvimler</h2>
             <div className="flex flex-col gap-1.5">
               {TAKVIMLER.map((t) => (
-                <label key={t.kod} className="flex items-center gap-2 text-white/80">
+                <label key={t.kod} className="flex items-center gap-2 text-white">
                   <input
                     type="checkbox"
                     checked={!filtre.gizliTakvimler.includes(t.kod)}
@@ -640,7 +640,7 @@ export function TakvimUygulamasi({
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-white/45">Süzgeç</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-white/70">Süzgeç</h2>
             <input value={filtre.arama} onChange={(e) => setFiltre({ ...filtre, arama: e.target.value })} placeholder="Ara…" className={kutu} />
             <select value={filtre.sorumlu} onChange={(e) => setFiltre({ ...filtre, sorumlu: e.target.value })} className={kutu} aria-label="Sorumlu">
               <option value="">Herkes</option>
@@ -657,7 +657,7 @@ export function TakvimUygulamasi({
               Tamamlananları gizle
             </label>
           </div>
-          <p className="text-xs leading-relaxed text-white/35">
+          <p className="text-xs leading-relaxed text-white/60">
             Kısayollar: <b>N</b> yeni, <b>T</b> bugün, <b>←</b> <b>→</b> gezinme. Gün hücresine çift tıklayarak o güne ekleyin; öğeleri sürükleyip başka güne veya başka sıraya bırakın.
           </p>
         </aside>
