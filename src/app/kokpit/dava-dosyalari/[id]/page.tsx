@@ -477,7 +477,7 @@ export default async function DavaDosyasiDetaySayfasi({
             />
           </div>
 
-          <div className="mb-8 max-w-2xl">
+          <div className="mb-8 max-w-5xl">
             <DuzenlenebilirKart
               etiketOnEki="dosya-detay.dosya-agaci"
               varsayilanBaslik="Dosya Ağacı"
