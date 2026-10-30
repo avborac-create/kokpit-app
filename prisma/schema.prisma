@@ -528,6 +528,7 @@ model DavaDosyasi {
   davaTuruId           String?
   davaTuru             SecenekDegeri?   @relation("DavaDosyasiDavaTuru", fields: [davaTuruId], references: [id])
   talepSonucu          String?
+  talepKalemleri       Json?
   durusmaTarihi        DateTime?
   uyusmazlikGrubuId    String?
   uyusmazlikGrubu      UyusmazlikGrubu? @relation(fields: [uyusmazlikGrubuId], references: [id])

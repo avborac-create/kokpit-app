@@ -11,7 +11,8 @@ import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { DavaDosyasiSekmeleri } from "@/modules/dava-dosyasi/components/dava-dosyasi-sekmeleri";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
-import { davaDegeriHesapla, davaDegeriYaz } from "@/modules/dava-dosyasi/lib/dava-degeri";
+import { davaDegeriKalemlerden, davaDegeriYaz, ekstralariAyikla } from "@/modules/dava-dosyasi/lib/dava-degeri";
+import { TalepKalemleriPaneli } from "@/modules/dava-dosyasi/components/talep-kalemleri-paneli";
 import { VekilPaneli } from "@/modules/dava-dosyasi/components/vekil-paneli";
 import { prisma } from "@/core/db/prisma";
 import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
@@ -241,7 +242,9 @@ export default async function DavaDosyasiDetaySayfasi({
   const konuSecenegi = uyusmazlikTurleri.find((t) => t.id === dosya.hukukiIliskiTuruId);
   const turSecenegi = davaTurleri.find((t) => t.id === dosya.davaTuruId);
   const hukukDali = hukukDallari.find((d) => d.id === (konuSecenegi?.ustId ?? turSecenegi?.ustId));
-  const davaDegeri = davaDegeriHesapla((dosya.talepSonucu ?? "").split("\n").filter(Boolean));
+  const talepMaddeleri = (dosya.talepSonucu ?? "").split("\n").filter(Boolean);
+  const talepEkstralari = ekstralariAyikla(dosya.talepKalemleri);
+  const davaDegeri = davaDegeriKalemlerden(talepMaddeleri, talepEkstralari);
   const icerikAlanlari: KartAlani[] = [
     {
       anahtar: "hukukDali",
@@ -542,6 +545,14 @@ export default async function DavaDosyasiDetaySayfasi({
               onKaydet={dosyaAlanlariniGuncelle.bind(null, id)}
             />
           </div>
+
+          {talepMaddeleri.length > 0 && (
+            <div className="mb-6 max-w-5xl">
+              <FormKarti baslik="Dava Değeri · Talep Kalemleri">
+                <TalepKalemleriPaneli dosyaId={id} maddeler={talepMaddeleri} baslangic={talepEkstralari} />
+              </FormKarti>
+            </div>
+          )}
 
           <div className="mb-6 max-w-5xl">
             <FormKarti baslik="Vekil Bilgileri">

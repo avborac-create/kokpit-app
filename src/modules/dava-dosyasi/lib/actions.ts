@@ -3,7 +3,8 @@
 import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import type { MuvekkilSifati, HukukiMudahaleDurumu, DosyaEvresi, AdliBirimHareketYonu, MasrafYansitmaHedefi } from "@prisma/client";
+import type { MuvekkilSifati, HukukiMudahaleDurumu, DosyaEvresi, AdliBirimHareketYonu, MasrafYansitmaHedefi, Prisma } from "@prisma/client";
+import { ekstralariAyikla } from "./dava-degeri";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi, sistemYoneticisiMi } from "@/core/auth/yetki";
@@ -1296,4 +1297,16 @@ export async function calisilanAvukatKaldir(avukatId: string) {
   const kullanici = await mevcutKullanici();
   if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
   await prisma.calisilanAvukat.update({ where: { id: avukatId }, data: { aktifMi: false } });
+}
+
+// Dava degeri paneli: her talep maddesinin kalem/tur/kismi/artirim-islah bilgileri.
+export async function talepKalemleriniKaydet(dosyaId: string, ham: unknown) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+  const ekstralar = ekstralariAyikla(ham);
+  await prisma.davaDosyasi.update({
+    where: { id: dosyaId },
+    data: { talepKalemleri: ekstralar as unknown as Prisma.InputJsonValue, surum: { increment: 1 } },
+  });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
