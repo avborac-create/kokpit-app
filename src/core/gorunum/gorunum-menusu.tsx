@@ -3,8 +3,6 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { gorunumTercihiniKaydet } from "./actions";
 import {
-  CAM_ETIKETLERI,
-  CAM_KADEMELERI,
   PALETLER,
   PALET_BILGISI,
   PUNTO_ETIKETLERI,
@@ -128,15 +126,25 @@ export function GorunumMenusu() {
             sec={(punto) => degistir({ punto })}
           />
 
-          <Baslik className="mt-4">Saydamlık</Baslik>
-          <Segment
-            degerler={CAM_KADEMELERI}
-            etiketler={CAM_ETIKETLERI}
-            secili={tercih.cam}
-            sec={(cam) => degistir({ cam })}
-          />
+          <Baslik className="mt-4">Saydamlık efektleri</Baslik>
+          <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg bg-white/[0.06] px-3 py-2.5 text-sm text-white">
+            <span>{tercih.cam === "kapali" ? "Kapalı" : "Açık"}</span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="sr-only"
+              checked={tercih.cam !== "kapali"}
+              onChange={(e) => degistir({ cam: e.target.checked ? "orta" : "kapali" })}
+            />
+            <span
+              aria-hidden="true"
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${tercih.cam !== "kapali" ? "bg-[var(--accent)]" : "bg-white/25"}`}
+            >
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${tercih.cam !== "kapali" ? "left-[22px]" : "left-0.5"}`} />
+            </span>
+          </label>
           <p className="mt-2 text-xs leading-snug text-white/50">
-            Yüzeylerin ne kadar saydam olacağını belirler. “Kapalı” tam opaktır; en sade ve okunaklı görünüm budur.
+            Pencere ve kartların arkasındaki rengin hafifçe sezilmesini sağlar. Kapalıyken yüzeyler tamamen düzdür.
           </p>
         </div>
       )}

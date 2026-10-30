@@ -265,7 +265,7 @@ function SutunBasligi({
 }) {
   return (
     <th
-      className={`relative select-none whitespace-nowrap py-2 text-left text-[13px] font-medium ${ilk ? "pl-0.5 pr-2.5" : "px-2.5"}`}
+      className={`relative select-none whitespace-nowrap py-2 text-left text-[13px] font-medium ${ilk ? "pl-3 pr-2.5" : "px-2.5"}`}
       style={{ width: genislik }}
     >
       <div className="flex items-center gap-2 pr-2">
@@ -374,9 +374,9 @@ export function DosyalarTablosu({
   const acmaGenisligi = ACMA_STILLERI.find((x) => x.kod === acmaStili)?.genislik ?? 0;
   // 14px dolgu + (secim kutusu 18px + bosluk) + (acma dugmesi + bosluk)
   // Ilk sutunun basina giren oge payi: secim kutusu (18px + bosluk) ve varsa acma dugmesi.
-  const ilkEk = 26;
+  const ilkEk = 0;
   // Sagda sabit duran giris dugmesi sutunu.
-  const sonSutun = acmaGenisligi ? acmaGenisligi + 20 : 12;
+  const sonSutun = 30 + (acmaGenisligi ? acmaGenisligi + 8 : 0) + 20;
   function secimModunuDegistir() {
     setSecim(new Set());
     setSecimModu((m) => !m);
@@ -575,26 +575,27 @@ export function DosyalarTablosu({
                 <SutunBasligi
                   key={anahtar}
                   ilk={anahtar === gorunurSutunlar[0]}
-                  bas={anahtar === gorunurSutunlar[0] ? (
-                    <input
-                  type="checkbox"
-                  checked={secimModu && hepsiSecili}
-                  ref={(el) => {
-                    if (el) el.indeterminate = secimModu && seciliIdler.length > 0 && !hepsiSecili;
-                  }}
-                  onChange={() => (secimModu ? hepsiniDegistir() : setSecimModu(true))}
-                  aria-label={secimModu ? "Tümünü seç" : "Seçim modunu aç"}
-                  title={secimModu ? "Tümünü seç" : "Dosya seçmek için tıklayın"}
-                  className="onay-kutusu"
-                />
-                  ) : undefined}
                   etiket={sutunEtiketleri[anahtar] ?? anahtar}
                   aciklama={DAVA_DOSYALARI_SUTUN_ACIKLAMALARI[anahtar]}
                   genislik={genislikler[anahtar] ?? VARSAYILAN_GENISLIK}
                   suruklemeBaslat={(e) => genislikSuruklemeBaslat(anahtar, e)}
                 />
               ))}
-              <th className="sticky right-0 z-10 bg-[var(--yuzey,#1c2432)] p-0" aria-label="Dosyayı aç" />
+              <th className="sticky right-0 z-10 bg-[var(--yuzey,#1c2432)] p-0">
+                <div className="flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={secimModu && hepsiSecili}
+                    ref={(el) => {
+                      if (el) el.indeterminate = secimModu && seciliIdler.length > 0 && !hepsiSecili;
+                    }}
+                    onChange={() => (secimModu ? hepsiniDegistir() : setSecimModu(true))}
+                    aria-label={secimModu ? "Tümünü seç" : "Seçim modunu aç"}
+                    title={secimModu ? "Tümünü seç" : "Dosya seçmek için tıklayın"}
+                    className="onay-kutusu"
+                  />
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -611,20 +612,10 @@ export function DosyalarTablosu({
                 {gorunurSutunlar.map((anahtar, sutunIndex) => (
                   <td
                     key={anahtar}
-                    className={`${sutunIndex === 0 ? "pl-0.5 pr-2.5" : "px-2.5"} py-1.5 ${anahtar === "konu" ? "text-white/85" : "text-white/60"}`}
+                    className={`${sutunIndex === 0 ? "pl-3 pr-2.5" : "px-2.5"} py-1.5 ${anahtar === "konu" ? "text-white/85" : "text-white/60"}`}
                   >
                     {sutunIndex === 0 ? (
                       <div className="flex items-center gap-1">
-                        {secimModu && (
-                          <input
-                            type="checkbox"
-                            checked={secim.has(dosya.id)}
-                            onChange={() => secimiDegistir(dosya.id)}
-                            aria-label="Dosyayı seç"
-                            className="onay-kutusu mr-1"
-                          />
-                        )}
-                        {!secimModu && <span className="w-[26px] shrink-0" aria-hidden="true" />}
                         <span className="shrink-0" style={{ width: seviye * 18 }} />
                         {seviye === 1 ? (
                           <span className="w-3.5 shrink-0 text-white/35">└</span>
@@ -662,8 +653,18 @@ export function DosyalarTablosu({
                     )}
                   </td>
                 ))}
-                <td className="sticky right-0 z-10 bg-[var(--yuzey,#1c2432)] p-0">
-                  <div className="flex h-12 items-center justify-center">
+                <td className="sticky right-0 z-10 border-t border-white/[0.06] bg-[var(--yuzey,#1c2432)] p-0">
+                  <div className="flex h-12 items-center justify-center gap-2">
+                    {secimModu && (
+                      <input
+                        type="checkbox"
+                        checked={secim.has(dosya.id)}
+                        onChange={() => secimiDegistir(dosya.id)}
+                        aria-label="Dosyayı seç"
+                        className="onay-kutusu"
+                      />
+                    )}
+                    {!secimModu && <span className="w-[18px] shrink-0" aria-hidden="true" />}
                     <AcmaDugmesi stil={acmaStili} href={`/kokpit/dava-dosyalari/${dosya.id}`} />
                   </div>
                 </td>

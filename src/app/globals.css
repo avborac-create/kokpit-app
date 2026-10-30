@@ -552,17 +552,11 @@ html[data-tema="acik"] .text-\[\#6e6e73\] { color: #5c6678; }
   }
 }
 
-/* Telefon: tum yuzeyler duz ve opak (cam/saydamlik yok). Ekran kucuk oldugu icin arkadaki
-   renk bulutu okunurlugu bozuyor; sade, mat gorunum tercih edilir. */
+/* Telefon: Saydamlik acikken de yuzeyler bulaniklastirilmaz; yalnizca hafif saydamdir (yukaridaki blok).
+   Zemin ust cubukla ayni renkte tutulur: iOS'un ust kenardaki asiri-kaydirma/kenar efektinde
+   cubugun arkasinda farkli bir renk gorunmesin. */
 @media (max-width: 767px) {
-  html[data-cam] .glass,
-  html[data-cam] .glass-strong {
-    background: var(--yuzey) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    box-shadow: none !important;
-    border-color: var(--glass-cizgi) !important;
-  }
+  html { background-color: var(--yuzey); }
 }
 
 /* Dosyalar listesi onay kutusu: iOS'ta siyah kare gorunmesin diye ozel cizim. */
