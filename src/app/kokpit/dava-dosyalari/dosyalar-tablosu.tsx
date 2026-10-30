@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { davaDosyalariniListele } from "@/modules/dava-dosyasi/lib/queries";
@@ -9,6 +10,7 @@ import {
   kokpitNoGoster,
   buroNoGoster,
 } from "@/modules/dava-dosyasi/lib/kokpit-no";
+import { ACMA_STILLERI, AcmaDugmesi, VARSAYILAN_ACMA_STILI, acmaStiliGecerliMi, type AcmaStili } from "./acma-dugmesi";
 import { TopluIslemCubugu } from "./toplu-islem-cubugu";
 import { DavaDosyasiSilmeButonu } from "@/modules/dava-dosyasi/components/dava-dosyasi-silme-butonu";
 
@@ -105,8 +107,6 @@ const VARSAYILAN_GENISLIKLER: Record<string, number> = {
 };
 
 const MIN_GENISLIK = 56;
-const ILK_SUTUN_GENISLIGI = 44;
-const ILK_SUTUN_GENISLIGI_SECIMSIZ = 40;
 
 // Bu ekrana ozel, tarayici basina (localStorage) bir tercih - "kullanici
 // sutun genisliklerini elle ayarlayabilsin" talebi geregi kisiye ozel kalir
@@ -203,6 +203,33 @@ function gizlileriYaz(liste: string[]) {
 function gizlileriAbone(d: () => void) {
   gizliDinleyiciler.add(d);
   return () => gizliDinleyiciler.delete(d);
+}
+
+// Kisiye ozel acma dugmesi stili (ilkel deger oldugu icin onbellek gerekmez).
+const ACMA_ANAHTARI = "kokpit-dava-dosyalari-acma-dugmesi";
+const acmaDinleyiciler = new Set<() => void>();
+
+function acmaStiliniOku(): AcmaStili {
+  try {
+    const v = localStorage.getItem(ACMA_ANAHTARI);
+    return acmaStiliGecerliMi(v) ? v : VARSAYILAN_ACMA_STILI;
+  } catch {
+    return VARSAYILAN_ACMA_STILI;
+  }
+}
+
+function acmaStiliniYaz(stil: AcmaStili) {
+  try {
+    localStorage.setItem(ACMA_ANAHTARI, stil);
+  } catch {
+    // localStorage erisilemez - sessizce yok say
+  }
+  acmaDinleyiciler.forEach((d) => d());
+}
+
+function acmaStiliAbone(d: () => void) {
+  acmaDinleyiciler.add(d);
+  return () => acmaDinleyiciler.delete(d);
 }
 
 function genislikleriAbone(dinleyici: () => void) {
@@ -337,9 +364,11 @@ export function DosyalarTablosu({
   // Toplu secim: yalnizca listede gorunen satirlar gecerlidir (silinen/filtrelenen kayitlar otomatik duser).
   const [secim, setSecim] = useState<Set<string>>(new Set());
   const [secimModu, setSecimModu] = useState(false);
-  const ilkSutun = secimModu
-    ? ILK_SUTUN_GENISLIGI
-    : ILK_SUTUN_GENISLIGI_SECIMSIZ;
+  const router = useRouter();
+  const acmaStili = useSyncExternalStore(acmaStiliAbone, acmaStiliniOku, () => VARSAYILAN_ACMA_STILI);
+  const acmaGenisligi = ACMA_STILLERI.find((x) => x.kod === acmaStili)?.genislik ?? 0;
+  // 14px dolgu + (secim kutusu 18px + bosluk) + (acma dugmesi + bosluk)
+  const ilkSutun = Math.max(40, 14 + (secimModu ? 26 : 0) + (acmaGenisligi ? acmaGenisligi + 8 : 0));
   function secimModunuDegistir() {
     setSecim(new Set());
     setSecimModu((m) => !m);
@@ -456,6 +485,26 @@ export function DosyalarTablosu({
         )}
         <details className="relative">
           <summary className="cursor-pointer list-none rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
+            Açma düğmesi
+          </summary>
+          <div className="absolute right-0 z-30 mt-1 w-64 rounded-xl border border-white/20 bg-[var(--yuzey,#1c2432)] p-2 shadow-2xl">
+            {ACMA_STILLERI.map((x) => (
+              <label key={x.kod} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-white hover:bg-white/10">
+                <input type="radio" name="acma-stili" className="sr-only" checked={acmaStili === x.kod} onChange={() => acmaStiliniYaz(x.kod)} />
+                <span className={`h-3 w-3 shrink-0 rounded-full border ${acmaStili === x.kod ? "border-[var(--accent)] bg-[var(--accent)]" : "border-white/40"}`} />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span>{x.ad}</span>
+                  <span className="truncate text-xs text-white/50">{x.not}</span>
+                </span>
+                <span className="flex w-[50px] justify-center">
+                  <AcmaDugmesi stil={x.kod} />
+                </span>
+              </label>
+            ))}
+          </div>
+        </details>
+        <details className="relative">
+          <summary className="cursor-pointer list-none rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
             Sütunlar{gizliSutunlar.length > 0 ? ` (${gizliSutunlar.length} gizli)` : ""}
           </summary>
           <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-white/20 bg-[var(--yuzey,#1c2432)] p-2 shadow-2xl">
@@ -555,10 +604,15 @@ export function DosyalarTablosu({
             {satirlar.map(({ dosya, seviye, altSayisi }) => (
               <tr
                 key={dosya.id}
-                className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
+                onDoubleClick={(e) => {
+                // Baglanti, dugme, kutu gibi etkilesimli ogelere cift tiklama dosyayi acmaz.
+                if ((e.target as HTMLElement).closest("a,button,input,label,select,details")) return;
+                router.push(`/kokpit/dava-dosyalari/${dosya.id}`);
+              }}
+              className={`group/satir select-none border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
               >
                 <td className="py-0 pl-2.5 pr-1">
-                  {/* Dosya, Kokpit No baglantisina dokunularak acilir; bu sutun yalnizca secim kutusunu tasir. */}
+                  {/* Dosya; Kokpit No baglantisi, secilen acma dugmesi veya satira cift tiklayarak acilir. */}
                   <div className="flex h-9 items-center gap-2">
                     {secimModu && (
                       <input
@@ -569,6 +623,7 @@ export function DosyalarTablosu({
                         className="onay-kutusu"
                       />
                     )}
+                    <AcmaDugmesi stil={acmaStili} href={`/kokpit/dava-dosyalari/${dosya.id}`} />
                   </div>
                 </td>
                 {gorunurSutunlar.map((anahtar, sutunIndex) => (
