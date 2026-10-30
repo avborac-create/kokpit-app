@@ -481,15 +481,6 @@ export function DosyalarTablosu({
   return (
     <>
       <div className="mb-2 flex justify-end gap-2 text-xs">
-        {secimModu && (
-          <button
-            type="button"
-            onClick={secimModunuDegistir}
-            className="rounded-full bg-[var(--accent)] px-3 py-1 text-white"
-          >
-            Seçimi kapat
-          </button>
-        )}
         <details className="relative">
           <summary className="cursor-pointer list-none rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
             Açma düğmesi
@@ -553,6 +544,15 @@ export function DosyalarTablosu({
               Tümünü daralt
             </button>
           </>
+        )}
+        {secimModu && (
+          <button
+            type="button"
+            onClick={secimModunuDegistir}
+            className="rounded-full bg-[var(--accent)] px-3 py-1 text-white"
+          >
+            Seçimi kapat
+          </button>
         )}
       </div>
       <div className={`glass overflow-x-auto rounded-2xl`}>
