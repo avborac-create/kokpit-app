@@ -304,7 +304,7 @@ export function DosyalarTablosu({
     <div className="glass overflow-x-auto rounded-2xl">
       <table className="w-full table-fixed text-left text-sm">
         <colgroup>
-          <col style={{ width: 44 }} />
+          <col style={{ width: 24 }} />
           {gorunurSutunlar.map((anahtar) => (
             <col key={anahtar} style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }} />
           ))}
@@ -312,7 +312,7 @@ export function DosyalarTablosu({
         </colgroup>
         <thead className="text-white/50">
           <tr>
-            <th className="w-11 px-1 py-2" aria-label="Aç" />
+            <th className="w-6 p-0" aria-label="Aç" />
             {gorunurSutunlar.map((anahtar) => (
               <SutunBasligi
                 key={anahtar}
@@ -335,12 +335,15 @@ export function DosyalarTablosu({
               key={dosya.id}
               className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${seviye === 0 && altSayisi > 0 ? "bg-white/[0.03]" : ""}`}
             >
-              <td className="px-1 py-1.5 text-center">
-                <Link href={`/kokpit/dava-dosyalari/${dosya.id}`} title="Dosyayı aç">
-                  <Dugme type="button" varyant="ikincil" boyut="kompakt" className="!px-2">
-                    <span aria-hidden>↗</span>
-                    <span className="sr-only">Aç</span>
-                  </Dugme>
+              <td className="p-0">
+                {/* Satir cubugu: tiklaninca dosya acilir; satirin uzerine gelince kalinlasir. */}
+                <Link
+                  href={`/kokpit/dava-dosyalari/${dosya.id}`}
+                  title="Dosyayı aç"
+                  aria-label="Dosyayı aç"
+                  className="flex h-9 w-full items-center justify-center"
+                >
+                  <span className="h-6 w-1 rounded-full bg-[var(--accent)] opacity-50 transition-all group-hover/satir:w-1.5 group-hover/satir:opacity-100" />
                 </Link>
               </td>
               {gorunurSutunlar.map((anahtar, sutunIndex) => (
