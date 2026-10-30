@@ -149,7 +149,7 @@ html[data-palet="apple"] .glass-strong { backdrop-filter: blur(var(--cam-bulanik
 
 /* BMW iDrive 8: mavi parlak zemin, yuvarlak cam, BMW mavisi vurgu. */
 html[data-palet="bmw"][data-tema="koyu"] {
-  --background: #151c27; --background-2: #212a38; --yuzey: #212a38;
+  --background: #1d2635; --background-2: #2a3547; --yuzey: #2a3547;
   --accent: #1c69d4; --accent-soft: rgba(28, 105, 212, 0.26); --link: #7aaef2;
   --blob-1: #1d4f9a; --blob-2: #2a3650; --blob-3: #17407a;
   --glass-border: rgba(120, 170, 255, 0.2); --glass-cizgi: rgba(120, 170, 255, 0.18);
@@ -163,7 +163,7 @@ html[data-palet="bmw"][data-tema="acik"] {
 }
 /* Mercedes Hiperekran: turkuaz parlayan cam, ince acik cerceve. */
 html[data-palet="hiperekran"][data-tema="koyu"] {
-  --background: #141c27; --background-2: #1f2a38; --yuzey: #1f2a38;
+  --background: #1c2736; --background-2: #293648; --yuzey: #293648;
   --accent: #00adef; --accent-soft: rgba(0, 173, 239, 0.22); --link: #6fd2f7;
   --blob-1: #14507a; --blob-2: #222f3f; --blob-3: #10435f;
   --glass-border: rgba(140, 200, 255, 0.22); --glass-cizgi: rgba(140, 200, 255, 0.18);
@@ -177,7 +177,7 @@ html[data-palet="hiperekran"][data-tema="acik"] {
 }
 /* Mercedes Gumus: koyu antrasit, ince gumus cizgiler, hafif yazi. */
 html[data-palet="gumus"][data-tema="koyu"] {
-  --background: #1b2029; --background-2: #272d38; --yuzey: #272d38;
+  --background: #252b37; --background-2: #323947; --yuzey: #323947;
   --accent: #aab4c2; --accent-soft: rgba(170, 180, 194, 0.18); --link: #c9d1db;
   --blob-1: #2e3644; --blob-2: #232a35; --blob-3: #2a323f;
   --glass-border: rgba(201, 209, 219, 0.2); --glass-cizgi: rgba(201, 209, 219, 0.2);
@@ -306,9 +306,9 @@ html[data-palet="gumus"] .kart-baslik::before { border-radius: 0; width: 1rem; h
 html[data-cam="hafif"] { --cam-bulaniklik: 8px; }
 html[data-cam="orta"] { --cam-bulaniklik: 14px; }
 html[data-cam="yogun"] { --cam-bulaniklik: 20px; }
-html[data-tema="koyu"][data-cam="hafif"] { --cam-alfa: 0.15; --cam-alfa-guclu: 0.22; }
-html[data-tema="koyu"][data-cam="orta"] { --cam-alfa: 0.1; --cam-alfa-guclu: 0.16; }
-html[data-tema="koyu"][data-cam="yogun"] { --cam-alfa: 0.06; --cam-alfa-guclu: 0.11; }
+html[data-tema="koyu"][data-cam="hafif"] { --cam-alfa: 0.19; --cam-alfa-guclu: 0.27; }
+html[data-tema="koyu"][data-cam="orta"] { --cam-alfa: 0.14; --cam-alfa-guclu: 0.21; }
+html[data-tema="koyu"][data-cam="yogun"] { --cam-alfa: 0.09; --cam-alfa-guclu: 0.16; }
 html[data-tema="acik"][data-cam="hafif"] { --cam-alfa: 0.78; --cam-alfa-guclu: 0.86; }
 html[data-tema="acik"][data-cam="orta"] { --cam-alfa: 0.6; --cam-alfa-guclu: 0.72; }
 html[data-tema="acik"][data-cam="yogun"] { --cam-alfa: 0.42; --cam-alfa-guclu: 0.56; }
