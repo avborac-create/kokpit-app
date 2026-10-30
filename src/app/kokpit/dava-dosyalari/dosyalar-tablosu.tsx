@@ -164,6 +164,47 @@ function genislikleriYaz(genislikler: Record<string, number>) {
   dinleyiciler.forEach((dinleyici) => dinleyici());
 }
 
+// Kisiye ozel gizlenen sutunlar (ayni onbellekli useSyncExternalStore deseni).
+const GIZLI_ANAHTARI = "kokpit-dava-dosyalari-gizli-sutunlar";
+const gizliDinleyiciler = new Set<() => void>();
+let gizliOnbellek: { ham: string | null; sonuc: string[] } = { ham: undefined as unknown as string, sonuc: [] };
+const BOS_LISTE: string[] = [];
+
+function gizlileriOku(): string[] {
+  let ham: string | null;
+  try {
+    ham = localStorage.getItem(GIZLI_ANAHTARI);
+  } catch {
+    ham = null;
+  }
+  if (ham === gizliOnbellek.ham) return gizliOnbellek.sonuc;
+  let sonuc = BOS_LISTE;
+  if (ham) {
+    try {
+      const l = JSON.parse(ham);
+      if (Array.isArray(l)) sonuc = l.filter((x): x is string => typeof x === "string");
+    } catch {
+      sonuc = BOS_LISTE;
+    }
+  }
+  gizliOnbellek = { ham, sonuc };
+  return sonuc;
+}
+
+function gizlileriYaz(liste: string[]) {
+  try {
+    localStorage.setItem(GIZLI_ANAHTARI, JSON.stringify(liste));
+  } catch {
+    // localStorage erisilemez - sessizce yok say
+  }
+  gizliDinleyiciler.forEach((d) => d());
+}
+
+function gizlileriAbone(d: () => void) {
+  gizliDinleyiciler.add(d);
+  return () => gizliDinleyiciler.delete(d);
+}
+
 function genislikleriAbone(dinleyici: () => void) {
   dinleyiciler.add(dinleyici);
   return () => dinleyiciler.delete(dinleyici);
@@ -260,7 +301,7 @@ function agacSatirlari(dosyalar: Dosya[], daraltilmis: Set<string>): Satir[] {
 
 export function DosyalarTablosu({
   dosyalar,
-  gorunurSutunlar,
+  gorunurSutunlar: tumSutunlar,
   sutunEtiketleri,
   silmeYetkisiVar,
   durumlar,
@@ -273,6 +314,12 @@ export function DosyalarTablosu({
   durumlar: { id: string; etiket: string }[];
   avukatlar: { id: string; adSoyad: string }[];
 }) {
+  const gizliSutunlar = useSyncExternalStore(gizlileriAbone, gizlileriOku, () => BOS_LISTE);
+  const gorunurSutunlar = tumSutunlar.filter((a) => !gizliSutunlar.includes(a));
+  function sutunGizlemeDegistir(anahtar: string) {
+    if (gizliSutunlar.includes(anahtar)) gizlileriYaz(gizliSutunlar.filter((a) => a !== anahtar));
+    else if (gorunurSutunlar.length > 1) gizlileriYaz([...gizliSutunlar, anahtar]);
+  }
   const kayitliGenislikler = useSyncExternalStore(
     genislikleriAbone,
     genislikleriOku,
@@ -405,6 +452,29 @@ export function DosyalarTablosu({
         >
           {secimModu ? "Seçimi kapat" : "Seç"}
         </button>
+        <details className="relative">
+          <summary className="cursor-pointer list-none rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
+            Sütunlar{gizliSutunlar.length > 0 ? ` (${gizliSutunlar.length} gizli)` : ""}
+          </summary>
+          <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-white/20 bg-[var(--yuzey,#1c2432)] p-2 shadow-2xl">
+            {tumSutunlar.map((anahtar) => (
+              <label key={anahtar} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm text-white hover:bg-white/10">
+                <input
+                  type="checkbox"
+                  className="onay-kutusu"
+                  checked={!gizliSutunlar.includes(anahtar)}
+                  onChange={() => sutunGizlemeDegistir(anahtar)}
+                />
+                {sutunEtiketleri[anahtar] ?? anahtar}
+              </label>
+            ))}
+            {gizliSutunlar.length > 0 && (
+              <button type="button" onClick={() => gizlileriYaz([])} className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm text-[var(--link)] hover:bg-white/10">
+                Tümünü göster
+              </button>
+            )}
+          </div>
+        </details>
         {anaDosyaIdleri.length > 0 && (
           <>
             <button
