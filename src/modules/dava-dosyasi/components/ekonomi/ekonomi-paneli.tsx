@@ -90,7 +90,7 @@ function DurumSeridi({
   return (
     <div className="mb-5">
       <div
-        className={`mb-3 rounded-2xl border px-5 py-4 ${
+        className={`mb-3 rounded-xl border px-4 py-3 ${
           ozet.net > 0
             ? "border-[#ff7a70]/40 bg-[#ff7a70]/[0.07]"
             : ozet.net < 0
@@ -126,7 +126,7 @@ function DurumSeridi({
           Bu dosyaya aktarmak için <u>{paraHesapNo ?? 100} - Para Trafiği</u> sekmesinden virman yapın →
         </Link>
       )}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      <div className="grid grid-cols-2 items-start gap-2 md:grid-cols-4">
         {gosterilecek.map((h) => (
           <Link
             key={h.hesapId}
@@ -272,8 +272,8 @@ export async function EkonomiPaneli({
   ];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+    <div className="max-w-5xl rounded-2xl border border-white/10 bg-white/[0.02] p-4 md:p-5">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold tracking-tight text-white">
           {musteriDuzeyi ? "Müvekkil Ekonomisi — tüm dosyalar" : "Dosya Ekonomisi"}
         </h2>
@@ -292,7 +292,7 @@ export async function EkonomiPaneli({
 
       <Link
         href={`/kokpit/finans/musteri-iliskileri/${kapsam.musteriId}/odeme-talebi`}
-        className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-3 text-white transition-colors hover:bg-[var(--accent)]/30"
+        className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-2 text-white transition-colors hover:bg-[var(--accent)]/30"
       >
         <span>
           <span className="block text-sm font-semibold">📄 Müvekkil Hesap Özeti Oluştur</span>
