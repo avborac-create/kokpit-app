@@ -73,7 +73,7 @@ const VARSAYILAN_GENISLIKLER: Record<string, number> = {
   muvekkiller: 150,
   durum: 96,
   sorumluAvukat: 120,
-  islemler: 84,
+  islemler: 52,
 };
 
 const MIN_GENISLIK = 56;
@@ -304,6 +304,7 @@ export function DosyalarTablosu({
     <div className="glass overflow-x-auto rounded-2xl">
       <table className="w-full table-fixed text-left text-sm">
         <colgroup>
+          <col style={{ width: 44 }} />
           {gorunurSutunlar.map((anahtar) => (
             <col key={anahtar} style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }} />
           ))}
@@ -311,6 +312,7 @@ export function DosyalarTablosu({
         </colgroup>
         <thead className="text-white/50">
           <tr>
+            <th className="w-11 px-1 py-2" aria-label="Aç" />
             {gorunurSutunlar.map((anahtar) => (
               <SutunBasligi
                 key={anahtar}
@@ -333,6 +335,14 @@ export function DosyalarTablosu({
               key={dosya.id}
               className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${seviye === 0 && altSayisi > 0 ? "bg-white/[0.03]" : ""}`}
             >
+              <td className="px-1 py-1.5 text-center">
+                <Link href={`/kokpit/dava-dosyalari/${dosya.id}`} title="Dosyayı aç">
+                  <Dugme type="button" varyant="ikincil" boyut="kompakt" className="!px-2">
+                    <span aria-hidden>↗</span>
+                    <span className="sr-only">Aç</span>
+                  </Dugme>
+                </Link>
+              </td>
               {gorunurSutunlar.map((anahtar, sutunIndex) => (
                 <td
                   key={anahtar}
@@ -368,12 +378,6 @@ export function DosyalarTablosu({
               ))}
               <td className="px-2.5 py-1.5">
                 <div className="flex items-center justify-end gap-1 opacity-70 transition-opacity group-hover/satir:opacity-100 [@media(hover:none)]:opacity-100">
-                  <Link href={`/kokpit/dava-dosyalari/${dosya.id}`} title="Dosyayı aç">
-                    <Dugme type="button" varyant="ikincil" boyut="kompakt" className="!px-2">
-                      <span aria-hidden>↗</span>
-                      <span className="sr-only">Aç</span>
-                    </Dugme>
-                  </Link>
                   {silmeYetkisiVar && <DavaDosyasiSilmeButonu dosyaId={dosya.id} boyut="kompakt" simge />}
                 </div>
               </td>
@@ -381,7 +385,7 @@ export function DosyalarTablosu({
           ))}
           {dosyalar.length === 0 && (
             <tr>
-              <td colSpan={gorunurSutunlar.length + 1} className="px-4 py-8 text-center text-white/40">
+              <td colSpan={gorunurSutunlar.length + 2} className="px-4 py-8 text-center text-white/40">
                 Kayıt bulunamadı.
               </td>
             </tr>
