@@ -53,7 +53,7 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
   kayitNo: (dosya) => (
     <Link
       href={`/kokpit/dava-dosyalari/${dosya.id}`}
-      className="truncate font-medium text-white hover:text-[#6db8ff] hover:underline"
+      className="truncate font-medium text-[#6db8ff] underline decoration-[#6db8ff]/40 underline-offset-4 hover:decoration-[#6db8ff]"
     >
       {kokpitNoGoster(dosya)}
     </Link>
@@ -105,8 +105,8 @@ const VARSAYILAN_GENISLIKLER: Record<string, number> = {
 };
 
 const MIN_GENISLIK = 56;
-const ILK_SUTUN_GENISLIGI = 72;
-const ILK_SUTUN_GENISLIGI_SECIMSIZ = 52;
+const ILK_SUTUN_GENISLIGI = 44;
+const ILK_SUTUN_GENISLIGI_SECIMSIZ = 40;
 
 // Bu ekrana ozel, tarayici basina (localStorage) bir tercih - "kullanici
 // sutun genisliklerini elle ayarlayabilsin" talebi geregi kisiye ozel kalir
@@ -317,6 +317,7 @@ export function DosyalarTablosu({
   const gizliSutunlar = useSyncExternalStore(gizlileriAbone, gizlileriOku, () => BOS_LISTE);
   const gorunurSutunlar = tumSutunlar.filter((a) => !gizliSutunlar.includes(a));
   function sutunGizlemeDegistir(anahtar: string) {
+    if (anahtar === "kayitNo") return; // dosyayi acan baglanti bu sutunda
     if (gizliSutunlar.includes(anahtar)) gizlileriYaz(gizliSutunlar.filter((a) => a !== anahtar));
     else if (gorunurSutunlar.length > 1) gizlileriYaz([...gizliSutunlar, anahtar]);
   }
@@ -464,6 +465,7 @@ export function DosyalarTablosu({
                   type="checkbox"
                   className="onay-kutusu"
                   checked={!gizliSutunlar.includes(anahtar)}
+                  disabled={anahtar === "kayitNo"}
                   onChange={() => sutunGizlemeDegistir(anahtar)}
                 />
                 {sutunEtiketleri[anahtar] ?? anahtar}
@@ -556,7 +558,7 @@ export function DosyalarTablosu({
                 className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
               >
                 <td className="py-0 pl-2.5 pr-1">
-                  {/* Sol cubuk satirin uzerine gelince kalinlasir; simge dugmesi dosyayi acar. */}
+                  {/* Dosya, Kokpit No baglantisina dokunularak acilir; bu sutun yalnizca secim kutusunu tasir. */}
                   <div className="flex h-9 items-center gap-2">
                     {secimModu && (
                       <input
@@ -567,27 +569,6 @@ export function DosyalarTablosu({
                         className="onay-kutusu"
                       />
                     )}
-                    <span className="hidden h-6 w-1 shrink-0 rounded-full md:block bg-[var(--accent)] opacity-50 transition-all group-hover/satir:w-1.5 group-hover/satir:opacity-100" />
-                    <Link
-                      href={`/kokpit/dava-dosyalari/${dosya.id}`}
-                      title="Dosyayı aç"
-                      aria-label="Dosyayı aç"
-                      className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[var(--accent-soft)] text-[#8fb4e8] hover:bg-[var(--accent)] hover:text-white"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-[15px] w-[15px]"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M14 4h6v6M20 4l-9 9" />
-                        <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
-                      </svg>
-                    </Link>
                   </div>
                 </td>
                 {gorunurSutunlar.map((anahtar, sutunIndex) => (
