@@ -303,7 +303,7 @@ export function DosyalarTablosu({
     <div className="glass overflow-x-auto rounded-2xl">
       <table className="w-full table-fixed text-left text-sm">
         <colgroup>
-          <col style={{ width: 68 }} />
+          <col style={{ width: 56 }} />
           {gorunurSutunlar.map((anahtar) => (
             <col key={anahtar} style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }} />
           ))}
@@ -311,7 +311,7 @@ export function DosyalarTablosu({
         </colgroup>
         <thead className="text-white/50">
           <tr>
-            <th className="w-[68px] p-0" aria-label="Aç" />
+            <th className="w-14 p-0" aria-label="Aç" />
             {gorunurSutunlar.map((anahtar) => (
               <SutunBasligi
                 key={anahtar}
@@ -335,15 +335,19 @@ export function DosyalarTablosu({
               className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${seviye === 0 && altSayisi > 0 ? "bg-white/[0.03]" : ""}`}
             >
               <td className="py-0 pl-1.5 pr-1">
-                {/* Sol cubuk satirin uzerine gelince kalinlasir; "Aç" dugmesi dosyayi acar. */}
+                {/* Sol cubuk satirin uzerine gelince kalinlasir; simge dugmesi dosyayi acar. */}
                 <div className="flex h-9 items-center gap-1.5">
                   <span className="h-6 w-1 shrink-0 rounded-full bg-[var(--accent)] opacity-50 transition-all group-hover/satir:w-1.5 group-hover/satir:opacity-100" />
                   <Link
                     href={`/kokpit/dava-dosyalari/${dosya.id}`}
                     title="Dosyayı aç"
-                    className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-semibold text-[#8fb4e8] hover:bg-[var(--accent)] hover:text-white"
+                    aria-label="Dosyayı aç"
+                    className="flex h-7 w-8 items-center justify-center rounded-[7px] bg-[var(--accent-soft)] text-[#8fb4e8] hover:bg-[var(--accent)] hover:text-white"
                   >
-                    Aç
+                    <svg viewBox="0 0 24 24" className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M14 4h6v6M20 4l-9 9" />
+                      <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
+                    </svg>
                   </Link>
                 </div>
               </td>
