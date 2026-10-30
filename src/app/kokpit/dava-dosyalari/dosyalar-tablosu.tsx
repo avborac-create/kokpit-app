@@ -14,6 +14,36 @@ type Dosya = Awaited<ReturnType<typeof davaDosyalariniListele>>[number];
 // Sütun anahtarı -> hücre içeriği. Görünür sütun kümesi/sırası admin
 // tarafında (Ayarlar > Sütun Düzeni) belirlenir - bu harita sadece NASIL
 // render edileceğini tanımlar (bkz. dava-dosyalari/page.tsx).
+// Tür sütunu kısa tutulur: Hukuk / Ceza / İdari / İcra / AYM.
+// Konu ayrı sütunda; diğer dosya türleri (İhtar vb.) kendi adıyla görünür.
+function turMetni(dosya: Dosya): string {
+  const kod = dosya.tur?.kod;
+  const yargi = dosya.yargiKolu?.etiket;
+  return kod === "icra_dosyasi"
+    ? "İcra"
+    : kod === "dava_dosyasi" && yargi
+      ? yargi === "Anayasa Mahkemesi"
+        ? "AYM"
+        : yargi
+      : (dosya.tur?.etiket.replace(/ Dosyası$/, "") ?? "—");
+}
+
+// Genişlik ölçümü için sütunun düz metni (otomatik daralma).
+const OLCU_METINLERI: Record<string, (dosya: Dosya) => string> = {
+  kayitNo: (d) => kokpitNoGoster(d),
+  buroNo: (d) => String(buroNoGoster(d.buroNo) ?? ""),
+  dosyaNo: (d) => d.dosyaNo ?? "—",
+  tur: (d) => turMetni(d),
+  birimAdi: (d) => d.birimAdi ?? "—",
+  konu: (d) => d.konu ?? "",
+  karsiTaraflar: (d) => d.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—",
+  muvekkiller: (d) => d.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—",
+  durum: (d) => d.durum.etiket,
+  sorumluAvukat: (d) => d.sorumluAvukat?.adSoyad ?? "—",
+};
+
+const KARAKTER_GENISLIGI = 7.4;
+
 const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
   kayitNo: (dosya) => (
     <Link
@@ -26,18 +56,7 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
   buroNo: (dosya) => buroNoGoster(dosya.buroNo),
   dosyaNo: (dosya) => dosya.dosyaNo ?? "—",
   tur: (dosya) => {
-    // Tür sütunu kısa tutulur: Hukuk / Ceza / İdari / İcra / AYM.
-    // Konu ayrı sütunda; diğer dosya türleri (İhtar vb.) kendi adıyla görünür.
-    const kod = dosya.tur?.kod;
-    const yargi = dosya.yargiKolu?.etiket;
-    const metin =
-      kod === "icra_dosyasi"
-        ? "İcra"
-        : kod === "dava_dosyasi" && yargi
-          ? yargi === "Anayasa Mahkemesi"
-            ? "AYM"
-            : yargi
-          : (dosya.tur?.etiket.replace(/ Dosyası$/, "") ?? "—");
+    const metin = turMetni(dosya);
     return (
       <span className="flex items-center gap-1.5">
         <span className="truncate">{metin}</span>
@@ -77,6 +96,7 @@ const VARSAYILAN_GENISLIKLER: Record<string, number> = {
 };
 
 const MIN_GENISLIK = 56;
+const ILK_SUTUN_GENISLIGI = 72;
 
 // Bu ekrana ozel, tarayici basina (localStorage) bir tercih - "kullanici
 // sutun genisliklerini elle ayarlayabilsin" talebi geregi kisiye ozel kalir
@@ -273,12 +293,28 @@ export function DosyalarTablosu({
       return yeni;
     });
   }
-  const genislikler = { ...VARSAYILAN_GENISLIKLER, ...kayitliGenislikler, ...taslakGenislikler };
+  // Kullanici elle ayarlamadiysa sutun, icerigi kisaysa (ornegin 3-4 karakter) otomatik daralir;
+  // varsayilan genislikten buyumez.
+  const otomatik: Record<string, number> = {};
+  gorunurSutunlar.forEach((anahtar, i) => {
+    const olcu = OLCU_METINLERI[anahtar];
+    const ust = VARSAYILAN_GENISLIKLER[anahtar] ?? VARSAYILAN_GENISLIK;
+    if (!olcu) return;
+    let enUzun = (sutunEtiketleri[anahtar] ?? anahtar).length;
+    for (const { dosya } of satirlar) enUzun = Math.max(enUzun, olcu(dosya).length);
+    const ek = 28 + (i === 0 ? 44 : 0) + (anahtar === "durum" ? 16 : 0);
+    otomatik[anahtar] = Math.min(ust, Math.max(MIN_GENISLIK, Math.ceil(enUzun * KARAKTER_GENISLIGI + ek)));
+  });
+  const genislikler = { ...VARSAYILAN_GENISLIKLER, ...otomatik, ...kayitliGenislikler, ...taslakGenislikler };
+  const toplamGenislik =
+    ILK_SUTUN_GENISLIGI +
+    gorunurSutunlar.reduce((t, a) => t + (genislikler[a] ?? VARSAYILAN_GENISLIK), 0) +
+    (genislikler.islemler ?? VARSAYILAN_GENISLIKLER.islemler);
 
   function genislikSuruklemeBaslat(anahtar: string, baslangicE: React.PointerEvent) {
     const baslangicX = baslangicE.clientX;
     const baslangicGenislik = genislikler[anahtar] ?? VARSAYILAN_GENISLIK;
-    const temel = { ...VARSAYILAN_GENISLIKLER, ...kayitliGenislikler };
+    const temel = { ...VARSAYILAN_GENISLIKLER, ...otomatik, ...kayitliGenislikler };
 
     function hareket(e: PointerEvent) {
       const yeni = Math.max(MIN_GENISLIK, baslangicGenislik + (e.clientX - baslangicX));
@@ -321,9 +357,9 @@ export function DosyalarTablosu({
         </div>
       )}
     <div className="glass overflow-x-auto rounded-2xl">
-      <table className="w-full table-fixed text-left text-sm">
+      <table className="table-fixed text-left text-sm" style={{ width: toplamGenislik }}>
         <colgroup>
-          <col style={{ width: 88 }} />
+          <col style={{ width: ILK_SUTUN_GENISLIGI }} />
           {gorunurSutunlar.map((anahtar) => (
             <col key={anahtar} style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }} />
           ))}
@@ -331,7 +367,7 @@ export function DosyalarTablosu({
         </colgroup>
         <thead className="text-white/50">
           <tr>
-            <th className="p-0 pl-2">
+            <th className="p-0 pl-2.5">
               <input
                 type="checkbox"
                 checked={hepsiSecili}
@@ -341,7 +377,7 @@ export function DosyalarTablosu({
                 onChange={hepsiniDegistir}
                 aria-label="Tümünü seç"
                 title="Tümünü seç"
-                className="h-4 w-4 cursor-pointer accent-[var(--accent)]"
+                className="onay-kutusu"
               />
             </th>
             {gorunurSutunlar.map((anahtar) => (
@@ -366,22 +402,22 @@ export function DosyalarTablosu({
               key={dosya.id}
               className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
             >
-              <td className="py-0 pl-1.5 pr-1">
+              <td className="py-0 pl-2.5 pr-1">
                 {/* Sol cubuk satirin uzerine gelince kalinlasir; simge dugmesi dosyayi acar. */}
-                <div className="flex h-9 items-center gap-1.5">
+                <div className="flex h-9 items-center gap-2">
                   <input
                     type="checkbox"
                     checked={secim.has(dosya.id)}
                     onChange={() => secimiDegistir(dosya.id)}
                     aria-label="Dosyayı seç"
-                    className="h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)]"
+                    className="onay-kutusu"
                   />
-                  <span className="h-6 w-1 shrink-0 rounded-full bg-[var(--accent)] opacity-50 transition-all group-hover/satir:w-1.5 group-hover/satir:opacity-100" />
+                  <span className="hidden h-6 w-1 shrink-0 rounded-full md:block bg-[var(--accent)] opacity-50 transition-all group-hover/satir:w-1.5 group-hover/satir:opacity-100" />
                   <Link
                     href={`/kokpit/dava-dosyalari/${dosya.id}`}
                     title="Dosyayı aç"
                     aria-label="Dosyayı aç"
-                    className="flex h-7 w-8 items-center justify-center rounded-[7px] bg-[var(--accent-soft)] text-[#8fb4e8] hover:bg-[var(--accent)] hover:text-white"
+                    className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[var(--accent-soft)] text-[#8fb4e8] hover:bg-[var(--accent)] hover:text-white"
                   >
                     <svg viewBox="0 0 24 24" className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M14 4h6v6M20 4l-9 9" />
