@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 // Dugme satirin en sagindaki sabit sutunda durur. "dugmesiz": dugme yok, dosya Kokpit No
 // baglantisina dokunarak / satira cift tiklayarak acilir.
 export const ACMA_STILLERI = [
+  { kod: "goz", ad: "Göz simgesi", not: "Yuvarlak, gözlü “Görüntüle”", genislik: 36 },
   { kod: "dugmesiz", ad: "Düğmesiz", not: "KN numarasına dokununca açılır", genislik: 0 },
   { kod: "apple", ad: "Apple", not: "İnce ok, çerçevesiz", genislik: 30 },
   { kod: "microsoft", ad: "Microsoft", not: "Köşeli, ince çerçeve", genislik: 34 },
@@ -17,7 +18,7 @@ export const ACMA_STILLERI = [
 ] as const;
 
 export type AcmaStili = (typeof ACMA_STILLERI)[number]["kod"];
-export const VARSAYILAN_ACMA_STILI: AcmaStili = "bmw";
+export const VARSAYILAN_ACMA_STILI: AcmaStili = "goz";
 
 export function acmaStiliGecerliMi(x: unknown): x is AcmaStili {
   return ACMA_STILLERI.some((s) => s.kod === x);
@@ -35,9 +36,11 @@ const OK = "M9 5l7 7-7 7";
 const DIS = "M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4";
 const SAG = "M5 12h14M13 6l6 6-6 6";
 const CAPRAZ = "M7 17L17 7M8 7h9v9";
+const GOZ = "M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z";
 const UZUN = "M3 12h18M16 7l5 5-5 5";
 
 const BICIM: Record<Exclude<AcmaStili, "dugmesiz">, { sinif: string; icerik: ReactNode }> = {
+  goz: { sinif: "h-9 w-9 rounded-full border-[1.5px] border-[#4a5a78] text-[#cfd9ea]", icerik: <Simge d={GOZ} boyut={19} kalinlik={1.8} /> },
   apple: { sinif: "h-[30px] w-[30px] text-[#6db8ff]", icerik: <Simge d={OK} boyut={20} kalinlik={2.4} /> },
   microsoft: { sinif: "h-8 w-[34px] rounded-[4px] border-[1.5px] border-[#5b6b85] text-[#cfd9ea]", icerik: <Simge d={DIS} boyut={16} kalinlik={1.8} /> },
   google: { sinif: "h-8 w-[50px] rounded-full bg-[#2d3f63] text-[#c6d7ff]", icerik: <Simge d={SAG} boyut={19} kalinlik={2.2} /> },
