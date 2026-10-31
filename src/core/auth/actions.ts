@@ -48,11 +48,11 @@ export async function girisYap(
 
   // Kullanicinin hesabinda kayitli gorunum tercihi varsa bu cihaza tasinir
   // (yeni bilgisayarda da ayni tema/palet/cam gelsin).
-  if (kullanici.gorunumTema || kullanici.gorunumCam || kullanici.gorunumPalet || kullanici.gorunumPunto) {
+  if (kullanici.gorunumTema || kullanici.gorunumCam || kullanici.gorunumPalet || kullanici.gorunumPunto || kullanici.gorunumLogo) {
     cookieStore.set(
       GORUNUM_COOKIE_ADI,
       gorunumuBirlestir(
-        gorunumuCozumle(`${kullanici.gorunumTema}.${kullanici.gorunumCam}.${kullanici.gorunumPalet}.${kullanici.gorunumPunto}`),
+        gorunumuCozumle(`${kullanici.gorunumTema}.${kullanici.gorunumCam}.${kullanici.gorunumPalet}.${kullanici.gorunumPunto}.${kullanici.gorunumLogo}`),
       ),
       { path: "/", maxAge: GORUNUM_COOKIE_OMRU_SN, sameSite: "lax" },
     );

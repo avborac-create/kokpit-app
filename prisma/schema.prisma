@@ -83,6 +83,8 @@ model Kullanici {
   gorunumPalet String?
   // Yazi boyutu: kucuk / normal / buyuk / cokbuyuk. Bos = normal.
   gorunumPunto String?
+  // Uygulama logosu: k2 / k1 / k5 / s4. Bos = k2.
+  gorunumLogo  String?
 
   sorumluOlduguMusteriler        Musteri[]          @relation("MusteriSorumluAvukat")
   sorumluOlduguDosyalar          DavaDosyasi[]      @relation("DavaDosyasiSorumluAvukat")

@@ -22,6 +22,7 @@ export function gorunumuUygula(tercih: GorunumTercihi) {
   kok.setAttribute("data-cam", tercih.cam);
   kok.setAttribute("data-palet", tercih.palet);
   kok.setAttribute("data-punto", tercih.punto);
+  kok.setAttribute("data-logo", tercih.logo);
   durumCubugunuBoya(kok);
 }
 

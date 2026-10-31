@@ -38,8 +38,8 @@ export const metadata: Metadata = {
     // (gercek bir kullanicidan bildirildi, kok neden buradan bulundu).
     // Kalici cozum: /favicon.ico rotasini hic uretmemek, sadece asagidaki
     // versiyonlanabilir PNG linkine guvenmek.
-    icon: [{ url: "/icons/favicon-32.png?v=16", sizes: "32x32", type: "image/png" }],
-    apple: [{ url: "/icons/apple-touch-icon.png?v=16", sizes: "180x180", type: "image/png" }],
+    icon: [{ url: "/icons/favicon-32.png?v=17", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png?v=17", sizes: "180x180", type: "image/png" }],
   },
 };
 
@@ -58,6 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       data-cam="orta"
       data-palet="bmw"
       data-punto="normal"
+      data-logo="k2"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-svh overflow-hidden antialiased`}
     >

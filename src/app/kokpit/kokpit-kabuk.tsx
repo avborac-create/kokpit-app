@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cikisYap } from "@/core/auth/actions";
@@ -10,7 +9,7 @@ import { OneriButonu } from "@/core/oneri/oneri-butonu";
 import { GorunumMenusu } from "@/core/gorunum/gorunum-menusu";
 import { AsagiCekYenile } from "@/core/ui/asagi-cek-yenile";
 import { YenileButonu } from "@/core/ui/yenile-butonu";
-import { UYGULAMA_LOGOSU_YOLU } from "@/core/ui/marka";
+import { MarkaLogosu } from "@/core/ui/marka-logosu";
 
 // Apple'in kendi uygulamalarindaki (Ayarlar, Mail) master-detail deseni:
 // telefon genisliginde (md altinda) tek seferde tek panel gorunur - modul
@@ -45,13 +44,7 @@ export function KokpitKabuk({
         }`}
       >
         <div className="flex shrink-0 items-center gap-3 border-b border-white/10 px-5 py-5">
-          <Image
-            src={UYGULAMA_LOGOSU_YOLU}
-            alt=""
-            width={36}
-            height={36}
-            className="shrink-0 rounded-xl"
-          />
+          <MarkaLogosu boyut={36} className="shrink-0 rounded-xl" />
           <div>
             <p className="text-base font-semibold tracking-tight text-white">KOKPİT</p>
             <p className="text-sm text-white/45">Eces Hukuk Bürosu</p>

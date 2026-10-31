@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { gorunumTercihiniKaydet } from "./actions";
 import {
+  LOGOLAR,
+  LOGO_ETIKETLERI,
   PALETLER,
   PALET_BILGISI,
   PUNTO_ETIKETLERI,
@@ -113,6 +115,31 @@ export function GorunumMenusu() {
                     <i className="block h-5 w-3" style={{ background: bilgi.renkler[2] }} />
                   </span>
                   <span className="min-w-0 leading-tight">{bilgi.ad}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <Baslik className="mt-4">Logo</Baslik>
+          <div className="grid grid-cols-4 gap-2" role="group">
+            {LOGOLAR.map((logo) => {
+              const seciliMi = tercih.logo === logo;
+              return (
+                <button
+                  key={logo}
+                  type="button"
+                  onClick={() => degistir({ logo })}
+                  aria-pressed={seciliMi}
+                  title={LOGO_ETIKETLERI[logo]}
+                  className={`flex flex-col items-center gap-1 rounded-xl border p-1.5 text-[10px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
+                    seciliMi
+                      ? "border-[var(--accent)] bg-[var(--accent-soft)] text-white"
+                      : "border-white/10 text-white/60 hover:bg-white/[0.06]"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/icons/logo-${logo}.png`} alt="" width={40} height={40} className="h-10 w-10 rounded-xl" />
+                  <span className="leading-tight">{LOGO_ETIKETLERI[logo]}</span>
                 </button>
               );
             })}

@@ -582,3 +582,10 @@ html[data-tema="acik"] .text-\[\#6e6e73\] { color: #5c6678; }
   background-color: var(--accent);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E");
 }
+
+/* Uygulama logosu: yalniz <html data-logo> ile secilen gorunur (bkz. core/ui/marka-logosu.tsx). */
+.marka-logo{display:none}
+html[data-logo="k2"] .marka-logo-k2,
+html[data-logo="k1"] .marka-logo-k1,
+html[data-logo="k5"] .marka-logo-k5,
+html[data-logo="s4"] .marka-logo-s4{display:block}
