@@ -1653,3 +1653,26 @@ model BekleyenGorev {
   @@index([kaynak])
   @@map("bekleyen_gorevler")
 }
+
+// Web Push (telefon/bilgisayar bildirimi): uygulamanin VAPID anahtar cifti (tek satir) ve
+// kullanicilarin cihaz abonelikleri.
+model PushAnahtari {
+  id         String @id
+  publicKey  String
+  privateKey String
+
+  @@map("push_anahtarlari")
+}
+
+model PushAboneligi {
+  id              String   @id @default(cuid())
+  kullaniciId     String
+  endpoint        String   @unique
+  p256dh          String
+  auth            String
+  cihaz           String?
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([kullaniciId])
+  @@map("push_abonelikleri")
+}

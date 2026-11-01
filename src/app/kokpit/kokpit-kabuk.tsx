@@ -102,6 +102,14 @@ export function KokpitKabuk({
           </div>
           <div className="flex items-center gap-1.5 md:gap-2">
             <YenileButonu />
+            <Link
+              href="/kokpit/bildirimler"
+              aria-label="Bildirimler"
+              title="Bildirimler"
+              className="glass inline-flex h-8 w-8 items-center justify-center rounded-full text-white/85 outline-none transition-colors hover:bg-white/10 md:h-9 md:w-9"
+            >
+              <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2 7.5 2 7.5H4S6 15 6 9ZM10 20a2 2 0 0 0 4 0" /></svg>
+            </Link>
             <OneriButonu />
             <GorunumMenusu />
             <form action={cikisYap}>
