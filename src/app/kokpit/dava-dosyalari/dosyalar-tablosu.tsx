@@ -553,8 +553,8 @@ export function DosyalarTablosu({
       </div>
       <div className={`glass overflow-x-auto rounded-2xl`}>
         <table
-          className="table-fixed text-left text-sm"
-          style={{ width: toplamGenislik }}
+          className="table-fixed text-left text-sm [@media(pointer:coarse)]:[--ac-sutun:76px]"
+          style={{ width: `calc(${toplamGenislik}px + var(--ac-sutun, 0px))` }}
         >
           <colgroup>
             {secimModu && <col style={{ width: secimSutunu }} />}
@@ -564,6 +564,7 @@ export function DosyalarTablosu({
                 style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }}
               />
             ))}
+            {!secimModu && <col className="hidden [@media(pointer:coarse)]:table-column" style={{ width: 76 }} />}
           </colgroup>
           <thead className="text-white/50">
             <tr>
@@ -594,6 +595,9 @@ export function DosyalarTablosu({
                   suruklemeBaslat={(e) => genislikSuruklemeBaslat(anahtar, e)}
                 />
               ))}
+              {!secimModu && (
+                <th className="sticky right-0 hidden w-[76px] bg-[var(--yuzey,#1c2432)] p-0 [@media(pointer:coarse)]:table-cell" />
+              )}
             </tr>
           </thead>
           <tbody>
@@ -606,7 +610,9 @@ export function DosyalarTablosu({
                   setAktifId(dosya.id);
                   if (window.matchMedia("(pointer: coarse)").matches) satirdanAc(e, dosya.id, true);
                 }}
-                onDoubleClick={(e) => satirdanAc(e, dosya.id, false)}
+                onDoubleClick={(e) => {
+                  if (!window.matchMedia("(pointer: coarse)").matches) satirdanAc(e, dosya.id, false);
+                }}
                 className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] [@media(pointer:fine)]:cursor-pointer ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""} ${aktifId === dosya.id ? "bg-[color-mix(in_srgb,var(--accent)_16%,transparent)] shadow-[inset_3px_0_0_var(--accent)]" : ""}`}
               >
                 {secimModu && (
@@ -660,21 +666,25 @@ export function DosyalarTablosu({
                             {altSayisi} alt
                           </span>
                         )}
-                        {!secimModu && (
-                          <button
-                            type="button"
-                            onClick={() => router.push(`/kokpit/dava-dosyalari/${dosya.id}`)}
-                            className="ml-1 hidden shrink-0 rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-medium text-white [@media(pointer:coarse)]:block"
-                          >
-                            Aç
-                          </button>
-                        )}
                       </div>
                     ) : (
                       <Hucre>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
                     )}
                   </td>
                 ))}
+                {!secimModu && (
+                  <td className="sticky right-0 hidden bg-[var(--yuzey,#1c2432)] p-0 [@media(pointer:coarse)]:table-cell">
+                    <div className="flex items-center justify-center px-2">
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/kokpit/dava-dosyalari/${dosya.id}`)}
+                        className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-sm font-medium text-white"
+                      >
+                        Aç
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
             {dosyalar.length === 0 && (
