@@ -59,7 +59,7 @@ export default async function MusterilerSayfasi({
       </form>
 
       <div className="glass overflow-x-auto rounded-2xl">
-        <table className="w-full text-left text-sm">
+        <table className="w-full whitespace-nowrap text-left text-sm">
           <thead className="text-white/50">
             <tr>
               <th className="px-4 py-3 font-medium">Ad Soyad / Unvan</th>
@@ -73,7 +73,7 @@ export default async function MusterilerSayfasi({
           <tbody>
             {musteriler.map((musteri) => (
               <tr key={musteri.id} className="border-t border-white/[0.06] hover:bg-white/[0.04]">
-                <td className="px-4 py-3">
+                <td className="max-w-[15rem] truncate px-4 py-3" title={musteri.adSoyadUnvan}>
                   <Link
                     href={`/kokpit/musteriler/${musteri.id}`}
                     className="font-medium text-white hover:text-[#6db8ff] hover:underline"
