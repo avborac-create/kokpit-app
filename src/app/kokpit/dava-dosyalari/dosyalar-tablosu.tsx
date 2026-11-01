@@ -10,7 +10,6 @@ import {
   kokpitNoGoster,
   buroNoGoster,
 } from "@/modules/dava-dosyasi/lib/kokpit-no";
-import { ACMA_STILLERI, AcmaDugmesi, VARSAYILAN_ACMA_STILI, acmaStiliGecerliMi, type AcmaStili } from "./acma-dugmesi";
 import { TopluIslemCubugu } from "./toplu-islem-cubugu";
 
 type Dosya = Awaited<ReturnType<typeof davaDosyalariniListele>>[number];
@@ -203,33 +202,6 @@ function gizlileriAbone(d: () => void) {
   return () => gizliDinleyiciler.delete(d);
 }
 
-// Kisiye ozel acma dugmesi stili (ilkel deger oldugu icin onbellek gerekmez).
-const ACMA_ANAHTARI = "kokpit-dava-dosyalari-acma-dugmesi";
-const acmaDinleyiciler = new Set<() => void>();
-
-function acmaStiliniOku(): AcmaStili {
-  try {
-    const v = localStorage.getItem(ACMA_ANAHTARI);
-    return acmaStiliGecerliMi(v) ? v : VARSAYILAN_ACMA_STILI;
-  } catch {
-    return VARSAYILAN_ACMA_STILI;
-  }
-}
-
-function acmaStiliniYaz(stil: AcmaStili) {
-  try {
-    localStorage.setItem(ACMA_ANAHTARI, stil);
-  } catch {
-    // localStorage erisilemez - sessizce yok say
-  }
-  acmaDinleyiciler.forEach((d) => d());
-}
-
-function acmaStiliAbone(d: () => void) {
-  acmaDinleyiciler.add(d);
-  return () => acmaDinleyiciler.delete(d);
-}
-
 function genislikleriAbone(dinleyici: () => void) {
   dinleyiciler.add(dinleyici);
   return () => dinleyiciler.delete(dinleyici);
@@ -370,13 +342,21 @@ export function DosyalarTablosu({
   const [secim, setSecim] = useState<Set<string>>(new Set());
   const [secimModu, setSecimModu] = useState(false);
   const router = useRouter();
-  const acmaStili = useSyncExternalStore(acmaStiliAbone, acmaStiliniOku, () => VARSAYILAN_ACMA_STILI);
-  const acmaGenisligi = ACMA_STILLERI.find((x) => x.kod === acmaStili)?.genislik ?? 0;
-  // 14px dolgu + (secim kutusu 18px + bosluk) + (acma dugmesi + bosluk)
-  // Ilk sutunun basina giren oge payi: secim kutusu (18px + bosluk) ve varsa acma dugmesi.
   const ilkEk = 0;
-  // Sagda sabit duran giris dugmesi sutunu.
-  const sonSutun = 30 + (acmaGenisligi ? acmaGenisligi + 8 : 0) + 20;
+  // Secim modunda tablonun basina giren onay kutusu sutunu (sabit, solda).
+  const secimSutunu = secimModu ? 44 : 0;
+  // Dosyayi acma: parmakla tek dokunus, fare ile cift tiklama. Metin secilmisse (uzun basma /
+  // surukleme) satir acilmaz; onay kutusu, baglanti, dugme gibi ogelere basmak da acmaz.
+  function satirdanAc(e: React.MouseEvent, id: string, dokunmatik: boolean) {
+    if ((e.target as HTMLElement).closest("a,button,input,label,select,details")) return;
+    if (window.getSelection()?.toString()) return;
+    if (secimModu) {
+      if (!dokunmatik) return;
+      secimiDegistir(id);
+      return;
+    }
+    router.push(`/kokpit/dava-dosyalari/${id}`);
+  }
   function secimModunuDegistir() {
     setSecim(new Set());
     setSecimModu((m) => !m);
@@ -440,7 +420,7 @@ export function DosyalarTablosu({
       (t, a) => t + (genislikler[a] ?? VARSAYILAN_GENISLIK),
       0,
     ) +
-    sonSutun;
+    secimSutunu;
 
   function genislikSuruklemeBaslat(
     anahtar: string,
@@ -481,26 +461,6 @@ export function DosyalarTablosu({
   return (
     <>
       <div className="mb-2 flex justify-end gap-2 text-xs">
-        <details className="relative">
-          <summary className="cursor-pointer list-none rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
-            Açma düğmesi
-          </summary>
-          <div className="absolute right-0 z-30 mt-1 w-64 rounded-xl border border-white/20 bg-[var(--yuzey,#1c2432)] p-2 shadow-2xl">
-            {ACMA_STILLERI.map((x) => (
-              <label key={x.kod} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-white hover:bg-white/10">
-                <input type="radio" name="acma-stili" className="sr-only" checked={acmaStili === x.kod} onChange={() => acmaStiliniYaz(x.kod)} />
-                <span className={`h-3 w-3 shrink-0 rounded-full border ${acmaStili === x.kod ? "border-[var(--accent)] bg-[var(--accent)]" : "border-white/40"}`} />
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span>{x.ad}</span>
-                  <span className="truncate text-xs text-white/50">{x.not}</span>
-                </span>
-                <span className="flex w-[50px] justify-center">
-                  <AcmaDugmesi stil={x.kod} />
-                </span>
-              </label>
-            ))}
-          </div>
-        </details>
         <details className="relative">
           <summary className="cursor-pointer list-none rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
             Sütunlar{gizliSutunlar.length > 0 ? ` (${gizliSutunlar.length} gizli)` : ""}
@@ -545,15 +505,13 @@ export function DosyalarTablosu({
             </button>
           </>
         )}
-        {secimModu && (
-          <button
-            type="button"
-            onClick={secimModunuDegistir}
-            className="rounded-full bg-[var(--accent)] px-3 py-1 text-white"
-          >
-            Seçimi kapat
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={secimModunuDegistir}
+          className={`rounded-full px-3 py-1 ${secimModu ? "bg-[var(--accent)] text-white" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
+        >
+          {secimModu ? "Seçimi kapat" : "Seç"}
+        </button>
       </div>
       <div className={`glass overflow-x-auto rounded-2xl`}>
         <table
@@ -561,16 +519,33 @@ export function DosyalarTablosu({
           style={{ width: toplamGenislik }}
         >
           <colgroup>
+            {secimModu && <col style={{ width: secimSutunu }} />}
             {gorunurSutunlar.map((anahtar) => (
               <col
                 key={anahtar}
                 style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }}
               />
             ))}
-            <col style={{ width: sonSutun }} />
           </colgroup>
           <thead className="text-white/50">
             <tr>
+              {secimModu && (
+                <th className="sticky left-0 z-10 bg-[var(--yuzey,#1c2432)] p-0">
+                  <div className="flex h-9 items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={hepsiSecili}
+                      ref={(el) => {
+                        if (el) el.indeterminate = seciliIdler.length > 0 && !hepsiSecili;
+                      }}
+                      onChange={hepsiniDegistir}
+                      aria-label="Tümünü seç"
+                      title="Tümünü seç"
+                      className="onay-kutusu"
+                    />
+                  </div>
+                </th>
+              )}
               {gorunurSutunlar.map((anahtar) => (
                 <SutunBasligi
                   key={anahtar}
@@ -581,36 +556,31 @@ export function DosyalarTablosu({
                   suruklemeBaslat={(e) => genislikSuruklemeBaslat(anahtar, e)}
                 />
               ))}
-              <th className="sticky right-0 z-10 bg-[var(--yuzey,#1c2432)] p-0">
-                <div className="flex items-center justify-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={secimModu && hepsiSecili}
-                    ref={(el) => {
-                      if (el) el.indeterminate = secimModu && seciliIdler.length > 0 && !hepsiSecili;
-                    }}
-                    onChange={() => (secimModu ? hepsiniDegistir() : setSecimModu(true))}
-                    aria-label={secimModu ? "Tümünü seç" : "Seçim modunu aç"}
-                    title={secimModu ? "Tümünü seç" : "Dosya seçmek için tıklayın"}
-                    className="onay-kutusu"
-                  />
-                  {/* Satirlardaki giris dugmesiyle ayni genislikte bos pay: kutular alt alta hizalanir. */}
-                  <span className="shrink-0" style={{ width: acmaGenisligi }} aria-hidden="true" />
-                </div>
-              </th>
             </tr>
           </thead>
           <tbody>
             {satirlar.map(({ dosya, seviye, altSayisi }) => (
               <tr
                 key={dosya.id}
-                onDoubleClick={(e) => {
-                // Baglanti, dugme, kutu gibi etkilesimli ogelere cift tiklama dosyayi acmaz.
-                if ((e.target as HTMLElement).closest("a,button,input,label,select,details")) return;
-                router.push(`/kokpit/dava-dosyalari/${dosya.id}`);
-              }}
-              className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
+                onClick={(e) => {
+                  if (window.matchMedia("(pointer: coarse)").matches) satirdanAc(e, dosya.id, true);
+                }}
+                onDoubleClick={(e) => satirdanAc(e, dosya.id, false)}
+                className={`group/satir cursor-pointer border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
               >
+                {secimModu && (
+                  <td className={`sticky left-0 z-10 p-0 ${secim.has(dosya.id) ? "bg-[color-mix(in_srgb,var(--yuzey,#1c2432),var(--accent)_22%)]" : "bg-[var(--yuzey,#1c2432)]"}`}>
+                    <div className="flex h-12 items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={secim.has(dosya.id)}
+                        onChange={() => secimiDegistir(dosya.id)}
+                        aria-label="Dosyayı seç"
+                        className="onay-kutusu"
+                      />
+                    </div>
+                  </td>
+                )}
                 {gorunurSutunlar.map((anahtar, sutunIndex) => (
                   <td
                     key={anahtar}
@@ -655,27 +625,12 @@ export function DosyalarTablosu({
                     )}
                   </td>
                 ))}
-                <td className={`sticky right-0 z-10 border-t border-white/[0.06] p-0 ${secim.has(dosya.id) ? "bg-[color-mix(in_srgb,var(--yuzey,#1c2432),var(--accent)_22%)]" : "bg-[var(--yuzey,#1c2432)]"}`}>
-                  <div className="flex h-12 items-center justify-center gap-2">
-                    {secimModu && (
-                      <input
-                        type="checkbox"
-                        checked={secim.has(dosya.id)}
-                        onChange={() => secimiDegistir(dosya.id)}
-                        aria-label="Dosyayı seç"
-                        className="onay-kutusu"
-                      />
-                    )}
-                    {!secimModu && <span className="w-[18px] shrink-0" aria-hidden="true" />}
-                    <AcmaDugmesi stil={acmaStili} href={`/kokpit/dava-dosyalari/${dosya.id}`} />
-                  </div>
-                </td>
               </tr>
             ))}
             {dosyalar.length === 0 && (
               <tr>
                 <td
-                  colSpan={gorunurSutunlar.length + 1}
+                  colSpan={gorunurSutunlar.length + (secimModu ? 1 : 0)}
                   className="px-4 py-8 text-center text-white/40"
                 >
                   Kayıt bulunamadı.
