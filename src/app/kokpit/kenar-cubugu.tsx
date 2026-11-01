@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { BuroRolu, KullaniciRolu } from "@prisma/client";
@@ -55,6 +55,20 @@ function dosyalarAbone(dinleyici: () => void) {
   return () => dosyalarDinleyicileri.delete(dinleyici);
 }
 
+// Son acilan modul: ana sayfaya (telefonda menu listesine) donuldugunde menude
+// o modul isaretli kalir; kullanici nerede kaldigini hatirlar.
+const SON_MODUL_ANAHTARI = "kokpit-son-modul";
+function sonModulOku(): string | null {
+  try {
+    return localStorage.getItem(SON_MODUL_ANAHTARI);
+  } catch {
+    return null;
+  }
+}
+function sonModulAbone() {
+  return () => {};
+}
+
 // iOS Ayarlar uygulamasindaki bilgi mimarisi: modul listesi gibi degil,
 // gunluk is akisi gibi hissettiren, sabit/kisa gruplarla ayrilmis bir sol
 // menu (bkz. ARCHITECTURE.md "Sol Menü Yeniden Tasarımı"). Bolum
@@ -88,11 +102,32 @@ export function KenarCubugu({
     return true;
   }
 
+  const sonModul = useSyncExternalStore(sonModulAbone, sonModulOku, () => null);
+  useEffect(() => {
+    if (yol !== "/kokpit" && yol.startsWith("/kokpit/")) {
+      try {
+        localStorage.setItem(SON_MODUL_ANAHTARI, yol);
+      } catch {
+        // localStorage erisilemez - sessizce yok say
+      }
+    }
+  }, [yol]);
+  // Yalniz ana sayfadayken gecerli: son modulun yolu bu oge ile basliyorsa "son" sayilir.
+  const sonVar = yol === "/kokpit" && !!sonModul;
+  function sonMu(modulYol: string) {
+    return sonVar && modulYol !== "/kokpit" && !!sonModul && (sonModul === modulYol || sonModul.startsWith(modulYol + "/"));
+  }
+
   const hukukDosyalariAktifMi = yol.startsWith("/kokpit/dava-dosyalari");
   const dosyalarCocukAktifMi =
     yol.startsWith("/kokpit/dava-dosyalari") ||
     yol.startsWith("/kokpit/cmk-dosyalari") ||
-    yol.startsWith("/kokpit/haciz-raporlari");
+    yol.startsWith("/kokpit/haciz-raporlari") ||
+    (sonVar &&
+      !!sonModul &&
+      (sonModul.startsWith("/kokpit/dava-dosyalari") ||
+        sonModul.startsWith("/kokpit/cmk-dosyalari") ||
+        sonModul.startsWith("/kokpit/haciz-raporlari")));
   const kayitliAcikMi = useSyncExternalStore(dosyalarAbone, dosyalarDegeriOku, () => null);
   const dosyalarAcikMi = kayitliAcikMi ?? dosyalarCocukAktifMi;
 
@@ -106,14 +141,14 @@ export function KenarCubugu({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-3">
-        <MenuBagi modul={anaSayfa} ikon={AnaSayfaIkonu} seciliMi={yol === "/kokpit"} />
-        {gorunurMu("buro-takvimi") && <MenuBagi modul={modulHaritasi.get("buro-takvimi")!} ikon={TakvimIkonu} seciliMi={yol.startsWith("/kokpit/takvim")} />}
+        <MenuBagi modul={anaSayfa} ikon={AnaSayfaIkonu} seciliMi={yol === "/kokpit"} telefondaSoluk={sonVar} />
+        {gorunurMu("buro-takvimi") && <MenuBagi modul={modulHaritasi.get("buro-takvimi")!} ikon={TakvimIkonu} seciliMi={yol.startsWith("/kokpit/takvim")} sonMu={sonMu(modulHaritasi.get("buro-takvimi")!.yol)} />}
 
         {(gorunurMu("musteriler") ||
           gorunurMu("dava-dosyalari") ||
           gorunurMu("cmk-dosyalari")) && <BolumBasligi>MODÜLLER</BolumBasligi>}
         {gorunurMu("musteriler") && (
-          <MenuBagi modul={modulHaritasi.get("musteriler")!} ikon={MuvekkillerIkonu} seciliMi={yol.startsWith("/kokpit/musteriler")} />
+          <MenuBagi modul={modulHaritasi.get("musteriler")!} ikon={MuvekkillerIkonu} seciliMi={yol.startsWith("/kokpit/musteriler")} sonMu={sonMu(modulHaritasi.get("musteriler")!.yol)} />
         )}
         {(gorunurMu("dava-dosyalari") || gorunurMu("cmk-dosyalari") || gorunurMu("haciz-raporlari")) && (
           <>
@@ -137,6 +172,7 @@ export function KenarCubugu({
                     modul={modulHaritasi.get("dava-dosyalari")!}
                     ikon={HukukDosyalariIkonu}
                     seciliMi={hukukDosyalariAktifMi}
+                    sonMu={sonMu(modulHaritasi.get("dava-dosyalari")!.yol)}
                   />
                 )}
                 {gorunurMu("cmk-dosyalari") && (
@@ -144,6 +180,7 @@ export function KenarCubugu({
                     modul={modulHaritasi.get("cmk-dosyalari")!}
                     ikon={CezaDosyalariIkonu}
                     seciliMi={yol.startsWith("/kokpit/cmk-dosyalari")}
+                    sonMu={sonMu(modulHaritasi.get("cmk-dosyalari")!.yol)}
                     rozetSayisi={cmkDikkatSayisi}
                   />
                 )}
@@ -159,6 +196,7 @@ export function KenarCubugu({
               modul={modulHaritasi.get("oneriler")!}
               ikon={OnerilerIkonu}
               seciliMi={yol.startsWith("/kokpit/oneriler")}
+              sonMu={sonMu(modulHaritasi.get("oneriler")!.yol)}
             />
           </>
         )}
@@ -166,7 +204,7 @@ export function KenarCubugu({
 
       {ayarlar && (
         <div className="border-t border-white/10 p-3">
-          <MenuBagi modul={ayarlar} ikon={AyarlarIkonu} seciliMi={yol.startsWith("/kokpit/ayarlar")} />
+          <MenuBagi modul={ayarlar} ikon={AyarlarIkonu} seciliMi={yol.startsWith("/kokpit/ayarlar")} sonMu={sonMu(ayarlar.yol)} />
         </div>
       )}
     </div>
@@ -191,11 +229,17 @@ function MenuBagi({
   modul,
   ikon: Ikon,
   seciliMi,
+  sonMu = false,
+  telefondaSoluk = false,
   rozetSayisi = 0,
 }: {
   modul: ModulTanimi;
   ikon: (props: { className?: string }) => React.ReactElement;
   seciliMi: boolean;
+  // Ana sayfadayken son acilan modul (telefonda menu isaretli kalir).
+  sonMu?: boolean;
+  // Telefonda ana sayfa satiri isaretsiz kalir (son modul isaretlidir).
+  telefondaSoluk?: boolean;
   rozetSayisi?: number;
 }) {
   if (!modul.aktif) {
@@ -211,15 +255,19 @@ function MenuBagi({
     );
   }
 
+  const secili = seciliMi || sonMu;
+  const seciliSinif = telefondaSoluk
+    ? "md:bg-white/[0.1] md:text-white md:shadow-[inset_3px_0_0_var(--link)] max-md:text-white/65"
+    : "bg-white/[0.1] text-white shadow-[inset_3px_0_0_var(--link)]";
   return (
     <Link
       href={modul.yol}
       aria-current={seciliMi ? "page" : undefined}
       className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-[15px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] ${
-        seciliMi ? "bg-white/[0.1] text-white shadow-[inset_3px_0_0_var(--link)]" : "text-white/65 hover:bg-white/[0.06]"
+        secili ? seciliSinif : "text-white/65 hover:bg-white/[0.06]"
       }`}
     >
-      <Ikon className={`h-[18px] w-[18px] shrink-0 ${seciliMi ? "text-[#6db8ff]" : ""}`} />
+      <Ikon className={`h-[18px] w-[18px] shrink-0 ${secili && !telefondaSoluk ? "text-[#6db8ff]" : ""}`} />
       <span className="flex-1 truncate font-medium">{modul.ad}</span>
       {rozetSayisi > 0 && (
         <span className="rounded-full bg-[var(--danger-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[#ff7a70]">
