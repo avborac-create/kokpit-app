@@ -37,6 +37,15 @@ export function TakvimIkonu(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function IslerIkonu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Taban {...props}>
+      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h7A2.5 2.5 0 0 1 16 5.5v5a2.5 2.5 0 0 1-2.5 2.5H9l-3.2 2.6a.4.4 0 0 1-.65-.3V13A2.5 2.5 0 0 1 4 10.5v-5Z" />
+      <path d="M7.5 8h5" />
+    </Taban>
+  );
+}
+
 export function GorevlerIkonu(props: SVGProps<SVGSVGElement>) {
   return (
     <Taban {...props}>

@@ -1676,3 +1676,79 @@ model PushAboneligi {
   @@index([kullaniciId])
   @@map("push_abonelikleri")
 }
+
+// "Isler": Telegram konularinin yerini alan gorev sistemi. Her is bir konudur; durumu, kontrol listesi
+// (alt gorevler) ve yorum akisi vardir. Durum: BASLATILMADI | BASLATILDI | DONULECEK | TAMAMLANDI.
+model Is {
+  id               String       @id @default(cuid())
+  baslik           String
+  aciklama         String?
+  durum            String       @default("BASLATILMADI")
+  sorumluId        String?
+  olusturanId      String?
+  olusturmaTarihi  DateTime     @default(now())
+  guncellemeTarihi DateTime     @default(now())
+  tamamlanmaTarihi DateTime?
+  maddeler         IsMaddesi[]
+  yorumlar         IsYorumu[]
+  yardimlar        IsYardimi[]
+
+  @@index([durum])
+  @@index([sorumluId, durum])
+  @@map("isler")
+}
+
+model IsMaddesi {
+  id    String  @id @default(cuid())
+  isId  String
+  is    Is      @relation(fields: [isId], references: [id], onDelete: Cascade)
+  metin String
+  tamam Boolean @default(false)
+  sira  Int     @default(0)
+
+  @@index([isId])
+  @@map("is_maddeleri")
+}
+
+model IsYorumu {
+  id     String   @id @default(cuid())
+  isId   String
+  is     Is       @relation(fields: [isId], references: [id], onDelete: Cascade)
+  yazanId String?
+  metin  String
+  tarih  DateTime @default(now())
+  ekler  IsEki[]
+
+  @@index([isId, tarih])
+  @@map("is_yorumlari")
+}
+
+// Yorumlara eklenen fotograf/belge (Vercel Blob, ozel depo; okuma /api/isler/dosya uzerinden).
+model IsEki {
+  id      String    @id @default(cuid())
+  isId    String
+  yorumId String
+  yorum   IsYorumu  @relation(fields: [yorumId], references: [id], onDelete: Cascade)
+  url     String
+  ad      String
+  tur     String
+
+  @@index([isId])
+  @@index([yorumId])
+  @@map("is_ekleri")
+}
+
+// Yardim istegi: is sahibi baska bir kullanicidan yardim ister; is, yardim edenin listesinde de "Yardim"
+// etiketiyle gorunur. Ayri kopya YOK: ayni is (ayni durum, kontrol listesi, yorumlar) iki kanalda gosterilir.
+model IsYardimi {
+  id          String   @id @default(cuid())
+  isId        String
+  is          Is       @relation(fields: [isId], references: [id], onDelete: Cascade)
+  isteyenId   String
+  yardimciId  String
+  tarih       DateTime @default(now())
+
+  @@unique([isId, yardimciId])
+  @@index([yardimciId])
+  @@map("is_yardimlari")
+}
