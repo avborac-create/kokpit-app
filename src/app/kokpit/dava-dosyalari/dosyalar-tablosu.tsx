@@ -609,7 +609,7 @@ export function DosyalarTablosu({
                 if ((e.target as HTMLElement).closest("a,button,input,label,select,details")) return;
                 router.push(`/kokpit/dava-dosyalari/${dosya.id}`);
               }}
-              className={`group/satir select-none border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
+              className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
               >
                 {gorunurSutunlar.map((anahtar, sutunIndex) => (
                   <td
