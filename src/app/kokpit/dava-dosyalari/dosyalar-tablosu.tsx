@@ -503,7 +503,7 @@ export function DosyalarTablosu({
           <summary className="cursor-pointer list-none rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
             Sütunlar{gizliSutunlar.length > 0 ? ` (${gizliSutunlar.length} gizli)` : ""}
           </summary>
-          <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-white/20 bg-[var(--yuzey,#1c2432)] p-2 shadow-2xl">
+          <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl max-md:fixed max-md:inset-x-3 max-md:w-auto max-md:max-h-[60vh] max-md:overflow-y-auto border border-white/20 bg-[var(--yuzey,#1c2432)] p-2 shadow-2xl">
             {tumSutunlar.map((anahtar) => (
               <label key={anahtar} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm text-white hover:bg-white/10">
                 <input
@@ -553,7 +553,7 @@ export function DosyalarTablosu({
       </div>
       <div className={`glass overflow-x-auto rounded-2xl`}>
         <table
-          className="table-fixed text-left text-sm [@media(pointer:coarse)]:[--ac-sutun:76px]"
+          className="table-fixed text-left text-sm [@media(pointer:coarse)]:[--ac-sutun:52px]"
           style={{ width: `calc(${toplamGenislik}px + var(--ac-sutun, 0px))` }}
         >
           <colgroup>
@@ -564,7 +564,7 @@ export function DosyalarTablosu({
                 style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }}
               />
             ))}
-            {!secimModu && <col className="hidden [@media(pointer:coarse)]:table-column" style={{ width: 76 }} />}
+            {!secimModu && <col className="hidden [@media(pointer:coarse)]:table-column" style={{ width: 52 }} />}
           </colgroup>
           <thead className="text-white/50">
             <tr>
@@ -596,7 +596,7 @@ export function DosyalarTablosu({
                 />
               ))}
               {!secimModu && (
-                <th className="sticky right-0 hidden w-[76px] bg-[var(--yuzey,#1c2432)] p-0 [@media(pointer:coarse)]:table-cell" />
+                <th className="sticky right-0 hidden w-[52px] bg-[var(--yuzey,#1c2432)] p-0 [@media(pointer:coarse)]:table-cell" />
               )}
             </tr>
           </thead>
@@ -678,9 +678,10 @@ export function DosyalarTablosu({
                       <button
                         type="button"
                         onClick={() => router.push(`/kokpit/dava-dosyalari/${dosya.id}`)}
-                        className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-sm font-medium text-white"
+                        aria-label="Dosyayı aç"
+                        className="flex h-9 w-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent)_22%,transparent)] text-[var(--accent)] active:bg-[var(--accent)] active:text-white"
                       >
-                        Aç
+                        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
                       </button>
                     </div>
                   </td>
