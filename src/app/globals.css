@@ -595,3 +595,15 @@ html, body { overscroll-behavior: none; }
 @media (min-width: 768px) {
   [data-dar="true"] .menu-grup > .menu-satir + .menu-satir::before { left: 10px; right: 10px; }
 }
+
+/* Sutun genisligi tutamaclari (bkz. sutun-boyutlandirici.tsx): her tablonun baslik hucresinin sag kenarinda. */
+th.sutun-th { position: relative; }
+.sutun-tutamac { position: absolute; top: 0; right: 0; bottom: 0; width: 14px; cursor: col-resize; touch-action: none; user-select: none; z-index: 2; }
+.sutun-tutamac::after { content: ""; position: absolute; right: 3px; top: 25%; bottom: 25%; width: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.14); }
+.sutun-tutamac:hover::after, .sutun-tutamac.aktif::after { background: var(--accent); width: 3px; }
+@media (pointer: coarse) {
+  .sutun-tutamac { width: 24px; }
+  .sutun-tutamac::after { right: 6px; background: rgba(255, 255, 255, 0.24); }
+}
+table.sutun-ayarli { table-layout: fixed; }
+table.sutun-ayarli th, table.sutun-ayarli td { overflow: hidden; text-overflow: ellipsis; }

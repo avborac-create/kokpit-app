@@ -10,6 +10,7 @@ import { GorunumMenusu } from "@/core/gorunum/gorunum-menusu";
 import { AsagiCekYenile } from "@/core/ui/asagi-cek-yenile";
 import { YenileButonu } from "@/core/ui/yenile-butonu";
 import { MarkaLogosu } from "@/core/ui/marka-logosu";
+import { SutunBoyutlandirici } from "@/core/ui/sutun-boyutlandirici";
 
 // Masaustunde sol menu daraltilabilir: daralinca yalniz renkli ikon seridi kalir.
 // Tercih localStorage'da tutulur (useSyncExternalStore: SSR'da hep "genis").
@@ -115,6 +116,7 @@ export function KokpitKabuk({
           {children}
         </main>
         <AsagiCekYenile hedef={anaAlanRef} />
+        <SutunBoyutlandirici />
       </div>
     </div>
   );

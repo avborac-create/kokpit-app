@@ -553,6 +553,7 @@ export function DosyalarTablosu({
       </div>
       <div className={`glass overflow-x-auto rounded-2xl`}>
         <table
+          data-sutun-ayari="kapali"
           className="table-fixed text-left text-sm [@media(pointer:coarse)]:[--ac-sutun:52px]"
           style={{ width: `calc(${toplamGenislik}px + var(--ac-sutun, 0px))` }}
         >
