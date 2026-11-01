@@ -18,7 +18,7 @@ const alan = "rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 text-s
 const tarihYaz = (g: string) => g.split("-").reverse().join(".");
 const sayiAl = (v: string) => (v.trim() === "" ? null : Math.max(0, Number(v.replace(",", ".")) || 0));
 
-// Dava Degeri: her talep maddesi icin tutar, kalem, tur, kismi dava ve artirim/islah gecmisi.
+// Dava Degeri: her satirda yalniz tutar + ne icin oldugu; tur, kismi dava ve artirim/islah "..." altinda.
 export function TalepKalemleriPaneli({
   dosyaId,
   maddeler,
@@ -30,6 +30,7 @@ export function TalepKalemleriPaneli({
 }) {
   const [ekstralar, setEkstralar] = useState<TalepEkstrasi[]>(maddeler.map((_, i) => baslangic[i] ?? bosEkstra()));
   const [acikArtis, setAcikArtis] = useState<number | null>(null);
+  const [acikAyrinti, setAcikAyrinti] = useState<Set<number>>(new Set());
   const [artis, setArtis] = useState<{ tarih: string; tur: string; tutar: string }>({ tarih: "", tur: "Islah", tutar: "" });
   const [degisti, setDegisti] = useState(false);
   const [mesaj, setMesaj] = useState("");
@@ -81,121 +82,133 @@ export function TalepKalemleriPaneli({
       {maddeler.map((metin, i) => {
         const e = ekstralar[i];
         const ilk = ilkTalep(metin, e);
+        const ayrintiVar = !!e.tur || e.kismi || e.artislar.length > 0;
+        const ayrintiAcik = acikAyrinti.has(i);
         return (
-          <div key={i} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-            <p className="text-sm text-white/85">
-              <span className="mr-1.5 text-white/40">{i + 1}.</span>
-              {metin}
-            </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <label className="flex items-center gap-1 text-xs text-white/50">
+          <div key={i} className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1 text-sm text-white/50">
                 ₺
                 <input
                   inputMode="decimal"
-                  value={e.tutar ?? ""}
-                  placeholder={ilk > 0 ? String(ilk) : "Tutar"}
+                  value={e.tutar ?? (ilk > 0 ? String(ilk) : "")}
+                  placeholder="Tutar"
                   onChange={(ev) => guncelle(i, { tutar: sayiAl(ev.target.value) })}
                   className={`${alan} w-32 text-right tabular-nums`}
-                  aria-label="Talep tutarı"
+                  aria-label="Tutar"
                 />
               </label>
               <input
                 list="talep-kalem-onerileri"
                 value={e.kalem}
-                placeholder="Kalem (Cezai şart…)"
+                placeholder="Ne için? (Cezai şart…)"
                 onChange={(ev) => guncelle(i, { kalem: ev.target.value })}
-                className={`${alan} min-w-0 flex-1 basis-40`}
-                aria-label="Kalem"
+                className={`${alan} min-w-0 flex-1`}
+                aria-label="Ne için"
               />
-              <select value={e.tur} onChange={(ev) => guncelle(i, { tur: ev.target.value })} className={alan} aria-label="Tür">
-                <option value="">Tür</option>
-                {KALEM_TURLERI.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-              <label className="flex items-center gap-1.5 text-sm text-white/70">
-                <input
-                  type="checkbox"
-                  checked={e.kismi}
-                  onChange={(ev) => guncelle(i, { kismi: ev.target.checked })}
-                  className="h-3.5 w-3.5 accent-[var(--accent)]"
-                />
-                Kısmi dava
-              </label>
-              {e.artislar.length > 0 && (
-                <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-white">Güncel {davaDegeriYaz(guncelTalep(metin, e))}</span>
-              )}
-            </div>
-
-            {e.kismi && (
-              <div className="mt-2 flex flex-wrap items-center gap-2 pl-3 text-sm text-white/60">
-                <span>└ Alacağın tamamı: ₺</span>
-                <input
-                  inputMode="decimal"
-                  value={e.tamAlacak ?? ""}
-                  onChange={(ev) => guncelle(i, { tamAlacak: sayiAl(ev.target.value) })}
-                  className={`${alan} w-32 text-right tabular-nums`}
-                  aria-label="Alacağın tamamı"
-                />
-                {e.tamAlacak ? (
-                  <span>
-                    → saklı kalan <b className="text-white">{davaDegeriYaz(Math.max(0, e.tamAlacak - guncelTalep(metin, e)))}</b>
-                  </span>
-                ) : null}
-              </div>
-            )}
-
-            {e.artislar.map((a, k) => (
-              <div key={k} className="mt-1.5 flex items-center gap-2 pl-3 text-xs text-white/60">
-                <span>
-                  ↳ {tarihYaz(a.tarih)} · {a.tur} · <b className="text-white/85">+{davaDegeriYaz(a.tutar)}</b>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => guncelle(i, { artislar: e.artislar.filter((_, x) => x !== k) })}
-                  className="text-white/40 hover:text-[#ff7a70]"
-                  aria-label="Artışı kaldır"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-
-            {acikArtis === i ? (
-              <div className="mt-2 flex flex-wrap items-center gap-2 pl-3">
-                <input type="date" value={artis.tarih} onChange={(ev) => setArtis({ ...artis, tarih: ev.target.value })} className={alan} aria-label="Artış tarihi" />
-                <select value={artis.tur} onChange={(ev) => setArtis({ ...artis, tur: ev.target.value })} className={alan} aria-label="Artış türü">
-                  {ARTIS_TURLERI.map((t) => (
-                    <option key={t}>{t}</option>
-                  ))}
-                </select>
-                <input
-                  inputMode="decimal"
-                  value={artis.tutar}
-                  onChange={(ev) => setArtis({ ...artis, tutar: ev.target.value })}
-                  placeholder="Artış tutarı"
-                  className={`${alan} w-32 text-right tabular-nums`}
-                />
-                <button type="button" onClick={() => artisEkle(i)} className="rounded-lg bg-[var(--accent)] px-3 py-1 text-sm font-medium text-white">
-                  Ekle
-                </button>
-                <button type="button" onClick={() => setAcikArtis(null)} className="text-xs text-white/50 hover:text-white">
-                  Vazgeç
-                </button>
-              </div>
-            ) : (
               <button
                 type="button"
-                onClick={() => {
-                  setAcikArtis(i);
-                  setMesaj("");
-                }}
-                className="mt-1.5 pl-3 text-xs text-[var(--link)] hover:underline"
+                onClick={() => setAcikAyrinti((o) => { const y = new Set(o); if (!y.delete(i)) y.add(i); return y; })}
+                aria-expanded={ayrintiAcik}
+                aria-label="Ayrıntılar"
+                title="Tür, kısmi dava, artırım/ıslah"
+                className={`shrink-0 rounded-lg px-2 py-1 text-sm ${ayrintiVar ? "text-[var(--link)]" : "text-white/40"} hover:bg-white/10`}
               >
-                + Artırım / Islah ekle
+                {ayrintiAcik ? "▴" : "⋯"}
               </button>
+            </div>
+
+            {ayrintiAcik && (
+              <div className="ml-6 flex flex-col gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
+                <div className="flex flex-wrap items-center gap-3">
+                  <select value={e.tur} onChange={(ev) => guncelle(i, { tur: ev.target.value })} className={alan} aria-label="Tür">
+                    <option value="">Tür</option>
+                    {KALEM_TURLERI.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-1.5 text-sm text-white/70">
+                    <input
+                      type="checkbox"
+                      checked={e.kismi}
+                      onChange={(ev) => guncelle(i, { kismi: ev.target.checked })}
+                      className="h-3.5 w-3.5 accent-[var(--accent)]"
+                    />
+                    Kısmi dava
+                  </label>
+                </div>
+
+                {e.kismi && (
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-white/60">
+                    <span>Alacağın tamamı: ₺</span>
+                    <input
+                      inputMode="decimal"
+                      value={e.tamAlacak ?? ""}
+                      onChange={(ev) => guncelle(i, { tamAlacak: sayiAl(ev.target.value) })}
+                      className={`${alan} w-32 text-right tabular-nums`}
+                      aria-label="Alacağın tamamı"
+                    />
+                    {e.tamAlacak ? (
+                      <span>
+                        → saklı kalan <b className="text-white">{davaDegeriYaz(Math.max(0, e.tamAlacak - guncelTalep(metin, e)))}</b>
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+
+                {e.artislar.map((x, k) => (
+                  <div key={k} className="flex items-center gap-2 text-xs text-white/60">
+                    <span>
+                      ↳ {tarihYaz(x.tarih)} · {x.tur} · <b className="text-white/85">+{davaDegeriYaz(x.tutar)}</b>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => guncelle(i, { artislar: e.artislar.filter((_, y) => y !== k) })}
+                      className="text-white/40 hover:text-[#ff7a70]"
+                      aria-label="Artışı kaldır"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+
+                {acikArtis === i ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input type="date" value={artis.tarih} onChange={(ev) => setArtis({ ...artis, tarih: ev.target.value })} className={alan} aria-label="Artış tarihi" />
+                    <select value={artis.tur} onChange={(ev) => setArtis({ ...artis, tur: ev.target.value })} className={alan} aria-label="Artış türü">
+                      {ARTIS_TURLERI.map((t) => (
+                        <option key={t}>{t}</option>
+                      ))}
+                    </select>
+                    <input
+                      inputMode="decimal"
+                      value={artis.tutar}
+                      onChange={(ev) => setArtis({ ...artis, tutar: ev.target.value })}
+                      placeholder="Artış tutarı"
+                      className={`${alan} w-32 text-right tabular-nums`}
+                    />
+                    <button type="button" onClick={() => artisEkle(i)} className="rounded-lg bg-[var(--accent)] px-3 py-1 text-sm font-medium text-white">
+                      Ekle
+                    </button>
+                    <button type="button" onClick={() => setAcikArtis(null)} className="text-xs text-white/50 hover:text-white">
+                      Vazgeç
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAcikArtis(i);
+                      setMesaj("");
+                    }}
+                    className="self-start text-xs text-[var(--link)] hover:underline"
+                  >
+                    + Artırım / Islah ekle
+                  </button>
+                )}
+              </div>
             )}
           </div>
         );
@@ -221,9 +234,6 @@ export function TalepKalemleriPaneli({
           </button>
         </div>
       </div>
-      <p className="text-xs text-white/35">
-        Formül: güncel talep = ilk talep + artış/ıslahlar; toplam dava değeri bunların toplamıdır. Belirsiz alacak davasında “talep artırımı” (HMK m.107), diğer hâllerde “ıslah” (HMK m.176-182).
-      </p>
     </div>
   );
 }
