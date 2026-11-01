@@ -39,7 +39,7 @@ export function KokpitKabuk({
   return (
     <div className="flex min-h-0 flex-1">
       <aside
-        className={`glass m-3 grow min-h-0 shrink-0 flex-col rounded-3xl md:mr-0 md:flex md:w-60 md:grow-0 ${
+        className={`glass m-3 grow min-h-0 shrink-0 flex-col rounded-[10px] md:mr-0 md:flex md:w-60 md:grow-0 ${
           modulSeciliMi ? "hidden" : "flex"
         }`}
       >
@@ -53,7 +53,7 @@ export function KokpitKabuk({
         {kenarCubugu}
       </aside>
       <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
-        <header className="glass-strong relative z-30 flex h-12 shrink-0 items-center justify-between max-md:!rounded-none max-md:!border-x-0 max-md:!border-t-0 px-3 md:m-3 md:h-auto md:rounded-2xl md:px-6 md:py-3">
+        <header className="glass-strong relative z-30 flex h-12 shrink-0 items-center justify-between max-md:!rounded-none max-md:!border-x-0 max-md:!border-t-0 px-3 md:m-3 md:h-auto md:rounded-[10px] md:px-6 md:py-3">
           <div className="flex items-center gap-3">
             <Link
               href="/kokpit"
