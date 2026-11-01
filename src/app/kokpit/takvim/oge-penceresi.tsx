@@ -9,12 +9,24 @@ import {
   TEKRARLAR,
   TURLER,
   googleTakvimBaglantisi,
+  gunEkle,
+  takvimRengi,
   type Oge,
   type OgeGirdisi,
 } from "./tipler";
 
-const alan = "rounded-lg border border-white/15 bg-white/[0.06] px-2.5 py-1.5 text-sm text-white outline-none focus:border-[var(--accent)]";
-const etiket = "mb-1 block text-xs font-medium uppercase tracking-wider text-white/45";
+const alan = "rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2.5 text-[15px] text-white outline-none [color-scheme:dark] focus:border-[var(--accent)]";
+const etiket = "mb-1 block text-xs font-medium text-white/55";
+const bolumBasligi = "text-sm font-semibold text-white/85";
+// Secenek dugmesi: secili olan dolu, digerleri hafif cizgili. kucuk = ikincil sira, yesil = Tamamlandi.
+const cip = (secili: boolean, kucuk = false, yesil = false) =>
+  `rounded-full border ${kucuk ? "px-3 py-1.5 text-sm" : "px-4 py-2 text-sm font-medium"} transition-colors ${
+    secili
+      ? yesil
+        ? "border-[#34c77b] bg-[#34c77b]/20 text-[#7be6a8]"
+        : "border-[var(--accent)] bg-[var(--accent)]/20 text-white"
+      : "border-white/15 text-white/65 hover:bg-white/[0.06]"
+  }`;
 
 // Basit zengin metin: # baslik, - madde, - [ ] / - [x] onay kutusu (alt gorev), **kalin**.
 function Onizleme({ metin, onDegis }: { metin: string; onDegis: (yeni: string) => void }) {
@@ -130,216 +142,273 @@ export function OgePenceresi({
     onKaydet({ ...v, baslik, etiketler: etiketMetni.split(",").map((e) => e.trim()).filter(Boolean) });
   }
 
+  const [ekAcik, setEkAcik] = useState(Boolean(v.yer || v.meet || etiketMetni.trim()) || v.tur === "DURUSMA" || v.tur === "TOPLANTI");
+  const [bitisAcik, setBitisAcik] = useState(Boolean(v.bitisTarihi || v.bitisSaati));
+
   const dosyaBaglantisi = oge?.dosya ? (oge.dosya.startsWith("d:") ? `/kokpit/dava-dosyalari/${oge.dosya.slice(2)}` : `/kokpit/cmk-dosyalari/${oge.dosya.slice(2)}`) : null;
 
+  const bugun = new Date().toLocaleDateString("sv-SE");
+  const hizliTarihler = [
+    ["Bugün", bugun],
+    ["Yarın", gunEkle(bugun, 1)],
+    ["Haftaya", gunEkle(bugun, 7)],
+  ] as const;
+  const altGorevToplam = (v.icerik.match(/^- \[( |x)\] /gm) ?? []).length;
+  const altGorevTamam = (v.icerik.match(/^- \[x\] /gm) ?? []).length;
+  const turAdi = TURLER.find((t) => t.kod === v.tur)?.ad ?? "Görev";
+  const baslikIpucu = { GOREV: "Ne yapılacak?", DURUSMA: "Hangi duruşma?", TOPLANTI: "Toplantı konusu?", NOT: "Not başlığı" }[v.tur];
+  const renk = takvimRengi(v.takvim);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 pt-10" onMouseDown={(e) => e.target === e.currentTarget && onKapat()}>
-      <div className="w-full max-w-2xl rounded-3xl border border-white/15 bg-[var(--yuzey,#1c2432)] p-6 shadow-2xl">
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <input
-            ref={baslikKutusu}
-            value={v.baslik}
-            disabled={salt}
-            onChange={(e) => set("baslik", e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !salt && (e.preventDefault(), kaydet())}
-            placeholder="Başlık"
-            className="min-w-0 flex-1 bg-transparent text-xl font-semibold text-white outline-none placeholder:text-white/30"
-          />
-          <button type="button" onClick={onKapat} className="rounded-full px-2 text-white/50 hover:bg-white/10 hover:text-white" aria-label="Kapat">
-            ✕
-          </button>
-        </div>
-
-        {salt ? (
-          <div className="flex flex-col gap-3 text-sm text-white/75">
-            <p>
-              {oge?.turetilmis === "dogum"
-                ? "Doğum günleri Ayarlar › Kullanıcılar bölümündeki tarihten gelir."
-                : "Bu duruşma dosya kaydındaki duruşma tarihinden gelir. Tarihini sürükleyerek değiştirebilirsiniz; dosyayı açarak düzenleyin."}
-            </p>
-            {dosyaBaglantisi && (
-              <Link href={dosyaBaglantisi} className="w-fit rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white">
-                Dosyayı aç
-              </Link>
-            )}
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-start sm:p-4 sm:pt-10" onMouseDown={(e) => e.target === e.currentTarget && onKapat()}>
+      <div className="flex max-h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-white/15 bg-[var(--yuzey,#1c2432)] shadow-2xl sm:max-h-[90dvh] sm:rounded-3xl">
+        <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: renk }} />
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-4">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-white/50">{salt ? "Takvim kaydı" : oge ? `${turAdi} · düzenle` : `Yeni ${turAdi.toLocaleLowerCase("tr")}`}</p>
+              <input
+                ref={baslikKutusu}
+                value={v.baslik}
+                disabled={salt}
+                onChange={(e) => set("baslik", e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !salt && (e.preventDefault(), kaydet())}
+                placeholder={baslikIpucu}
+                className="mt-1 w-full bg-transparent text-2xl font-semibold text-white outline-none placeholder:text-white/30"
+              />
+            </div>
+            <button type="button" onClick={onKapat} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/[0.06] text-white/60 hover:bg-white/10 hover:text-white" aria-label="Kapat">
+              ✕
+            </button>
           </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <label>
-                <span className={etiket}>Takvim</span>
-                <select value={v.takvim} onChange={(e) => set("takvim", e.target.value as OgeGirdisi["takvim"])} className={`${alan} w-full`}>
-                  {TAKVIMLER.filter((t) => t.kod !== "DOGUM").map((t) => (
-                    <option key={t.kod} value={t.kod}>
-                      {t.ad}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                <span className={etiket}>Tür</span>
-                <select value={v.tur} onChange={(e) => set("tur", e.target.value as OgeGirdisi["tur"])} className={`${alan} w-full`}>
-                  {TURLER.map((t) => (
-                    <option key={t.kod} value={t.kod}>
-                      {t.ad}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                <span className={etiket}>Durum</span>
-                <select value={v.durum} onChange={(e) => set("durum", e.target.value as OgeGirdisi["durum"])} className={`${alan} w-full`}>
-                  {DURUMLAR.map((t) => (
-                    <option key={t.kod} value={t.kod}>
-                      {t.ad}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                <span className={etiket}>Sorumlu</span>
-                <select value={v.sorumluId ?? ""} onChange={(e) => set("sorumluId", e.target.value || null)} className={`${alan} w-full`}>
-                  <option value="">—</option>
-                  {kisiler.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.ad}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <label>
-                <span className={etiket}>Başlangıç</span>
-                <input type="date" value={v.tarih} onChange={(e) => set("tarih", e.target.value)} className={`${alan} w-full`} />
-              </label>
-              <label>
-                <span className={etiket}>Saat</span>
-                <input type="time" value={v.saat ?? ""} onChange={(e) => set("saat", e.target.value || null)} className={`${alan} w-full`} />
-              </label>
-              <label>
-                <span className={etiket}>Bitiş (çok günlü)</span>
-                <input type="date" value={v.bitisTarihi ?? ""} min={v.tarih} onChange={(e) => set("bitisTarihi", e.target.value || null)} className={`${alan} w-full`} />
-              </label>
-              <label>
-                <span className={etiket}>Bitiş saati</span>
-                <input type="time" value={v.bitisSaati ?? ""} onChange={(e) => set("bitisSaati", e.target.value || null)} className={`${alan} w-full`} />
-              </label>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <label className="col-span-1">
-                <span className={etiket}>Tekrar</span>
-                <select value={v.tekrar ?? ""} onChange={(e) => set("tekrar", (e.target.value || null) as OgeGirdisi["tekrar"])} className={`${alan} w-full`}>
-                  <option value="">Tekrarlanmaz</option>
-                  {TEKRARLAR.map((t) => (
-                    <option key={t.kod} value={t.kod}>
-                      {t.ad}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {v.tekrar && (
-                <label className="col-span-1">
-                  <span className={etiket}>Tekrar bitişi</span>
-                  <input type="date" value={v.tekrarBitis ?? ""} onChange={(e) => set("tekrarBitis", e.target.value || null)} className={`${alan} w-full`} />
-                </label>
+          {salt ? (
+            <div className="flex flex-col gap-3 text-sm text-white/75">
+              <p>
+                {oge?.turetilmis === "dogum"
+                  ? "Doğum günleri Ayarlar › Kullanıcılar bölümündeki tarihten gelir."
+                  : "Bu duruşma dosya kaydındaki duruşma tarihinden gelir. Tarihini sürükleyerek değiştirebilirsiniz; dosyayı açarak düzenleyin."}
+              </p>
+              {dosyaBaglantisi && (
+                <Link href={dosyaBaglantisi} className="w-fit rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white">
+                  Dosyayı aç
+                </Link>
               )}
-              <label className="col-span-2">
-                <span className={etiket}>Yer</span>
-                <input value={v.yer ?? ""} onChange={(e) => set("yer", e.target.value || null)} placeholder="Adliye, salon, adres…" className={`${alan} w-full`} />
-              </label>
             </div>
+          ) : (
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-wrap gap-2">
+                {TURLER.map((t) => (
+                  <button key={t.kod} type="button" onClick={() => set("tur", t.kod)} className={cip(v.tur === t.kod)}>
+                    {t.ad}
+                  </button>
+                ))}
+              </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label>
-                <span className={etiket}>Toplantı bağlantısı (Meet / Zoom)</span>
-                <input value={v.meet ?? ""} onChange={(e) => set("meet", e.target.value || null)} placeholder="https://meet.google.com/…" className={`${alan} w-full`} />
-              </label>
-              <label>
-                <span className={etiket}>Etiketler (virgülle)</span>
-                <input value={etiketMetni} onChange={(e) => setEtiketMetni(e.target.value)} placeholder="acil, istinaf, keşif" className={`${alan} w-full`} />
-              </label>
-            </div>
-
-            {v.tur === "DURUSMA" && (
-              <label>
-                <span className={etiket}>Bağlı dosya</span>
-                <select value={v.dosya ?? ""} onChange={(e) => set("dosya", e.target.value || null)} className={`${alan} w-full`}>
-                  <option value="">{dosyalar ? "Dosya seçin (isteğe bağlı)" : "Dosyalar yükleniyor…"}</option>
-                  {v.dosya && !dosyalar?.some((d) => d.deger === v.dosya) && <option value={v.dosya}>{oge?.dosyaEtiketi ?? v.dosya}</option>}
-                  {(dosyalar ?? []).map((d) => (
-                    <option key={d.deger} value={d.deger}>
-                      {d.etiket}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-
-            <div>
-              <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-                <span className={`${etiket} mb-0`}>Sayfa / notlar</span>
-                <div className="flex items-center gap-1 text-xs text-white/60">
-                  {[
-                    ["# ", "Başlık"],
-                    ["- ", "• Liste"],
-                    ["- [ ] ", "☐ Alt görev"],
-                    ["**", "B"],
-                  ].map(([o, ad]) => (
-                    <button key={o} type="button" onClick={() => bicim(o)} className="rounded-md px-2 py-0.5 hover:bg-white/10 hover:text-white">
+              <section className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3.5">
+                <p className={bolumBasligi}>Ne zaman?</p>
+                <div className="flex flex-wrap gap-2">
+                  {hizliTarihler.map(([ad, g]) => (
+                    <button key={ad} type="button" onClick={() => set("tarih", g)} className={cip(v.tarih === g, true)}>
                       {ad}
                     </button>
                   ))}
-                  <button type="button" onClick={() => setOnizle((x) => !x)} className="rounded-md bg-white/10 px-2 py-0.5 text-white">
-                    {onizle ? "Düzenle" : "Önizle"}
+                </div>
+                <div className="flex gap-2">
+                  <label className="min-w-0 flex-1">
+                    <span className={etiket}>Tarih</span>
+                    <input type="date" value={v.tarih} onChange={(e) => set("tarih", e.target.value)} className={`${alan} w-full min-w-0`} />
+                  </label>
+                  <label className="w-[8.5rem] shrink-0">
+                    <span className={etiket}>Saat</span>
+                    <input type="time" value={v.saat ?? ""} onChange={(e) => set("saat", e.target.value || null)} className={`${alan} w-full min-w-0`} />
+                  </label>
+                </div>
+                {bitisAcik ? (
+                  <div className="flex gap-2">
+                    <label className="min-w-0 flex-1">
+                      <span className={etiket}>Bitiş tarihi</span>
+                      <input type="date" value={v.bitisTarihi ?? ""} min={v.tarih} onChange={(e) => set("bitisTarihi", e.target.value || null)} className={`${alan} w-full min-w-0`} />
+                    </label>
+                    <label className="w-[8.5rem] shrink-0">
+                      <span className={etiket}>Bitiş saati</span>
+                      <input type="time" value={v.bitisSaati ?? ""} onChange={(e) => set("bitisSaati", e.target.value || null)} className={`${alan} w-full min-w-0`} />
+                    </label>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => setBitisAcik(true)} className="w-fit text-sm text-[var(--link)] hover:underline">
+                    + Bitiş ekle (çok günlü ya da saat aralığı)
                   </button>
+                )}
+                <div>
+                  <span className={etiket}>Tekrar</span>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => set("tekrar", null)} className={cip(!v.tekrar, true)}>
+                      Tekrarlanmaz
+                    </button>
+                    {TEKRARLAR.map((t) => (
+                      <button key={t.kod} type="button" onClick={() => set("tekrar", t.kod)} className={cip(v.tekrar === t.kod, true)}>
+                        {t.ad}
+                      </button>
+                    ))}
+                  </div>
+                  {v.tekrar && (
+                    <label className="mt-2 block">
+                      <span className={etiket}>Tekrar bitişi (isteğe bağlı)</span>
+                      <input type="date" value={v.tekrarBitis ?? ""} onChange={(e) => set("tekrarBitis", e.target.value || null)} className={`${alan} w-full min-w-0`} />
+                    </label>
+                  )}
                 </div>
-              </div>
-              {onizle ? (
-                <div className="min-h-28 rounded-lg border border-white/10 bg-white/[0.03] p-3">
-                  <Onizleme metin={v.icerik || "_Boş sayfa_"} onDegis={(m) => set("icerik", m)} />
+              </section>
+
+              <section className="flex flex-col gap-3">
+                <p className={bolumBasligi}>Durum ve sorumlu</p>
+                <div className="flex flex-wrap gap-2">
+                  {DURUMLAR.map((t) => (
+                    <button key={t.kod} type="button" onClick={() => set("durum", t.kod)} className={cip(v.durum === t.kod, true, t.kod === "TAMAM")}>
+                      {t.kod === "TAMAM" ? "✓ " : ""}
+                      {t.ad}
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <textarea
-                  ref={metinKutusu}
-                  value={v.icerik}
-                  onChange={(e) => set("icerik", e.target.value)}
-                  rows={6}
-                  placeholder="Dilekçe taslağı, notlar, alt görevler (- [ ] ile onay kutusu)…"
-                  className={`${alan} w-full resize-y`}
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <label>
+                    <span className={etiket}>Takvim</span>
+                    <select value={v.takvim} onChange={(e) => set("takvim", e.target.value as OgeGirdisi["takvim"])} className={`${alan} w-full min-w-0`}>
+                      {TAKVIMLER.filter((t) => t.kod !== "DOGUM").map((t) => (
+                        <option key={t.kod} value={t.kod}>
+                          {t.ad}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className={etiket}>Sorumlu</span>
+                    <select value={v.sorumluId ?? ""} onChange={(e) => set("sorumluId", e.target.value || null)} className={`${alan} w-full min-w-0`}>
+                      <option value="">Atanmadı</option>
+                      {kisiler.map((k) => (
+                        <option key={k.id} value={k.id}>
+                          {k.ad}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </section>
+
+              {v.tur === "DURUSMA" && (
+                <label>
+                  <span className={etiket}>Bağlı dosya</span>
+                  <select value={v.dosya ?? ""} onChange={(e) => set("dosya", e.target.value || null)} className={`${alan} w-full min-w-0`}>
+                    <option value="">{dosyalar ? "Dosya seçin (isteğe bağlı)" : "Dosyalar yükleniyor…"}</option>
+                    {v.dosya && !dosyalar?.some((d) => d.deger === v.dosya) && <option value={v.dosya}>{oge?.dosyaEtiketi ?? v.dosya}</option>}
+                    {(dosyalar ?? []).map((d) => (
+                      <option key={d.deger} value={d.deger}>
+                        {d.etiket}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               )}
-            </div>
-          </div>
-        )}
 
-        {hata && <p className="mt-2 text-sm text-red-300">{hata}</p>}
+              <section className="flex flex-col gap-3">
+                {ekAcik ? (
+                  <>
+                    <p className={bolumBasligi}>Yer, bağlantı ve etiket</p>
+                    <label>
+                      <span className={etiket}>Yer</span>
+                      <input value={v.yer ?? ""} onChange={(e) => set("yer", e.target.value || null)} placeholder="Adliye, salon, adres…" className={`${alan} w-full min-w-0`} />
+                    </label>
+                    <label>
+                      <span className={etiket}>Toplantı bağlantısı (Meet / Zoom)</span>
+                      <input value={v.meet ?? ""} onChange={(e) => set("meet", e.target.value || null)} placeholder="https://meet.google.com/…" className={`${alan} w-full min-w-0`} />
+                    </label>
+                    <label>
+                      <span className={etiket}>Etiketler (virgülle ayırın)</span>
+                      <input value={etiketMetni} onChange={(e) => setEtiketMetni(e.target.value)} placeholder="acil, istinaf, keşif" className={`${alan} w-full min-w-0`} />
+                    </label>
+                  </>
+                ) : (
+                  <button type="button" onClick={() => setEkAcik(true)} className="w-fit text-sm text-[var(--link)] hover:underline">
+                    + Yer, toplantı bağlantısı, etiket ekle
+                  </button>
+                )}
+              </section>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            {oge && !salt && (
-              <button type="button" onClick={() => onSil(oge.id)} className="rounded-lg px-3 py-1.5 text-[#ff8a80] hover:bg-white/10">
-                Sil
-              </button>
-            )}
-            {oge && oge.turetilmis !== "dogum" && (
-              <a href={googleTakvimBaglantisi(oge)} target="_blank" rel="noopener noreferrer" className="rounded-lg px-3 py-1.5 text-[var(--link)] hover:bg-white/10">
-                Google Takvim’e ekle
-              </a>
-            )}
-          </div>
-          {!salt && (
-            <div className="flex gap-2">
-              <button type="button" onClick={onKapat} className="rounded-lg px-4 py-1.5 text-sm text-white/70 hover:bg-white/10">
-                Vazgeç
-              </button>
-              <button type="button" onClick={kaydet} className="rounded-lg bg-[var(--accent)] px-5 py-1.5 text-sm font-medium text-white">
-                Kaydet
-              </button>
+              <section>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className={bolumBasligi}>Notlar ve alt görevler</p>
+                  <div className="flex items-center gap-1 text-xs text-white/60">
+                    {[
+                      ["# ", "Başlık"],
+                      ["- ", "• Liste"],
+                      ["- [ ] ", "☐ Alt görev"],
+                      ["**", "B"],
+                    ].map(([o, ad]) => (
+                      <button key={o} type="button" onClick={() => bicim(o)} className="rounded-md px-2 py-1 hover:bg-white/10 hover:text-white">
+                        {ad}
+                      </button>
+                    ))}
+                    <button type="button" onClick={() => setOnizle((x) => !x)} className="rounded-md bg-white/10 px-2 py-1 text-white">
+                      {onizle ? "Düzenle" : "Önizle"}
+                    </button>
+                  </div>
+                </div>
+                {altGorevToplam > 0 && (
+                  <div className="mb-2">
+                    <div className="mb-1 flex justify-between text-xs text-white/60">
+                      <span>{altGorevTamam === altGorevToplam ? "Hepsi tamam, harika!" : `${altGorevTamam}/${altGorevToplam} alt görev tamam`}</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full rounded-full bg-[#34c77b] transition-all" style={{ width: `${(altGorevTamam / altGorevToplam) * 100}%` }} />
+                    </div>
+                  </div>
+                )}
+                {onizle ? (
+                  <div className="min-h-28 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                    <Onizleme metin={v.icerik || "_Boş sayfa_"} onDegis={(m) => set("icerik", m)} />
+                  </div>
+                ) : (
+                  <textarea
+                    ref={metinKutusu}
+                    value={v.icerik}
+                    onChange={(e) => set("icerik", e.target.value)}
+                    rows={5}
+                    placeholder="Dilekçe taslağı, notlar, alt görevler (- [ ] ile onay kutusu)…"
+                    className={`${alan} w-full resize-y`}
+                  />
+                )}
+              </section>
             </div>
           )}
+        </div>
+
+        <div className="shrink-0 border-t border-white/10 bg-[var(--yuzey,#1c2432)] px-5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-3">
+          {hata && <p className="mb-2 text-sm text-red-300">{hata}</p>}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-1 text-xs">
+              {oge && !salt && (
+                <button type="button" onClick={() => onSil(oge.id)} className="rounded-lg px-3 py-2 text-[#ff8a80] hover:bg-white/10">
+                  Sil
+                </button>
+              )}
+              {oge && oge.turetilmis !== "dogum" && (
+                <a href={googleTakvimBaglantisi(oge)} target="_blank" rel="noopener noreferrer" className="rounded-lg px-3 py-2 text-[var(--link)] hover:bg-white/10">
+                  Google Takvim’e ekle
+                </a>
+              )}
+            </div>
+            {!salt && (
+              <div className="ml-auto flex gap-2">
+                <button type="button" onClick={onKapat} className="rounded-xl px-4 py-2.5 text-sm text-white/70 hover:bg-white/10">
+                  Vazgeç
+                </button>
+                <button type="button" onClick={kaydet} className="rounded-xl bg-[var(--accent)] px-6 py-2.5 text-sm font-semibold text-white active:opacity-80">
+                  Kaydet
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
