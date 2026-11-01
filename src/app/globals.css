@@ -590,3 +590,8 @@ html[data-palet] .tikon { border-radius: 6px; box-shadow: none; }
 /* iPhone'da sayfa lastik gibi kayip paneli durum cubugunun altina sokmasin (iOS orayi bulaniklastiriyor). */
 html, body { overscroll-behavior: none; }
 @media (pointer: coarse) { body { position: fixed; inset: 0; width: 100%; } }
+
+/* Daraltilmis menude (yalniz masaustu) ayirici cizgi tum satir genisliginde. */
+@media (min-width: 768px) {
+  [data-dar="true"] .menu-grup > .menu-satir + .menu-satir::before { left: 10px; right: 10px; }
+}

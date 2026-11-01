@@ -3,8 +3,9 @@
 // hem formda (istemci) hem sunucuda ayni kurali uygular.
 
 // Hukuki bicim / kurum eki: bunlardan biri varsa ad "tam unvan" sayilir.
+// Kisaltmalar (Ltd. Şti., A.Ş.) KABUL EDILMEZ: MERSIS'teki unvan "... LİMİTED ŞİRKETİ" diye tam yazilir.
 const HUKUKI_BICIM =
-  /(L[İI]M[İI]TED|LTD|ANON[İI]M|A\.?\s?Ş|KOLLEKT[İI]F|KOMAND[İI]T|KOOPERAT[İI]F|VAKF[İI]|DERNE[ĞG][İI]|BANKASI|BELED[İI]YES[İI]|BAŞKANLI[ĞG]I|MÜD[ÜU]RL[ÜU][ĞG][ÜU]|BAKANLI[ĞG]I|ÜN[İI]VERS[İI]TES[İI]|ŞUBES[İI]|ODASI|B[İI]RL[İI][ĞG][İI]|SEND[İI]KASI|HOLD[İI]NG)/;
+  /((L[İI]M[İI]TED|ANON[İI]M|KOLLEKT[İI]F|KOMAND[İI]T)\s+Ş[İI]RKET|KOOPERAT[İI][FD]|VAKF[İI]|DERNE[ĞG][İI]|BANKASI|BELED[İI]YES[İI]|BAŞKANLI[ĞG]I|MÜD[ÜU]RL[ÜU][ĞG][ÜU]|BAKANLI[ĞG]I|ÜN[İI]VERS[İI]TES[İI]|ŞUBES[İI]|ODASI|B[İI]RL[İI][ĞG][İI]|SEND[İI]KASI)/;
 
 // Kisi adinda gecmeyen, firma adinda sik gecen sozcukler.
 const FIRMA_KELIMESI =

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cikisYap } from "@/core/auth/actions";
@@ -10,6 +10,30 @@ import { GorunumMenusu } from "@/core/gorunum/gorunum-menusu";
 import { AsagiCekYenile } from "@/core/ui/asagi-cek-yenile";
 import { YenileButonu } from "@/core/ui/yenile-butonu";
 import { MarkaLogosu } from "@/core/ui/marka-logosu";
+
+// Masaustunde sol menu daraltilabilir: daralinca yalniz renkli ikon seridi kalir.
+// Tercih localStorage'da tutulur (useSyncExternalStore: SSR'da hep "genis").
+const MENU_DAR_ANAHTARI = "kokpit-menu-dar";
+const darDinleyicileri = new Set<() => void>();
+function darOku(): boolean {
+  try {
+    return localStorage.getItem(MENU_DAR_ANAHTARI) === "1";
+  } catch {
+    return false;
+  }
+}
+function darAbone(dinleyici: () => void) {
+  darDinleyicileri.add(dinleyici);
+  return () => darDinleyicileri.delete(dinleyici);
+}
+function darYaz(deger: boolean) {
+  try {
+    localStorage.setItem(MENU_DAR_ANAHTARI, deger ? "1" : "0");
+  } catch {
+    // localStorage erisilemez - sessizce yok say
+  }
+  darDinleyicileri.forEach((d) => d());
+}
 
 // Apple'in kendi uygulamalarindaki (Ayarlar, Mail) master-detail deseni:
 // telefon genisliginde (md altinda) tek seferde tek panel gorunur - modul
@@ -35,20 +59,31 @@ export function KokpitKabuk({
   const pathname = usePathname();
   const anaAlanRef = useRef<HTMLElement>(null);
   const modulSeciliMi = pathname !== "/kokpit";
+  const dar = useSyncExternalStore(darAbone, darOku, () => false);
 
   return (
     <div className="flex min-h-0 flex-1">
       <aside
-        className={`glass m-3 max-md:mb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] grow min-h-0 shrink-0 flex-col rounded-[10px] md:mr-0 md:flex md:w-60 md:grow-0 ${
-          modulSeciliMi ? "hidden" : "flex"
-        }`}
+        data-dar={dar ? "true" : "false"}
+        className={`glass group/menu m-3 max-md:mb-[max(env(safe-area-inset-bottom,0px),1.5rem)] grow min-h-0 shrink-0 flex-col rounded-[20px] md:mr-0 md:flex md:rounded-[10px] md:grow-0 ${
+          dar ? "md:w-[76px]" : "md:w-60"
+        } ${modulSeciliMi ? "hidden" : "flex"}`}
       >
-        <div className="flex shrink-0 items-center gap-3 px-5 pb-3 pt-5">
+        <div className="flex shrink-0 items-center gap-3 px-5 pb-3 pt-5 md:group-data-[dar=true]/menu:flex-col md:group-data-[dar=true]/menu:gap-2 md:group-data-[dar=true]/menu:px-2">
           <MarkaLogosu boyut={40} className="shrink-0 rounded-xl" />
-          <div>
+          <div className="min-w-0 flex-1 md:group-data-[dar=true]/menu:hidden">
             <p className="text-base font-semibold tracking-tight text-white">KOKPİT</p>
             <p className="text-sm text-white/45">Eces Hukuk Bürosu</p>
           </div>
+          <button
+            type="button"
+            onClick={() => darYaz(!dar)}
+            aria-label={dar ? "Menüyü genişlet" : "Menüyü daralt"}
+            title={dar ? "Menüyü genişlet" : "Menüyü daralt"}
+            className="hidden h-8 w-8 shrink-0 place-items-center rounded-lg text-white/50 hover:bg-white/10 hover:text-white md:grid"
+          >
+            <svg viewBox="0 0 24 24" className={`h-4 w-4 transition-transform ${dar ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+          </button>
         </div>
         {kenarCubugu}
       </aside>

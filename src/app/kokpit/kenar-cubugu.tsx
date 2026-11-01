@@ -139,7 +139,7 @@ function Grup({ children }: { children: React.ReactNode }) {
 }
 
 function BolumBasligi({ children }: { children: React.ReactNode }) {
-  return <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/45">{children}</p>;
+  return <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/45 md:group-data-[dar=true]/menu:hidden">{children}</p>;
 }
 
 // Her modulun kendi rengi olan yuvarlak kare ikon + etiket + sag ok. Secili
@@ -166,19 +166,20 @@ function MenuBagi({
   const kutu = (
     <span
       aria-hidden="true"
-      className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white"
+      className="relative grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white"
       style={{ backgroundColor: renk }}
     >
       <Ikon className="h-4 w-4" />
+      {rozetSayisi > 0 && <span className="absolute -right-1 -top-1 hidden h-2.5 w-2.5 rounded-full bg-[#ff5f56] md:group-data-[dar=true]/menu:block" />}
     </span>
   );
 
   if (!modul.aktif) {
     return (
-      <span className="menu-satir flex items-center gap-3 px-3 py-2.5 text-[15px] text-white/30" title="Bu bölüm henüz geliştirilmedi">
+      <span className="menu-satir flex items-center gap-3 px-3 py-2.5 text-[15px] text-white/30 md:group-data-[dar=true]/menu:justify-center md:group-data-[dar=true]/menu:px-0" title="Bu bölüm henüz geliştirilmedi">
         <span className="opacity-40">{kutu}</span>
-        <span className="flex-1 truncate">{modul.ad}</span>
-        <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium">Yakında</span>
+        <span className="flex-1 truncate md:group-data-[dar=true]/menu:hidden">{modul.ad}</span>
+        <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium md:group-data-[dar=true]/menu:hidden">Yakında</span>
       </span>
     );
   }
@@ -191,16 +192,17 @@ function MenuBagi({
     <Link
       href={modul.yol}
       aria-current={seciliMi ? "page" : undefined}
-      className={`menu-satir flex items-center gap-3 px-3 py-2.5 text-[15px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)] ${
+      title={modul.ad}
+      className={`menu-satir flex items-center gap-3 px-3 py-2.5 text-[15px] outline-none md:group-data-[dar=true]/menu:justify-center md:group-data-[dar=true]/menu:px-0 transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)] ${
         secili ? seciliSinif : "text-white/85 hover:bg-white/[0.06]"
       }`}
     >
       {kutu}
-      <span className="flex-1 truncate font-medium">{modul.ad}</span>
+      <span className="flex-1 truncate font-medium md:group-data-[dar=true]/menu:hidden">{modul.ad}</span>
       {rozetSayisi > 0 && (
-        <span className="rounded-full bg-[var(--danger-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[#ff7a70]">{rozetSayisi}</span>
+        <span className="rounded-full md:group-data-[dar=true]/menu:hidden bg-[var(--danger-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[#ff7a70]">{rozetSayisi}</span>
       )}
-      <OkKirilimIkonu className="h-3.5 w-3.5 shrink-0 text-white/30" />
+      <OkKirilimIkonu className="h-3.5 w-3.5 shrink-0 text-white/30 md:group-data-[dar=true]/menu:hidden" />
     </Link>
   );
 }
