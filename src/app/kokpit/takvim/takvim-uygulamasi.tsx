@@ -380,8 +380,12 @@ export function TakvimUygulamasi({
         return (
           <div
             key={g}
-            onDoubleClick={() => setPencere({ oge: null, tarih: g })}
-            className={`min-h-28 bg-[var(--yuzey,#1c2432)] p-1.5 ${buAy ? "" : "bg-black/20"}`}
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest("button,a,[draggable='true']")) return;
+              setImlec(g);
+              setGorunum("HAFTA");
+            }}
+            className={`cursor-pointer min-h-28 bg-[var(--yuzey,#1c2432)] p-1.5 ${buAy ? "" : "bg-black/20"}`}
           >
             <div className="mb-0.5 flex items-center justify-between">
               <span className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-sm ${g === bugun ? "bg-[var(--accent)] font-semibold text-white" : buAy ? "font-medium text-white" : "text-white/45"}`}>
