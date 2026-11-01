@@ -69,8 +69,10 @@ export function DavaDosyasiFormIcerik({
   alanSirasi,
   etiketler,
   yoneticiMi,
+  birimler,
 }: {
   yoneticiMi: boolean;
+  birimler: string[];
   action: (oncekiDurum: DavaDosyasiSonucu, formData: FormData) => Promise<DavaDosyasiSonucu>;
   gonderButonuMetni: string;
   dosyaId?: string;
@@ -239,6 +241,7 @@ export function DavaDosyasiFormIcerik({
         <div key={`${anahtar}-k`}>
           <DosyaKimligiAlanlari
             varsayilanBirim={g?.birimAdi ?? dosya?.birimAdi ?? ""}
+            birimler={birimler}
             varsayilanDosyaNo={g?.dosyaNo ?? dosya?.dosyaNo ?? ""}
             birimGoster={alanSirasi.includes("birimAdi")}
             dosyaNoGoster={alanSirasi.includes("dosyaNo")}

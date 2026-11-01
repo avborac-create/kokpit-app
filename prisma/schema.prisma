@@ -1620,3 +1620,17 @@ model TakvimOgesi {
   @@index([cmkDosyasiId])
   @@map("takvim_ogeleri")
 }
+
+// Adli birim katalogu: mahkeme/icra dairesi adlari serbest yazilmaz, bu listeden
+// secilir (UYAP yazimi: "Istanbul Anadolu 51. Asliye Hukuk Mahkemesi"). Yeni birim
+// adliye + tur + sira numarasindan sistem tarafindan kurulur.
+model AdliBirim {
+  id        String   @id @default(cuid())
+  ad        String   @unique
+  adliye    String
+  tur       String
+  sira      Int?
+  createdAt DateTime @default(now())
+
+  @@map("adli_birimler")
+}

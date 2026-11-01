@@ -20,6 +20,7 @@ import { DosyaBaglayici } from "@/modules/dava-dosyasi/components/dosya-baglayic
 import { kokpitNoGoster, kayitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { Dugme } from "@/core/ui/button";
 import { DuzenlenebilirKart, type KartAlani } from "@/core/ui/duzenlenebilir-kart";
+import { adliBirimleriListele } from "@/modules/dava-dosyasi/lib/adli-birim";
 import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
 import { FormKarti } from "@/core/ui/form-karti";
 import { DosyaBirlikteUyarisi } from "@/core/birlikte/dosya-birlikte-uyarisi";
@@ -93,7 +94,7 @@ export default async function DavaDosyasiDetaySayfasi({
   const { id } = await params;
   const { sekme, alt } = await searchParams;
   const aktifSekme = sekme === "ekonomi" || sekme === "evrak" || sekme === "gorevler" ? sekme : "genel";
-  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri, vekilAdaylari, calisilanAvukatlar] = await Promise.all([
+  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri, vekilAdaylari, calisilanAvukatlar, birimKatalogu] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
     anaDosyaAdaylariniGetir(id),
@@ -106,6 +107,7 @@ export default async function DavaDosyasiDetaySayfasi({
     secenekleriGetir("dava_turu"),
     vekilAdaylariniGetir(),
     calisilanAvukatlariGetir(),
+    adliBirimleriListele(),
   ]);
   if (!dosya) notFound();
 
@@ -231,9 +233,13 @@ export default async function DavaDosyasiDetaySayfasi({
     {
       anahtar: "birimAdi",
       varsayilanEtiket: "Birim",
-      tip: "metin",
+      tip: "secim",
       deger: dosya.birimAdi ?? "",
       gosterim: dosya.birimAdi ?? "—",
+      secenekler: [
+        { value: "", label: "Seçiniz…" },
+        ...[...(dosya.birimAdi && !birimKatalogu.includes(dosya.birimAdi) ? [dosya.birimAdi] : []), ...birimKatalogu].map((b) => ({ value: b, label: b })),
+      ],
     },
     {
       anahtar: "dosyaNo",

@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
+import { BirimSecici } from "./birim-secici";
 import {
-  BIRIM_HATASI,
   DOSYA_NO_TURLERI,
-  birimDosyaNosuGibiMi,
   dosyaNoAyristir,
   dosyaNoBirlestir,
   yilHatasi,
@@ -19,12 +18,14 @@ import {
 // no varsa duz metin kutusunda aynen gosterilir.
 export function DosyaKimligiAlanlari({
   varsayilanBirim,
+  birimler,
   varsayilanDosyaNo,
   birimGoster,
   dosyaNoGoster,
   etiketler,
 }: {
   varsayilanBirim: string;
+  birimler: string[];
   varsayilanDosyaNo: string;
   birimGoster: boolean;
   dosyaNoGoster: boolean;
@@ -33,14 +34,12 @@ export function DosyaKimligiAlanlari({
   const ayri = dosyaNoAyristir(varsayilanDosyaNo);
   const eskiBicim = Boolean(varsayilanDosyaNo.trim()) && !ayri;
 
-  const [birim, setBirim] = useState(varsayilanBirim);
   const [yil, setYil] = useState(ayri?.yil ?? "");
   const [sira, setSira] = useState(ayri?.sira ?? "");
   const [tur, setTur] = useState(ayri?.tur || "Esas");
   const [eski, setEski] = useState(varsayilanDosyaNo);
   const [yilDokunuldu, setYilDokunuldu] = useState(false);
 
-  const birimHatasi = birimDosyaNosuGibiMi(birim) ? BIRIM_HATASI : "";
   const yilHata = yil || sira ? (yilHatasi(yil) ?? "") : "";
   const siraEksik = yil && !sira ? "Sıra numarasını da girin (ör. 423)." : sira && !yil ? "Yılı da girin (ör. 2026)." : "";
 
@@ -51,18 +50,7 @@ export function DosyaKimligiAlanlari({
       {birimGoster && (
         <Alan>
           <Etiket htmlFor="birimAdi">{etiketler.birim}</Etiket>
-          <Girdi
-            id="birimAdi"
-            name="birimAdi"
-            placeholder="İstanbul 1. İş Mahkemesi · Ankara 5. İcra Dairesi"
-            value={birim}
-            onChange={(e) => {
-              setBirim(e.target.value);
-              e.currentTarget.setCustomValidity(birimDosyaNosuGibiMi(e.target.value) ? BIRIM_HATASI : "");
-            }}
-            ref={(el) => el?.setCustomValidity(birimHatasi)}
-          />
-          {birimHatasi && <p className="mt-1 text-xs text-[#ff7a70]">{birimHatasi}</p>}
+          <BirimSecici birimler={birimler} varsayilan={varsayilanBirim} />
         </Alan>
       )}
       {dosyaNoGoster && (

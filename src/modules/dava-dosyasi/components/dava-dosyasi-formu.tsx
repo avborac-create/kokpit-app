@@ -7,6 +7,7 @@ import type { davaDosyasiGetir } from "@/modules/dava-dosyasi/lib/queries";
 import type { DavaDosyasiSonucu } from "@/modules/dava-dosyasi/lib/actions";
 import { formAlanDuzeniniGetir } from "@/core/form-duzeni/queries";
 import { DAVA_DOSYASI_ALAN_ETIKETLERI } from "@/core/form-duzeni/dava-dosyasi-alanlari";
+import { adliBirimleriListele } from "../lib/adli-birim";
 import { DavaDosyasiFormIcerik } from "./dava-dosyasi-form-icerik";
 
 type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
@@ -19,7 +20,7 @@ type Props = {
 };
 
 export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSecilenMusteriId }: Props) {
-  const [kullanici, hukukDallari, hukukiIliskiTurleri, muvekkilSifatlari, davaTurleri, dosyaTurleri, yargiKollari, musteriler, alanDuzeni, etiketler] = await Promise.all([
+  const [kullanici, hukukDallari, hukukiIliskiTurleri, muvekkilSifatlari, davaTurleri, dosyaTurleri, yargiKollari, musteriler, alanDuzeni, etiketler, birimler] = await Promise.all([
     mevcutKullanici(),
     secenekleriGetir("hukuk_dali"),
     secenekleriGetir("hukuki_iliski_turu"),
@@ -30,6 +31,7 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
     musterileriListele(),
     formAlanDuzeniniGetir("dava-dosyasi"),
     etiketleriGetir(),
+    adliBirimleriListele(),
   ]);
 
   const seciliIdler =
@@ -60,6 +62,7 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
       baslangicKarsiTaraflar={dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad, tc: kt.karsiTaraf.tanimlayiciKod })) ?? []}
       alanSirasi={alanSirasi}
       etiketler={etiketler}
+      birimler={birimler}
       yoneticiMi={!!kullanici && silebilirMi(kullanici.rol)}
     />
   );

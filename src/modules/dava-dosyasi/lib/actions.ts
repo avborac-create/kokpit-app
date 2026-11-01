@@ -11,6 +11,7 @@ import { silebilirMi, sistemYoneticisiMi } from "@/core/auth/yetki";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { dosyaCariHesapOzeti } from "./queries";
 import { dosyaKimligiHatasi } from "./dosya-kimligi";
+import { birimKatalogHatasi } from "./adli-birim";
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
   const deger = String(formData.get(alan) ?? "").trim();
@@ -246,7 +247,9 @@ export async function davaDosyasiOlustur(
     };
   }
 
-  const kimlikHatasi = dosyaKimligiHatasi(metinYaAlNull(formData, "birimAdi"), metinYaAlNull(formData, "dosyaNo"));
+  const kimlikHatasi =
+    dosyaKimligiHatasi(metinYaAlNull(formData, "birimAdi"), metinYaAlNull(formData, "dosyaNo")) ??
+    (await birimKatalogHatasi(metinYaAlNull(formData, "birimAdi")));
   if (kimlikHatasi) {
     return {
       hata: kimlikHatasi,
@@ -350,11 +353,12 @@ export async function davaDosyasiGuncelle(
     where: { id },
     select: { turId: true, konu: true, birimAdi: true, dosyaNo: true },
   });
-  const kimlikHatasi = dosyaKimligiHatasi(
-    g("birimAdi") ? metinYaAlNull(formData, "birimAdi") : null,
-    g("dosyaNo") ? metinYaAlNull(formData, "dosyaNo") : null,
-    mevcut,
-  );
+  const kimlikHatasi =
+    dosyaKimligiHatasi(
+      g("birimAdi") ? metinYaAlNull(formData, "birimAdi") : null,
+      g("dosyaNo") ? metinYaAlNull(formData, "dosyaNo") : null,
+      mevcut,
+    ) ?? (g("birimAdi") ? await birimKatalogHatasi(metinYaAlNull(formData, "birimAdi"), mevcut.birimAdi) : null);
   if (kimlikHatasi) {
     return {
       hata: kimlikHatasi,
@@ -650,6 +654,10 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
         mevcutKimlik ?? undefined,
       );
       if (hata) throw new Error(hata);
+      if (alan === "birimAdi") {
+        const katalogHatasi = await birimKatalogHatasi(deger || null, mevcutKimlik?.birimAdi);
+        if (katalogHatasi) throw new Error(katalogHatasi);
+      }
     }
     switch (alan) {
       case "muvekkilSifatiId": {
