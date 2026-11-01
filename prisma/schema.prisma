@@ -1684,6 +1684,11 @@ model Is {
   baslik           String
   aciklama         String?
   durum            String       @default("BASLATILMADI")
+  // PARCA = yap-bitir, SUREC = uzun sure takip gerektiren, OPERASYONEL = haftalik duzenli (haftalikHedef kez).
+  tur              String       @default("PARCA")
+  haftalikHedef    Int?
+  // Otomatik acilan islerde kaynak kaydi ("unvan:<id>").
+  kaynak           String?
   sorumluId        String?
   olusturanId      String?
   olusturmaTarihi  DateTime     @default(now())
@@ -1692,7 +1697,10 @@ model Is {
   maddeler         IsMaddesi[]
   yorumlar         IsYorumu[]
   yardimlar        IsYardimi[]
+  operasyonKayitlari IsOperasyonKaydi[]
 
+  @@index([tur])
+  @@index([kaynak])
   @@index([durum])
   @@index([sorumluId, durum])
   @@map("isler")
@@ -1751,4 +1759,16 @@ model IsYardimi {
   @@unique([isId, yardimciId])
   @@index([yardimciId])
   @@map("is_yardimlari")
+}
+
+// Operasyonel gorevlerde her "Yaptim" bir kayittir; haftalik hedefe karsi sayilir.
+model IsOperasyonKaydi {
+  id     String   @id @default(cuid())
+  isId   String
+  is     Is       @relation(fields: [isId], references: [id], onDelete: Cascade)
+  yapanId String?
+  tarih  DateTime @default(now())
+
+  @@index([isId, tarih])
+  @@map("is_operasyon_kayitlari")
 }

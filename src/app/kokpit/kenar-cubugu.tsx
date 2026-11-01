@@ -9,7 +9,6 @@ import {
   AnaSayfaIkonu,
   TakvimIkonu,
   GorevlerIkonu,
-  IslerIkonu,
   MuvekkillerIkonu,
   HukukDosyalariIkonu,
   CezaDosyalariIkonu,
@@ -43,7 +42,6 @@ export function KenarCubugu({
   buroRolu,
   menuDuzeni,
   cmkDikkatSayisi = 0,
-  bekleyenGorevSayisi = 0,
   isSayisi = 0,
 }: {
   kullaniciRol?: KullaniciRolu;
@@ -53,8 +51,6 @@ export function KenarCubugu({
   // (yaklasan durusma + gecikmis sonraki kontrol) - bkz.
   // cmkOzetSayilariniHesapla. 0 ise rozet hic gosterilmez.
   cmkDikkatSayisi?: number;
-  // Giris yapan kullanicinin acik bekleyen gorev sayisi (0 ise rozet gosterilmez).
-  bekleyenGorevSayisi?: number;
   // Giris yapan kullaniciya atanmis, tamamlanmamis is sayisi.
   isSayisi?: number;
 }) {
@@ -101,10 +97,7 @@ export function KenarCubugu({
             <MenuBagi modul={modulHaritasi.get("buro-takvimi")!} ikon={TakvimIkonu} renk="#ef6a5b" seciliMi={yol.startsWith("/kokpit/takvim")} sonMu={sonMu(modulHaritasi.get("buro-takvimi")!.yol)} />
           )}
           {gorunurMu("isler") && (
-            <MenuBagi modul={modulHaritasi.get("isler")!} ikon={IslerIkonu} renk="#8b5cf6" seciliMi={yol.startsWith("/kokpit/isler")} sonMu={sonMu(modulHaritasi.get("isler")!.yol)} rozetSayisi={isSayisi} />
-          )}
-          {gorunurMu("bekleyen-gorevler") && (
-            <MenuBagi modul={modulHaritasi.get("bekleyen-gorevler")!} ikon={GorevlerIkonu} renk="#14b8c4" seciliMi={yol.startsWith("/kokpit/bekleyen-gorevler")} sonMu={sonMu(modulHaritasi.get("bekleyen-gorevler")!.yol)} rozetSayisi={bekleyenGorevSayisi} />
+            <MenuBagi modul={modulHaritasi.get("isler")!} ikon={GorevlerIkonu} renk="#8b5cf6" seciliMi={yol.startsWith("/kokpit/isler")} sonMu={sonMu(modulHaritasi.get("isler")!.yol)} rozetSayisi={isSayisi} />
           )}
         </Grup>
 

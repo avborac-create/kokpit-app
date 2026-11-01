@@ -1,6 +1,7 @@
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { IsListesi } from "./is-listesi";
+import { buHaftaBasi } from "./hafta";
 
 export default async function IslerSayfasi({ searchParams }: { searchParams: Promise<{ kimin?: string }> }) {
   const { kimin } = await searchParams;
@@ -9,7 +10,7 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
     prisma.is.findMany({
       orderBy: { guncellemeTarihi: "desc" },
       take: 400,
-      include: { _count: { select: { yorumlar: true } }, maddeler: { select: { tamam: true } }, yardimlar: true },
+      include: { _count: { select: { yorumlar: true } }, maddeler: { select: { tamam: true } }, yardimlar: true, operasyonKayitlari: { where: { tarih: { gte: buHaftaBasi() } }, select: { id: true } } },
     }),
     prisma.kullanici.findMany({ where: { aktifMi: true }, select: { id: true, adSoyad: true }, orderBy: { adSoyad: "asc" } }),
   ]);
@@ -17,8 +18,8 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
 
   return (
     <div className="mx-auto max-w-3xl pt-3">
-      <h1 className="text-2xl font-semibold tracking-tight text-white">İşler</h1>
-      <p className="mb-5 mt-1 text-sm text-white/55">Her konu bir iştir: durumu, kontrol listesi ve yorumları vardır. Biri yazınca ya da durumu değiştirince ilgililere bildirim gider.</p>
+      <h1 className="text-2xl font-semibold tracking-tight text-white">Görevler</h1>
+      <p className="mb-5 mt-1 text-sm text-white/55">Sizden beklenen her şey burada: parça görevler, süreçler ve operasyonel görevler. Biri yazınca ya da durumu değiştirince ilgililere bildirim gider.</p>
       <IsListesi
         benimId={k?.kullaniciId ?? ""}
         tumBuro={kimin === "buro"}
@@ -32,6 +33,10 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
           yorumSayisi: i._count.yorumlar,
           maddeToplam: i.maddeler.length,
           maddeTamam: i.maddeler.filter((m) => m.tamam).length,
+          tur: i.tur,
+          hedef: i.haftalikHedef ?? 0,
+          yapilan: i.operasyonKayitlari.length,
+          olusturanId: i.olusturanId,
           yardimBenim: i.yardimlar.some((y) => y.yardimciId === (k?.kullaniciId ?? "")),
           yardimIsteyen: ad.get(i.yardimlar.find((y) => y.yardimciId === (k?.kullaniciId ?? ""))?.isteyenId ?? "") ?? "",
           destekMi: i.yardimlar.find((y) => y.yardimciId === (k?.kullaniciId ?? ""))?.isteyenId === i.olusturanId,

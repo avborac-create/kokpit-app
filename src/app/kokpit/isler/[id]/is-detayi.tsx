@@ -3,14 +3,18 @@
 import { upload } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { type YeniEk, durumDegistir, isBilgisiniGuncelle, isSil, maddeDurumu, maddeEkle, maddeSil, sorumluDegistir, yardimIste, yardimKaldir, yorumEkle } from "../actions";
-import { DURUMLAR } from "../durum";
+import { type YeniEk, durumDegistir, isBilgisiniGuncelle, isSil, maddeDurumu, maddeEkle, maddeSil, sorumluDegistir, yardimIste, yardimKaldir, yorumEkle, operasyonYapildi, operasyonKaydiSil, hedefGuncelle } from "../actions";
+import { DURUMLAR, turBilgisi } from "../durum";
 
 type Detay = {
   id: string;
   baslik: string;
   aciklama: string | null;
   durum: string;
+  tur: string;
+  haftalikHedef: number;
+  yapilan: number;
+  kayitlar: { id: string; yapan: string; zaman: string }[];
   sorumluId: string;
   olusturan: string;
   yardimlar: { id: string; ad: string; isteyen: string; yardimciId: string }[];
@@ -66,6 +70,9 @@ export function IsDetayi({ is, kisiler, benimId }: { is: Detay; kisiler: { id: s
   return (
     <div className="mt-3 flex flex-col gap-4">
       <div className={kutu}>
+        <span className="mb-1.5 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ background: turBilgisi(is.tur).renk + "26", color: turBilgisi(is.tur).renk }}>
+          {turBilgisi(is.tur).ad}
+        </span>
         <input value={baslik} onChange={(e) => setBaslik(e.target.value)} className="w-full bg-transparent text-xl font-semibold text-white outline-none" />
         <textarea value={aciklama} onChange={(e) => setAciklama(e.target.value)} rows={2} placeholder="Açıklama (isteğe bağlı)…" className="mt-2 w-full resize-y bg-transparent text-[15px] text-white/80 outline-none placeholder:text-white/30" />
         {degisti && (
@@ -73,6 +80,37 @@ export function IsDetayi({ is, kisiler, benimId }: { is: Detay; kisiler: { id: s
             Kaydet
           </button>
         )}
+        {is.tur === "OPERASYONEL" ? (
+          <div className="mt-3 rounded-xl bg-white/[0.05] p-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-[15px] text-white">
+                Bu hafta: <b>{is.yapilan}</b> / {is.haftalikHedef}
+              </span>
+              <button type="button" disabled={bekliyor} onClick={() => basla(async () => { await operasyonYapildi(is.id); yonlendirici.refresh(); })} className="rounded-lg bg-[#14b8c4]/25 px-4 py-1.5 text-sm font-semibold text-[#7ee8ef] disabled:opacity-50">
+                Yaptım ✓
+              </button>
+              <label className="ml-auto flex items-center gap-1.5 text-sm text-white/55">
+                Haftada
+                <input type="number" min={1} max={14} defaultValue={is.haftalikHedef} onBlur={(e) => basla(() => hedefGuncelle(is.id, Number(e.target.value)).then(() => yonlendirici.refresh()))} className={`${alan} w-16 px-2 py-1 text-sm`} />
+                kez
+              </label>
+            </div>
+            {is.kayitlar.length > 0 && (
+              <ul className="mt-2 flex flex-col text-xs text-white/50">
+                {is.kayitlar.map((k) => (
+                  <li key={k.id} className="flex items-center gap-2 py-0.5">
+                    <span>
+                      ✓ {k.yapan} · {k.zaman}
+                    </span>
+                    <button type="button" aria-label="Kaydı sil" onClick={() => basla(() => operasyonKaydiSil(k.id).then(() => yonlendirici.refresh()))} className="text-white/30 hover:text-red-300">
+                      ✕
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {DURUMLAR.map((d) => {
             const secili = is.durum === d.anahtar;
@@ -83,6 +121,7 @@ export function IsDetayi({ is, kisiler, benimId }: { is: Detay; kisiler: { id: s
             );
           })}
         </div>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-white/55">
           <span>Sorumlu:</span>
           <select value={is.sorumluId} onChange={(e) => basla(() => sorumluDegistir(is.id, e.target.value).then(() => yonlendirici.refresh()))} className={`${alan} py-1.5 text-sm`}>

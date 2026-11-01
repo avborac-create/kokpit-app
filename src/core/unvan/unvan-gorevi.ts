@@ -1,6 +1,6 @@
 import { prisma } from "@/core/db/prisma";
 
-// Kisa unvanli kayit icin "Bekleyen Gorevler" listesine acik bir gorev ekler (takvime YAZILMAZ:
+// Kisa unvanli kayit icin "Gorevler" (Isler) paneline Parca gorev olarak acik bir gorev ekler (takvime YAZILMAZ:
 // takvim yalniz zamana bagli isler icindir). Gorev kayda "unvan:<id>" ile baglanir; unvan
 // tamamlaninca kapatilir.
 export async function unvanGoreviOlustur(opts: {
@@ -10,10 +10,11 @@ export async function unvanGoreviOlustur(opts: {
   kullaniciId: string | null;
 }) {
   const kaynak = `unvan:${opts.kayitId}`;
-  const var_ = await prisma.bekleyenGorev.findFirst({ where: { kaynak, tamamlandiMi: false }, select: { id: true } });
+  const var_ = await prisma.is.findFirst({ where: { kaynak, durum: { not: "TAMAMLANDI" } }, select: { id: true } });
   if (var_) return;
-  await prisma.bekleyenGorev.create({
+  await prisma.is.create({
     data: {
+      tur: "PARCA",
       baslik: `Tam ünvanı tamamla: ${opts.ad}`,
       aciklama: `${opts.tur} kaydı kısa ünvanla açıldı. MERSİS ya da Ticaret Sicil Gazetesi'nden tam ünvanı bulup kaydı düzeltin.`,
       kaynak,
@@ -24,8 +25,8 @@ export async function unvanGoreviOlustur(opts: {
 }
 
 export async function unvanGoreviniKapat(kayitId: string) {
-  await prisma.bekleyenGorev.updateMany({
-    where: { kaynak: `unvan:${kayitId}`, tamamlandiMi: false },
-    data: { tamamlandiMi: true, tamamlanmaTarihi: new Date() },
+  await prisma.is.updateMany({
+    where: { kaynak: `unvan:${kayitId}`, durum: { not: "TAMAMLANDI" } },
+    data: { durum: "TAMAMLANDI", tamamlanmaTarihi: new Date() },
   });
 }

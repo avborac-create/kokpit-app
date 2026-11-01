@@ -28,13 +28,20 @@ async function ilgililereBildir(isId: string, yapanId: string, baslik: string, m
   await pushGonder([...alicilar], { baslik, metin: `${is.baslik} — ${metin}`.slice(0, 180), url: `/kokpit/isler/${isId}`, etiket: `is-${isId}` });
 }
 
-export async function isEkle(baslik: string, sorumluId: string, aciklama: string, destekId = ""): Promise<{ hata?: string; id?: string }> {
+export async function isEkle(baslik: string, sorumluId: string, aciklama: string, destekId = "", tur = "PARCA", hedef = 0): Promise<{ hata?: string; id?: string }> {
   const k = await girisli();
   const b = baslik.trim();
   if (!b) return { hata: "Konu başlığı boş olamaz." };
   const atanan = sorumluId || k.kullaniciId;
   const is = await prisma.is.create({
-    data: { baslik: b.slice(0, 200), aciklama: aciklama.trim() || null, sorumluId: atanan, olusturanId: k.kullaniciId },
+    data: {
+      baslik: b.slice(0, 200),
+      aciklama: aciklama.trim() || null,
+      tur: ["PARCA", "SUREC", "OPERASYONEL"].includes(tur) ? tur : "PARCA",
+      haftalikHedef: tur === "OPERASYONEL" ? Math.min(14, Math.max(1, Math.round(hedef) || 1)) : null,
+      sorumluId: atanan,
+      olusturanId: k.kullaniciId,
+    },
   });
   if (atanan !== k.kullaniciId) {
     await pushGonder([atanan], { baslik: "Size yeni bir iş atandı", metin: `${k.adSoyad}: ${b}`.slice(0, 180), url: `/kokpit/isler/${is.id}`, etiket: `is-${is.id}` });
@@ -148,5 +155,28 @@ export async function yardimKaldir(yardimId: string) {
   await girisli();
   const y = await prisma.isYardimi.delete({ where: { id: yardimId } });
   revalidatePath(`/kokpit/isler/${y.isId}`);
+  revalidatePath("/kokpit/isler");
+}
+
+export async function operasyonYapildi(isId: string) {
+  const k = await girisli();
+  await prisma.isOperasyonKaydi.create({ data: { isId, yapanId: k.kullaniciId } });
+  await prisma.is.update({ where: { id: isId }, data: { guncellemeTarihi: new Date() } });
+  revalidatePath(`/kokpit/isler/${isId}`);
+  revalidatePath("/kokpit/isler");
+}
+
+export async function operasyonKaydiSil(kayitId: string) {
+  await girisli();
+  const y = await prisma.isOperasyonKaydi.delete({ where: { id: kayitId } });
+  revalidatePath(`/kokpit/isler/${y.isId}`);
+  revalidatePath("/kokpit/isler");
+}
+
+export async function hedefGuncelle(isId: string, hedef: number) {
+  await girisli();
+  const h = Math.min(14, Math.max(1, Math.round(hedef) || 1));
+  await prisma.is.update({ where: { id: isId }, data: { haftalikHedef: h } });
+  revalidatePath(`/kokpit/isler/${isId}`);
   revalidatePath("/kokpit/isler");
 }
