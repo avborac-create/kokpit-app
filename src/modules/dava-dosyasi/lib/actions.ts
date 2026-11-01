@@ -12,6 +12,8 @@ import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { dosyaCariHesapOzeti } from "./queries";
 import { dosyaKimligiHatasi } from "./dosya-kimligi";
 import { birimKatalogHatasi } from "./adli-birim";
+import { KISA_UNVAN_UYARISI, unvanKisaMi } from "@/core/unvan/unvan-kontrol";
+import { unvanGoreviOlustur } from "@/core/unvan/unvan-gorevi";
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
   const deger = String(formData.get(alan) ?? "").trim();
@@ -166,12 +168,15 @@ async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: stri
   // "yeniKarsiTarafTcleri" her yeni isimle AYNI sirada gelir (bos olabilir).
   const tamAdlar = formData.getAll("yeniKarsiTarafAdlari").map(String);
   const tcler = formData.getAll("yeniKarsiTarafTcleri").map(String);
+  const kisalar = formData.getAll("yeniKarsiTarafKisa").map(String);
   const yeniAdlar = tamAdlar
-    .map((ad, i) => ({ ad: ad.trim(), tc: (tcler[i] ?? "").trim() || null }))
+    .map((ad, i) => ({ ad: ad.trim(), tc: (tcler[i] ?? "").trim() || null, kisaOnayli: kisalar[i] === "1" }))
     .filter((k) => k.ad);
 
   const yeniIdler: string[] = [];
-  for (const { ad, tc } of yeniAdlar) {
+  const kullanici = await mevcutKullanici();
+  for (const { ad, tc, kisaOnayli } of yeniAdlar) {
+    if (unvanKisaMi(ad) && !kisaOnayli) throw new Error(KISA_UNVAN_UYARISI);
     // Ayni musteri altinda ayni isimde (buyuk/kucuk harf ve bosluk
     // duyarsiz) zaten bir karsi taraf varsa YENI kayit olusturmak yerine
     // onu kullan - aksi halde ayni "Mata Kauçuk"tan birden fazla, birbirine
@@ -186,6 +191,9 @@ async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: stri
       ? mevcut.id
       : (await prisma.karsiTaraf.create({ data: { musteriId: musteriIdleri[0], ad, tanimlayiciKod: tc } })).id;
     yeniIdler.push(id);
+    if (kisaOnayli && unvanKisaMi(ad)) {
+      await unvanGoreviOlustur({ ad, tur: "Karşı taraf", kayitId: id, kullaniciId: kullanici?.kullaniciId ?? null });
+    }
   }
 
   return [...secilenIdler, ...yeniIdler];

@@ -7,6 +7,16 @@ import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { telefonuDuzenle } from "@/modules/musteri/lib/telefon";
+import { KISA_UNVAN_UYARISI, unvanKisaMi } from "@/core/unvan/unvan-kontrol";
+import { unvanGoreviOlustur, unvanGoreviniKapat } from "@/core/unvan/unvan-gorevi";
+
+// Kisa unvan kurali: tuzel kisi ya da firma gibi gorunen ad, onay kutusu isaretli degilse kaydedilmez.
+async function kisaUnvanDurumu(adSoyadUnvan: string, tipId: string, formData: FormData): Promise<boolean> {
+  const tip = await prisma.secenekDegeri.findUnique({ where: { id: tipId }, select: { kod: true } });
+  const kisa = unvanKisaMi(adSoyadUnvan, tip?.kod === "tuzel_kisi");
+  if (kisa && formData.get("kisaUnvanOnayi") !== "1") throw new Error(KISA_UNVAN_UYARISI);
+  return kisa;
+}
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
   const deger = String(formData.get(alan) ?? "").trim();
@@ -60,6 +70,7 @@ export async function musteriOlustur(formData: FormData) {
     throw new Error("Ad/Soyad/Unvan, tip ve durum alanları zorunludur.");
   }
 
+  const kisaUnvan = await kisaUnvanDurumu(adSoyadUnvan, tipId, formData);
   const musteri = await prisma.musteri.create({
     data: {
       adSoyadUnvan,
@@ -73,6 +84,10 @@ export async function musteriOlustur(formData: FormData) {
     },
   });
 
+  if (kisaUnvan) {
+    const kullanici = await mevcutKullanici();
+    await unvanGoreviOlustur({ ad: adSoyadUnvan, tur: "Müvekkil", kayitId: musteri.id, kullaniciId: kullanici?.kullaniciId ?? null });
+  }
   await telefonSatirlariniYaz(musteri.id, formData);
   revalidatePath("/kokpit/musteriler");
   redirect(`/kokpit/musteriler/${musteri.id}`);
@@ -87,6 +102,7 @@ export async function musteriGuncelle(id: string, formData: FormData) {
     throw new Error("Ad/Soyad/Unvan, tip ve durum alanları zorunludur.");
   }
 
+  const kisaUnvan = await kisaUnvanDurumu(adSoyadUnvan, tipId, formData);
   await prisma.musteri.update({
     where: { id },
     data: {
@@ -101,6 +117,12 @@ export async function musteriGuncelle(id: string, formData: FormData) {
     },
   });
 
+  if (kisaUnvan) {
+    const kullanici = await mevcutKullanici();
+    await unvanGoreviOlustur({ ad: adSoyadUnvan, tur: "Müvekkil", kayitId: id, kullaniciId: kullanici?.kullaniciId ?? null });
+  } else {
+    await unvanGoreviniKapat(id);
+  }
   await telefonSatirlariniYaz(id, formData);
   revalidatePath("/kokpit/musteriler");
   revalidatePath(`/kokpit/musteriler/${id}`);

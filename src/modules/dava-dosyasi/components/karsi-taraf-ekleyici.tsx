@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { Alan, Etiket, Girdi } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
+import { KISA_UNVAN_ONAY_METNI, KISA_UNVAN_UYARISI, unvanKisaMi } from "@/core/unvan/unvan-kontrol";
 
-type KarsiTarafCipi = { id: string; ad: string; tc?: string | null; mevcutMu: boolean };
+type KarsiTarafCipi = { id: string; ad: string; tc?: string | null; mevcutMu: boolean; kisa?: boolean };
 
 // Eskiden ayri iki bilesendi: "var olan karsi taraflardan sec" (checkbox
 // listesi) + "yeni ekle" (isim yaz + buton). Kullanici checkbox listesinin
@@ -25,13 +26,17 @@ export function KarsiTarafEkleyici({
   );
   const [girdi, setGirdi] = useState("");
   const [tcGirdi, setTcGirdi] = useState("");
+  const [kisaOnay, setKisaOnay] = useState(false);
+  const kisaMi = unvanKisaMi(girdi);
 
   function ekle() {
     const ad = girdi.trim();
     if (!ad) return;
-    setCipler((liste) => [...liste, { id: ad, ad, tc: tcGirdi.trim() || null, mevcutMu: false }]);
+    if (kisaMi && !kisaOnay) return;
+    setCipler((liste) => [...liste, { id: ad, ad, tc: tcGirdi.trim() || null, mevcutMu: false, kisa: kisaMi }]);
     setGirdi("");
     setTcGirdi("");
+    setKisaOnay(false);
   }
 
   function kaldir(index: number) {
@@ -75,6 +80,15 @@ export function KarsiTarafEkleyici({
           Ekle
         </Dugme>
       </div>
+      {kisaMi && (
+        <div className="mt-2 rounded-xl border border-[#f2b04c]/40 bg-[#f2b04c]/10 p-3 text-sm text-[#f3d9a8]">
+          <p>{KISA_UNVAN_UYARISI}</p>
+          <label className="mt-2 flex items-start gap-2 text-white/85">
+            <input type="checkbox" checked={kisaOnay} onChange={(e) => setKisaOnay(e.target.checked)} className="mt-1 h-4 w-4 accent-[#f2b04c]" />
+            <span>{KISA_UNVAN_ONAY_METNI}</span>
+          </label>
+        </div>
+      )}
       {cipler.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2">
           {cipler.map((cip, i) => (
@@ -88,6 +102,7 @@ export function KarsiTarafEkleyici({
                 <>
                   <input type="hidden" name="yeniKarsiTarafAdlari" value={cip.ad} />
                   <input type="hidden" name="yeniKarsiTarafTcleri" value={cip.tc ?? ""} />
+                  <input type="hidden" name="yeniKarsiTarafKisa" value={cip.kisa ? "1" : "0"} />
                 </>
               )}
               {cip.ad}

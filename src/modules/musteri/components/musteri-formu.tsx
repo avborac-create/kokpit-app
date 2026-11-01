@@ -9,6 +9,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { secenekListesiTumDegerlerle } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { TelefonSatirlari } from "@/modules/musteri/components/telefon-satirlari";
+import { KisaUnvanOnayi } from "@/core/unvan/kisa-unvan-onayi";
 
 const VARSAYILAN_SIFATLAR = ["Firma sahibi", "Firma ortağı", "Genel müdür", "Satış müdürü", "Muhasebe", "Çalışan personel", "Yetkili"];
 
@@ -43,6 +44,9 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
       <Alan>
         <Etiket htmlFor="adSoyadUnvan">Ad Soyad / Unvan</Etiket>
         <Girdi id="adSoyadUnvan" name="adSoyadUnvan" required defaultValue={musteri?.adSoyadUnvan} />
+        <div className="mt-2">
+          <KisaUnvanOnayi adAlaniId="adSoyadUnvan" tipAlaniId="tipId" tuzelTipIdleri={tipler.filter((t) => t.kod === "tuzel_kisi").map((t) => t.id)} />
+        </div>
       </Alan>
     ),
     tipId: () => (
