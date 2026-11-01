@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore, useState } from "react";
+import { useSyncExternalStore, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -355,6 +355,7 @@ export function DosyalarTablosu({
       secimiDegistir(id);
       return;
     }
+    if (dokunmatik) return;
     router.push(`/kokpit/dava-dosyalari/${id}`);
   }
   function secimModunuDegistir() {
@@ -372,6 +373,43 @@ export function DosyalarTablosu({
       return y;
     });
   }
+  // Masaustu: klavye ile gezinme. Aktif satir vurgulanir; ok tuslari tasir, Enter acar,
+  // bosluk (secim modunda) isaretler.
+  const [aktifId, setAktifId] = useState<string | null>(null);
+  const siraliIdler = satirlar.map((s) => s.dosya.id).join(",");
+  useEffect(() => {
+    function tus(e: KeyboardEvent) {
+      const t = e.target as HTMLElement | null;
+      if (t && t.closest("input,textarea,select,[contenteditable=true],button,a,summary")) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const idler = siraliIdler ? siraliIdler.split(",") : [];
+      if (idler.length === 0) return;
+      const i = aktifId ? idler.indexOf(aktifId) : -1;
+      let yeni: string | null = null;
+      if (e.key === "ArrowDown") yeni = idler[Math.min(i + 1, idler.length - 1)];
+      else if (e.key === "ArrowUp") yeni = idler[i <= 0 ? 0 : i - 1];
+      else if (e.key === "Home") yeni = idler[0];
+      else if (e.key === "End") yeni = idler[idler.length - 1];
+      else if (e.key === "Enter" && i >= 0) {
+        e.preventDefault();
+        router.push(`/kokpit/dava-dosyalari/${idler[i]}`);
+        return;
+      } else if (e.key === " " && i >= 0 && secimModu) {
+        e.preventDefault();
+        secimiDegistir(idler[i]);
+        return;
+      } else if (e.key === "Escape" && aktifId) {
+        setAktifId(null);
+        return;
+      }
+      if (!yeni) return;
+      e.preventDefault();
+      setAktifId(yeni);
+      document.querySelector(`tr[data-satir-id="${yeni}"]`)?.scrollIntoView({ block: "nearest" });
+    }
+    window.addEventListener("keydown", tus);
+    return () => window.removeEventListener("keydown", tus);
+  });
   function hepsiniDegistir() {
     setSecim(hepsiSecili ? new Set() : new Set(gorunenIdler));
   }
@@ -562,11 +600,14 @@ export function DosyalarTablosu({
             {satirlar.map(({ dosya, seviye, altSayisi }) => (
               <tr
                 key={dosya.id}
+                data-satir-id={dosya.id}
                 onClick={(e) => {
+                  if ((e.target as HTMLElement).closest("a,button,input,label,select,details")) return;
+                  setAktifId(dosya.id);
                   if (window.matchMedia("(pointer: coarse)").matches) satirdanAc(e, dosya.id, true);
                 }}
                 onDoubleClick={(e) => satirdanAc(e, dosya.id, false)}
-                className={`group/satir cursor-pointer border-t border-white/[0.06] hover:bg-white/[0.04] ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""}`}
+                className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] [@media(pointer:fine)]:cursor-pointer ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""} ${aktifId === dosya.id ? "bg-[color-mix(in_srgb,var(--accent)_16%,transparent)] shadow-[inset_3px_0_0_var(--accent)]" : ""}`}
               >
                 {secimModu && (
                   <td className={`sticky left-0 z-10 p-0 ${secim.has(dosya.id) ? "bg-[color-mix(in_srgb,var(--yuzey,#1c2432),var(--accent)_22%)]" : "bg-[var(--yuzey,#1c2432)]"}`}>
@@ -618,6 +659,15 @@ export function DosyalarTablosu({
                           <span className="shrink-0 text-[11px] text-white/40">
                             {altSayisi} alt
                           </span>
+                        )}
+                        {!secimModu && (
+                          <button
+                            type="button"
+                            onClick={() => router.push(`/kokpit/dava-dosyalari/${dosya.id}`)}
+                            className="ml-1 hidden shrink-0 rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-medium text-white [@media(pointer:coarse)]:block"
+                          >
+                            Aç
+                          </button>
                         )}
                       </div>
                     ) : (
