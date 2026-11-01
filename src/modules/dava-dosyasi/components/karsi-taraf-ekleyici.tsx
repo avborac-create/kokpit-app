@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Alan, Etiket, Girdi } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
+import { MersisAra } from "@/core/unvan/mersis-ara";
 import { KISA_UNVAN_ONAY_METNI, KISA_UNVAN_UYARISI, unvanKisaMi } from "@/core/unvan/unvan-kontrol";
 
 type KarsiTarafCipi = { id: string; ad: string; tc?: string | null; mevcutMu: boolean; kisa?: boolean };
@@ -79,6 +80,9 @@ export function KarsiTarafEkleyici({
         <Dugme type="button" varyant="ikincil" onClick={ekle}>
           Ekle
         </Dugme>
+      </div>
+      <div className="mt-1">
+        <MersisAra ad={girdi} />
       </div>
       {kisaMi && (
         <div className="mt-2 rounded-xl border border-[#f2b04c]/40 bg-[#f2b04c]/10 p-3 text-sm text-[#f3d9a8]">
