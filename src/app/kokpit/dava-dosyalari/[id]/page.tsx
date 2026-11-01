@@ -147,6 +147,17 @@ export default async function DavaDosyasiDetaySayfasi({
       ? (await Promise.all(agacIdleri.map((i) => kapsamOzeti({ musteriId, dosyaId: i })))).reduce((t, o) => t + o.net, 0)
       : null;
   const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
+  // Dosya basligindaki bakiye uyarilari: bakiyesi olan her cari hesap kendi adiyla. Isaret muvekkil
+  // acisindan: ARTI = muvekkil adina dosyada duran para (kullanilabilir/iade), EKSI = muvekkilden
+  // istenecek tutar. Para hesabinda bakiye = alacak - borc (zaten artisi muvekkil lehine); digerlerinde
+  // bakiye = borc - alacak oldugundan isaret ters cevrilir. Adliyede tutulan hesaplar uyari disi.
+  const bakiyeEtiketleri = dosyaEkonomisi.hesaplar
+    .filter((h) => !h.tutulanHesapMi)
+    .map((h) => {
+      const tutar = Math.round((h.paraHesabiMi ? h.bakiye : -h.bakiye) * 100) / 100;
+      return { hesapId: h.hesapId, ad: h.ad, tutar, artiMi: tutar > 0 };
+    })
+    .filter((e) => e.tutar !== 0);
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
   // Baslik/etiket degisikligi tum kullanicilari etkiledigi icin yalniz yonetici.
@@ -452,26 +463,18 @@ export default async function DavaDosyasiDetaySayfasi({
               )}
             </div>
             <div className="flex flex-wrap justify-end gap-1.5 max-md:basis-full max-md:justify-start">
-              {dosyaEkonomisi.net !== 0 && <span
-                className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  dosyaEkonomisi.net > 0
-                    ? "bg-[#ff7a70]/15 text-[#ff7a70]"
-                    : dosyaEkonomisi.net < 0
-                      ? "bg-[#32d74b]/15 text-[#32d74b]"
-                      : "bg-white/[0.08] text-white/80"
-                }`}
-              >
-                {dosyaEkonomisi.net > 0
-                  ? `Müvekkil Borcu: ${paraFormatlayici.format(dosyaEkonomisi.net)}`
-                  : dosyaEkonomisi.net < 0
-                    ? `Müvekkil Lehine Fazla: ${paraFormatlayici.format(-dosyaEkonomisi.net)}`
-                    : ""}
-              </span>}
-              {dosyaEkonomisi.paraBakiyesi > 0 && (
-                <span className="whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2.5 py-0.5 text-xs font-medium text-[#8fb4e8]">
-                  Para trafiğinde bekleyen: {paraFormatlayici.format(dosyaEkonomisi.paraBakiyesi)}
+              {bakiyeEtiketleri.map((e) => (
+                <span
+                  key={e.hesapId}
+                  title={e.artiMi ? "Müvekkil adına dosyada duran para: dosya için kullanılabilir, başka hesaba virman yapılabilir ya da müvekkile iade edilir." : "Müvekkilden istenmesi gereken tutar."}
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    e.artiMi ? "bg-[#32d74b]/15 text-[#32d74b]" : "bg-[#ff7a70]/15 text-[#ff7a70]"
+                  }`}
+                >
+                  {e.ad} {e.artiMi ? "artı" : "eksi"} bakiye vermektedir: {paraFormatlayici.format(Math.abs(e.tutar))}
+                  {e.artiMi ? " · müvekkile iade / virman" : " · müvekkilden istenecek"}
                 </span>
-              )}
+              ))}
               {agacNet !== null && (
                 <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs font-medium text-white/90">
                   Alt dosyalar dahil net: {paraFormatlayici.format(agacNet)}
