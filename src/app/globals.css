@@ -575,3 +575,10 @@ html .tsatir.tsatir-konu { background: color-mix(in srgb, #f2b04c 13%, transpare
 html .tsatir-konu .tikon { background: linear-gradient(135deg, #f2b04c, #c9821c); color: #fff; box-shadow: none; }
 .konu-etiket { color: #f2b04c; }
 html[data-tema="acik"] .konu-etiket { color: #9a5b00; }
+
+/* DUZ YUZEY (Notion fume): cam efekti yok; zemin ve kartlar duz, ince cizgili, kucuk koseli. */
+html[data-cam="kapali"] body { background-image: none; }
+html .glass, html .glass-strong { border-radius: 8px; }
+html[data-palet] .tsatir { border-radius: 6px; box-shadow: none; }
+html[data-palet] .alan-hucre { border-radius: 6px; border: 1px solid var(--glass-cizgi); box-shadow: none; }
+html[data-palet] .tikon { border-radius: 6px; box-shadow: none; }

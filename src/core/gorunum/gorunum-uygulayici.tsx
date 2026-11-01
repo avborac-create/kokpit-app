@@ -19,7 +19,8 @@ export function gorunumuUygula(tercih: GorunumTercihi) {
   const sistemAcikMi = window.matchMedia("(prefers-color-scheme: light)").matches;
   const kok = document.documentElement;
   kok.setAttribute("data-tema", etkinTema(tercih.tema, sistemAcikMi));
-  kok.setAttribute("data-cam", tercih.cam);
+  // Cam efekti kaldirildi: yuzeyler her zaman duz (bkz. globals.css "kapali").
+  kok.setAttribute("data-cam", "kapali");
   kok.setAttribute("data-palet", tercih.palet);
   kok.setAttribute("data-punto", tercih.punto);
   kok.setAttribute("data-logo", tercih.logo);
