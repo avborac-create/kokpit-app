@@ -39,7 +39,7 @@ export function KokpitKabuk({
   return (
     <div className="flex min-h-0 flex-1">
       <aside
-        className={`glass m-3 grow min-h-0 shrink-0 flex-col rounded-[10px] md:mr-0 md:flex md:w-60 md:grow-0 ${
+        className={`glass m-3 max-md:mb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] grow min-h-0 shrink-0 flex-col rounded-[10px] md:mr-0 md:flex md:w-60 md:grow-0 ${
           modulSeciliMi ? "hidden" : "flex"
         }`}
       >
@@ -76,7 +76,7 @@ export function KokpitKabuk({
             </form>
           </div>
         </header>
-        <main ref={anaAlanRef} className="min-w-0 flex-1 overflow-y-auto overscroll-y-contain px-3 pb-6 md:px-6">
+        <main ref={anaAlanRef} className="min-w-0 flex-1 overflow-y-auto overscroll-y-contain px-3 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] md:px-6 md:pb-6">
           {children}
         </main>
         <AsagiCekYenile hedef={anaAlanRef} />
