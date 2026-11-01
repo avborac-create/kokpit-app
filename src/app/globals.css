@@ -569,3 +569,9 @@ html[data-logo="k2"] .marka-logo-k2,
 html[data-logo="k1"] .marka-logo-k1,
 html[data-logo="k5"] .marka-logo-k5,
 html[data-logo="s4"] .marka-logo-s4{display:block}
+
+/* Dosya basligindaki "Konu" satiri: taraf satirlarindan ayrisan sicak (kehribar) ton. */
+html .tsatir.tsatir-konu { background: color-mix(in srgb, #f2b04c 13%, transparent); border-color: color-mix(in srgb, #f2b04c 38%, transparent); }
+html .tsatir-konu .tikon { background: linear-gradient(135deg, #f2b04c, #c9821c); color: #fff; box-shadow: none; }
+.konu-etiket { color: #f2b04c; }
+html[data-tema="acik"] .konu-etiket { color: #9a5b00; }

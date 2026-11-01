@@ -408,17 +408,6 @@ export default async function DavaDosyasiDetaySayfasi({
               )}
             </h1>
             <div className="mt-2 grid grid-cols-1 items-stretch gap-1.5 text-sm md:flex md:flex-wrap md:gap-2">
-              {(dosya.birimAdi || dosya.dosyaNo) && (
-                <div className="tsatir">
-                  <span className="tikon tikon-konu" aria-hidden>§</span>
-                  <div className="min-w-0 flex-1">
-                    <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">Konu</span>
-                    <span className="break-words text-sm font-medium text-white sm:text-base">
-                      {dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}
-                    </span>
-                  </div>
-                </div>
-              )}
               <div className="tsatir">
                 <span className="tikon" aria-hidden>👤</span>
                 <div className="min-w-0 flex-1">
@@ -439,6 +428,17 @@ export default async function DavaDosyasiDetaySayfasi({
                   </span>
                 </div>
               </div>
+              {(dosya.birimAdi || dosya.dosyaNo) && (
+                <div className="tsatir tsatir-konu">
+                  <span className="tikon tikon-konu" aria-hidden>§</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="konu-etiket block text-[11px] font-semibold uppercase tracking-wider sm:text-xs">Konu</span>
+                    <span className="break-words text-sm font-medium text-white sm:text-base">
+                      {dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
