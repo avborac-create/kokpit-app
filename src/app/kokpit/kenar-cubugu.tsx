@@ -9,51 +9,12 @@ import {
   AnaSayfaIkonu,
   TakvimIkonu,
   MuvekkillerIkonu,
-  DosyalarIkonu,
   HukukDosyalariIkonu,
   CezaDosyalariIkonu,
   OnerilerIkonu,
   AyarlarIkonu,
   OkKirilimIkonu,
 } from "./kenar-cubugu-ikonlari";
-
-const DOSYALAR_ACIK_ANAHTARI = "kokpit-sol-menu-dosyalar-acik";
-
-// "Dosyalar" ac/kapa tercihini localStorage'da (harici bir "store")
-// tutan minik bir useSyncExternalStore kaynagi - React'in effect icinde
-// dogrudan setState cagirmayi onlemesi (react-hooks/set-state-in-effect)
-// gerektirdigi icin, sayfa yenilense de tercihin kullanici dostu bicimde
-// korunmasinin dogru yolu budur: sunucu anlik goruntusu hep `false`
-// (SSR'da localStorage yok, hydration uyumsuzlugu olmaz), istemci mount
-// olur olmaz gercek degere senkronize olur.
-const dosyalarDinleyicileri = new Set<() => void>();
-
-// null = kullanici hic ac/kapa yapmadi (henuz bir tercih kaydedilmedi) -
-// bu durumda varsayilan, alttaki bir rota aktifse acik baslamaktir; "1"/"0"
-// kullanicinin ACIKCA sectigi, rotadan bagimsiz kalici tercihtir (boylece
-// kullanici aktif bir alt sayfadayken bile "Dosyalar"i kapatabilir).
-function dosyalarDegeriOku(): boolean | null {
-  try {
-    const deger = localStorage.getItem(DOSYALAR_ACIK_ANAHTARI);
-    return deger === null ? null : deger === "1";
-  } catch {
-    return null;
-  }
-}
-
-function dosyalarDegeriYaz(deger: boolean) {
-  try {
-    localStorage.setItem(DOSYALAR_ACIK_ANAHTARI, deger ? "1" : "0");
-  } catch {
-    // localStorage erisilemez (gizli sekme vb.) - sessizce yok say
-  }
-  dosyalarDinleyicileri.forEach((dinleyici) => dinleyici());
-}
-
-function dosyalarAbone(dinleyici: () => void) {
-  dosyalarDinleyicileri.add(dinleyici);
-  return () => dosyalarDinleyicileri.delete(dinleyici);
-}
 
 // Son acilan modul: ana sayfaya (telefonda menu listesine) donuldugunde menude
 // o modul isaretli kalir; kullanici nerede kaldigini hatirlar.
@@ -118,116 +79,75 @@ export function KenarCubugu({
     return sonVar && modulYol !== "/kokpit" && !!sonModul && (sonModul === modulYol || sonModul.startsWith(modulYol + "/"));
   }
 
-  const hukukDosyalariAktifMi = yol.startsWith("/kokpit/dava-dosyalari");
-  const dosyalarCocukAktifMi =
-    yol.startsWith("/kokpit/dava-dosyalari") ||
-    yol.startsWith("/kokpit/cmk-dosyalari") ||
-    yol.startsWith("/kokpit/haciz-raporlari") ||
-    (sonVar &&
-      !!sonModul &&
-      (sonModul.startsWith("/kokpit/dava-dosyalari") ||
-        sonModul.startsWith("/kokpit/cmk-dosyalari") ||
-        sonModul.startsWith("/kokpit/haciz-raporlari")));
-  const kayitliAcikMi = useSyncExternalStore(dosyalarAbone, dosyalarDegeriOku, () => null);
-  const dosyalarAcikMi = kayitliAcikMi ?? dosyalarCocukAktifMi;
-
-  function dosyalarAcKapa() {
-    dosyalarDegeriYaz(!dosyalarAcikMi);
-  }
-
   const anaSayfa = modulHaritasi.get("ana-sayfa")!;
   const ayarlar = gorunurMu("ayarlar") ? modulHaritasi.get("ayarlar") : undefined;
+  const dosyaOgesiVar = gorunurMu("dava-dosyalari") || gorunurMu("cmk-dosyalari");
+  const modulGrubuVar = gorunurMu("musteriler") || dosyaOgesiVar;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-3">
-        <MenuBagi modul={anaSayfa} ikon={AnaSayfaIkonu} seciliMi={yol === "/kokpit"} telefondaSoluk={sonVar} />
-        {gorunurMu("buro-takvimi") && <MenuBagi modul={modulHaritasi.get("buro-takvimi")!} ikon={TakvimIkonu} seciliMi={yol.startsWith("/kokpit/takvim")} sonMu={sonMu(modulHaritasi.get("buro-takvimi")!.yol)} />}
+      <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
+        <Grup>
+          <MenuBagi modul={anaSayfa} ikon={AnaSayfaIkonu} renk="#3b82f6" seciliMi={yol === "/kokpit"} telefondaSoluk={sonVar} />
+          {gorunurMu("buro-takvimi") && (
+            <MenuBagi modul={modulHaritasi.get("buro-takvimi")!} ikon={TakvimIkonu} renk="#ef6a5b" seciliMi={yol.startsWith("/kokpit/takvim")} sonMu={sonMu(modulHaritasi.get("buro-takvimi")!.yol)} />
+          )}
+        </Grup>
 
-        {(gorunurMu("musteriler") ||
-          gorunurMu("dava-dosyalari") ||
-          gorunurMu("cmk-dosyalari")) && <BolumBasligi>MODÜLLER</BolumBasligi>}
-        {gorunurMu("musteriler") && (
-          <MenuBagi modul={modulHaritasi.get("musteriler")!} ikon={MuvekkillerIkonu} seciliMi={yol.startsWith("/kokpit/musteriler")} sonMu={sonMu(modulHaritasi.get("musteriler")!.yol)} />
-        )}
-        {(gorunurMu("dava-dosyalari") || gorunurMu("cmk-dosyalari") || gorunurMu("haciz-raporlari")) && (
-          <>
-            <button
-              type="button"
-              onClick={dosyalarAcKapa}
-              aria-expanded={dosyalarAcikMi}
-              aria-controls="dosyalar-alt-menu"
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-[15px] text-white/65 outline-none transition-colors hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
-            >
-              <DosyalarIkonu className="h-[18px] w-[18px] shrink-0" />
-              <span className="flex-1 truncate">Dosyalar</span>
-              <OkKirilimIkonu
-                className={`h-3.5 w-3.5 shrink-0 text-white/35 transition-transform ${dosyalarAcikMi ? "rotate-90" : ""}`}
-              />
-            </button>
-            {dosyalarAcikMi && (
-              <div id="dosyalar-alt-menu" className="flex flex-col gap-0.5 pl-4">
-                {gorunurMu("dava-dosyalari") && (
-                  <MenuBagi
-                    modul={modulHaritasi.get("dava-dosyalari")!}
-                    ikon={HukukDosyalariIkonu}
-                    seciliMi={hukukDosyalariAktifMi}
-                    sonMu={sonMu(modulHaritasi.get("dava-dosyalari")!.yol)}
-                  />
-                )}
-                {gorunurMu("cmk-dosyalari") && (
-                  <MenuBagi
-                    modul={modulHaritasi.get("cmk-dosyalari")!}
-                    ikon={CezaDosyalariIkonu}
-                    seciliMi={yol.startsWith("/kokpit/cmk-dosyalari")}
-                    sonMu={sonMu(modulHaritasi.get("cmk-dosyalari")!.yol)}
-                    rozetSayisi={cmkDikkatSayisi}
-                  />
-                )}
-              </div>
-            )}
-          </>
+        {modulGrubuVar && (
+          <div className="flex flex-col gap-1.5">
+            <BolumBasligi>Modüller</BolumBasligi>
+            <Grup>
+              {gorunurMu("musteriler") && (
+                <MenuBagi modul={modulHaritasi.get("musteriler")!} ikon={MuvekkillerIkonu} renk="#8b6cf0" seciliMi={yol.startsWith("/kokpit/musteriler")} sonMu={sonMu(modulHaritasi.get("musteriler")!.yol)} />
+              )}
+              {gorunurMu("dava-dosyalari") && (
+                <MenuBagi modul={modulHaritasi.get("dava-dosyalari")!} ikon={HukukDosyalariIkonu} renk="#e8a33d" seciliMi={yol.startsWith("/kokpit/dava-dosyalari")} sonMu={sonMu(modulHaritasi.get("dava-dosyalari")!.yol)} />
+              )}
+              {gorunurMu("cmk-dosyalari") && (
+                <MenuBagi modul={modulHaritasi.get("cmk-dosyalari")!} ikon={CezaDosyalariIkonu} renk="#2fb58a" seciliMi={yol.startsWith("/kokpit/cmk-dosyalari")} sonMu={sonMu(modulHaritasi.get("cmk-dosyalari")!.yol)} rozetSayisi={cmkDikkatSayisi} />
+              )}
+            </Grup>
+          </div>
         )}
 
         {gorunurMu("oneriler") && (
-          <>
-            <BolumBasligi>YÖNETİM</BolumBasligi>
-            <MenuBagi
-              modul={modulHaritasi.get("oneriler")!}
-              ikon={OnerilerIkonu}
-              seciliMi={yol.startsWith("/kokpit/oneriler")}
-              sonMu={sonMu(modulHaritasi.get("oneriler")!.yol)}
-            />
-          </>
+          <div className="flex flex-col gap-1.5">
+            <BolumBasligi>Yönetim</BolumBasligi>
+            <Grup>
+              <MenuBagi modul={modulHaritasi.get("oneriler")!} ikon={OnerilerIkonu} renk="#d65db1" seciliMi={yol.startsWith("/kokpit/oneriler")} sonMu={sonMu(modulHaritasi.get("oneriler")!.yol)} />
+            </Grup>
+          </div>
         )}
       </nav>
 
       {ayarlar && (
-        <div className="border-t border-white/10 p-3">
-          <MenuBagi modul={ayarlar} ikon={AyarlarIkonu} seciliMi={yol.startsWith("/kokpit/ayarlar")} sonMu={sonMu(ayarlar.yol)} />
+        <div className="p-3 pt-0">
+          <Grup>
+            <MenuBagi modul={ayarlar} ikon={AyarlarIkonu} renk="#7a8597" seciliMi={yol.startsWith("/kokpit/ayarlar")} sonMu={sonMu(ayarlar.yol)} />
+          </Grup>
         </div>
       )}
     </div>
   );
 }
 
-// Grup basliklari (MODÜLLER, YÖNETİM): belirgin, tiklanamaz; asagidaki ogeleri anlamca grupluyor.
-function BolumBasligi({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="mb-1 mt-5 flex items-center gap-2 px-3 text-xs font-bold uppercase tracking-[0.14em] text-white/75 first:mt-1">
-      <span aria-hidden="true" className="h-3.5 w-[3px] rounded-full bg-[var(--accent)]" />
-      {children}
-    </p>
-  );
+// Yuvarlak kose grup kutusu (iOS Ayarlar'daki "inset grouped" duzeni): satirlar
+// tek kutuda, aralarinda ince ayirici cizgi.
+function Grup({ children }: { children: React.ReactNode }) {
+  return <div className="menu-grup overflow-hidden rounded-xl bg-white/[0.05]">{children}</div>;
 }
 
-// Tum sol menu ogelerinin ortak gorsel dili: tek satir, rahat tiklanabilir
-// yukseklik, ince ikon + etiket. Secili durum "parlak buyuk buton" DEGIL -
-// hafif/yuvarlatilmis bir arka plan + beyaz metin + ikon mavi vurgusu
-// (bkz. gorev tanimindaki tasarim ilkeleri).
+function BolumBasligi({ children }: { children: React.ReactNode }) {
+  return <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/45">{children}</p>;
+}
+
+// Her modulun kendi rengi olan yuvarlak kare ikon + etiket + sag ok. Secili
+// satir: grup icinde hafif dolgu; son acilan modul telefonda ayni sekilde isaretli kalir.
 function MenuBagi({
   modul,
   ikon: Ikon,
+  renk,
   seciliMi,
   sonMu = false,
   telefondaSoluk = false,
@@ -235,6 +155,7 @@ function MenuBagi({
 }: {
   modul: ModulTanimi;
   ikon: (props: { className?: string }) => React.ReactElement;
+  renk: string;
   seciliMi: boolean;
   // Ana sayfadayken son acilan modul (telefonda menu isaretli kalir).
   sonMu?: boolean;
@@ -242,13 +163,20 @@ function MenuBagi({
   telefondaSoluk?: boolean;
   rozetSayisi?: number;
 }) {
+  const kutu = (
+    <span
+      aria-hidden="true"
+      className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white"
+      style={{ backgroundColor: renk }}
+    >
+      <Ikon className="h-4 w-4" />
+    </span>
+  );
+
   if (!modul.aktif) {
     return (
-      <span
-        className="flex items-center gap-3 rounded-md px-3 py-2.5 text-[15px] text-white/30"
-        title="Bu bölüm henüz geliştirilmedi"
-      >
-        <Ikon className="h-[18px] w-[18px] shrink-0" />
+      <span className="menu-satir flex items-center gap-3 px-3 py-2.5 text-[15px] text-white/30" title="Bu bölüm henüz geliştirilmedi">
+        <span className="opacity-40">{kutu}</span>
         <span className="flex-1 truncate">{modul.ad}</span>
         <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium">Yakında</span>
       </span>
@@ -257,23 +185,22 @@ function MenuBagi({
 
   const secili = seciliMi || sonMu;
   const seciliSinif = telefondaSoluk
-    ? "md:bg-white/[0.1] md:text-white md:shadow-[inset_3px_0_0_var(--link)] max-md:text-white/65"
-    : "bg-white/[0.1] text-white shadow-[inset_3px_0_0_var(--link)]";
+    ? "md:bg-white/[0.1] md:text-white text-white/85"
+    : "bg-white/[0.1] text-white";
   return (
     <Link
       href={modul.yol}
       aria-current={seciliMi ? "page" : undefined}
-      className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-[15px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] ${
-        secili ? seciliSinif : "text-white/65 hover:bg-white/[0.06]"
+      className={`menu-satir flex items-center gap-3 px-3 py-2.5 text-[15px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)] ${
+        secili ? seciliSinif : "text-white/85 hover:bg-white/[0.06]"
       }`}
     >
-      <Ikon className={`h-[18px] w-[18px] shrink-0 ${secili && !telefondaSoluk ? "text-[#6db8ff]" : ""}`} />
+      {kutu}
       <span className="flex-1 truncate font-medium">{modul.ad}</span>
       {rozetSayisi > 0 && (
-        <span className="rounded-full bg-[var(--danger-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[#ff7a70]">
-          {rozetSayisi}
-        </span>
+        <span className="rounded-full bg-[var(--danger-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[#ff7a70]">{rozetSayisi}</span>
       )}
+      <OkKirilimIkonu className="h-3.5 w-3.5 shrink-0 text-white/30" />
     </Link>
   );
 }

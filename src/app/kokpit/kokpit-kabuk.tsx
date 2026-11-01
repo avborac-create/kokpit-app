@@ -43,8 +43,8 @@ export function KokpitKabuk({
           modulSeciliMi ? "hidden" : "flex"
         }`}
       >
-        <div className="flex shrink-0 items-center gap-3 border-b border-white/10 px-5 py-5">
-          <MarkaLogosu boyut={36} className="shrink-0 rounded-xl" />
+        <div className="flex shrink-0 items-center gap-3 px-5 pb-3 pt-5">
+          <MarkaLogosu boyut={40} className="shrink-0 rounded-xl" />
           <div>
             <p className="text-base font-semibold tracking-tight text-white">KOKPİT</p>
             <p className="text-sm text-white/45">Eces Hukuk Bürosu</p>
