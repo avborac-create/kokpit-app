@@ -1,5 +1,6 @@
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { menuDuzeniniGetir } from "@/core/menu/queries";
+import { prisma } from "@/core/db/prisma";
 import { cmkOzetSayilariniHesapla } from "@/modules/cmk-dosyalari/lib/queries";
 import { KenarCubugu } from "./kenar-cubugu";
 import { UstBilgiRozeti } from "./ust-bilgi-rozeti";
@@ -19,6 +20,9 @@ export async function KenarCubuguVerisi() {
     menuDuzeniniGetir(),
     cmkOzetSayilariniHesapla(),
   ]);
+  const bekleyenGorevSayisi = kullanici
+    ? await prisma.bekleyenGorev.count({ where: { sorumluId: kullanici.kullaniciId, tamamlandiMi: false } })
+    : 0;
 
   return (
     <KenarCubugu
@@ -26,6 +30,7 @@ export async function KenarCubuguVerisi() {
       buroRolu={kullanici?.buroRolu}
       menuDuzeni={menuDuzeni.map((oge) => ({ anahtar: oge.anahtar, gizliMi: oge.gizliMi }))}
       cmkDikkatSayisi={cmkOzet.yaklasanDurusma + cmkOzet.gecikmisKontrol}
+      bekleyenGorevSayisi={bekleyenGorevSayisi}
     />
   );
 }

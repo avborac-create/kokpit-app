@@ -1634,3 +1634,22 @@ model AdliBirim {
 
   @@map("adli_birimler")
 }
+
+// Zamana bagli OLMAYAN, insanlarin yapmasi gereken isler ("Bekleyen Gorevler" listesi).
+// Tarihli/saatli isler TakvimOgesi'nde kalir; takvime gorev yazilmaz.
+model BekleyenGorev {
+  id               String    @id @default(cuid())
+  baslik           String
+  aciklama         String?
+  // Otomatik gorevlerde kaynak kaydi ("unvan:<musteriId>"); elle eklenenlerde bos.
+  kaynak           String?
+  sorumluId        String?
+  olusturanId      String?
+  tamamlandiMi     Boolean   @default(false)
+  tamamlanmaTarihi DateTime?
+  olusturmaTarihi  DateTime  @default(now())
+
+  @@index([sorumluId, tamamlandiMi])
+  @@index([kaynak])
+  @@map("bekleyen_gorevler")
+}

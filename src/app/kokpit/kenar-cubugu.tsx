@@ -8,6 +8,7 @@ import { MODUL_KAYIT_DEFTERI, type ModulTanimi } from "@/core/modul-kayit-defter
 import {
   AnaSayfaIkonu,
   TakvimIkonu,
+  GorevlerIkonu,
   MuvekkillerIkonu,
   HukukDosyalariIkonu,
   CezaDosyalariIkonu,
@@ -41,6 +42,7 @@ export function KenarCubugu({
   buroRolu,
   menuDuzeni,
   cmkDikkatSayisi = 0,
+  bekleyenGorevSayisi = 0,
 }: {
   kullaniciRol?: KullaniciRolu;
   buroRolu?: BuroRolu;
@@ -49,6 +51,8 @@ export function KenarCubugu({
   // (yaklasan durusma + gecikmis sonraki kontrol) - bkz.
   // cmkOzetSayilariniHesapla. 0 ise rozet hic gosterilmez.
   cmkDikkatSayisi?: number;
+  // Giris yapan kullanicinin acik bekleyen gorev sayisi (0 ise rozet gosterilmez).
+  bekleyenGorevSayisi?: number;
 }) {
   const yol = usePathname();
   const gizliSeti = new Set(menuDuzeni.filter((oge) => oge.gizliMi).map((oge) => oge.anahtar));
@@ -91,6 +95,9 @@ export function KenarCubugu({
           <MenuBagi modul={anaSayfa} ikon={AnaSayfaIkonu} renk="#3b82f6" seciliMi={yol === "/kokpit"} telefondaSoluk={sonVar} />
           {gorunurMu("buro-takvimi") && (
             <MenuBagi modul={modulHaritasi.get("buro-takvimi")!} ikon={TakvimIkonu} renk="#ef6a5b" seciliMi={yol.startsWith("/kokpit/takvim")} sonMu={sonMu(modulHaritasi.get("buro-takvimi")!.yol)} />
+          )}
+          {gorunurMu("bekleyen-gorevler") && (
+            <MenuBagi modul={modulHaritasi.get("bekleyen-gorevler")!} ikon={GorevlerIkonu} renk="#14b8c4" seciliMi={yol.startsWith("/kokpit/bekleyen-gorevler")} sonMu={sonMu(modulHaritasi.get("bekleyen-gorevler")!.yol)} rozetSayisi={bekleyenGorevSayisi} />
           )}
         </Grup>
 

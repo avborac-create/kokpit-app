@@ -23,4 +23,4 @@ export const KISA_UNVAN_UYARISI =
   "Bu ad kısa görünüyor. Firmaların ticaret sicilindeki tam ünvanı (ör. “… Sanayi Ticaret Limited Şirketi”) yazılmalıdır; MERSİS ya da vekaletnameden alın.";
 
 export const KISA_UNVAN_ONAY_METNI =
-  "Kısa ünvan girdim; tam ünvanı MERSİS / Ticaret Sicil Gazetesi'nden sonra tamamlayacağım (yarın sabah bana görev açılsın)";
+  "Kısa ünvan girdim; tam ünvanı MERSİS / Ticaret Sicil Gazetesi'nden sonra tamamlayacağım (Bekleyen Görevler listeme eklensin)";
