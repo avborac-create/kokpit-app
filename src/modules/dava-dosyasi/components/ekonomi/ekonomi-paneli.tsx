@@ -475,7 +475,7 @@ async function OzetSekmesi({
           <div>
             <p className="mb-0.5 text-white/45">Müvekkil lehine (bizdeki parası): {para.format(lehineToplam)}</p>
             <p className="flex justify-between gap-3">
-              <span>Para Trafiği'nde bekleyen para</span>
+              <span>Para Trafiği’nde bekleyen para</span>
               <span className="tabular-nums text-[#32d74b]">{para.format(ozet.paraBakiyesi)}</span>
             </p>
             {lehineHesap.map((h) => (
