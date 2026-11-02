@@ -437,11 +437,23 @@ export async function hesapEkle(formData: FormData) {
   yenile();
 }
 
-export async function hesapAdiGuncelle(id: string, formData: FormData) {
+export async function hesapGuncelle(id: string, formData: FormData) {
   await yoneticiyiDogrula();
   const ad = metin(formData, "ad");
   if (!ad) throw new Error("Hesap adı boş olamaz.");
-  await prisma.cariHesap.update({ where: { id }, data: { ad } });
+  const hesap = await prisma.cariHesap.findUnique({ where: { id } });
+  if (!hesap) throw new Error("Hesap bulunamadı.");
+  const no = Number(metin(formData, "no") || hesap.no);
+  if (!Number.isInteger(no) || no < 100 || no > 399) {
+    throw new Error("Hesap kodu 100–399 aralığında olmalıdır (100'ler müvekkil, 200'ler karşı taraf, 300'ler adliye).");
+  }
+  if (no !== hesap.no) {
+    if (hesap.paraHesabiMi) throw new Error("Para Trafiği hesabının kodu değiştirilemez.");
+    if (await prisma.cariHesap.findUnique({ where: { no } })) throw new Error(`${no} kodlu bir hesap zaten var.`);
+  }
+  // Grup, kodun serisinden belirlenir: 100'ler müvekkil, 200'ler karşı taraf, 300'ler adliye.
+  const grup = no >= 300 ? "ADLIYE" : no >= 200 ? "BORCLU" : "MUVEKKIL";
+  await prisma.cariHesap.update({ where: { id }, data: { ad, no, grup } });
   yenile();
 }
 

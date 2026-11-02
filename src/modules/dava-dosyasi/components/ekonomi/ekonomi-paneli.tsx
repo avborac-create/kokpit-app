@@ -29,7 +29,7 @@ import {
 import {
   borcEkle,
   dosyalarArasiVirman,
-  hesapAdiGuncelle,
+  hesapGuncelle,
   hesapAktifligiDegistir,
   hesapEkle,
   hesapSil,
@@ -879,7 +879,8 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
               <tr key={h.id} className={`border-t border-white/[0.06] ${h.aktifMi ? "" : "opacity-45"}`}>
                 <td className="px-4 py-3 font-medium text-white">{h.no}</td>
                 <td className="px-4 py-3">
-                  <form action={hesapAdiGuncelle.bind(null, h.id)} className="flex items-center gap-2">
+                  <form action={hesapGuncelle.bind(null, h.id)} className="flex flex-wrap items-center gap-2">
+                    <Girdi name="no" type="number" min={100} max={399} defaultValue={h.no} className="!w-20 !py-1" required disabled={h.paraHesabiMi} title="Hesap kodu (100 müvekkil, 200 karşı taraf, 300 adliye)" />
                     <Girdi name="ad" defaultValue={h.ad} className="!py-1" required />
                     <GonderButonu varyant="ikincil" boyut="kompakt" bekleyenMetin="…">
                       Kaydet
