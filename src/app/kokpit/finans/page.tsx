@@ -2,6 +2,13 @@ import Link from "next/link";
 
 const ALT_MODULLER = [
   {
+    anahtar: "kasa",
+    ad: "Kasa / Nakit Yönetimi",
+    aciklama: "Büro kasası: nakit tahsilatlar, personele avans/ödemeler, büro giderleri, kod bazlı takip ve gün sonu sayımı.",
+    yol: "/kokpit/finans/kasa",
+    aktif: true,
+  },
+  {
     anahtar: "musteri-iliskileri",
     ad: "Müvekkil Finansal İlişkiler",
     aciklama: "Cari hesap yönetimi, tahsilat/masraf tasnifi ve dosya bazlı bakiye takibi.",
@@ -15,6 +22,8 @@ const ALT_MODULLER = [
     yol: "/kokpit/finans/buro-giderleri",
     aktif: false,
   },
+  { anahtar: "banka", ad: "Banka", aciklama: "Banka hesapları, hareketler ve mutabakat.", yol: "/kokpit/finans/banka", aktif: false },
+  { anahtar: "tahsilat-listesi", ad: "Tahsilat Listesi", aciklama: "Tüm tahsilatların tek listede takibi ve raporu.", yol: "/kokpit/finans/tahsilat-listesi", aktif: false },
 ];
 
 export default function FinansSayfasi() {

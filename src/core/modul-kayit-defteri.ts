@@ -36,6 +36,8 @@ export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
   { anahtar: "musteriler", ad: "Müvekkiller", yol: "/kokpit/musteriler", aktif: true },
   { anahtar: "dava-dosyalari", ad: "Yargı Dosyaları", yol: "/kokpit/dava-dosyalari", aktif: true },
   { anahtar: "cmk-dosyalari", ad: "CMK Dosyaları", yol: "/kokpit/cmk-dosyalari", aktif: true },
+  // Finans: alt modüller (Kasa / Nakit Yönetimi, ileride Banka, Tahsilat Listesi, Büro Gider...) /kokpit/finans sayfasında.
+  { anahtar: "finans", ad: "Finans", yol: "/kokpit/finans", aktif: true, rolGorebilir: ["YONETICI"] },
   // "haciz-artcilari" menuden kaldirildi (deaktif); sayfa, veri ve /kokpit/haciz-artcilari
   // adresi yerinde. Geri getirmek icin su girisi ve kenar-cubugu.tsx'teki blogu geri ekleyin:
   // { anahtar: "haciz-artcilari", ad: "Haciz Artçıları", yol: "/kokpit/haciz-artcilari", aktif: true,

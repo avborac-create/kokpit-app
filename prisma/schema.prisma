@@ -1774,3 +1774,58 @@ model IsOperasyonKaydi {
   @@index([isId, tarih])
   @@map("is_operasyon_kayitlari")
 }
+
+// ---- Finans > Kasa / Nakit Yonetimi ----
+enum KasaYon {
+  GIRIS
+  CIKIS
+
+  @@map("kasa_yon")
+}
+
+// Kasa kodlari (cari hesap kodlarina benzer): her nakit hareketi bir koda baglanir.
+model KasaKodu {
+  id        String   @id @default(cuid())
+  no        Int      @unique
+  ad        String
+  yon       KasaYon
+  // true ise hareket bir personele baglanir (avans, maas, geri odeme...).
+  personelMi Boolean  @default(false)
+  aktifMi   Boolean  @default(true)
+  hareketler KasaHareketi[]
+
+  @@map("kasa_kodlari")
+}
+
+// Elle girilen kasa hareketi. Muvekkillerden Para Trafigi'ne gelen NAKIT tahsilatlar
+// kopyalanmaz; kasa ekraninda otomatik "turetilmis" satir olarak gorunur.
+model KasaHareketi {
+  id           String   @id @default(cuid())
+  kodId        String
+  kod          KasaKodu @relation(fields: [kodId], references: [id], onDelete: Restrict)
+  yon          KasaYon
+  tarih        DateTime
+  tutar        Decimal  @db.Decimal(14, 2)
+  aciklama     String?
+  personelId   String?
+  olusturanId  String?
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([tarih])
+  @@index([personelId])
+  @@map("kasa_hareketleri")
+}
+
+// Gun sonu / donem sayimi: sayilan nakit ile sistemin beklediği tutarin farki saklanir.
+model KasaSayimi {
+  id          String   @id @default(cuid())
+  tarih       DateTime
+  sayilan     Decimal  @db.Decimal(14, 2)
+  beklenen    Decimal  @db.Decimal(14, 2)
+  fark        Decimal  @db.Decimal(14, 2)
+  aciklama    String?
+  olusturanId String?
+  olusturmaTarihi DateTime @default(now())
+
+  @@map("kasa_sayimlari")
+}

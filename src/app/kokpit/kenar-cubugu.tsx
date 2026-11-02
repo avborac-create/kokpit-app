@@ -11,6 +11,7 @@ import {
   GorevlerIkonu,
   MuvekkillerIkonu,
   HukukDosyalariIkonu,
+  MuvekkilFinansIkonu,
   CezaDosyalariIkonu,
   OnerilerIkonu,
   AyarlarIkonu,
@@ -86,7 +87,7 @@ export function KenarCubugu({
   const anaSayfa = modulHaritasi.get("ana-sayfa")!;
   const ayarlar = gorunurMu("ayarlar") ? modulHaritasi.get("ayarlar") : undefined;
   const dosyaOgesiVar = gorunurMu("dava-dosyalari") || gorunurMu("cmk-dosyalari");
-  const modulGrubuVar = gorunurMu("musteriler") || dosyaOgesiVar;
+  const modulGrubuVar = gorunurMu("musteriler") || dosyaOgesiVar || gorunurMu("finans");
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -113,6 +114,9 @@ export function KenarCubugu({
               )}
               {gorunurMu("cmk-dosyalari") && (
                 <MenuBagi modul={modulHaritasi.get("cmk-dosyalari")!} ikon={CezaDosyalariIkonu} renk="#2fb58a" seciliMi={yol.startsWith("/kokpit/cmk-dosyalari")} sonMu={sonMu(modulHaritasi.get("cmk-dosyalari")!.yol)} rozetSayisi={cmkDikkatSayisi} />
+              )}
+              {gorunurMu("finans") && (
+                <MenuBagi modul={modulHaritasi.get("finans")!} ikon={MuvekkilFinansIkonu} renk="#3fb27f" seciliMi={yol.startsWith("/kokpit/finans")} sonMu={sonMu(modulHaritasi.get("finans")!.yol)} />
               )}
             </Grup>
           </div>
