@@ -656,3 +656,8 @@ select.alan-bmw {
   background-position: right 0.9rem center;
 }
 }
+
+/* Grafit (koyu): vurgu rengi acik buz mavisi oldugundan, vurgu zeminli dolgulu dugmelerde (bg-[var(--accent)]) beyaz yazi okunmaz;
+   koyu yazi kullanilir. Yari saydam tonlar (.../25 gibi) etkilenmez. */
+html[data-palet="grafit"][data-tema="koyu"] [class*="bg-[var(--accent)]"]:not([class*="bg-[var(--accent)]/"]) { color: #0a1a26 !important; text-shadow: none; }
+html[data-palet="grafit"][data-tema="koyu"] [class*="bg-[var(--accent)]"]:not([class*="bg-[var(--accent)]/"]):hover { background-color: color-mix(in srgb, var(--accent) 82%, white) !important; }

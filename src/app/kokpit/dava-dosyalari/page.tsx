@@ -37,8 +37,8 @@ export default async function DavaDosyalariSayfasi({
     if (kayitli) redirect(`/kokpit/dava-dosyalari?${decodeURIComponent(kayitli)}`);
   }
   const filtreAktif = Boolean(params.arama || params.durum || params.musteri);
-  const avukatlar = await vekilAdaylariniGetir();
-  const [dosyalar, durumlar, kullanici, sutunDuzeni, filtreMusteri] = await Promise.all([
+  const [avukatlar, dosyalar, durumlar, kullanici, sutunDuzeni, filtreMusteri] = await Promise.all([
+    vekilAdaylariniGetir(),
     davaDosyalariniListele({ arama: params.arama, durumKod: params.durum, musteriId: params.musteri }),
     secenekleriGetir("dava_dosyasi_durumu"),
     mevcutKullanici(),
