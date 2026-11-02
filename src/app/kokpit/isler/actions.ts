@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { pushGonder } from "@/core/bildirim/push";
-import { DURUMLAR } from "./durum";
+import { DURUMLAR, TURLER, ZAMAN_BASKILARI } from "./durum";
+import { PERIYOTLAR } from "./hafta";
 
 async function girisli() {
   const k = await mevcutKullanici();
@@ -28,7 +29,7 @@ async function ilgililereBildir(isId: string, yapanId: string, baslik: string, m
   await pushGonder([...alicilar], { baslik, metin: `${is.baslik} — ${metin}`.slice(0, 180), url: `/kokpit/isler/${isId}`, etiket: `is-${isId}` });
 }
 
-export async function isEkle(baslik: string, sorumluId: string, aciklama: string, destekId = "", tur = "PARCA", hedef = 0): Promise<{ hata?: string; id?: string }> {
+export async function isEkle(baslik: string, sorumluId: string, aciklama: string, destekId = ""): Promise<{ hata?: string; id?: string }> {
   const k = await girisli();
   const b = baslik.trim();
   if (!b) return { hata: "Konu başlığı boş olamaz." };
@@ -37,8 +38,6 @@ export async function isEkle(baslik: string, sorumluId: string, aciklama: string
     data: {
       baslik: b.slice(0, 200),
       aciklama: aciklama.trim() || null,
-      tur: ["PARCA", "SUREC", "OPERASYONEL"].includes(tur) ? tur : "PARCA",
-      haftalikHedef: tur === "OPERASYONEL" ? Math.min(14, Math.max(1, Math.round(hedef) || 1)) : null,
       sorumluId: atanan,
       olusturanId: k.kullaniciId,
     },
@@ -175,7 +174,7 @@ export async function operasyonKaydiSil(kayitId: string) {
 
 export async function hedefGuncelle(isId: string, hedef: number) {
   await girisli();
-  const h = Math.min(14, Math.max(1, Math.round(hedef) || 1));
+  const h = Math.min(31, Math.max(1, Math.round(hedef) || 1));
   await prisma.is.update({ where: { id: isId }, data: { haftalikHedef: h } });
   revalidatePath(`/kokpit/isler/${isId}`);
   revalidatePath("/kokpit/isler");
@@ -210,5 +209,77 @@ export async function maddeSirala(isId: string, idSirasi: string[]) {
   const izinli = new Set(mevcut.map((m) => m.id));
   const liste = idSirasi.filter((id) => izinli.has(id));
   await prisma.$transaction(liste.map((id, k) => prisma.isMaddesi.update({ where: { id }, data: { sira: k + 1 } })));
+  revalidatePath("/kokpit/isler");
+}
+
+// ---- Yerinde duzenleme: tarz, zaman baskisi, yargi turu, periyot, tetikleyici ----
+export async function turDegistir(isId: string, tur: string) {
+  await girisli();
+  if (!TURLER.some((t) => t.anahtar === tur)) throw new Error("Geçersiz görev tarzı.");
+  const mevcut = await prisma.is.findUnique({ where: { id: isId }, select: { haftalikHedef: true } });
+  await prisma.is.update({
+    where: { id: isId },
+    data: { tur, haftalikHedef: tur === "OPERASYONEL" ? (mevcut?.haftalikHedef ?? 1) : mevcut?.haftalikHedef, guncellemeTarihi: new Date() },
+  });
+  revalidatePath(`/kokpit/isler/${isId}`);
+  revalidatePath("/kokpit/isler");
+}
+
+export async function zamanBaskisiDegistir(isId: string, baski: string) {
+  await girisli();
+  const b = ZAMAN_BASKILARI.find((z) => z.anahtar === baski)?.anahtar ?? null;
+  await prisma.is.update({ where: { id: isId }, data: { zamanBaskisi: b, guncellemeTarihi: new Date() } });
+  revalidatePath(`/kokpit/isler/${isId}`);
+  revalidatePath("/kokpit/isler");
+}
+
+export async function yargiTuruDegistir(isId: string, yargiTuruId: string) {
+  await girisli();
+  await prisma.is.update({ where: { id: isId }, data: { yargiTuruId: yargiTuruId || null, guncellemeTarihi: new Date() } });
+  revalidatePath(`/kokpit/isler/${isId}`);
+  revalidatePath("/kokpit/isler");
+}
+
+export async function periyotDegistir(isId: string, periyot: string) {
+  await girisli();
+  const p = PERIYOTLAR.find((x) => x.anahtar === periyot)?.anahtar ?? "HAFTA";
+  await prisma.is.update({ where: { id: isId }, data: { periyot: p, guncellemeTarihi: new Date() } });
+  revalidatePath(`/kokpit/isler/${isId}`);
+  revalidatePath("/kokpit/isler");
+}
+
+export async function tetikleyiciGuncelle(isId: string, metin: string) {
+  await girisli();
+  await prisma.is.update({ where: { id: isId }, data: { tetikleyici: metin.trim().slice(0, 300) || null, guncellemeTarihi: new Date() } });
+  revalidatePath(`/kokpit/isler/${isId}`);
+}
+
+// ---- Yargi turu listesi yonetimi ----
+export async function yargiTuruEkle(ad: string): Promise<{ hata?: string }> {
+  await girisli();
+  const a = ad.trim().slice(0, 80);
+  if (!a) return { hata: "Ad boş olamaz." };
+  if (await prisma.gorevYargiTuru.findUnique({ where: { ad: a } })) return { hata: "Bu yargı türü zaten var." };
+  const son = await prisma.gorevYargiTuru.findFirst({ orderBy: { sira: "desc" }, select: { sira: true } });
+  await prisma.gorevYargiTuru.create({ data: { ad: a, sira: (son?.sira ?? 0) + 1 } });
+  revalidatePath("/kokpit/isler");
+  return {};
+}
+
+export async function yargiTuruAdiDegistir(id: string, ad: string): Promise<{ hata?: string }> {
+  await girisli();
+  const a = ad.trim().slice(0, 80);
+  if (!a) return { hata: "Ad boş olamaz." };
+  const ayni = await prisma.gorevYargiTuru.findUnique({ where: { ad: a } });
+  if (ayni && ayni.id !== id) return { hata: "Bu ad başka bir yargı türünde var." };
+  await prisma.gorevYargiTuru.update({ where: { id }, data: { ad: a } });
+  revalidatePath("/kokpit/isler");
+  return {};
+}
+
+// Silinen yargi turundeki gorevlerin yargi turu bos kalir (gorevler silinmez).
+export async function yargiTuruSil(id: string) {
+  await girisli();
+  await prisma.gorevYargiTuru.delete({ where: { id } });
   revalidatePath("/kokpit/isler");
 }

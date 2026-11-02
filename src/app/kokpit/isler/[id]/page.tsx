@@ -15,7 +15,7 @@ export default async function IsSayfasi({ params }: { params: Promise<{ id: stri
       <Link href="/kokpit/isler" className="text-sm text-white/55 hover:text-white">
         ← Görevler
       </Link>
-      <IsDetayi benimId={k?.kullaniciId ?? ""} kisiler={veri.kisiler} is={veri.is} />
+      <IsDetayi benimId={k?.kullaniciId ?? ""} kisiler={veri.kisiler} yargiTurleri={veri.yargiTurleri} is={veri.is} />
     </div>
   );
 }

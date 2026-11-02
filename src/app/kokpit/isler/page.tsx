@@ -4,19 +4,20 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { IsListesi } from "./is-listesi";
 import { IsDetayi } from "./[id]/is-detayi";
 import { isDetayiYukle } from "./detay-veri";
-import { buHaftaBasi } from "./hafta";
+import { donemBasi } from "./hafta";
 
 export default async function IslerSayfasi({ searchParams }: { searchParams: Promise<{ kimin?: string; is?: string }> }) {
   const { kimin, is: seciliId } = await searchParams;
   const k = await mevcutKullanici();
-  const [isler, kisiler, detay] = await Promise.all([
+  const [isler, kisiler, detay, yargiTurleri] = await Promise.all([
     prisma.is.findMany({
       orderBy: { guncellemeTarihi: "desc" },
       take: 400,
-      include: { _count: { select: { yorumlar: true } }, maddeler: { select: { tamam: true } }, yardimlar: true, operasyonKayitlari: { where: { tarih: { gte: buHaftaBasi() } }, select: { id: true } } },
+      include: { _count: { select: { yorumlar: true } }, maddeler: { select: { tamam: true } }, yardimlar: true, operasyonKayitlari: { where: { tarih: { gte: donemBasi("YIL") } }, select: { tarih: true } } },
     }),
     prisma.kullanici.findMany({ where: { aktifMi: true }, select: { id: true, adSoyad: true }, orderBy: { adSoyad: "asc" } }),
     seciliId ? isDetayiYukle(seciliId, k?.kullaniciId ?? "") : Promise.resolve(null),
+    prisma.gorevYargiTuru.findMany({ orderBy: [{ sira: "asc" }, { ad: "asc" }], select: { id: true, ad: true } }),
   ]);
   const ad = new Map(kisiler.map((x) => [x.id, x.adSoyad]));
   const bugun = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
@@ -30,6 +31,7 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
         benimId={k?.kullaniciId ?? ""}
         tumBuro={kimin === "buro"}
         kisiler={kisiler}
+        yargiTurleri={yargiTurleri}
         bugun={bugun}
         seciliId={detay ? seciliId : undefined}
         isler={isler.map((i) => ({
@@ -45,7 +47,10 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
           maddeTamam: i.maddeler.filter((m) => m.tamam).length,
           tur: i.tur,
           hedef: i.haftalikHedef ?? 0,
-          yapilan: i.operasyonKayitlari.length,
+          periyot: i.periyot,
+          zamanBaskisi: i.zamanBaskisi ?? "",
+          yargiTuruId: i.yargiTuruId ?? "",
+          yapilan: i.operasyonKayitlari.filter((o) => o.tarih >= donemBasi(i.periyot)).length,
           yardimBenim: i.yardimlar.some((y) => y.yardimciId === (k?.kullaniciId ?? "")),
           yardimIsteyen: ad.get(i.yardimlar.find((y) => y.yardimciId === (k?.kullaniciId ?? ""))?.isteyenId ?? "") ?? "",
           destekMi: i.yardimlar.find((y) => y.yardimciId === (k?.kullaniciId ?? ""))?.isteyenId === i.olusturanId,
@@ -64,7 +69,7 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
                 Tam sayfada aç ↗
               </Link>
             </div>
-            <IsDetayi key={detay.is.id} benimId={k?.kullaniciId ?? ""} kisiler={detay.kisiler} is={detay.is} kapatHref={kapatHref} />
+            <IsDetayi key={detay.is.id} benimId={k?.kullaniciId ?? ""} kisiler={detay.kisiler} yargiTurleri={yargiTurleri} is={detay.is} kapatHref={kapatHref} />
           </aside>
         </>
       )}

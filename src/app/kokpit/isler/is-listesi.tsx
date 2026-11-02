@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, useTransition } from "react";
-import { durumDegistir, isEkle, operasyonYapildi } from "./actions";
-import { DURUMLAR, TURLER, durumBilgisi, turBilgisi } from "./durum";
+import { durumDegistir, isEkle, operasyonYapildi, yargiTuruAdiDegistir, yargiTuruEkle, yargiTuruSil } from "./actions";
+import { DURUMLAR, TURLER, durumBilgisi, turBilgisi, zamanBaskisiBilgisi } from "./durum";
+import { periyotBilgisi } from "./hafta";
 
 type Is = {
   id: string;
@@ -12,6 +13,9 @@ type Is = {
   durum: string;
   tur: string;
   hedef: number;
+  periyot: string;
+  zamanBaskisi: string;
+  yargiTuruId: string;
   yapilan: number;
   sorumluId: string | null;
   sorumluAd: string;
@@ -75,18 +79,17 @@ function Avatar({ ad }: { ad: string }) {
   );
 }
 
-export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }: { isler: Is[]; kisiler: { id: string; adSoyad: string }[]; benimId: string; tumBuro: boolean; bugun: string; seciliId?: string }) {
+export function IsListesi({ isler, kisiler, yargiTurleri, benimId, tumBuro, bugun, seciliId }: { isler: Is[]; kisiler: { id: string; adSoyad: string }[]; yargiTurleri: { id: string; ad: string }[]; benimId: string; tumBuro: boolean; bugun: string; seciliId?: string }) {
   const yonlendirici = useRouter();
   const kayitliGorunum = useSyncExternalStore(gorunumAbone, gorunumOku, () => null);
   const gorunum: Gorunum = GORUNUMLER.some((g) => g.k === kayitliGorunum) ? (kayitliGorunum as Gorunum) : "liste";
   const [baslik, setBaslik] = useState("");
-  const [tur, setTur] = useState<string>("PARCA");
-  const [hedef, setHedef] = useState(3);
   const [sorumlu, setSorumlu] = useState(benimId);
   const [destek, setDestek] = useState("");
   const [hata, setHata] = useState("");
   const [filtre, setFiltre] = useState<string>("ACIK");
   const [turFiltre, setTurFiltre] = useState<string>("HEPSI");
+  const [yargiFiltre, setYargiFiltre] = useState<string>("HEPSI");
   const [kisiSecili, setKisiSecili] = useState(benimId);
   const [bekliyor, basla] = useTransition();
 
@@ -94,21 +97,27 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
   const gorevHref = (id: string) => `/kokpit/isler?${kimin}is=${id}`;
 
   const benim = (i: Is) => i.sorumluId === benimId || i.yardimBenim;
-  const beklenen = (i: Is) => benim(i) && (i.tur === "OPERASYONEL" ? i.hedef > 0 && i.yapilan < i.hedef : i.durum !== "TAMAMLANDI");
+  // Donemsel gorev, baslatilmadikca (olay gerceklesmedikce) kullanicidan beklenmez.
+  const beklenen = (i: Is) => benim(i) && (i.tur === "OPERASYONEL" ? i.hedef > 0 && i.yapilan < i.hedef : i.durum !== "TAMAMLANDI" && !(i.tur === "DONEMSEL" && i.durum === "BASLATILMADI"));
   const beklenenler = isler.filter(beklenen);
 
   // Gorunume gore kimlerin gorevleri: kisiler gorunumunde secilen kisi, digerlerinde ben / tum buro.
   const kapsam = isler.filter((i) => (gorunum === "kisiler" ? i.sorumluId === kisiSecili : tumBuro || benim(i)));
-  const turdeki = kapsam.filter((i) => turFiltre === "HEPSI" || i.tur === turFiltre);
-  const gorunen = turdeki.filter((i) => {
-    if (i.tur === "OPERASYONEL") return filtre === "ACIK" || filtre === "HEPSI";
-    return filtre === "HEPSI" ? true : filtre === "ACIK" ? i.durum !== "TAMAMLANDI" : i.durum === filtre;
-  });
+  const turdeki = kapsam.filter((i) => (turFiltre === "HEPSI" || i.tur === turFiltre) && (yargiFiltre === "HEPSI" || (yargiFiltre === "YOK" ? !i.yargiTuruId : i.yargiTuruId === yargiFiltre)));
+  const acikSonGun = (i: Is) => i.zamanBaskisi === "SON_GUN" && i.durum !== "TAMAMLANDI";
+  // Son gunlu (acik) gorevler en ustte, tarihi en yakin olan once; digerlerinin sirasi korunur.
+  const sonGunSirasi = (a: Is, b: Is) => (acikSonGun(a) === acikSonGun(b) ? (acikSonGun(a) ? (a.vade || "9999").localeCompare(b.vade || "9999") : 0) : acikSonGun(a) ? -1 : 1);
+  const gorunen = turdeki
+    .filter((i) => {
+      if (i.tur === "OPERASYONEL") return filtre === "ACIK" || filtre === "HEPSI";
+      return filtre === "HEPSI" ? true : filtre === "ACIK" ? i.durum !== "TAMAMLANDI" : i.durum === filtre;
+    })
+    .sort(sonGunSirasi);
 
   function ekle() {
     setHata("");
     basla(async () => {
-      const s = await isEkle(baslik, sorumlu, "", destek, tur, hedef);
+      const s = await isEkle(baslik, sorumlu, "", destek);
       if (s.hata) setHata(s.hata);
       else if (s.id) {
         setBaslik("");
@@ -120,11 +129,21 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
   const sekme = (secili: boolean) => `rounded-full px-3.5 py-1.5 text-sm ${secili ? "bg-white/15 font-semibold text-white" : "text-white/60 hover:bg-white/10"}`;
   const vadeRenk = (i: Is) => (i.vade && i.durum !== "TAMAMLANDI" && i.vade < bugun ? "#ff7a70" : "rgba(255,255,255,0.6)");
   const vadeYaz = (v: string) => (v ? new Date(v + "T12:00:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "—");
+  const yargiAdi = (i: Is) => yargiTurleri.find((y) => y.id === i.yargiTuruId)?.ad ?? "";
+  const BaskiRozeti = ({ i }: { i: Is }) => {
+    const z = zamanBaskisiBilgisi(i.zamanBaskisi);
+    if (!z || i.durum === "TAMAMLANDI") return null;
+    return (
+      <span className="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide" style={{ background: z.renk + "30", color: z.renk }}>
+        {z.tarihEtiketi}
+      </span>
+    );
+  };
   const DurumRozeti = ({ i }: { i: Is }) => {
     const d = durumBilgisi(i.durum);
     return i.tur === "OPERASYONEL" ? (
       <span className="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ background: i.yapilan >= i.hedef ? "#22c55e26" : "#14b8c426", color: i.yapilan >= i.hedef ? "#22c55e" : "#14b8c4" }}>
-        Bu hafta {i.yapilan}/{i.hedef}
+        {periyotBilgisi(i.periyot).bu} {i.yapilan}/{i.hedef}
       </span>
     ) : (
       <span className="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ background: d.renk + "26", color: d.renk }}>
@@ -141,6 +160,7 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
         <Link href={gorevHref(i.id)} scroll={false} className="flex flex-col gap-1.5 px-4 py-3">
           <div className="flex items-start gap-2">
             <span className="min-w-0 flex-1 text-[15px] font-medium text-white">{i.baslik}</span>
+            <BaskiRozeti i={i} />
             <DurumRozeti i={i} />
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-white/50">
@@ -157,6 +177,7 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
               <Avatar ad={i.sorumluAd} />
               {i.sorumluAd}
             </span>
+            {yargiAdi(i) && <span className="rounded-full bg-white/10 px-2 py-0.5 text-white/70">{yargiAdi(i)}</span>}
             {i.maddeToplam > 0 && (
               <span>
                 ☑ {i.maddeTamam}/{i.maddeToplam}
@@ -186,6 +207,14 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
             {f.ad}
           </button>
         ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {[{ anahtar: "HEPSI", ad: "Tüm yargı türleri" }, ...yargiTurleri.map((y) => ({ anahtar: y.id, ad: y.ad })), { anahtar: "YOK", ad: "Türü belirsiz" }].map((f) => (
+          <button key={f.anahtar} type="button" onClick={() => setYargiFiltre(f.anahtar)} className={`rounded-full border px-3 py-1 text-xs ${yargiFiltre === f.anahtar ? "border-white/40 bg-white/15 text-white" : "border-white/10 text-white/55"}`}>
+            {f.ad}
+          </button>
+        ))}
+        <YargiTuruYonetimi yargiTurleri={yargiTurleri} />
       </div>
       {gorunum !== "pano" && (
         <div className="flex flex-wrap gap-1.5">
@@ -219,23 +248,9 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
 
       {/* Yeni gorev / atama */}
       <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3.5">
-        <div className="flex flex-wrap gap-1.5">
-          {TURLER.map((t) => (
-            <button key={t.anahtar} type="button" onClick={() => setTur(t.anahtar)} className="rounded-full border px-3.5 py-1.5 text-sm font-medium" style={tur === t.anahtar ? { background: t.renk, borderColor: t.renk, color: "#fff" } : { borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.65)" }}>
-              {t.ad}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-white/50">{turBilgisi(tur).aciklama}</p>
+        <p className="text-xs text-white/50">Görevi açın; tarzını (parça, artçı, süreç…), zaman baskısını ve yargı türünü görev ayrıntısında belirleyebilirsiniz.</p>
         <div className="flex flex-col gap-2 lg:flex-row">
           <input value={baslik} onChange={(e) => setBaslik(e.target.value)} onKeyDown={(e) => e.key === "Enter" && baslik.trim() && ekle()} placeholder="Yeni görev başlığı…" className={`${alan} flex-1`} />
-          {tur === "OPERASYONEL" && (
-            <label className="flex items-center gap-1.5 text-sm text-white/65">
-              Haftada
-              <input type="number" min={1} max={14} value={hedef} onChange={(e) => setHedef(Number(e.target.value))} className={`${alan} w-16 px-2`} />
-              kez
-            </label>
-          )}
           <label className="flex items-center gap-1.5 text-sm text-white/65">
             <span className="whitespace-nowrap">Kime:</span>
             <select value={sorumlu} onChange={(e) => setSorumlu(e.target.value)} className={alan}>
@@ -318,6 +333,7 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
                 <th className="px-3 py-2.5 font-medium">Sorumlu</th>
                 <th className="px-3 py-2.5 font-medium">Atayan</th>
                 <th className="px-3 py-2.5 font-medium">Tür</th>
+                <th className="px-3 py-2.5 font-medium">Yargı türü</th>
                 <th className="px-3 py-2.5 font-medium">Durum</th>
                 <th className="px-3 py-2.5 font-medium">Bitiş</th>
                 <th className="px-3 py-2.5 font-medium">Alt görev</th>
@@ -326,7 +342,7 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
             <tbody>
               {gorunen.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-white/45">
+                  <td colSpan={8} className="px-3 py-6 text-center text-white/45">
                     Bu görünümde görev yok.
                   </td>
                 </tr>
@@ -349,8 +365,12 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
                   <td className="whitespace-nowrap px-3 py-2.5 text-xs font-semibold" style={{ color: turBilgisi(i.tur).renk }}>
                     {turBilgisi(i.tur).kisa}
                   </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-white/65">{yargiAdi(i) || "—"}</td>
                   <td className="px-3 py-2.5">
-                    <DurumRozeti i={i} />
+                    <span className="flex items-center gap-1.5">
+                      <BaskiRozeti i={i} />
+                      <DurumRozeti i={i} />
+                    </span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-2.5" style={{ color: vadeRenk(i) }}>
                     {vadeYaz(i.vade)}
@@ -409,5 +429,62 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
         </div>
       )}
     </div>
+  );
+}
+
+function YargiTuruYonetimi({ yargiTurleri }: { yargiTurleri: { id: string; ad: string }[] }) {
+  const yonlendirici = useRouter();
+  const [acik, setAcik] = useState(false);
+  const [yeni, setYeni] = useState("");
+  const [hata, setHata] = useState("");
+  const [bekliyor, basla] = useTransition();
+  const bitir = (s: { hata?: string }) => {
+    setHata(s.hata ?? "");
+    if (!s.hata) yonlendirici.refresh();
+  };
+  return (
+    <>
+      <button type="button" onClick={() => setAcik(!acik)} className="ml-1 rounded-full border border-dashed border-white/25 px-3 py-1 text-xs text-white/60 hover:bg-white/10">
+        {acik ? "Kapat" : "⚙ Yargı türlerini düzenle"}
+      </button>
+      {acik && (
+        <div className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+          <ul className="flex flex-col gap-1.5">
+            {yargiTurleri.map((y) => (
+              <li key={y.id} className="flex items-center gap-2">
+                <input defaultValue={y.ad} onBlur={(e) => e.target.value.trim() !== y.ad && basla(async () => bitir(await yargiTuruAdiDegistir(y.id, e.target.value)))} className={`${alan} flex-1 py-1 text-sm`} />
+                <OnayliSil ad={y.ad} onay={() => basla(async () => { await yargiTuruSil(y.id); yonlendirici.refresh(); })} />
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 flex gap-2">
+            <input value={yeni} onChange={(e) => setYeni(e.target.value)} onKeyDown={(e) => e.key === "Enter" && yeni.trim() && basla(async () => { bitir(await yargiTuruEkle(yeni)); setYeni(""); })} placeholder="+ Yeni yargı türü…" className={`${alan} flex-1 py-1 text-sm`} />
+            <button type="button" disabled={bekliyor || !yeni.trim()} onClick={() => basla(async () => { bitir(await yargiTuruEkle(yeni)); setYeni(""); })} className="rounded-xl border border-white/15 px-4 text-sm text-white/80 disabled:opacity-40">
+              Ekle
+            </button>
+          </div>
+          {hata && <p className="mt-1 text-xs text-red-300">{hata}</p>}
+          <p className="mt-2 text-xs text-white/40">Bir yargı türünü silerseniz o türdeki görevler silinmez, yalnızca türsüz kalır.</p>
+        </div>
+      )}
+    </>
+  );
+}
+
+function OnayliSil({ ad, onay }: { ad: string; onay: () => void }) {
+  const [soruyor, setSoruyor] = useState(false);
+  return soruyor ? (
+    <span className="flex items-center gap-1 text-xs">
+      <button type="button" onClick={onay} className="rounded-lg bg-red-500/80 px-2 py-1 font-semibold text-white" title={ad + " silinsin"}>
+        Sil
+      </button>
+      <button type="button" onClick={() => setSoruyor(false)} className="rounded-lg border border-white/15 px-2 py-1 text-white/70">
+        Vazgeç
+      </button>
+    </span>
+  ) : (
+    <button type="button" aria-label="Sil" onClick={() => setSoruyor(true)} className="px-1.5 text-white/35 hover:text-red-300">
+      ✕
+    </button>
   );
 }

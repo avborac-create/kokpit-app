@@ -1,5 +1,5 @@
 import { prisma } from "@/core/db/prisma";
-import { buHaftaBasi } from "./hafta";
+import { donemBasi } from "./hafta";
 
 export type Detay = {
   id: string;
@@ -9,6 +9,10 @@ export type Detay = {
   tur: string;
   vade: string;
   haftalikHedef: number;
+  periyot: string;
+  tetikleyici: string;
+  zamanBaskisi: string;
+  yargiTuruId: string;
   yapilan: number;
   kayitlar: { id: string; yapan: string; zaman: string }[];
   sorumluId: string;
@@ -18,8 +22,8 @@ export type Detay = {
   yorumlar: { id: string; yazan: string; benim: boolean; metin: string; zaman: string; ekler: { id: string; ad: string; tur: string }[] }[];
 };
 
-export async function isDetayiYukle(id: string, benimId: string): Promise<{ is: Detay; kisiler: { id: string; adSoyad: string }[] } | null> {
-  const [is, kisiler, yapilan] = await Promise.all([
+export async function isDetayiYukle(id: string, benimId: string): Promise<{ is: Detay; kisiler: { id: string; adSoyad: string }[]; yargiTurleri: { id: string; ad: string }[] } | null> {
+  const [is, kisiler, yargiTurleri] = await Promise.all([
     prisma.is.findUnique({
       where: { id },
       include: {
@@ -30,13 +34,15 @@ export async function isDetayiYukle(id: string, benimId: string): Promise<{ is: 
       },
     }),
     prisma.kullanici.findMany({ where: { aktifMi: true }, select: { id: true, adSoyad: true }, orderBy: { adSoyad: "asc" } }),
-    prisma.isOperasyonKaydi.count({ where: { isId: id, tarih: { gte: buHaftaBasi() } } }),
+    prisma.gorevYargiTuru.findMany({ orderBy: [{ sira: "asc" }, { ad: "asc" }], select: { id: true, ad: true } }),
   ]);
   if (!is) return null;
+  const yapilan = await prisma.isOperasyonKaydi.count({ where: { isId: id, tarih: { gte: donemBasi(is.periyot) } } });
   const ad = new Map(kisiler.map((x) => [x.id, x.adSoyad]));
   const tarihSaat = (d: Date) => d.toLocaleString("tr-TR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul" });
   return {
     kisiler,
+    yargiTurleri,
     is: {
       id: is.id,
       baslik: is.baslik,
@@ -45,6 +51,10 @@ export async function isDetayiYukle(id: string, benimId: string): Promise<{ is: 
       tur: is.tur,
       vade: is.vade ? is.vade.toISOString().slice(0, 10) : "",
       haftalikHedef: is.haftalikHedef ?? 0,
+      periyot: is.periyot,
+      tetikleyici: is.tetikleyici ?? "",
+      zamanBaskisi: is.zamanBaskisi ?? "",
+      yargiTuruId: is.yargiTuruId ?? "",
       yapilan,
       kayitlar: is.operasyonKayitlari.map((o) => ({ id: o.id, yapan: o.yapanId ? (ad.get(o.yapanId) ?? "—") : "—", zaman: tarihSaat(o.tarih) })),
       sorumluId: is.sorumluId ?? "",

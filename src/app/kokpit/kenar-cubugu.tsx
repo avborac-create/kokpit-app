@@ -96,7 +96,7 @@ export function KenarCubugu({
     <div className="flex min-h-0 flex-1 flex-col">
       <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
         <Grup>
-          <MenuBagi modul={anaSayfa} ikon={AnaSayfaIkonu} renk="#3b82f6" seciliMi={yol === "/kokpit"} telefondaSoluk={sonVar} />
+          <MenuBagi modul={anaSayfa} ikon={AnaSayfaIkonu} renk="#3b82f6" seciliMi={yol === "/kokpit"} telefondaSoluk />
           {gorunurMu("buro-takvimi") && (
             <MenuBagi modul={modulHaritasi.get("buro-takvimi")!} ikon={TakvimIkonu} renk="#f97316" seciliMi={yol.startsWith("/kokpit/takvim")} sonMu={sonMu(modulHaritasi.get("buro-takvimi")!.yol)} />
           )}

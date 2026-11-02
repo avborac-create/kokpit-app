@@ -34,7 +34,7 @@ export default async function KokpitAnaSayfa({ searchParams }: { searchParams: P
           {selam(saat)}
           {ad ? `, ${ad}` : ""}
         </h1>
-        <p className="mt-2 text-white/60">Kokpit’e hoş geldiniz. Çalışmaya sol menüden devam edebilirsiniz.</p>
+        <p className="mt-2 text-white/60">Kokpit’e hoş geldiniz. Çalışmaya menüden devam edebilirsiniz.</p>
       </section>
 
       <AnaSayfaDuzeni

@@ -1686,9 +1686,18 @@ model Is {
   baslik           String
   aciklama         String?
   durum            String       @default("BASLATILMADI")
-  // PARCA = yap-bitir, SUREC = uzun sure takip gerektiren, OPERASYONEL = haftalik duzenli (haftalikHedef kez).
+  // Tarz: PARCA, ARTCI (ana isten sonra mecburen yapilan), SUREC, OPERASYONEL (= Periyodik; anahtar korunur),
+  // DONEMSEL (bir olay olunca gundeme gelir).
   tur              String       @default("PARCA")
   haftalikHedef    Int?
+  // Periyodik gorevde donem: HAFTA / AY / YIL (haftalikHedef = donemdeki hedef kez).
+  periyot          String       @default("HAFTA")
+  // Dönemsel gorevde tetikleyici olay (serbest metin).
+  tetikleyici      String?
+  // Zaman baskisi: SON_GUN (kacirilirsa sorumluluk dogar) / TESLIM / bos. Tarih = vade.
+  zamanBaskisi     String?
+  yargiTuruId      String?
+  yargiTuru        GorevYargiTuru? @relation(fields: [yargiTuruId], references: [id], onDelete: SetNull)
   // Bitis tarihi (yalniz gun).
   vade             DateTime?    @db.Date
   // Otomatik acilan islerde kaynak kaydi ("unvan:<id>").
@@ -1708,6 +1717,15 @@ model Is {
   @@index([durum])
   @@index([sorumluId, durum])
   @@map("isler")
+}
+
+model GorevYargiTuru {
+  id    String @id @default(cuid())
+  ad    String @unique
+  sira  Int    @default(0)
+  isler Is[]
+
+  @@map("gorev_yargi_turleri")
 }
 
 model IsMaddesi {

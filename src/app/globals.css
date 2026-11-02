@@ -215,7 +215,9 @@ html:is([data-palet="gumus"], [data-palet="grafit"]) .glass h2.uppercase::before
 html[data-palet="gumus"] .glass {
   box-shadow: inset 0 2px 0 color-mix(in srgb, var(--accent) 38%, transparent), 0 14px 34px -18px var(--glass-golge);
 }
-html:is([data-palet="gumus"], [data-palet="grafit"]) nav a[aria-current="page"] { background: var(--accent-soft); color: var(--link); }
+@media (min-width: 768px) {
+  html:is([data-palet="gumus"], [data-palet="grafit"]) nav a[aria-current="page"] { background: var(--accent-soft); color: var(--link); }
+}
 html:is([data-palet="gumus"], [data-palet="grafit"]) h1 { background: linear-gradient(90deg, var(--foreground), var(--link)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 html:is([data-palet="gumus"], [data-palet="grafit"]) body,
 html[data-palet="hiperekran"] body { font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif; font-weight: 400; letter-spacing: 0; -webkit-font-smoothing: antialiased; }

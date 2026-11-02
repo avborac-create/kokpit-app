@@ -64,12 +64,12 @@ export function KokpitKabuk({
   const dar = useSyncExternalStore(darAbone, darOku, () => false);
 
   return (
-    <div className="flex min-h-0 flex-1">
+    <div className={`flex min-h-0 flex-1 ${modulSeciliMi ? "" : "max-md:flex-col max-md:overflow-y-auto"}`}>
       <aside
         data-dar={dar ? "true" : "false"}
         className={`glass group/menu m-3 max-md:mb-[max(env(safe-area-inset-bottom,0px),1.5rem)] grow min-h-0 shrink-0 flex-col rounded-[20px] md:mr-0 md:flex md:rounded-[10px] md:grow-0 ${
           dar ? "md:w-[76px]" : "md:w-60"
-        } ${modulSeciliMi ? "hidden" : "flex"}`}
+        } ${modulSeciliMi ? "hidden" : "flex max-md:order-2 max-md:grow-0"}`}
       >
         <div className="flex shrink-0 items-center gap-3 px-5 pb-3 pt-5 md:group-data-[dar=true]/menu:flex-col md:group-data-[dar=true]/menu:gap-2 md:group-data-[dar=true]/menu:px-2">
           <MarkaLogosu boyut={40} className="shrink-0 rounded-xl" />
@@ -89,13 +89,13 @@ export function KokpitKabuk({
         </div>
         {kenarCubugu}
       </aside>
-      <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
-        <header className="glass-strong relative z-30 flex h-12 shrink-0 items-center justify-between max-md:!rounded-none max-md:!border-x-0 max-md:!border-t-0 px-3 md:m-3 md:h-auto md:rounded-[10px] md:px-6 md:py-3">
+      <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "max-md:contents"}`}>
+        <header className={`glass-strong relative z-30 flex h-12 shrink-0 items-center justify-between max-md:!rounded-none max-md:!border-x-0 max-md:!border-t-0 px-3 md:m-3 md:h-auto md:rounded-[10px] md:px-6 md:py-3 ${modulSeciliMi ? "" : "max-md:order-1 max-md:shrink-0"}`}>
           <div className="flex items-center gap-3">
             <GeriButonu />
             <Link
               href="/kokpit"
-              className="-ml-1 inline-flex items-center gap-0.5 rounded-full py-1 pl-0.5 pr-2 text-[17px] font-normal tracking-tight text-[var(--link)] active:opacity-60 md:hidden"
+              className={`-ml-1 inline-flex items-center gap-0.5 rounded-full py-1 pl-0.5 pr-2 text-[17px] font-normal tracking-tight text-[var(--link)] active:opacity-60 md:hidden ${modulSeciliMi ? "" : "max-md:!hidden"}`}
             >
               <svg viewBox="0 0 12 20" className="h-[18px] w-[11px]" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 2 2 10l8 8" /></svg>
               Ana Sayfa
@@ -122,7 +122,7 @@ export function KokpitKabuk({
             </form>
           </div>
         </header>
-        <main ref={anaAlanRef} className="min-w-0 flex-1 overflow-y-auto overscroll-y-contain px-3 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] md:px-6 md:pb-6">
+        <main ref={anaAlanRef} className={`min-w-0 ${modulSeciliMi ? "" : "max-md:order-3 max-md:shrink-0 max-md:overflow-visible"} flex-1 overflow-y-auto overscroll-y-contain px-3 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] md:px-6 md:pb-6`}>
           {children}
         </main>
         <AsagiCekYenile hedef={anaAlanRef} />

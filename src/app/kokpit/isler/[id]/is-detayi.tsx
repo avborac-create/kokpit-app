@@ -3,15 +3,16 @@
 import { upload } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { type YeniEk, durumDegistir, isBilgisiniGuncelle, isSil, maddeDurumu, maddeEkle, maddeSil, maddeSirala, maddeTasi, sorumluDegistir, vadeGuncelle, yardimIste, yardimKaldir, yorumEkle, operasyonYapildi, operasyonKaydiSil, hedefGuncelle } from "../actions";
-import { DURUMLAR, turBilgisi } from "../durum";
+import { type YeniEk, durumDegistir, isBilgisiniGuncelle, isSil, maddeDurumu, maddeEkle, maddeSil, maddeSirala, maddeTasi, sorumluDegistir, vadeGuncelle, yardimIste, yardimKaldir, yorumEkle, operasyonYapildi, operasyonKaydiSil, hedefGuncelle, turDegistir, zamanBaskisiDegistir, yargiTuruDegistir, periyotDegistir, tetikleyiciGuncelle } from "../actions";
+import { DURUMLAR, TURLER, ZAMAN_BASKILARI, turBilgisi, zamanBaskisiBilgisi } from "../durum";
+import { PERIYOTLAR, periyotBilgisi } from "../hafta";
 import type { Detay } from "../detay-veri";
 
 const alan = "alan-bmw [color-scheme:dark]";
 const kutu = "rounded-2xl border border-white/10 bg-white/[0.04] p-4";
 const etiket = "pt-1.5 text-[13px] text-white/50";
 
-export function IsDetayi({ is, kisiler, benimId, kapatHref }: { is: Detay; kisiler: { id: string; adSoyad: string }[]; benimId: string; kapatHref?: string }) {
+export function IsDetayi({ is, kisiler, yargiTurleri, benimId, kapatHref }: { is: Detay; kisiler: { id: string; adSoyad: string }[]; yargiTurleri: { id: string; ad: string }[]; benimId: string; kapatHref?: string }) {
   const yonlendirici = useRouter();
   const [bekliyor, basla] = useTransition();
   const [baslik, setBaslik] = useState(is.baslik);
@@ -76,6 +77,7 @@ export function IsDetayi({ is, kisiler, benimId, kapatHref }: { is: Detay; kisil
   const yuzde = is.maddeler.length ? Math.round((biten / is.maddeler.length) * 100) : 0;
   const degisti = baslik !== is.baslik || aciklama !== (is.aciklama ?? "");
   const tur = turBilgisi(is.tur);
+  const baski = zamanBaskisiBilgisi(is.zamanBaskisi);
 
   return (
     <div className="flex flex-col gap-4">
@@ -84,6 +86,11 @@ export function IsDetayi({ is, kisiler, benimId, kapatHref }: { is: Detay; kisil
         <span className="mb-1.5 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ background: tur.renk + "26", color: tur.renk }}>
           {tur.ad}
         </span>
+        {baski && (
+          <span className="mb-1.5 ml-1.5 inline-block rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide" style={{ background: baski.renk + "30", color: baski.renk }}>
+            {baski.tarihEtiketi}
+          </span>
+        )}
         <input value={baslik} onChange={(e) => setBaslik(e.target.value)} className="w-full bg-transparent text-2xl font-semibold text-white outline-none" />
         {degisti && (
           <button type="button" disabled={bekliyor} onClick={() => basla(() => isBilgisiniGuncelle(is.id, baslik, aciklama).then(yenile))} className="mt-1.5 rounded-lg bg-[var(--accent)] px-4 py-1.5 text-sm font-semibold text-white">
@@ -94,6 +101,40 @@ export function IsDetayi({ is, kisiler, benimId, kapatHref }: { is: Detay; kisil
 
       {/* Ozellikler (Notion tarzi satirlar) */}
       <div className="grid grid-cols-[88px_minmax(0,1fr)] items-start gap-x-3 gap-y-2.5 border-y border-white/10 py-3">
+        <span className={etiket}>Tarz</span>
+        <div>
+          <select value={is.tur} onChange={(e) => basla(() => turDegistir(is.id, e.target.value).then(yenile))} className={`${alan} py-1.5 text-sm`}>
+            {TURLER.map((t) => (
+              <option key={t.anahtar} value={t.anahtar}>
+                {t.ad}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-white/40">{tur.aciklama}</p>
+        </div>
+
+        <span className={etiket}>Zaman baskısı</span>
+        <div className="flex flex-wrap gap-1.5">
+          {[...ZAMAN_BASKILARI.map((z) => ({ anahtar: z.anahtar as string, ad: z.ad, renk: z.renk as string })), { anahtar: "", ad: "Yok", renk: "#94a3b8" }].map((z) => {
+            const secili = is.zamanBaskisi === z.anahtar;
+            return (
+              <button key={z.anahtar || "yok"} type="button" disabled={bekliyor} onClick={() => basla(() => zamanBaskisiDegistir(is.id, z.anahtar).then(yenile))} className="rounded-full border px-3 py-1 text-[13px] font-medium" style={secili ? { background: z.renk, borderColor: z.renk, color: "#fff" } : { borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.65)" }}>
+                {z.ad}
+              </button>
+            );
+          })}
+        </div>
+
+        <span className={etiket}>Yargı türü</span>
+        <select value={is.yargiTuruId} onChange={(e) => basla(() => yargiTuruDegistir(is.id, e.target.value).then(yenile))} className={`${alan} py-1.5 text-sm`}>
+          <option value="">Belirtilmedi</option>
+          {yargiTurleri.map((y) => (
+            <option key={y.id} value={y.id}>
+              {y.ad}
+            </option>
+          ))}
+        </select>
+
         <span className={etiket}>Sorumlu</span>
         <select value={is.sorumluId} onChange={(e) => basla(() => sorumluDegistir(is.id, e.target.value).then(yenile))} className={`${alan} py-1.5 text-sm`}>
           <option value="">Atanmadı</option>
@@ -106,7 +147,7 @@ export function IsDetayi({ is, kisiler, benimId, kapatHref }: { is: Detay; kisil
 
         {is.tur === "OPERASYONEL" ? (
           <>
-            <span className={etiket}>Bu hafta</span>
+            <span className={etiket}>{periyotBilgisi(is.periyot).bu}</span>
             <div className="rounded-xl bg-white/[0.05] p-3">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-[15px] text-white">
@@ -116,8 +157,14 @@ export function IsDetayi({ is, kisiler, benimId, kapatHref }: { is: Detay; kisil
                   Yaptım ✓
                 </button>
                 <label className="ml-auto flex items-center gap-1.5 text-sm text-white/55">
-                  Haftada
-                  <input type="number" min={1} max={14} defaultValue={is.haftalikHedef} onBlur={(e) => basla(() => hedefGuncelle(is.id, Number(e.target.value)).then(yenile))} className={`${alan} w-16 px-2 py-1 text-sm`} />
+                  <select value={is.periyot} onChange={(e) => basla(() => periyotDegistir(is.id, e.target.value).then(yenile))} className={`${alan} px-2 py-1 text-sm`}>
+                    {PERIYOTLAR.map((p) => (
+                      <option key={p.anahtar} value={p.anahtar}>
+                        {p.birim}
+                      </option>
+                    ))}
+                  </select>
+                  <input type="number" min={1} max={31} defaultValue={is.haftalikHedef} onBlur={(e) => basla(() => hedefGuncelle(is.id, Number(e.target.value)).then(yenile))} className={`${alan} w-16 px-2 py-1 text-sm`} />
                   kez
                 </label>
               </div>
@@ -153,7 +200,14 @@ export function IsDetayi({ is, kisiler, benimId, kapatHref }: { is: Detay; kisil
           </>
         )}
 
-        <span className={etiket}>Bitiş</span>
+        {is.tur === "DONEMSEL" && (
+          <>
+            <span className={etiket}>Ne zaman?</span>
+            <input defaultValue={is.tetikleyici} onBlur={(e) => e.target.value !== is.tetikleyici && basla(() => tetikleyiciGuncelle(is.id, e.target.value).then(yenile))} placeholder="Hangi olay olunca gündeme gelir? (ör. müvekkil talep edince)" className={`${alan} py-1.5 text-sm`} />
+          </>
+        )}
+
+        <span className={etiket}>{baski ? baski.tarihEtiketi : "Bitiş"}</span>
         <div className="flex items-center gap-2">
           <input type="date" defaultValue={is.vade} onChange={(e) => basla(() => vadeGuncelle(is.id, e.target.value).then(yenile))} className={`${alan} py-1.5 text-sm`} />
           {is.vade && (
