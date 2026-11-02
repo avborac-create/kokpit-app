@@ -149,7 +149,7 @@ html[data-palet="apple"] .glass-strong { backdrop-filter: blur(var(--cam-bulanik
 
 /* BMW iDrive 8: mavi parlak zemin, yuvarlak cam, BMW mavisi vurgu. */
 html[data-palet="bmw"][data-tema="koyu"] {
-  --background: #1d2635; --background-2: #2a3547; --yuzey: #2a3547;
+  --background: #2c3a50; --background-2: #3b4b66; --yuzey: #3b4b66;
   --accent: #1c69d4; --accent-soft: rgba(28, 105, 212, 0.26); --link: #7aaef2;
   --blob-1: #1d4f9a; --blob-2: #2a3650; --blob-3: #17407a;
   --glass-border: rgba(120, 170, 255, 0.2); --glass-cizgi: rgba(120, 170, 255, 0.18);
@@ -163,7 +163,7 @@ html[data-palet="bmw"][data-tema="acik"] {
 }
 /* Mercedes Hiperekran: turkuaz parlayan cam, ince acik cerceve. */
 html[data-palet="hiperekran"][data-tema="koyu"] {
-  --background: #1c2736; --background-2: #293648; --yuzey: #293648;
+  --background: #283b4c; --background-2: #364b5e; --yuzey: #364b5e;
   --accent: #00adef; --accent-soft: rgba(0, 173, 239, 0.22); --link: #6fd2f7;
   --blob-1: #14507a; --blob-2: #222f3f; --blob-3: #10435f;
   --glass-border: rgba(140, 200, 255, 0.22); --glass-cizgi: rgba(140, 200, 255, 0.18);
@@ -178,7 +178,7 @@ html[data-palet="hiperekran"][data-tema="acik"] {
 }
 /* Mercedes Gumus: koyu antrasit, ince gumus cizgiler, hafif yazi. */
 html[data-palet="gumus"][data-tema="koyu"] {
-  --background: #252b37; --background-2: #323947; --yuzey: #323947;
+  --background: #383f4d; --background-2: #465060; --yuzey: #465060;
   --accent: #4f9fe0; --accent-soft: rgba(79, 159, 224, 0.24); --link: #8dc4f2;
   --blob-1: #2e3644; --blob-2: #232a35; --blob-3: #2a323f;
   --glass-border: rgba(201, 209, 219, 0.2); --glass-cizgi: rgba(201, 209, 219, 0.2);
