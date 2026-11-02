@@ -118,16 +118,12 @@ export function Defter({
       );
     const silBolumu = silmeYetkisiVar && s.silme ? <SilButonu satir={s} /> : null;
     if (!duzenleBolumu && !silBolumu) return null;
+    // Düzenle / Sil her zaman görünür (gizli menü yok); dar ekranda alt satıra sarar.
     return (
-      <details className="relative">
-        <summary className="cursor-pointer list-none rounded-md px-2 py-0.5 text-white/55 hover:bg-white/10 hover:text-white" aria-label="İşlemler">
-          ⋯
-        </summary>
-        <div className="popover absolute right-0 top-full z-20 mt-1 flex items-center gap-2 rounded-xl px-3 py-2">
-          {duzenleBolumu}
-          {silBolumu}
-        </div>
-      </details>
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 [&_button]:rounded-md [&_button]:border [&_button]:border-white/20 [&_button]:px-2.5 [&_button]:py-1 [&_button]:text-xs [&_a]:rounded-md [&_a]:border [&_a]:border-white/20 [&_a]:px-2.5 [&_a]:py-1">
+        {duzenleBolumu}
+        {silBolumu}
+      </div>
     );
   };
   const kutu = (s: Satir) =>
