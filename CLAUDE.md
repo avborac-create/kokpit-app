@@ -8,3 +8,4 @@
 - Dil Türkçe; kullanıcı avukat, teknik olmayan açıklama ister.
 - **Kanban paneli:** Oturumdaki tüm görevler için yan panelde Kanban panosu (Artifact; kolonlar Yapılıyor / Sırada / Tamamlandı) açık tutulur; her yeni kullanıcı mesajı bir kart olur, her partide pano aynı Artifact bağlantısına yeniden yayınlanır. Pano müvekkil adı gibi hassas bilgi içermez.
 - **Çalışılan dosya:** Test, örnek ve doğrulama, kullanıcının o anda içinde bulunduğu müvekkil/dosya üzerinden yapılır; başka müvekkillerin adı anılmaz.
+- **Tamamlanma bildirimi:** Kullanıcının istediği ama henüz hayata geçmemiş (bekleyen/açık) her iş tamamlandığında yanıtta "Tamamlandı: …" diye mutlaka bildirilir; hâlâ bekleyenler kısaca listelenir. Açık işler hafızadaki `kokpit-is-sirasi` notunda tutulur.
