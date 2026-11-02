@@ -151,7 +151,7 @@ export function Defter({
 
   // A) Akis: ay basliklari altinda yuvarlak simgeli satirlar
   const aylar: { baslik: string; satirlar: Satir[] }[] = [];
-  for (const s of [...hesaplanan].reverse()) {
+  for (const s of hesaplanan) {
     const b = ay.format(s.tarih);
     const son = aylar[aylar.length - 1];
     if (son && son.baslik === b) son.satirlar.push(s);
@@ -219,7 +219,7 @@ export function Defter({
         ))}
       </div>
       <div className="space-y-1.5">
-        {[...hesaplanan].reverse().map((s) => {
+        {hesaplanan.map((s) => {
           const t = tutarOf(s);
           const kenar = virmanMi(s) || s.turetilmis ? "#8b5cf6" : iyiMi(t) ? "#32d74b" : "#ff7a70";
           return (
@@ -248,8 +248,8 @@ export function Defter({
           <thead className="text-white/50">
             <tr>
               {silmeYetkisiVar && <th className="w-8 px-3 py-3" />}
-              {!kompakt && <th className="px-4 py-3 font-medium">Tarih</th>}
-              {dosyaSutunu && !kompakt && <th className="px-4 py-3 font-medium">Dosya</th>}
+              <th className="px-4 py-3 font-medium">Tarih</th>
+              {dosyaSutunu && <th className="px-4 py-3 font-medium">Dosya</th>}
               <th className="px-4 py-3 font-medium">Açıklama</th>
               <th className="px-4 py-3 text-right font-medium text-[#ff7a70]/85">Borç</th>
               <th className="px-4 py-3 text-right font-medium text-[#32d74b]/85">Alacak</th>
@@ -272,8 +272,8 @@ export function Defter({
                     )}
                   </td>
                 )}
-                {!kompakt && <td className="whitespace-nowrap px-4 py-3 text-white/60">{tarihBicimi.format(s.tarih)}</td>}
-                {dosyaSutunu && !kompakt && (
+                <td className="whitespace-nowrap px-4 py-3 text-white/60">{tarihBicimi.format(s.tarih)}</td>
+                {dosyaSutunu && (
                   <td className="px-4 py-3">
                     {s.dosyaEtiketi ? (
                       <span className="whitespace-nowrap rounded-full bg-white/[0.07] px-2.5 py-0.5 text-xs text-white/75">
@@ -285,14 +285,6 @@ export function Defter({
                   </td>
                 )}
                 <td className={`px-4 py-3 text-white/85 ${kompakt ? "min-w-[12rem]" : ""}`}>
-                  {kompakt && (
-                    <span className="mb-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-white/45">
-                      {tarihBicimi.format(s.tarih)}
-                      {dosyaSutunu && (
-                        <span className="rounded-full bg-white/[0.07] px-2 text-white/70">{s.dosyaEtiketi ?? "havuz"}</span>
-                      )}
-                    </span>
-                  )}
                   <span className="whitespace-pre-line">{s.aciklama}</span>
                   {s.borcludan && (
                     <span className="ml-2 whitespace-nowrap rounded-full bg-[#ffb340]/15 px-2 py-0.5 text-[11px] text-[#ffb340]">
@@ -325,7 +317,7 @@ export function Defter({
               </tr>
             ))}
             <tr className="border-t border-white/10 font-medium">
-              <td className="px-4 py-3 text-white" colSpan={(kompakt ? 1 : dosyaSutunu ? 3 : 2) + (silmeYetkisiVar ? 1 : 0)}>
+              <td className="px-4 py-3 text-white" colSpan={(dosyaSutunu ? 3 : 2) + (silmeYetkisiVar ? 1 : 0)}>
                 Toplam
               </td>
               <td className="px-4 py-3 text-right text-white">{para.format(toplamBorc)}</td>
@@ -339,9 +331,7 @@ export function Defter({
   );
   return (
     <div>
-      <Sarmal>
-        <DefterGorunumSecici akis={akis} gosterge={gosterge} tablo={tablo} />
-      </Sarmal>
+      <Sarmal>{kompakt ? tablo : <DefterGorunumSecici akis={akis} gosterge={gosterge} tablo={tablo} />}</Sarmal>
       <p className="mt-2 text-xs text-white/35">
         {tutulanHesapMi
           ? "Bakiye = Alacak − Borç (bu hesapta/adliyede şu an duran tutar; iade edilince Borç olarak düşer)."

@@ -242,6 +242,12 @@ export async function EkonomiPaneli({
           ? alt
           : "ozet";
   const ozetOf = (hesapId: string) => ozet.hesaplar.find((o) => o.hesapId === hesapId);
+  // Akdi Vekalet'e ALACAK (virman / odeme) yazilmis ama BORC (vekalet ucreti) kaydi yoksa ya da eksikse uyar.
+  const vekaletUyarilari = kapsam.dosyaId
+    ? ozet.hesaplar.filter(
+        (h) => /akdi vekalet/i.test(h.ad) && !h.paraHesabiMi && !h.tutulanHesapMi && h.alacak > 0.001 && h.borc < h.alacak - 0.001,
+      )
+    : [];
   const dosyaSecenekleri: DosyaSecenegi[] = dosyalar.map((d) => ({ id: d.id, etiket: d.etiket, ayrinti: d.ayrinti }));
 
   type Sekme = { anahtar: string; etiket: string; rozet?: string };
@@ -273,6 +279,17 @@ export async function EkonomiPaneli({
 
   return (
     <div className="max-w-5xl rounded-2xl border border-white/10 bg-white/[0.02] p-4 md:p-5">
+      {vekaletUyarilari.map((h) => (
+        <div key={h.hesapId} className="mb-3 rounded-xl border-l-4 border-[#f2b04c] bg-[#f2b04c]/15 px-4 py-3 text-sm text-[#f3d9a8]">
+          <b>⚠ {h.no} - {h.ad}: borç kaydı eksik.</b>{" "}
+          {h.borc <= 0.001
+            ? `Bu dosyaya ${para.format(h.alacak)} alacak kaydı yaptınız ama borç (vekalet ücreti) kaydı yapmadınız.`
+            : `Bu dosyada alacak (${para.format(h.alacak)}) borçtan (${para.format(h.borc)}) fazla; borç kaydı eksik görünüyor.`}{" "}
+          <Link href={hrefYaz({ alt: String(h.no) })} className="font-semibold underline">
+            Borç kaydını gir →
+          </Link>
+        </div>
+      ))}
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold tracking-tight text-white">
           {musteriDuzeyi ? "Müvekkil Ekonomisi — tüm dosyalar" : "Dosya Ekonomisi"}
