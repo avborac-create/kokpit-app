@@ -867,8 +867,7 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
         <table className="w-full text-left text-sm">
           <thead className="text-white/50">
             <tr>
-              <th className="px-4 py-3 font-medium">Kod</th>
-              <th className="px-4 py-3 font-medium">Ad</th>
+              <th className="px-3 py-2 font-medium">Kod / Ad</th>
               <th className="px-4 py-3 font-medium">Grup / Tür</th>
               <th className="px-4 py-3 font-medium">Durum</th>
               <th className="px-4 py-3" />
@@ -877,23 +876,22 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
           <tbody>
             {hesaplar.map((h) => (
               <tr key={h.id} className={`border-t border-white/[0.06] ${h.aktifMi ? "" : "opacity-45"}`}>
-                <td className="px-4 py-3 font-medium text-white">{h.no}</td>
-                <td className="px-4 py-3">
-                  <form action={hesapGuncelle.bind(null, h.id)} className="flex flex-wrap items-center gap-2">
-                    <Girdi name="no" type="number" min={100} max={399} defaultValue={h.no} className="!w-20 !py-1" required disabled={h.paraHesabiMi} title="Hesap kodu (100 müvekkil, 200 karşı taraf, 300 adliye)" />
-                    <Girdi name="ad" defaultValue={h.ad} className="!py-1" required />
+                <td className="px-3 py-1.5">
+                  <form action={hesapGuncelle.bind(null, h.id)} className="flex items-center gap-2">
+                    <Girdi name="no" type="number" min={100} max={399} defaultValue={h.no} className="!w-[4.5rem] !px-2 !py-1 !text-sm" required disabled={h.paraHesabiMi} title="Hesap kodu (100 müvekkil, 200 karşı taraf, 300 adliye)" />
+                    <Girdi name="ad" defaultValue={h.ad} className="!w-56 !px-2 !py-1 !text-sm" required />
                     <GonderButonu varyant="ikincil" boyut="kompakt" bekleyenMetin="…">
                       Kaydet
                     </GonderButonu>
                     {h.paraHesabiMi && <span className="text-xs text-white/40">para hesabı</span>}
                   </form>
                 </td>
-                <td className="px-4 py-3 text-white/60">
+                <td className="px-3 py-1.5 text-white/60">
                   {h.grup === "ADLIYE" ? "Adliye" : h.grup === "BORCLU" ? "Karşı Taraf" : "Müvekkil"}
                   {h.tutulanHesapMi ? " · tutulan" : h.paraHesabiMi ? " · para" : ""}
                 </td>
-                <td className="px-4 py-3 text-white/60">{h.aktifMi ? "Aktif" : "Pasif"}</td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5 text-white/60">{h.aktifMi ? "Aktif" : "Pasif"}</td>
+                <td className="px-3 py-1.5">
                   {!h.paraHesabiMi && (
                     <div className="flex items-center justify-end gap-2">
                       <form action={hesapAktifligiDegistir.bind(null, h.id, !h.aktifMi)}>
