@@ -1849,3 +1849,19 @@ model KasaSayimi {
 
   @@map("kasa_sayimlari")
 }
+
+// ---- Islem gunlugu: kullanicinin son islemlerini geri al / yeniden uygula ----
+model IslemGunlugu {
+  id              String    @id @default(cuid())
+  kullaniciId     String
+  ozet            String
+  veri            Json
+  // UYGULANDI = geri alinabilir, GERI_ALINDI = yeniden uygulanabilir, GECERSIZ = sonradan cakisma nedeniyle geri alinamaz
+  durum           String    @default("UYGULANDI")
+  neden           String?
+  olusturmaTarihi DateTime  @default(now())
+  geriAlmaTarihi  DateTime?
+
+  @@index([kullaniciId, durum, olusturmaTarihi])
+  @@map("islem_gunlugu")
+}

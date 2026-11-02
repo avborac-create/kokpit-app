@@ -2,6 +2,7 @@ import { MetinDuzeniDinleyici } from "@/core/metin/metin-duzeni-dinleyici";
 import { Suspense } from "react";
 import { KokpitKabuk } from "./kokpit-kabuk";
 import { KenarCubuguVerisi, UstBilgiVerisi } from "./kokpit-kabuk-verisi";
+import { GunlukBasligi, GunlukCubugu } from "@/core/gunluk/gunluk-verisi";
 
 // DIKKAT: bu layout artik BILEREK async DEGIL ve cookies()/DB okuyan hicbir
 // seyi DOGRUDAN await ETMEZ - bkz. kokpit-kabuk-verisi.tsx basindaki not.
@@ -21,6 +22,11 @@ export default function KokpitLayout({ children }: { children: React.ReactNode }
           <KenarCubuguVerisi />
         </Suspense>
       }
+      geriAl={
+        <Suspense fallback={null}>
+          <GunlukBasligi />
+        </Suspense>
+      }
       ustBilgi={
         <Suspense fallback={<UstBilgiIskeleti />}>
           <UstBilgiVerisi />
@@ -28,6 +34,9 @@ export default function KokpitLayout({ children }: { children: React.ReactNode }
       }
     >
       <MetinDuzeniDinleyici />
+      <Suspense fallback={null}>
+        <GunlukCubugu />
+      </Suspense>
       {children}
     </KokpitKabuk>
   );

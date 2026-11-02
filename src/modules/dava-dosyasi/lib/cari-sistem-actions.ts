@@ -8,8 +8,10 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { dosyaMasrafiEkle } from "@/modules/dava-dosyasi/lib/actions";
-import { dosyaEtiketiYaz, havuzTuretilenAlacak, kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
+import { dosyaEtiketiYaz, kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { MUVEKKILE_ODEME } from "@/modules/dava-dosyasi/lib/tasnif-sabitleri";
+import { eksiyeDusmeKontrolu, paraBakiyesi } from "@/modules/dava-dosyasi/lib/para-bakiye";
+import { cariGunlukle } from "@/core/gunluk/islem-gunlugu";
 
 function yenile() {
   revalidatePath("/kokpit", "layout");
@@ -45,29 +47,9 @@ async function dosyaMuvekkilinMi(musteriId: string, dosyaId: string) {
   if (sayac === 0) throw new Error("Seçilen dosya bu müvekkile ait değil.");
 }
 
-// Para Trafigi bakiyesi (Alacak - Borc). dosyaId verilirse dosya gorunumu
-// (muvekkil havuzundan o dosyaya aktarilanlar ALACAK sayilir).
-async function paraBakiyesi(tx: Pick<typeof prisma, "cariHareketi" | "cariHesap">, musteriId: string, dosyaId?: string) {
-  const para = await tx.cariHesap.findFirst({ where: { paraHesabiMi: true } });
-  if (!para) throw new Error("Para Trafiği hesabı bulunamadı.");
-  const where = { musteriId, hesapId: para.id, ...(dosyaId ? { dosyaId } : {}) };
-  const gruplar = await tx.cariHareketi.groupBy({ by: ["yon", "havuzKaynakli"], where, _sum: { tutar: true } });
-  let alacak = 0;
-  let borcHavuzsuz = 0;
-  let borcHavuz = 0;
-  for (const g of gruplar) {
-    const t = Number(g._sum.tutar ?? 0);
-    if (g.yon === "ALACAK") alacak += t;
-    else if (g.havuzKaynakli) borcHavuz += t;
-    else borcHavuzsuz += t;
-  }
-  const bakiye = alacak - borcHavuzsuz - borcHavuz + (dosyaId ? havuzTuretilenAlacak({ alacak, borcHavuzsuz, borcHavuz }) : 0);
-  return Math.round(bakiye * 100) / 100;
-}
-
 // Para geldi: Para Trafigi'ne ALACAK. Dosya duzeyinden girilirse dosyaya
 // etiketlenir (muvekkil ekraninda da gorunur); muvekkil duzeyinde dosya bos olabilir.
-export async function odemeEkle(musteriId: string, formData: FormData) {
+async function odemeEkle_(musteriId: string, formData: FormData) {
   const dosyaId = metin(formData, "dosyaId") || null;
   if (dosyaId) await dosyaMuvekkilinMi(musteriId, dosyaId);
   const para = await prisma.cariHesap.findFirst({ where: { paraHesabiMi: true } });
@@ -126,7 +108,7 @@ export async function odemeEkle(musteriId: string, formData: FormData) {
 }
 
 // Para hesabi disindaki bir hesaba (Akdi Vekalet, Bloke Para...) BORC yaz.
-export async function borcEkle(musteriId: string, formData: FormData) {
+async function borcEkle_(musteriId: string, formData: FormData) {
   const hesapId = metin(formData, "hesapId");
   const dosyaId = metin(formData, "dosyaId");
   if (!hesapId || !dosyaId) throw new Error("Hesap ve dosya seçilmelidir.");
@@ -148,7 +130,7 @@ export async function borcEkle(musteriId: string, formData: FormData) {
 }
 
 // Harcama (Masraflar): mevcut masraf kaydi akisi; dosya secimi formdan gelir.
-export async function masrafEkle(musteriId: string, formData: FormData) {
+async function masrafEkle_(musteriId: string, formData: FormData) {
   const dosyaId = metin(formData, "dosyaId");
   if (!dosyaId) throw new Error("Dosya seçilmelidir.");
   await dosyaMuvekkilinMi(musteriId, dosyaId);
@@ -160,7 +142,7 @@ export async function masrafEkle(musteriId: string, formData: FormData) {
 // Para Trafigi'nde BORC, hedef hesapta ALACAK. kapsamDosyaId doluysa dosya
 // ekranindan (o dosyanin kendi para bakiyesinden), bossa muvekkil
 // havuzundan yapilir.
-export async function virmanYap(musteriId: string, kapsamDosyaId: string, formData: FormData) {
+async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: FormData) {
   const hedefHesapId = metin(formData, "hedefHesapId");
   const dosyaId = kapsamDosyaId || metin(formData, "dosyaId");
   if (!hedefHesapId || !dosyaId) throw new Error("Hedef hesap ve dosya seçilmelidir.");
@@ -237,18 +219,7 @@ export async function virmanYap(musteriId: string, kapsamDosyaId: string, formDa
   yenile();
 }
 
-// Silme sonrasi Para Trafigi'nin (muvekkil ve ilgili dosya) eksiye dusmemesi icin kontrol.
-async function eksiyeDusmeKontrolu(
-  tx: Pick<typeof prisma, "cariHareketi" | "cariHesap">,
-  musteriId: string,
-  dosyaId: string | null,
-) {
-  if ((await paraBakiyesi(tx, musteriId)) < -0.001 || (dosyaId && (await paraBakiyesi(tx, musteriId, dosyaId)) < -0.001)) {
-    throw new Error("Bu işlem, virmanla kullanılmış parayı eksiye düşürür. Önce ilgili virmanı düzeltin ya da silin.");
-  }
-}
-
-export async function hareketSil(id: string, sifre?: string) {
+async function hareketSil_(id: string, sifre?: string) {
   await silmeYetkisiniDogrula(sifre);
   await prisma.$transaction(async (tx) => {
     const h = await tx.cariHareketi.findUnique({ where: { id } });
@@ -259,7 +230,7 @@ export async function hareketSil(id: string, sifre?: string) {
   yenile();
 }
 
-export async function virmanSil(virmanId: string, sifre?: string) {
+async function virmanSil_(virmanId: string, sifre?: string) {
   await silmeYetkisiniDogrula(sifre);
   await prisma.$transaction(async (tx) => {
     const satirlar = await tx.cariHareketi.findMany({ where: { virmanId } });
@@ -272,7 +243,7 @@ export async function virmanSil(virmanId: string, sifre?: string) {
 
 // Tarih / tutar / aciklama sonradan duzeltilebilir (virman satirlari haric -
 // onlari silip yeniden yapin). Tutar dusurulurse Para Trafigi eksiye dusemez.
-export async function hareketGuncelle(id: string, formData: FormData) {
+async function hareketGuncelle_(id: string, formData: FormData) {
   const tutar = tutarAl(formData);
   const tarih = tarihAl(formData);
   const aciklama = metin(formData, "aciklama") || null;
@@ -297,7 +268,7 @@ export async function hareketGuncelle(id: string, formData: FormData) {
 // Defterde yerinde duzenleme (sayfa degistirmez, hatayi pencereye dondurur).
 // hareket: tarih / tutar / aciklama (+ odeme sekli). virman: iki bagli satirin
 // tarih ve tutari birlikte guncellenir (yoneticiye ozel); Para Trafigi eksiye dusemez.
-export async function satirGuncelle(tip: "hareket" | "virman", id: string, formData: FormData): Promise<{ hata?: string }> {
+async function satirGuncelle_(tip: "hareket" | "virman", id: string, formData: FormData): Promise<{ hata?: string }> {
   try {
     const tutar = tutarAl(formData);
     const tarih = tarihAl(formData);
@@ -357,7 +328,7 @@ function topluAyir(ogeler: TopluOge[]) {
   };
 }
 
-export async function topluSil(ogeler: TopluOge[], sifre?: string): Promise<{ hata?: string }> {
+async function topluSil_(ogeler: TopluOge[], sifre?: string): Promise<{ hata?: string }> {
   try {
     await silmeYetkisiniDogrula(sifre);
     if (ogeler.length === 0) throw new Error("Kayıt seçilmedi.");
@@ -384,7 +355,7 @@ export async function topluSil(ogeler: TopluOge[], sifre?: string): Promise<{ ha
 export type OncekiTarih = { id: string; tarih: string };
 
 // Doner: degisen kayitlarin ESKI tarihleri (geri alma icin).
-export async function topluTarihDegistir(ogeler: TopluOge[], tarihMetni: string): Promise<{ hata?: string; onceki?: OncekiTarih[] }> {
+async function topluTarihDegistir_(ogeler: TopluOge[], tarihMetni: string): Promise<{ hata?: string; onceki?: OncekiTarih[] }> {
   try {
     await yoneticiyiDogrula();
     if (ogeler.length === 0) throw new Error("Kayıt seçilmedi.");
@@ -505,7 +476,7 @@ export async function dosyaEkonomiDurumuDegistir(dosyaId: string, disi: boolean)
 // Her satir: hedef hesap (virman) ya da "Muvekkile Odeme" (para buroyu terk eder) + dosya + tutar.
 // ör. borcludan gelen 50.000 TL -> 36.000 masraf iadesi (Harcama), 14.000 vekalet ucreti
 // (Akdi Vekalet); veya muvekkilden gelen 330.000 TL'nin dosyalara/hesaplara ayristirilmasi.
-export async function topluTasnif(musteriId: string, kapsamDosyaId: string, formData: FormData) {
+async function topluTasnif_(musteriId: string, kapsamDosyaId: string, formData: FormData) {
   const hedefler = formData.getAll("hedefHesapId").map(String);
   const dosyalar = formData.getAll("dosyaId").map(String);
   const tutarlar = formData.getAll("tutar").map((t) => Number(String(t).replace(",", ".")));
@@ -569,7 +540,7 @@ export async function topluTasnif(musteriId: string, kapsamDosyaId: string, form
 // B dosyasindaki bir hesaba aktarir. Iki satir (ayni virmanId): kaynakta BORC, hedefte ALACAK.
 // Kaynakta aktarilabilir tutar: Para Trafigi'nde dosyanin kendi bakiyesi, normal hesapta fazla odeme
 // (= -bakiye), tutulan (adliye) hesapta orada duran tutar (= +bakiye).
-export async function dosyalarArasiVirman(musteriId: string, formData: FormData) {
+async function dosyalarArasiVirman_(musteriId: string, formData: FormData) {
   const kaynakDosyaId = metin(formData, "kaynakDosyaId");
   const hedefDosyaId = metin(formData, "hedefDosyaId");
   const kaynakHesapId = metin(formData, "kaynakHesapId");
@@ -626,4 +597,42 @@ export async function dosyalarArasiVirman(musteriId: string, formData: FormData)
     });
   });
   yenile();
+}
+
+// ---- Islem gunlugu sarmalayicilari: her islem geri alinabilir / yeniden uygulanabilir ----
+export async function odemeEkle(...a: Parameters<typeof odemeEkle_>): ReturnType<typeof odemeEkle_> {
+  return cariGunlukle("Ödeme kaydı eklendi", [a[0]], () => odemeEkle_(...a));
+}
+export async function borcEkle(...a: Parameters<typeof borcEkle_>): ReturnType<typeof borcEkle_> {
+  return cariGunlukle("Borç kaydı eklendi", [a[0]], () => borcEkle_(...a));
+}
+export async function masrafEkle(...a: Parameters<typeof masrafEkle_>): ReturnType<typeof masrafEkle_> {
+  return cariGunlukle("Masraf kaydı eklendi", [a[0]], () => masrafEkle_(...a));
+}
+export async function virmanYap(...a: Parameters<typeof virmanYap_>): ReturnType<typeof virmanYap_> {
+  return cariGunlukle("Virman yapıldı", [a[0]], () => virmanYap_(...a));
+}
+export async function hareketSil(...a: Parameters<typeof hareketSil_>): ReturnType<typeof hareketSil_> {
+  return cariGunlukle("Defter satırı silindi", async () => (await prisma.cariHareketi.findMany({ where: { id: a[0] }, select: { musteriId: true } })).map((x) => x.musteriId), () => hareketSil_(...a));
+}
+export async function virmanSil(...a: Parameters<typeof virmanSil_>): ReturnType<typeof virmanSil_> {
+  return cariGunlukle("Virman silindi", async () => (await prisma.cariHareketi.findMany({ where: { virmanId: a[0] }, select: { musteriId: true } })).map((x) => x.musteriId), () => virmanSil_(...a));
+}
+export async function hareketGuncelle(...a: Parameters<typeof hareketGuncelle_>): ReturnType<typeof hareketGuncelle_> {
+  return cariGunlukle("Defter satırı düzenlendi", async () => (await prisma.cariHareketi.findMany({ where: { id: a[0] }, select: { musteriId: true } })).map((x) => x.musteriId), () => hareketGuncelle_(...a));
+}
+export async function satirGuncelle(...a: Parameters<typeof satirGuncelle_>): ReturnType<typeof satirGuncelle_> {
+  return cariGunlukle("Defter satırı düzenlendi", async () => (await prisma.cariHareketi.findMany({ where: a[0] === "virman" ? { virmanId: a[1] } : { id: a[1] }, select: { musteriId: true } })).map((x) => x.musteriId), () => satirGuncelle_(...a));
+}
+export async function topluSil(...a: Parameters<typeof topluSil_>): ReturnType<typeof topluSil_> {
+  return cariGunlukle("Seçili defter kayıtları silindi", async () => (await prisma.cariHareketi.findMany({ where: { OR: [{ id: { in: a[0].filter((o) => o.tip === "hareket").map((o) => o.id) } }, { virmanId: { in: a[0].filter((o) => o.tip === "virman").map((o) => o.id) } }] }, select: { musteriId: true } })).map((x) => x.musteriId), () => topluSil_(...a));
+}
+export async function topluTarihDegistir(...a: Parameters<typeof topluTarihDegistir_>): ReturnType<typeof topluTarihDegistir_> {
+  return cariGunlukle("Defter kayıtlarının tarihi değiştirildi", async () => (await prisma.cariHareketi.findMany({ where: { OR: [{ id: { in: a[0].filter((o) => o.tip === "hareket").map((o) => o.id) } }, { virmanId: { in: a[0].filter((o) => o.tip === "virman").map((o) => o.id) } }] }, select: { musteriId: true } })).map((x) => x.musteriId), () => topluTarihDegistir_(...a));
+}
+export async function topluTasnif(...a: Parameters<typeof topluTasnif_>): ReturnType<typeof topluTasnif_> {
+  return cariGunlukle("Toplu tasnif yapıldı", [a[0]], () => topluTasnif_(...a));
+}
+export async function dosyalarArasiVirman(...a: Parameters<typeof dosyalarArasiVirman_>): ReturnType<typeof dosyalarArasiVirman_> {
+  return cariGunlukle("Dosyalar arası virman yapıldı", [a[0]], () => dosyalarArasiVirman_(...a));
 }

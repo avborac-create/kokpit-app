@@ -6,6 +6,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { pushGonder } from "@/core/bildirim/push";
 import { DURUMLAR, TURLER, ZAMAN_BASKILARI } from "./durum";
 import { PERIYOTLAR } from "./hafta";
+import { isDurumuGunlukle, isSilmeyiGunlukle } from "@/core/gunluk/islem-gunlugu";
 
 async function girisli() {
   const k = await mevcutKullanici();
@@ -53,7 +54,7 @@ export async function isEkle(baslik: string, sorumluId: string, aciklama: string
   return { id: is.id };
 }
 
-export async function durumDegistir(isId: string, durum: string) {
+async function durumDegistir_(isId: string, durum: string) {
   const k = await girisli();
   const d = DURUMLAR.find((x) => x.anahtar === durum);
   if (!d) throw new Error("Geçersiz durum.");
@@ -85,7 +86,7 @@ export async function isBilgisiniGuncelle(isId: string, baslik: string, aciklama
   revalidatePath(`/kokpit/isler/${isId}`);
 }
 
-export async function isSil(isId: string) {
+async function isSil_(isId: string) {
   await girisli();
   await prisma.is.delete({ where: { id: isId } });
   revalidatePath("/kokpit/isler");
@@ -282,4 +283,14 @@ export async function yargiTuruSil(id: string) {
   await girisli();
   await prisma.gorevYargiTuru.delete({ where: { id } });
   revalidatePath("/kokpit/isler");
+}
+
+// ---- Islem gunlugu sarmalayicilari ----
+export async function durumDegistir(isId: string, durum: string) {
+  const d = DURUMLAR.find((x) => x.anahtar === durum);
+  return isDurumuGunlukle(`Görev durumu değişti: ${d?.ad ?? durum}`, isId, () => durumDegistir_(isId, durum));
+}
+
+export async function isSil(isId: string) {
+  return isSilmeyiGunlukle("Görev silindi", isId, () => isSil_(isId));
 }

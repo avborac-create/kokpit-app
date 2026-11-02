@@ -53,10 +53,12 @@ export function KokpitKabuk({
   children,
   kenarCubugu,
   ustBilgi,
+  geriAl,
 }: {
   children: React.ReactNode;
   kenarCubugu: React.ReactNode;
   ustBilgi: React.ReactNode;
+  geriAl?: React.ReactNode;
 }) {
   const pathname = usePathname();
   const anaAlanRef = useRef<HTMLElement>(null);
@@ -103,6 +105,7 @@ export function KokpitKabuk({
             {ustBilgi}
           </div>
           <div className="flex items-center gap-1.5 md:gap-2">
+            {geriAl}
             <YenileButonu />
             <Link
               href="/kokpit/bildirimler"
