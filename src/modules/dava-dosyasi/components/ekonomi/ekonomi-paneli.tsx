@@ -84,7 +84,7 @@ function DurumSeridi({
   havuzBakiyesi?: number;
   paraHesapNo?: number;
 }) {
-  const gosterilecek = ozet.hesaplar.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi && h.grup === "MUVEKKIL" && (h.borc !== 0 || h.alacak !== 0 || h.no <= 102 || h.no === 108));
+  const gosterilecek = ozet.hesaplar.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi && h.grup === "MUVEKKIL" && (h.borc !== 0 || h.alacak !== 0 || /akdi vekalet|harcama|avans/i.test(h.ad)));
   const tutulanlar = ozet.hesaplar.filter((h) => h.tutulanHesapMi && (h.borc !== 0 || h.alacak !== 0));
   const para = ozet.hesaplar.find((h) => h.paraHesabiMi);
   return (
@@ -119,11 +119,11 @@ function DurumSeridi({
       </div>
       {havuzBakiyesi !== undefined && havuzBakiyesi > 0 && (
         <Link
-          href={hrefYaz({ alt: String(paraHesapNo ?? 100) })}
+          href={hrefYaz({ alt: String(paraHesapNo ?? 101) })}
           className="mb-3 block rounded-xl border border-[#6db8ff]/40 bg-[#6db8ff]/[0.07] px-4 py-3 text-sm text-white/85 hover:bg-[#6db8ff]/[0.12]"
         >
           Müvekkilin havuzunda dosyaya aktarılmamış <b className="text-[#6db8ff]">{paraYaz.format(havuzBakiyesi)}</b> bekleyen para var.
-          Bu dosyaya aktarmak için <u>{paraHesapNo ?? 100} - Para Trafiği</u> sekmesinden virman yapın →
+          Bu dosyaya aktarmak için <u>{paraHesapNo ?? 101} - Para Trafiği</u> sekmesinden virman yapın →
         </Link>
       )}
       <div className="grid grid-cols-2 items-start gap-2 md:grid-cols-4">
@@ -238,9 +238,9 @@ export async function EkonomiPaneli({
       ? "dosyalar"
       : alt === "yonet" && silmeYetkisiVar
         ? "yonet"
-        : ["adliye", "borclu"].includes(alt)
+        : ["adliye", "borclu", "ozet200", "ozet300"].includes(alt)
           ? alt
-          : "ozet";
+          : "ozet100";
   const ozetOf = (hesapId: string) => ozet.hesaplar.find((o) => o.hesapId === hesapId);
   // Akdi Vekalet'e ALACAK (virman / odeme) yazilmis ama BORC (vekalet ucreti) kaydi yoksa ya da eksikse uyar.
   const vekaletUyarilari = kapsam.dosyaId
@@ -257,7 +257,6 @@ export async function EkonomiPaneli({
   };
   // Katlar: genel / muvekkil (100'ler) / borclu (200'ler) / adliye (300'ler)
   const genelKat: Sekme[] = [
-    { anahtar: "ozet", etiket: "Özet" },
     { anahtar: "anlasma", etiket: "Anlaşma" },
     ...(musteriDuzeyi
       ? [{ anahtar: "dosyalar", etiket: "Dosyaları Seç", rozet: disindakiSayisi > 0 ? `${disindakiSayisi} dışında` : undefined }]
@@ -266,14 +265,14 @@ export async function EkonomiPaneli({
   ];
   const katlar: { baslik: string; sekmeler: Sekme[] }[] = [
     { baslik: "", sekmeler: genelKat },
-    { baslik: "MÜVEKKİL-100", sekmeler: aktifHesaplar.filter((h) => h.grup === "MUVEKKIL").map(hesapSekmesi) },
+    { baslik: "MÜVEKKİL-100", sekmeler: [{ anahtar: "ozet100", etiket: "100 - Müvekkil Özeti" }, ...aktifHesaplar.filter((h) => h.grup === "MUVEKKIL").map(hesapSekmesi)] },
     {
       baslik: "KARŞI TARAF-200",
-      sekmeler: [{ anahtar: "borclu", etiket: "200 - Para Trafiği (Karşı Taraf)" }, ...aktifHesaplar.filter((h) => h.grup === "BORCLU").map(hesapSekmesi)],
+      sekmeler: [{ anahtar: "ozet200", etiket: "200 - Karşı Taraf Özeti" }, { anahtar: "borclu", etiket: "201 - Para Trafiği (Karşı Taraf)" }, ...aktifHesaplar.filter((h) => h.grup === "BORCLU").map(hesapSekmesi)],
     },
     {
       baslik: "ADLİYE-300",
-      sekmeler: [{ anahtar: "adliye", etiket: "300 - Para Trafiği (Adliye)" }, ...aktifHesaplar.filter((h) => h.grup === "ADLIYE").map(hesapSekmesi)],
+      sekmeler: [{ anahtar: "ozet300", etiket: "300 - Adliye Özeti" }, { anahtar: "adliye", etiket: "301 - Para Trafiği (Adliye)" }, ...aktifHesaplar.filter((h) => h.grup === "ADLIYE").map(hesapSekmesi)],
     },
   ];
 
@@ -379,7 +378,7 @@ export async function EkonomiPaneli({
         )}
       </div>
 
-      {aktif === "ozet" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyaSecenekleri} hesapNesneleri={aktifHesaplar} silmeYetkisiVar={silmeYetkisiVar} havuzBakiyesi={havuzBakiyesi} hrefYaz={hrefYaz} />}
+      {aktif === "ozet100" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyaSecenekleri} hesapNesneleri={aktifHesaplar} silmeYetkisiVar={silmeYetkisiVar} havuzBakiyesi={havuzBakiyesi} hrefYaz={hrefYaz} />}
       {seciliHesap && aktif === String(seciliHesap.no) && (
         <HesapSekmesi
           kapsam={kapsam}
@@ -392,11 +391,21 @@ export async function EkonomiPaneli({
           silmeYetkisiVar={silmeYetkisiVar}
         />
       )}
+      {(aktif === "ozet200" || aktif === "ozet300") && (
+        <GrupOzeti
+          baslik={aktif === "ozet200" ? "Karşı Taraf Özeti (200)" : "Adliye Özeti (300)"}
+          hesaplar={aktifHesaplar.filter((h) => h.grup === (aktif === "ozet200" ? "BORCLU" : "ADLIYE"))}
+          ozetOf={ozetOf}
+          hrefYaz={hrefYaz}
+          defterAnahtari={aktif === "ozet200" ? "borclu" : "adliye"}
+          defterEtiketi={aktif === "ozet200" ? "201 - Para Trafiği (Karşı Taraf)" : "301 - Para Trafiği (Adliye)"}
+        />
+      )}
       {aktif === "adliye" && kapsam.dosyaId && <AdliyeSekmesi dosyaId={kapsam.dosyaId} silmeYetkisiVar={silmeYetkisiVar} />}
       {aktif === "borclu" && kapsam.dosyaId && <BorcluSekmesi dosyaId={kapsam.dosyaId} silmeYetkisiVar={silmeYetkisiVar} />}
       {(aktif === "adliye" || aktif === "borclu") && !kapsam.dosyaId && (
         <p className="text-sm text-white/55">
-          200 - Karşı Taraf ve 300 - Adliye hesapları dosya bazındadır. Aşağıdaki sayfa sekmelerinden bir dosya seçin.
+          201 - Karşı Taraf ve 301 - Adliye para trafiği dosya bazındadır. Aşağıdaki sayfa sekmelerinden bir dosya seçin.
         </p>
       )}
       {aktif === "anlasma" && (
@@ -749,7 +758,7 @@ async function HesapSekmesi({
         </>
       ) : (
         <>
-          {hesap.no === 103 && adliyeHesaplari.length > 0 && (
+          {/bloke/i.test(hesap.ad) && adliyeHesaplari.length > 0 && (
             <>
               <h3 className="mb-1 mt-6 text-sm font-semibold text-white">🏛 Adliyeye Aktar (bloke paranın tamamını ya da bir kısmını adliyede duran para hesabına)</h3>
               <p className="mb-2 text-xs text-white/45">
@@ -826,7 +835,7 @@ async function HesapSekmesi({
               hesapId={hesap.id}
               dosyalar={dosyalar}
               sabitDosyaId={kapsam.dosyaId}
-              aciklamaIpucu={hesap.no === 101 ? "ör. dosyanın hizmet bedeli" : hesap.no === 108 ? "ör. dosya giderleri için istenen avans" : undefined}
+              aciklamaIpucu={/akdi vekalet/i.test(hesap.ad) ? "ör. dosyanın hizmet bedeli" : /avans/i.test(hesap.ad) ? "ör. dosya giderleri için istenen avans" : undefined}
             />
           )}
           <h3 className="mb-2 mt-6 text-sm font-semibold text-white">⇄ Bu Hesaba Virman (Para Trafiğinden ya da Başka Hesaptan)</h3>
@@ -928,6 +937,53 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
           <GonderButonu>+ Hesap Ekle</GonderButonu>
         </div>
       </form>
+    </div>
+  );
+}
+
+function GrupOzeti({
+  baslik,
+  hesaplar,
+  ozetOf,
+  hrefYaz,
+  defterAnahtari,
+  defterEtiketi,
+}: {
+  baslik: string;
+  hesaplar: { id: string; no: number; ad: string; tutulanHesapMi: boolean }[];
+  ozetOf: (hesapId: string) => { borc: number; alacak: number; bakiye: number } | undefined;
+  hrefYaz: (p: { sayfa?: string; alt?: string }) => string;
+  defterAnahtari: string;
+  defterEtiketi: string;
+}) {
+  const toplam = hesaplar.reduce((t, h) => t + (ozetOf(h.id)?.bakiye ?? 0), 0);
+  return (
+    <div>
+      <h3 className="mb-2 text-sm font-semibold text-white">{baslik}</h3>
+      <div className="glass overflow-x-auto rounded-2xl">
+        <div className="divide-y divide-white/[0.06] text-sm">
+          <Link href={hrefYaz({ alt: defterAnahtari })} className="flex items-center justify-between px-4 py-2 hover:bg-white/[0.05]">
+            <span className="text-white">{defterEtiketi}</span>
+            <span className="text-xs text-white/50">defteri aç →</span>
+          </Link>
+          {hesaplar.map((h) => {
+            const o = ozetOf(h.id);
+            return (
+              <Link key={h.id} href={hrefYaz({ alt: String(h.no) })} className="flex items-center justify-between gap-3 px-4 py-2 hover:bg-white/[0.05]">
+                <span className="text-white">
+                  {h.no} - {h.ad}
+                </span>
+                <span className="flex gap-4 text-xs text-white/60">
+                  <span>Borç {para.format(o?.borc ?? 0)}</span>
+                  <span>Alacak {para.format(o?.alacak ?? 0)}</span>
+                  <span className="font-medium text-white">{para.format(o?.bakiye ?? 0)}</span>
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-white/45">Gruptaki hesapların toplam bakiyesi: {para.format(toplam)}</p>
     </div>
   );
 }
