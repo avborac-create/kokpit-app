@@ -60,7 +60,7 @@ export function BorcFormu({
         <Girdi id="bf-aciklama" name="aciklama" placeholder={aciklamaIpucu ?? "ör. dosyanın hizmet bedeli"} />
       </Alan>
       <div className="flex items-end">
-        <GonderButonu>Borç Ekle</GonderButonu>
+        <GonderButonu>Borçlandır</GonderButonu>
       </div>
     </form>
   );

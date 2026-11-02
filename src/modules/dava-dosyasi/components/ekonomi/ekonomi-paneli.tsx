@@ -714,7 +714,7 @@ async function HesapSekmesi({
       {hesap.paraHesabiMi ? (
         <>
           <h3 className="mb-2 mt-6 text-sm font-semibold text-white">
-            + Ödeme Geldi{musteriDuzeyi ? " (dosya seçerseniz o dosyaya da işlenir)" : " (müvekkil ekonomisinde de görünür)"}
+            + Alacak Kaydı (Ödeme Geldi){musteriDuzeyi ? " (dosya seçerseniz o dosyaya da işlenir)" : " (müvekkil ekonomisinde de görünür)"}
           </h3>
           <OdemeFormu
             action={odemeEkle.bind(null, kapsam.musteriId)}
@@ -806,7 +806,7 @@ async function HesapSekmesi({
             </>
           )}
           {!hesap.tutulanHesapMi && (
-            <h3 className="mb-2 mt-6 text-sm font-semibold text-white">{hesap.masrafHesabiMi ? "+ Masraf Ekle" : "+ Borç Ekle"}</h3>
+            <h3 className="mb-2 mt-6 text-sm font-semibold text-white">{hesap.masrafHesabiMi ? "+ Masraf Ekle" : "+ Borçlandırma"}</h3>
           )}
           {hesap.tutulanHesapMi ? null : hesap.masrafHesabiMi ? (
             <>
