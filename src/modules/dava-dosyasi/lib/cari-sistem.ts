@@ -392,7 +392,10 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
       silme: { tip: "avansAktarimi", id: a.id },
     });
   }
-  return satirlar.sort((a, b) => a.tarih.getTime() - b.tarih.getTime());
+  // Ayni gun: para hesabinda once gelen para (ALACAK), digerlerinde once BORC; aksi halde
+  // sirasi belirsiz kalir ve bakiye gecici olarak eksiye dusmus gorunur.
+  const once = (x: { borc: number; alacak: number }) => (hesap.paraHesabiMi ? (x.alacak > 0 ? 0 : 1) : x.borc > 0 ? 0 : 1);
+  return satirlar.sort((a, b) => a.tarih.getTime() - b.tarih.getTime() || once(a) - once(b));
 }
 
 // Muvekkilin dosyalari (sayfa sekmeleri ve secim kutulari icin).

@@ -454,6 +454,15 @@ export async function hesapGuncelle(id: string, formData: FormData) {
   // Grup, kodun serisinden belirlenir: 100'ler müvekkil, 200'ler karşı taraf, 300'ler adliye.
   const grup = no >= 300 ? "ADLIYE" : no >= 200 ? "BORCLU" : "MUVEKKIL";
   await prisma.cariHesap.update({ where: { id }, data: { ad, no, grup } });
+  // Virman satirlari karsi hesabin kodunu aciklama metnine yazar; kod/ad degisince eskimesin.
+  if (no !== hesap.no || ad !== hesap.ad) {
+    const eskiOnek = `${hesap.no}-${hesap.ad.toLocaleUpperCase("tr-TR")} VİRMAN`;
+    const yeniOnek = `${no}-${ad.toLocaleUpperCase("tr-TR")} VİRMAN`;
+    const satirlar = await prisma.cariHareketi.findMany({ where: { aciklama: { startsWith: eskiOnek } }, select: { id: true, aciklama: true } });
+    for (const x of satirlar) {
+      await prisma.cariHareketi.update({ where: { id: x.id }, data: { aciklama: yeniOnek + (x.aciklama ?? "").slice(eskiOnek.length) } });
+    }
+  }
   yenile();
 }
 
