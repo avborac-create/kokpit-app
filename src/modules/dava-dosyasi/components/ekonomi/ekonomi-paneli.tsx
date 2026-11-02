@@ -458,7 +458,10 @@ async function OzetSekmesi({
         dosyalar.map(async (d) => ({ ...d, ozet: await kapsamOzeti({ musteriId: kapsam.musteriId, dosyaId: d.id }) })),
       )
     : [];
-  const digerHesaplar = ozet.hesaplar.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi);
+  // Muvekkil Ozeti (100) yalniz 1xx hesaplari gosterir; 200 (karsi taraf) ve 300 (adliye) kendi ozetlerindedir.
+  const ozetHesaplari = ozet.hesaplar.filter((h) => h.no < 200);
+  const digerHesaplar = ozetHesaplari.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi);
+  const netteGizli = ozet.hesaplar.filter((h) => h.no >= 200 && !h.tutulanHesapMi && Math.abs(h.bakiye) > 0.001);
 
   return (
     <div>
@@ -473,7 +476,7 @@ async function OzetSekmesi({
             </tr>
           </thead>
           <tbody>
-            {ozet.hesaplar.map((h) => {
+            {ozetHesaplari.map((h) => {
               const hesapNesnesi = hesapNesneleri.find((x) => x.id === h.hesapId);
               const hareketVar = Boolean(h.borc || h.alacak);
               return (
@@ -517,6 +520,11 @@ async function OzetSekmesi({
           </tbody>
         </table>
       </div>
+      {netteGizli.length > 0 && (
+        <p className="mt-2 text-xs text-white/45">
+          Net tutara şu hesaplar da dahildir (kendi özetlerinde görünür): {netteGizli.map((h) => `${h.no} - ${h.ad}`).join(", ")}.
+        </p>
+      )}
 
       {kirilim.length > 0 && (
         <div className="mt-6">
