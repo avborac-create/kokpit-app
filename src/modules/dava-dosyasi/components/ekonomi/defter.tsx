@@ -248,6 +248,7 @@ export function Defter({
           <thead className="text-white/50">
             <tr>
               {silmeYetkisiVar && <th className="w-8 px-3 py-3" />}
+              <th className="w-10 px-2 py-3 text-right font-medium text-white/50">Sıra</th>
               <th className="px-4 py-3 font-medium">Tarih</th>
               {dosyaSutunu && <th className="px-4 py-3 font-medium">Dosya</th>}
               <th className="px-4 py-3 font-medium">Açıklama</th>
@@ -258,7 +259,7 @@ export function Defter({
             </tr>
           </thead>
           <tbody>
-            {hesaplanan.map((s) => (
+            {hesaplanan.map((s, sira) => (
               <tr key={s.id} className={`border-t border-white/[0.06] ${s.turetilmis ? "italic opacity-70" : ""}`}>
                 {silmeYetkisiVar && (
                   <td className="w-8 px-3 py-3">
@@ -272,6 +273,7 @@ export function Defter({
                     )}
                   </td>
                 )}
+                <td className="w-10 px-2 py-3 text-right text-xs tabular-nums text-white/45">{sira + 1}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-white/60">{tarihBicimi.format(s.tarih)}</td>
                 {dosyaSutunu && (
                   <td className="px-4 py-3">
@@ -317,7 +319,7 @@ export function Defter({
               </tr>
             ))}
             <tr className="border-t border-white/10 font-medium">
-              <td className="px-4 py-3 text-white" colSpan={(dosyaSutunu ? 3 : 2) + (silmeYetkisiVar ? 1 : 0)}>
+              <td className="px-4 py-3 text-white" colSpan={(dosyaSutunu ? 4 : 3) + (silmeYetkisiVar ? 1 : 0)}>
                 Toplam
               </td>
               <td className="px-4 py-3 text-right text-white">{para.format(toplamBorc)}</td>
