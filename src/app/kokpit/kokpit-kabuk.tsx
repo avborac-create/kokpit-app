@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cikisYap } from "@/core/auth/actions";
 import { Dugme } from "@/core/ui/button";
 import { OneriButonu } from "@/core/oneri/oneri-butonu";
+import { GeriButonu } from "@/core/ui/geri-butonu";
 import { GorunumMenusu } from "@/core/gorunum/gorunum-menusu";
 import { AsagiCekYenile } from "@/core/ui/asagi-cek-yenile";
 import { YenileButonu } from "@/core/ui/yenile-butonu";
@@ -91,6 +92,7 @@ export function KokpitKabuk({
       <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "hidden"}`}>
         <header className="glass-strong relative z-30 flex h-12 shrink-0 items-center justify-between max-md:!rounded-none max-md:!border-x-0 max-md:!border-t-0 px-3 md:m-3 md:h-auto md:rounded-[10px] md:px-6 md:py-3">
           <div className="flex items-center gap-3">
+            <GeriButonu />
             <Link
               href="/kokpit"
               className="-ml-1 inline-flex items-center gap-0.5 rounded-full py-1 pl-0.5 pr-2 text-[17px] font-normal tracking-tight text-[var(--link)] active:opacity-60 md:hidden"
