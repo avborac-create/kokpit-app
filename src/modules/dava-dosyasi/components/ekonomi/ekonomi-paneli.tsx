@@ -640,7 +640,7 @@ async function HesapSekmesi({
   const kapsamDosyaId = kapsam.dosyaId ?? "";
   const hedefler = aktifHesaplar.filter((h) => !h.paraHesabiMi).map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` }));
   const adliyeHesaplari = aktifHesaplar
-    .filter((h) => h.grup === "ADLIYE")
+    .filter((h) => h.tutulanHesapMi)
     .map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` }));
 
   const turListesi = hesap.masrafHesabiMi && silmeYetkisiVar ? await secenekListesiTumDegerlerle("masraf_turu") : null;
@@ -751,10 +751,10 @@ async function HesapSekmesi({
         <>
           {hesap.no === 103 && adliyeHesaplari.length > 0 && (
             <>
-              <h3 className="mb-1 mt-6 text-sm font-semibold text-white">🏛 Adliyeye Aktar (bloke paranın tamamını ya da bir kısmını 300 serisi hesaba)</h3>
+              <h3 className="mb-1 mt-6 text-sm font-semibold text-white">🏛 Adliyeye Aktar (bloke paranın tamamını ya da bir kısmını adliyede duran para hesabına)</h3>
               <p className="mb-2 text-xs text-white/45">
-                Müvekkilden alınan bloke parayı adli birime yatırdığınızda burada kayda geçirin: harcama olarak yatırılan (geri
-                dönmeyen) için 301, teminat olarak yatırılan (sonradan geri alınabilen) için 302 hesabını seçin.
+                Müvekkilden alınan bloke parayı adli birime yatırdığınızda burada kayda geçirin: hesabın adından uygun olanı (teminat,
+                yediemin ücreti, avans vb.) seçin.
               </p>
               <VirmanFormu
                 action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
