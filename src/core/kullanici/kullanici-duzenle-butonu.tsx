@@ -10,7 +10,7 @@ import { BURO_ROLLERI, BURO_ROLU_ETIKETLERI, UYGULAMA_ROLU_ETIKETLERI, type Uygu
 import { SifreAlani } from "./sifre-alani";
 
 const girdiSinifi =
-  "w-full rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2 text-sm text-white outline-none focus:border-[var(--accent)] [color-scheme:dark]";
+  "alan-bmw [color-scheme:dark]";
 
 export function KullaniciDuzenleButonu({
   id,

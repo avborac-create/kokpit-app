@@ -1,10 +1,9 @@
 import type { LabelHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
-const alanSinifi =
-  "glass w-full rounded-xl px-3 py-2 text-sm text-white placeholder-white/35 outline-none transition-colors focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/40";
+const alanSinifi = "alan-bmw";
 
 export function Etiket(props: LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label {...props} className="mb-1 block text-sm font-medium text-white/70" />;
+  return <label {...props} className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em] text-white/60" />;
 }
 
 export function Girdi(props: React.ComponentProps<"input">) {

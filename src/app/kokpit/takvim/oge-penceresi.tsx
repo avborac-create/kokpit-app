@@ -15,7 +15,7 @@ import {
   type OgeGirdisi,
 } from "./tipler";
 
-const alan = "rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2.5 text-[15px] text-white outline-none [color-scheme:dark] focus:border-[var(--accent)]";
+const alan = "alan-bmw [color-scheme:dark]";
 const etiket = "mb-1 block text-xs font-medium text-white/55";
 const bolumBasligi = "text-sm font-semibold text-white/85";
 // Secenek dugmesi: secili olan dolu, digerleri hafif cizgili. kucuk = ikincil sira, yesil = Tamamlandi.

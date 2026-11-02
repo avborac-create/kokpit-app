@@ -24,7 +24,7 @@ type Is = {
   tarih: string;
 };
 
-const alan = "rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2.5 text-[15px] text-white outline-none [color-scheme:dark] focus:border-[var(--accent)]";
+const alan = "alan-bmw [color-scheme:dark]";
 
 export function IsListesi({ isler, kisiler, benimId, tumBuro }: { isler: Is[]; kisiler: { id: string; adSoyad: string }[]; benimId: string; tumBuro: boolean }) {
   const yonlendirici = useRouter();

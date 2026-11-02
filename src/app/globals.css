@@ -607,3 +607,37 @@ th.sutun-th { position: relative; }
 }
 table.sutun-ayarli { table-layout: fixed; }
 table.sutun-ayarli th, table.sutun-ayarli td { overflow: hidden; text-overflow: ellipsis; }
+
+/* Giris kutulari (BMW stili): keskin kose, solda vurgu seridi, dolgulu zemin. Tum formlar bu siniftan beslenir
+   (core/ui/form.tsx ve elle yazilan kutular); renkler tema degiskenlerinden gelir, vurgu seridi palete uyar. */
+@layer components {
+.alan-bmw {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.7rem 0.9rem;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--foreground);
+  background-color: color-mix(in srgb, var(--foreground) 7%, transparent);
+  border: 0;
+  border-left: 4px solid color-mix(in srgb, var(--foreground) 22%, transparent);
+  border-radius: 0;
+  outline: none;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+.alan-bmw::placeholder { color: color-mix(in srgb, var(--foreground) 38%, transparent); font-weight: 400; }
+.alan-bmw:hover { background-color: color-mix(in srgb, var(--foreground) 11%, transparent); }
+.alan-bmw:focus { border-left-color: var(--accent); background-color: color-mix(in srgb, var(--foreground) 14%, transparent); }
+.alan-bmw[aria-invalid="true"] { border-left-color: #e7222e; }
+.alan-bmw:disabled { opacity: 0.5; cursor: not-allowed; }
+textarea.alan-bmw { min-height: 0; }
+select.alan-bmw {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.6rem;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5l5 5 5-5' fill='none' stroke='%23999' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+}
+}

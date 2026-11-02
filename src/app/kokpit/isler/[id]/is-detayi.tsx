@@ -22,7 +22,7 @@ type Detay = {
   yorumlar: { id: string; yazan: string; benim: boolean; metin: string; zaman: string; ekler: { id: string; ad: string; tur: string }[] }[];
 };
 
-const alan = "rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2.5 text-[15px] text-white outline-none [color-scheme:dark] focus:border-[var(--accent)]";
+const alan = "alan-bmw [color-scheme:dark]";
 const kutu = "rounded-2xl border border-white/10 bg-white/[0.04] p-4";
 
 export function IsDetayi({ is, kisiler, benimId }: { is: Detay; kisiler: { id: string; adSoyad: string }[]; benimId: string }) {
