@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Alan, Etiket, Girdi } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
 import { MersisAra } from "@/core/unvan/mersis-ara";
+import { DetsisAra } from "@/core/unvan/detsis-ara";
 import { KISA_UNVAN_ONAY_METNI, KISA_UNVAN_UYARISI, unvanKisaMi } from "@/core/unvan/unvan-kontrol";
 
-type KarsiTarafCipi = { id: string; ad: string; tc?: string | null; mevcutMu: boolean; kisa?: boolean };
+type KarsiTarafCipi = { id: string; ad: string; tc?: string | null; detsis?: string | null; mevcutMu: boolean; kisa?: boolean };
 
 // Eskiden ayri iki bilesendi: "var olan karsi taraflardan sec" (checkbox
 // listesi) + "yeni ekle" (isim yaz + buton). Kullanici checkbox listesinin
@@ -20,13 +21,14 @@ type KarsiTarafCipi = { id: string; ad: string; tc?: string | null; mevcutMu: bo
 export function KarsiTarafEkleyici({
   baslangicKarsiTaraflar = [],
 }: {
-  baslangicKarsiTaraflar?: { id: string; ad: string; tc?: string | null }[];
+  baslangicKarsiTaraflar?: { id: string; ad: string; tc?: string | null; detsis?: string | null }[];
 }) {
   const [cipler, setCipler] = useState<KarsiTarafCipi[]>(
     baslangicKarsiTaraflar.map((kt) => ({ ...kt, mevcutMu: true })),
   );
   const [girdi, setGirdi] = useState("");
   const [tcGirdi, setTcGirdi] = useState("");
+  const [detsisGirdi, setDetsisGirdi] = useState("");
   const [kisaOnay, setKisaOnay] = useState(false);
   const kisaMi = unvanKisaMi(girdi);
 
@@ -34,9 +36,10 @@ export function KarsiTarafEkleyici({
     const ad = girdi.trim();
     if (!ad) return;
     if (kisaMi && !kisaOnay) return;
-    setCipler((liste) => [...liste, { id: ad, ad, tc: tcGirdi.trim() || null, mevcutMu: false, kisa: kisaMi }]);
+    setCipler((liste) => [...liste, { id: ad, ad, tc: tcGirdi.trim() || null, detsis: detsisGirdi.trim() || null, mevcutMu: false, kisa: kisaMi }]);
     setGirdi("");
     setTcGirdi("");
+    setDetsisGirdi("");
     setKisaOnay(false);
   }
 
@@ -81,8 +84,25 @@ export function KarsiTarafEkleyici({
           Ekle
         </Dugme>
       </div>
-      <div className="mt-1">
+      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
         <MersisAra ad={girdi} />
+        <DetsisAra ad={girdi} />
+        <Girdi
+          id="karsiTarafDetsisGirdi"
+          value={detsisGirdi}
+          onChange={(e) => setDetsisGirdi(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              ekle();
+            }
+          }}
+          inputMode="numeric"
+          maxLength={12}
+          placeholder="DETSİS no (kamu kurumu ise)"
+          className="max-w-[14rem]"
+          aria-label="Karşı taraf DETSİS numarası"
+        />
       </div>
       {kisaMi && (
         <div className="mt-2 rounded-xl border border-[#f2b04c]/40 bg-[#f2b04c]/10 p-3 text-sm text-[#f3d9a8]">
@@ -106,11 +126,13 @@ export function KarsiTarafEkleyici({
                 <>
                   <input type="hidden" name="yeniKarsiTarafAdlari" value={cip.ad} />
                   <input type="hidden" name="yeniKarsiTarafTcleri" value={cip.tc ?? ""} />
+                  <input type="hidden" name="yeniKarsiTarafDetsisleri" value={cip.detsis ?? ""} />
                   <input type="hidden" name="yeniKarsiTarafKisa" value={cip.kisa ? "1" : "0"} />
                 </>
               )}
               {cip.ad}
               {cip.tc && <span className="text-white/45">· {cip.tc}</span>}
+              {cip.detsis && <span className="text-white/45">· DETSİS {cip.detsis}</span>}
               <button
                 type="button"
                 onClick={() => kaldir(i)}

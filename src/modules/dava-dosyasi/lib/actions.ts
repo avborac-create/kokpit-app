@@ -169,13 +169,14 @@ async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: stri
   const tamAdlar = formData.getAll("yeniKarsiTarafAdlari").map(String);
   const tcler = formData.getAll("yeniKarsiTarafTcleri").map(String);
   const kisalar = formData.getAll("yeniKarsiTarafKisa").map(String);
+  const detsisler = formData.getAll("yeniKarsiTarafDetsisleri").map(String);
   const yeniAdlar = tamAdlar
-    .map((ad, i) => ({ ad: ad.trim(), tc: (tcler[i] ?? "").trim() || null, kisaOnayli: kisalar[i] === "1" }))
+    .map((ad, i) => ({ ad: ad.trim(), tc: (tcler[i] ?? "").trim() || null, detsis: (detsisler[i] ?? "").replace(/\D/g, "").slice(0, 12) || null, kisaOnayli: kisalar[i] === "1" }))
     .filter((k) => k.ad);
 
   const yeniIdler: string[] = [];
   const kullanici = await mevcutKullanici();
-  for (const { ad, tc, kisaOnayli } of yeniAdlar) {
+  for (const { ad, tc, detsis, kisaOnayli } of yeniAdlar) {
     if (unvanKisaMi(ad) && !kisaOnayli) throw new Error(KISA_UNVAN_UYARISI);
     // Ayni musteri altinda ayni isimde (buyuk/kucuk harf ve bosluk
     // duyarsiz) zaten bir karsi taraf varsa YENI kayit olusturmak yerine
@@ -187,9 +188,12 @@ async function karsiTarafIdleriniCozumle(formData: FormData, musteriIdleri: stri
     if (mevcut && tc && mevcut.tanimlayiciKod !== tc) {
       await prisma.karsiTaraf.update({ where: { id: mevcut.id }, data: { tanimlayiciKod: tc } });
     }
+    if (mevcut && detsis && mevcut.detsisNo !== detsis) {
+      await prisma.karsiTaraf.update({ where: { id: mevcut.id }, data: { detsisNo: detsis } });
+    }
     const id = mevcut
       ? mevcut.id
-      : (await prisma.karsiTaraf.create({ data: { musteriId: musteriIdleri[0], ad, tanimlayiciKod: tc } })).id;
+      : (await prisma.karsiTaraf.create({ data: { musteriId: musteriIdleri[0], ad, tanimlayiciKod: tc, detsisNo: detsis } })).id;
     yeniIdler.push(id);
     if (kisaOnayli && unvanKisaMi(ad)) {
       await unvanGoreviOlustur({ ad, tur: "Karşı taraf", kayitId: id, kullaniciId: kullanici?.kullaniciId ?? null });

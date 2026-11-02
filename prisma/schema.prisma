@@ -396,6 +396,8 @@ model KarsiTaraf {
 
   ad             String
   tanimlayiciKod String? // MAK: cek no, VKN vb. - simdilik serbest metin (bkz. ARCHITECTURE.md)
+  // Kamu kurum/kuruluslari icin DETSIS numarasi (DETSIS kaydindaki kurum no).
+  detsisNo       String?
   notlar         String?
 
   olusturmaTarihi DateTime @default(now())
