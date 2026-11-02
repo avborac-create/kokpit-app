@@ -129,6 +129,12 @@ export function VirmanFormu({
         </Etiket>
         <ParaGirdisi id="vf-tutar" name="tutar" required />
       </Alan>
+      <Alan>
+        <Etiket htmlFor="vf-borc">
+          Hedef hesabı da borçlandır <span className="text-xs text-white/40">(isteğe bağlı)</span>
+        </Etiket>
+        <ParaGirdisi id="vf-borc" name="borcTutari" />
+      </Alan>
       <div className="min-w-0 sm:col-span-2 md:col-span-3">
         <Alan>
           <Etiket htmlFor="vf-aciklama">Açıklama (isteğe bağlı)</Etiket>

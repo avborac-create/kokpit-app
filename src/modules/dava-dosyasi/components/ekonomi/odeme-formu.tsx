@@ -189,6 +189,11 @@ export function OdemeFormu({
                 <ParaGirdisi id="od-virman-tutar" name="virmanTutari" />
                 <span className="mt-1 block text-xs text-white/45">Boş bırakırsanız ödemenin tamamı aktarılır.</span>
               </Alan>
+              <Alan>
+                <Etiket htmlFor="od-virman-borc">Hedef hesabı da borçlandır</Etiket>
+                <ParaGirdisi id="od-virman-borc" name="borcTutari" />
+                <span className="mt-1 block text-xs text-white/45">İsteğe bağlı; virmandan ayrı bir borç kaydı olarak yazılır.</span>
+              </Alan>
               <p className="self-end pb-4 text-xs text-white/50 sm:col-span-2">
                 Virman, ödemeyle aynı tarihte yapılır; dosya seçili olmalıdır. Para önce Para Trafiği’ne girer, sonra seçilen hesaba geçer; her iki kayıt da defterde görünür.
               </p>

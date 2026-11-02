@@ -97,6 +97,7 @@ async function odemeEkle_(musteriId: string, formData: FormData) {
     vf.set("kaynak", "dosya");
     vf.set("tarih", String(formData.get("tarih") ?? ""));
     vf.set("tutar", String(virmanTutari));
+    if (metin(formData, "borcTutari")) vf.set("borcTutari", metin(formData, "borcTutari"));
     if (aciklama !== "GELEN ÖDEME") vf.set("aciklama", aciklama);
     try {
       await virmanYap(musteriId, dosyaId, vf);
@@ -157,6 +158,10 @@ async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: Fo
   // Kullanicinin notu varsa otomatik virman metninin sonuna eklenir.
   const not = metin(formData, "aciklama");
   const acik = (oto: string) => (not ? `${oto} — ${not}` : oto);
+  // Dagitim sirasinda hedef hesabi ayni anda borclandirma (istege bagli): virmandan AYRI bir BORC kaydi yazilir.
+  const borcHam = metin(formData, "borcTutari");
+  const borcTutari = borcHam ? Math.round(Number(borcHam.replace(",", ".")) * 100) / 100 : 0;
+  if (borcHam && (!Number.isFinite(borcTutari) || borcTutari <= 0)) throw new Error("Borçlandırma tutarı sıfırdan büyük bir sayı olmalıdır.");
 
   await prisma.$transaction(async (tx) => {
     const [para, hedef] = await Promise.all([
@@ -164,6 +169,14 @@ async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: Fo
       tx.cariHesap.findUnique({ where: { id: hedefHesapId } }),
     ]);
     if (!para || !hedef || hedef.paraHesabiMi) throw new Error("Geçerli bir hedef hesap seçin.");
+    if (borcTutari > 0 && hedef.tutulanHesapMi) throw new Error("Adliyede tutulan hesaplar borçlandırılamaz; borçlandırma alanını boş bırakın.");
+    const borcYaz = async () => {
+      if (borcTutari > 0) {
+        await tx.cariHareketi.create({
+          data: { musteriId, dosyaId, hesapId: hedef.id, yon: "BORC", tarih, tutar: borcTutari, aciklama: acik("BORÇLANDIRMA") },
+        });
+      }
+    };
 
     // Hesaplar arasi virman: kaynak hesapta (bu dosyada) fazla odeme olmali; kaynakta BORC, hedefte ALACAK.
     if (hesapKaynakId) {
@@ -192,6 +205,7 @@ async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: Fo
           aciklama: acik(`${kaynakHesap.no}-${kaynakHesap.ad.toLocaleUpperCase("tr-TR")} VİRMAN`),
         },
       });
+      await borcYaz();
       return;
     }
 
@@ -215,6 +229,7 @@ async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: Fo
         aciklama: acik(`${para.no}-${para.ad.toLocaleUpperCase("tr-TR")} VİRMAN`),
       },
     });
+    await borcYaz();
   });
   yenile();
 }
