@@ -56,7 +56,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="tr"
       data-tema="koyu"
       data-cam="kapali"
-      data-palet="bmw"
+      data-palet="grafit"
       data-punto="normal"
       data-logo="k2"
       suppressHydrationWarning
