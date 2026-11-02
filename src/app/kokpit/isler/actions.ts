@@ -180,3 +180,25 @@ export async function hedefGuncelle(isId: string, hedef: number) {
   revalidatePath(`/kokpit/isler/${isId}`);
   revalidatePath("/kokpit/isler");
 }
+
+// Bitis tarihi ("YYYY-MM-DD" ya da bos = kaldir).
+export async function vadeGuncelle(isId: string, vade: string) {
+  await girisli();
+  const gecerli = /^\d{4}-\d{2}-\d{2}$/.test(vade) ? new Date(vade + "T00:00:00Z") : null;
+  await prisma.is.update({ where: { id: isId }, data: { vade: gecerli, guncellemeTarihi: new Date() } });
+  revalidatePath("/kokpit/isler");
+}
+
+// Alt gorevi bir adim yukari (-1) ya da asagi (1) tasir.
+export async function maddeTasi(maddeId: string, yon: -1 | 1) {
+  await girisli();
+  const m = await prisma.isMaddesi.findUnique({ where: { id: maddeId } });
+  if (!m) return;
+  const liste = await prisma.isMaddesi.findMany({ where: { isId: m.isId }, orderBy: [{ sira: "asc" }, { id: "asc" }], select: { id: true } });
+  const i = liste.findIndex((x) => x.id === maddeId);
+  const j = i + yon;
+  if (i < 0 || j < 0 || j >= liste.length) return;
+  [liste[i], liste[j]] = [liste[j], liste[i]];
+  await prisma.$transaction(liste.map((x, k) => prisma.isMaddesi.update({ where: { id: x.id }, data: { sira: k + 1 } })));
+  revalidatePath("/kokpit/isler");
+}

@@ -1689,6 +1689,8 @@ model Is {
   // PARCA = yap-bitir, SUREC = uzun sure takip gerektiren, OPERASYONEL = haftalik duzenli (haftalikHedef kez).
   tur              String       @default("PARCA")
   haftalikHedef    Int?
+  // Bitis tarihi (yalniz gun).
+  vade             DateTime?    @db.Date
   // Otomatik acilan islerde kaynak kaydi ("unvan:<id>").
   kaynak           String?
   sorumluId        String?
