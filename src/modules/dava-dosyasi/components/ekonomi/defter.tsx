@@ -244,11 +244,11 @@ export function Defter({
 
   const tablo = (
       <div className={kompakt ? "overflow-x-auto" : "glass overflow-x-auto rounded-2xl"}>
-        <table className={kompakt ? "w-full text-left text-[13px] [&_td]:!px-2 [&_td]:!py-1.5 [&_th]:!px-2 [&_th]:!py-1.5 md:[&_td]:!px-3 md:[&_th]:!px-3" : "w-full text-left text-sm"}>
+        <table className={kompakt ? "w-full text-left text-[13px] [&_td:not(.dar)]:!px-2 [&_td]:!py-1.5 [&_th:not(.dar)]:!px-2 [&_th]:!py-1.5 md:[&_td:not(.dar)]:!px-3 md:[&_th:not(.dar)]:!px-3" : "w-full text-left text-sm"}>
           <thead className="text-white/50">
             <tr>
-              {silmeYetkisiVar && <th className="w-8 px-3 py-3" />}
-              <th className="w-10 px-2 py-3 text-right font-medium text-white/50">Sıra</th>
+              {silmeYetkisiVar && <th className={`dar py-3 ${kompakt ? "w-5 px-1" : "w-8 px-3"}`} />}
+              <th className={`dar py-3 text-right font-medium text-white/50 ${kompakt ? "w-5 px-1 text-[11px]" : "w-10 px-2"}`}>{kompakt ? "#" : "Sıra"}</th>
               <th className="px-4 py-3 font-medium">Tarih</th>
               {dosyaSutunu && <th className="px-4 py-3 font-medium">Dosya</th>}
               <th className="px-4 py-3 font-medium">Açıklama</th>
@@ -262,7 +262,7 @@ export function Defter({
             {hesaplanan.map((s, sira) => (
               <tr key={s.id} className={`border-t border-white/[0.06] ${s.turetilmis ? "italic opacity-70" : ""}`}>
                 {silmeYetkisiVar && (
-                  <td className="w-8 px-3 py-3">
+                  <td className={`dar py-3 ${kompakt ? "w-5 px-1" : "w-8 px-3"}`}>
                     {s.duzenle && (
                       <input
                         type="checkbox"
@@ -273,7 +273,7 @@ export function Defter({
                     )}
                   </td>
                 )}
-                <td className="w-10 px-2 py-3 text-right text-xs tabular-nums text-white/45">{sira + 1}</td>
+                <td className={`dar py-3 text-right text-xs tabular-nums text-white/45 ${kompakt ? "w-5 px-1" : "w-10 px-2"}`}>{sira + 1}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-white/60">{tarihBicimi.format(s.tarih)}</td>
                 {dosyaSutunu && (
                   <td className="px-4 py-3">
