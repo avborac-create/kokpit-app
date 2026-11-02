@@ -8,7 +8,7 @@
 
 export const TEMA_MODLARI = ["acik", "koyu", "sistem"] as const;
 export const CAM_KADEMELERI = ["kapali", "hafif", "orta", "yogun"] as const;
-export const PALETLER = ["bmw", "hiperekran", "gumus"] as const;
+export const PALETLER = ["bmw", "hiperekran", "gumus", "grafit"] as const;
 // Yazi boyutu: <html> yazi tabani (rem) olceklenir.
 export const PUNTO_KADEMELERI = ["kucuk", "normal", "buyuk", "cokbuyuk"] as const;
 // Uygulama logosu: kullanici hesabina bagli secim (sol menu ve giris ekraninda gorunur).
@@ -59,6 +59,7 @@ export const PALET_BILGISI: Record<Palet, { ad: string; renkler: [string, string
   bmw: { ad: "BMW iDrive", renkler: ["#EEF2F8", "#1D2635", "#1C69D4"] },
   hiperekran: { ad: "Mercedes Hiperekran", renkler: ["#EAF1F6", "#1C2736", "#00ADEF"] },
   gumus: { ad: "Mercedes Gümüş", renkler: ["#EEF0F3", "#252B37", "#AAB4C2"] },
+  grafit: { ad: "Mercedes Grafit", renkler: ["#E9EBEE", "#3C4046", "#8FD8FF"] },
 };
 
 function listedeMi<T extends string>(liste: readonly T[], deger: unknown): deger is T {
@@ -91,4 +92,4 @@ export function etkinTema(tema: TemaModu, sistemAcikMi: boolean): "acik" | "koyu
 
 // <head> icinde ilk boyamadan once calisan satir ici betik. Hata olursa
 // (cookie/matchMedia yok) sunucunun yazdigi varsayilan nitelikler kalir.
-export const GORUNUM_BASLATMA_BETIGI = `(function(){try{var m=document.cookie.match(/(?:^|; )${GORUNUM_COOKIE_ADI}=([^;]*)/);var p=m?decodeURIComponent(m[1]).split("."):[];var T=["acik","koyu","sistem"],C=["kapali","hafif","orta","yogun"],K=["bmw","hiperekran","gumus"],P=["kucuk","normal","buyuk","cokbuyuk"],G=["k2","k1","k5","s4"];var t=T.indexOf(p[0])>-1?p[0]:"sistem",c=C.indexOf(p[1])>-1?p[1]:"orta",k=K.indexOf(p[2])>-1?p[2]:"bmw",u=P.indexOf(p[3])>-1?p[3]:"normal",g=G.indexOf(p[4])>-1?p[4]:"k2";if(t==="sistem")t=matchMedia("(prefers-color-scheme: light)").matches?"acik":"koyu";var d=document.documentElement;d.setAttribute("data-tema",t);d.setAttribute("data-cam","kapali");d.setAttribute("data-palet",k);d.setAttribute("data-punto",u);d.setAttribute("data-logo",g)}catch(e){}})()`;
+export const GORUNUM_BASLATMA_BETIGI = `(function(){try{var m=document.cookie.match(/(?:^|; )${GORUNUM_COOKIE_ADI}=([^;]*)/);var p=m?decodeURIComponent(m[1]).split("."):[];var T=["acik","koyu","sistem"],C=["kapali","hafif","orta","yogun"],K=["bmw","hiperekran","gumus","grafit"],P=["kucuk","normal","buyuk","cokbuyuk"],G=["k2","k1","k5","s4"];var t=T.indexOf(p[0])>-1?p[0]:"sistem",c=C.indexOf(p[1])>-1?p[1]:"orta",k=K.indexOf(p[2])>-1?p[2]:"bmw",u=P.indexOf(p[3])>-1?p[3]:"normal",g=G.indexOf(p[4])>-1?p[4]:"k2";if(t==="sistem")t=matchMedia("(prefers-color-scheme: light)").matches?"acik":"koyu";var d=document.documentElement;d.setAttribute("data-tema",t);d.setAttribute("data-cam","kapali");d.setAttribute("data-palet",k);d.setAttribute("data-punto",u);d.setAttribute("data-logo",g)}catch(e){}})()`;

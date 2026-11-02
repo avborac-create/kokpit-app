@@ -4,6 +4,7 @@ import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/core/db/prisma";
+import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { telefonuDuzenle } from "@/modules/musteri/lib/telefon";
@@ -404,4 +405,47 @@ export async function irtibatKisisiSil(musteriId: string, kisiId: string, sifre?
 
   await prisma.irtibatKisisi.delete({ where: { id: kisiId } });
   revalidatePath(`/kokpit/musteriler/${musteriId}`);
+}
+
+// "Yeni Dosya" gibi formlardan, sayfadan ayrilmadan hizlica muvekkil eklemek icin (yonlendirme YAPMAZ).
+// Eksik bilgiler sonradan Muvekkiller bolumunden tamamlanir.
+export async function hizliMusteriSecenekleri(): Promise<{ tipler: { id: string; etiket: string; tuzel: boolean }[] }> {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Oturum bulunamadı.");
+  const tipler = await secenekleriGetir("musteri_tipi");
+  return { tipler: tipler.map((t) => ({ id: t.id, etiket: t.etiket, tuzel: t.kod === "tuzel_kisi" })) };
+}
+
+export async function hizliMusteriOlustur(girdi: {
+  ad: string;
+  tipId: string;
+  telefon: string;
+  kisaOnay: boolean;
+}): Promise<{ hata?: string; id?: string; ad?: string }> {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) return { hata: "Oturum bulunamadı." };
+  const ad = buyukHarfeCevir(girdi.ad.trim());
+  if (!ad || !girdi.tipId) return { hata: "Ad / ünvan ve tip zorunludur." };
+  const tip = await prisma.secenekDegeri.findUnique({ where: { id: girdi.tipId }, select: { kod: true } });
+  const kisa = unvanKisaMi(ad, tip?.kod === "tuzel_kisi");
+  if (kisa && !girdi.kisaOnay) return { hata: KISA_UNVAN_UYARISI };
+
+  const durumlar = await secenekleriGetir("musteri_durumu");
+  const durum = durumlar.find((d) => /aktif/i.test(d.kod) || /aktif/i.test(d.etiket)) ?? durumlar[0];
+  if (!durum) return { hata: "Müvekkil durumu listesi boş; önce Ayarlar > Seçenek Listeleri'nden ekleyin." };
+
+  let telefonSatiri: { telefon: string; tip: "CEP" | "SABIT" | null } | null = null;
+  if (girdi.telefon.trim()) {
+    const sonuc = telefonuDuzenle(girdi.telefon.trim(), "");
+    if ("hata" in sonuc) return { hata: `Telefon: ${sonuc.hata}` };
+    telefonSatiri = { telefon: sonuc.deger, tip: sonuc.tip };
+  }
+
+  const musteri = await prisma.musteri.create({ data: { adSoyadUnvan: ad, tipId: girdi.tipId, durumId: durum.id } });
+  if (telefonSatiri) {
+    await prisma.musteriTelefonu.create({ data: { musteriId: musteri.id, siraNo: 0, telefon: telefonSatiri.telefon, telefonTipi: telefonSatiri.tip } });
+  }
+  if (kisa) await unvanGoreviOlustur({ ad, tur: "Müvekkil", kayitId: musteri.id, kullaniciId: kullanici.kullaniciId });
+  revalidatePath("/kokpit/musteriler");
+  return { id: musteri.id, ad };
 }

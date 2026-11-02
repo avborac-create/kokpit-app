@@ -191,20 +191,35 @@ html[data-palet="gumus"][data-tema="acik"] {
   --blob-1: #d9dee6; --blob-2: #e6e9ee; --blob-3: #dfe3ea;
   --glass-border: rgba(93, 104, 120, 0.18); --glass-cizgi: rgba(20, 30, 50, 0.16);
 }
+/* Mercedes Grafit: Gumus'tan daha acik, notr grafit zemin; buz mavisi vurgu. */
+html[data-palet="grafit"][data-tema="koyu"] {
+  --background: #3c4046; --background-2: #4a4f56; --yuzey: #4a4f56;
+  --accent: #8fd8ff; --accent-soft: rgba(143, 216, 255, 0.22); --link: #a9e2ff;
+  --blob-1: #474c53; --blob-2: #3a3e44; --blob-3: #42474d;
+  --glass-border: rgba(224, 228, 233, 0.22); --glass-cizgi: rgba(224, 228, 233, 0.22);
+  --foreground: rgba(255, 255, 255, 0.96); --foreground-muted: rgba(255, 255, 255, 0.74);
+  --glass-parilti: rgba(255, 255, 255, 0.24);
+}
+html[data-palet="grafit"][data-tema="acik"] {
+  --murekkep: #16181b; --background: #e9ebee; --background-2: #ffffff; --yuzey: #f6f7f9;
+  --accent: #2b7aa8; --accent-soft: rgba(43, 122, 168, 0.14); --link: #1d6590;
+  --blob-1: #d6dadf; --blob-2: #e3e6ea; --blob-3: #dcdfe4;
+  --glass-border: rgba(90, 98, 110, 0.18); --glass-cizgi: rgba(20, 26, 36, 0.16);
+}
 /* Gumus: gri zemine kontrollu renk dokunuslari (panel basliklari, ust cizgi, sol menu, sekmeler). */
-html[data-palet="gumus"] .glass h2.uppercase::before {
+html:is([data-palet="gumus"], [data-palet="grafit"]) .glass h2.uppercase::before {
   content: ""; display: inline-block; width: 0.45rem; height: 0.45rem; margin-right: 0.55rem;
   border-radius: 9999px; background: var(--accent); vertical-align: 0.08em;
   box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 70%, transparent);
 }
-html[data-palet="gumus"] .glass {
+html:is([data-palet="gumus"], [data-palet="grafit"]) .glass {
   box-shadow: inset 0 2px 0 color-mix(in srgb, var(--accent) 38%, transparent), 0 14px 34px -18px var(--glass-golge);
 }
-html[data-palet="gumus"] nav a[aria-current="page"] { background: var(--accent-soft); color: var(--link); }
-html[data-palet="gumus"] h1 { background: linear-gradient(90deg, var(--foreground), var(--link)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-html[data-palet="gumus"] body,
+html:is([data-palet="gumus"], [data-palet="grafit"]) nav a[aria-current="page"] { background: var(--accent-soft); color: var(--link); }
+html:is([data-palet="gumus"], [data-palet="grafit"]) h1 { background: linear-gradient(90deg, var(--foreground), var(--link)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+html:is([data-palet="gumus"], [data-palet="grafit"]) body,
 html[data-palet="hiperekran"] body { font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif; font-weight: 400; letter-spacing: 0; -webkit-font-smoothing: antialiased; }
-html[data-palet="gumus"] strong, html[data-palet="gumus"] h1, html[data-palet="gumus"] h2,
+html:is([data-palet="gumus"], [data-palet="grafit"]) strong, html:is([data-palet="gumus"], [data-palet="grafit"]) h1, html:is([data-palet="gumus"], [data-palet="grafit"]) h2,
 html[data-palet="hiperekran"] strong, html[data-palet="hiperekran"] h1, html[data-palet="hiperekran"] h2 { font-weight: 600; }
 html[data-palet="bmw"] .glass, html[data-palet="bmw"] .glass-strong,
 html[data-palet="hiperekran"] .glass, html[data-palet="hiperekran"] .glass-strong {
@@ -227,8 +242,8 @@ html[data-palet="bmw"] .tikon-karsi { background: linear-gradient(135deg, #d12a2
 html[data-palet="hiperekran"] .tsatir { border-radius: 1rem; box-shadow: inset 0 0 20px rgba(0, 173, 239, 0.08), 0 0 12px rgba(0, 173, 239, 0.07); }
 html[data-palet="hiperekran"] .tikon { border-radius: 9999px; color: #fff; background: radial-gradient(circle at 35% 30%, #2fc6ff, #0a5f87); box-shadow: 0 0 10px rgba(0, 173, 239, 0.5); }
 html[data-palet="hiperekran"] .tikon-karsi { background: radial-gradient(circle at 35% 30%, #ff8a80, #7a2a24); box-shadow: 0 0 10px rgba(255, 106, 94, 0.5); }
-html[data-palet="gumus"] .tsatir { background: none; border: 0; border-bottom: 1px solid; border-image: linear-gradient(90deg, transparent, var(--glass-cizgi) 25%, var(--glass-cizgi) 75%, transparent) 1; border-radius: 0; padding-inline: 0.125rem; }
-html[data-palet="gumus"] .tikon { border-radius: 9999px; background: none; border: 1px solid var(--accent); color: var(--link); }
+html:is([data-palet="gumus"], [data-palet="grafit"]) .tsatir { background: none; border: 0; border-bottom: 1px solid; border-image: linear-gradient(90deg, transparent, var(--glass-cizgi) 25%, var(--glass-cizgi) 75%, transparent) 1; border-radius: 0; padding-inline: 0.125rem; }
+html:is([data-palet="gumus"], [data-palet="grafit"]) .tikon { border-radius: 9999px; background: none; border: 1px solid var(--accent); color: var(--link); }
 
 /* Gece mavisi: derin lacivert, keskin kose, secili/uzerine gelinen kartin beyaz parlamasi. */
 html[data-palet="gece"][data-tema="koyu"] {
@@ -307,13 +322,13 @@ html[data-palet="sahne"] .tikon { border-radius: 9999px; background: var(--accen
 .alan-hucre:has(> div:empty) { opacity: 0.7; }
 html[data-palet="bmw"] .alan-hucre { border-radius: 1.1rem; border-left: 3px solid var(--accent); box-shadow: inset 0 0 16px color-mix(in srgb, var(--accent) 7%, transparent); }
 html[data-palet="hiperekran"] .alan-hucre { border-radius: 1rem; box-shadow: inset 0 0 18px rgba(0, 173, 239, 0.07); }
-html[data-palet="gumus"] .alan-hucre { background: none; border: 0; border-bottom: 1px solid; border-image: linear-gradient(90deg, transparent, var(--glass-cizgi) 20%, var(--glass-cizgi) 80%, transparent) 1; border-radius: 0; padding-inline: 0.125rem; }
+html:is([data-palet="gumus"], [data-palet="grafit"]) .alan-hucre { background: none; border: 0; border-bottom: 1px solid; border-image: linear-gradient(90deg, transparent, var(--glass-cizgi) 20%, var(--glass-cizgi) 80%, transparent) 1; border-radius: 0; padding-inline: 0.125rem; }
 html[data-palet="apple"] .alan-hucre { border-radius: 0.875rem; border-color: transparent; background: rgb(255 255 255 / 0.06); }
 .kart-baslik::before {
   content: ""; display: inline-block; width: 0.5rem; height: 0.5rem; margin-right: 0.5rem;
   border-radius: 9999px; background: var(--accent); box-shadow: 0 0 8px var(--accent);
 }
-html[data-palet="gumus"] .kart-baslik::before { border-radius: 0; width: 1rem; height: 1px; box-shadow: none; vertical-align: middle; }
+html:is([data-palet="gumus"], [data-palet="grafit"]) .kart-baslik::before { border-radius: 0; width: 1rem; height: 1px; box-shadow: none; vertical-align: middle; }
 
 /* ---- Cam kademeleri (bulaniklik ust siniri bilerek 20px: ekran karti yuku) ---- */
 html[data-cam="hafif"] { --cam-bulaniklik: 20px; }
