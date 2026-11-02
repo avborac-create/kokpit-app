@@ -173,7 +173,7 @@ export async function borcluDefteri(dosyaId: string): Promise<DefterSatiri[]> {
     satirlar.push({
       id: `masraf-${m.id}`,
       tarih: m.tarih,
-      aciklama: `Borçluya yansıtılan masraf: ${m.tur.etiket} — ${m.aciklama}`,
+      aciklama: `Karşı tarafa yansıtılan masraf: ${m.tur.etiket} — ${m.aciklama}`,
       borc: Number(m.tutar),
       alacak: 0,
       silme: { tip: "masraf", id: m.id },

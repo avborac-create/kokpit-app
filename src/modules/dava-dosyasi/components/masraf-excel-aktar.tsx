@@ -233,7 +233,7 @@ export function MasrafExcelAktar({ dosyaId, dosyaEtiketi }: { dosyaId: string; d
                     >
                       <option value="MUVEKKIL">Müvekkile</option>
                       <option value="BURO">Büroya</option>
-                      <option value="BORCLU">Borçluya</option>
+                      <option value="BORCLU">Karşı Tarafa</option>
                     </Secim>
                   </td>
                   <td className="max-w-[260px] px-2 py-2">

@@ -8,7 +8,7 @@ type Hedef = "MUVEKKIL" | "BURO" | "BORCLU";
 const SECENEKLER: { deger: Hedef; etiket: string }[] = [
   { deger: "MUVEKKIL", etiket: "Müvekkile" },
   { deger: "BURO", etiket: "Büroya" },
-  { deger: "BORCLU", etiket: "Karşı Tarafa / Borçluya" },
+  { deger: "BORCLU", etiket: "Karşı Tarafa" },
 ];
 
 // "Masraf kime yansitilsin?" secimi. Karsi Tarafa / Borcluya secilirse,

@@ -84,7 +84,7 @@ export function YerindeDuzenle({
                 <label className="mb-3 flex cursor-pointer items-center gap-2 text-sm text-white/85">
                   <input type="hidden" name="borcludanForm" value="1" />
                   <input type="checkbox" name="borcludan" value="1" defaultChecked={duzenle.borcludan} className="h-4 w-4 accent-[var(--accent)]" />
-                  Para borçludan (karşı taraftan) geldi
+                  Para karşı taraftan geldi
                 </label>
               )}
               {hata && <p className="mb-3 text-sm text-[#ff7a70]">{hata}</p>}

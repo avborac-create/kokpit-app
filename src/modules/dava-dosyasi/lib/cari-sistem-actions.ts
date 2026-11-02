@@ -427,7 +427,7 @@ export async function hesapEkle(formData: FormData) {
   const ad = metin(formData, "ad");
   if (!Number.isInteger(no) || no <= 0 || !ad) throw new Error("Geçerli bir hesap kodu ve adı girin.");
   // Hesap plani: 100'ler muvekkil, 200'ler borclu, 300'ler adliye hesaplari.
-  if (no < 100 || no > 399) throw new Error("Hesap kodu 100–399 aralığında olmalıdır (100'ler müvekkil, 200'ler borçlu, 300'ler adliye).");
+  if (no < 100 || no > 399) throw new Error("Hesap kodu 100–399 aralığında olmalıdır (100'ler müvekkil, 200'ler karşı taraf, 300'ler adliye).");
   const grup = no >= 300 ? "ADLIYE" : no >= 200 ? "BORCLU" : "MUVEKKIL";
   // Adliye hesaplari varsayilan olarak "tutulan" (adliyede duran para) hesabidir.
   const tur = metin(formData, "tur");

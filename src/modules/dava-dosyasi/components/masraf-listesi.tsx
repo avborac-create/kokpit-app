@@ -12,7 +12,7 @@ type DosyaDetay = NonNullable<Awaited<ReturnType<typeof davaDosyasiGetir>>>;
 // Number(...) ile donusturulup gecirilir).
 type Masraf = Omit<DosyaDetay["masraflar"][number], "tutar"> & { tutar: number };
 
-const YANSITMA_ETIKETLERI = { MUVEKKIL: "Müvekkil", BURO: "Büro", BORCLU: "Borçlu" } as const;
+const YANSITMA_ETIKETLERI = { MUVEKKIL: "Müvekkil", BURO: "Büro", BORCLU: "Karşı Taraf" } as const;
 const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
 

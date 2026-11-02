@@ -84,7 +84,7 @@ export function OdemeFormu({
         <Etiket htmlFor="od-kaynak">Para Kimden Geldi</Etiket>
         <Secim id="od-kaynak" name="paraKaynagi" defaultValue="muvekkil">
           <option value="muvekkil">Müvekkilden</option>
-          <option value="borclu">Borçludan (karşı taraftan tahsilat)</option>
+          <option value="borclu">Karşı taraftan (tahsilat)</option>
         </Secim>
       </Alan>
       <Alan>

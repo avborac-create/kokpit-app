@@ -266,13 +266,13 @@ export async function EkonomiPaneli({
   ];
   const katlar: { baslik: string; sekmeler: Sekme[] }[] = [
     { baslik: "", sekmeler: genelKat },
-    { baslik: "MÜVEKKİL (100)", sekmeler: aktifHesaplar.filter((h) => h.grup === "MUVEKKIL").map(hesapSekmesi) },
+    { baslik: "PARA TRAFİĞİ-MÜVEKKİL (100)", sekmeler: aktifHesaplar.filter((h) => h.grup === "MUVEKKIL").map(hesapSekmesi) },
     {
-      baslik: "BORÇLU (200)",
-      sekmeler: [{ anahtar: "borclu", etiket: "200 - Borçlu" }, ...aktifHesaplar.filter((h) => h.grup === "BORCLU").map(hesapSekmesi)],
+      baslik: "PARA TRAFİĞİ-KARŞI TARAF (200)",
+      sekmeler: [{ anahtar: "borclu", etiket: "200 - Karşı Taraf" }, ...aktifHesaplar.filter((h) => h.grup === "BORCLU").map(hesapSekmesi)],
     },
     {
-      baslik: "ADLİYE (300)",
+      baslik: "PARA TRAFİĞİ-ADLİYE (300)",
       sekmeler: [{ anahtar: "adliye", etiket: "300 - Adliye (eski hareketler)" }, ...aktifHesaplar.filter((h) => h.grup === "ADLIYE").map(hesapSekmesi)],
     },
   ];
@@ -396,7 +396,7 @@ export async function EkonomiPaneli({
       {aktif === "borclu" && kapsam.dosyaId && <BorcluSekmesi dosyaId={kapsam.dosyaId} silmeYetkisiVar={silmeYetkisiVar} />}
       {(aktif === "adliye" || aktif === "borclu") && !kapsam.dosyaId && (
         <p className="text-sm text-white/55">
-          200 - Borçlu ve 300 - Adliye hesapları dosya bazındadır. Aşağıdaki sayfa sekmelerinden bir dosya seçin.
+          200 - Karşı Taraf ve 300 - Adliye hesapları dosya bazındadır. Aşağıdaki sayfa sekmelerinden bir dosya seçin.
         </p>
       )}
       {aktif === "anlasma" && (
@@ -670,7 +670,7 @@ async function HesapSekmesi({
       {borcludanToplam > 0 && (
         <div className="mb-3">
           <span className="rounded-full border border-[#ffb340]/30 bg-[#ffb340]/[0.07] px-3 py-1 text-xs text-white/80">
-            Borçludan gelen: <b className="text-[#ffb340]">{para.format(borcludanToplam)}</b>
+            Karşı taraftan gelen: <b className="text-[#ffb340]">{para.format(borcludanToplam)}</b>
           </span>
         </div>
       )}
@@ -729,7 +729,7 @@ async function HesapSekmesi({
           />
           <PanelBasligi
             baslik="⇉ Toplu Tasnif"
-            ipucu={'Bir parayı birden fazla dosya / hesaba böler. Örn. borçludan gelen 50.000 TL: 36.000 masraf iadesi (Harcama), 14.000 vekalet ücreti kesintisi (Akdi Vekalet); ya da kalanı müvekkile ödeme. Her satıra "neye mahsup edildiğini" yazın.'}
+            ipucu={'Bir parayı birden fazla dosya / hesaba böler. Örn. karşı taraftan gelen 50.000 TL: 36.000 masraf iadesi (Harcama), 14.000 vekalet ücreti kesintisi (Akdi Vekalet); ya da kalanı müvekkile ödeme. Her satıra "neye mahsup edildiğini" yazın.'}
           />
           <TopluTasnifFormu
             action={topluTasnif.bind(null, kapsam.musteriId, kapsamDosyaId)}
@@ -845,7 +845,7 @@ async function HesapSekmesi({
       {hesap.masrafHesabiMi && tumMasraflar.length > 0 && (
         <details className="mt-6 rounded-2xl border border-white/10 p-4">
           <summary className="cursor-pointer text-sm text-white/70">
-            Tüm masraf kayıtları ve yansıtma ayarı (Müvekkil / Büro / Borçlu)
+            Tüm masraf kayıtları ve yansıtma ayarı (Müvekkil / Büro / Karşı Taraf)
           </summary>
           <div className="mt-4">
             <MasrafListesi masraflar={tumMasraflar} dosyaId={kapsam.dosyaId ?? tumMasraflar[0]?.dosyaId ?? ""} silmeYetkisiVar={silmeYetkisiVar} />
@@ -862,7 +862,7 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
   return (
     <div>
       <p className="mb-3 text-sm text-white/55">
-        Cari hesap planı: müvekkil ile büro arasındaki hesaplar 100–199, borçlu ile olanlar 200–299, adliye ile olanlar 300–399 aralığındadır. Yeni hesap eklerken kod aralığı hesabın grubunu belirler. &quot;Tutulan&quot; hesaplar, üçüncü kişide/adliyede duran parayı gösterir (ör. 301 harcama, 302 teminat); müvekkilin borcu sayılmaz. Kaydı olan hesap silinemez, pasife alınabilir.</p>
+        Cari hesap planı: müvekkil ile büro arasındaki hesaplar 100–199, karşı taraf ile olanlar 200–299, adliye ile olanlar 300–399 aralığındadır. Yeni hesap eklerken kod aralığı hesabın grubunu belirler. &quot;Tutulan&quot; hesaplar, üçüncü kişide/adliyede duran parayı gösterir (ör. 301 harcama, 302 teminat); müvekkilin borcu sayılmaz. Kaydı olan hesap silinemez, pasife alınabilir.</p>
       <div className="glass mb-4 overflow-x-auto rounded-2xl">
         <table className="w-full text-left text-sm">
           <thead className="text-white/50">
@@ -888,7 +888,7 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
                   </form>
                 </td>
                 <td className="px-4 py-3 text-white/60">
-                  {h.grup === "ADLIYE" ? "Adliye" : h.grup === "BORCLU" ? "Borçlu" : "Müvekkil"}
+                  {h.grup === "ADLIYE" ? "Adliye" : h.grup === "BORCLU" ? "Karşı Taraf" : "Müvekkil"}
                   {h.tutulanHesapMi ? " · tutulan" : h.paraHesabiMi ? " · para" : ""}
                 </td>
                 <td className="px-4 py-3 text-white/60">{h.aktifMi ? "Aktif" : "Pasif"}</td>
@@ -970,21 +970,21 @@ async function BorcluSekmesi({ dosyaId, silmeYetkisiVar }: { dosyaId: string; si
   const satirlar = await borcluDefteri(dosyaId);
   return (
     <div>
-      <p className="mb-3 text-sm text-white/55">Karşı taraftan (borçludan) beklenen ve tahsil edilen tutarlar.</p>
+      <p className="mb-3 text-sm text-white/55">Karşı taraftan beklenen ve tahsil edilen tutarlar.</p>
       <CariDefter
         satirlar={satirlar}
         dosyaId={dosyaId}
         silmeYetkisiVar={silmeYetkisiVar}
-        bosMesaj="Bu dosyada borçludan beklenen bir alacak yok."
+        bosMesaj="Bu dosyada karşı taraftan beklenen bir alacak yok."
         bakiyeYorumu={(b) =>
           b > 0
-            ? `Borçludan tahsil edilecek ${para.format(b)} bakiye var.`
+            ? `Karşı taraftan tahsil edilecek ${para.format(b)} bakiye var.`
             : b < 0
-              ? `Borçludan ${para.format(-b)} fazla tahsil edilmiş.`
-              : "Mutabık — borçludan beklenen bakiye yok."
+              ? `Karşı taraftan ${para.format(-b)} fazla tahsil edilmiş.`
+              : "Mutabık — karşı taraftan beklenen bakiye yok."
         }
       />
-      <h3 className="mb-2 mt-6 text-sm font-semibold text-white">Borçlu Alacağı Ekle</h3>
+      <h3 className="mb-2 mt-6 text-sm font-semibold text-white">Karşı Taraf Alacağı Ekle</h3>
       <KarsiTarafAlacagiFormu action={karsiTarafAlacagiEkle.bind(null, dosyaId)} />
     </div>
   );

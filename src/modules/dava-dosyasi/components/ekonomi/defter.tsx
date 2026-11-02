@@ -137,7 +137,7 @@ export function Defter({
     ) : null;
   const etiketler = (s: Satir) => (
     <>
-      {s.borcludan && <span className="ml-2 whitespace-nowrap rounded-full bg-[#ffb340]/15 px-2 py-0.5 text-[11px] text-[#ffb340]">Borçludan</span>}
+      {s.borcludan && <span className="ml-2 whitespace-nowrap rounded-full bg-[#ffb340]/15 px-2 py-0.5 text-[11px] text-[#ffb340]">Karşı taraftan</span>}
       {s.odemeYontemi && <span className="ml-2 whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2 py-0.5 text-[11px] text-[#6db8ff]">{s.odemeYontemi}</span>}
     </>
   );
@@ -288,7 +288,7 @@ export function Defter({
                   <span className="whitespace-pre-line">{s.aciklama}</span>
                   {s.borcludan && (
                     <span className="ml-2 whitespace-nowrap rounded-full bg-[#ffb340]/15 px-2 py-0.5 text-[11px] text-[#ffb340]">
-                      Borçludan
+                      Karşı taraftan
                     </span>
                   )}
                   {s.odemeYontemi && (
