@@ -81,7 +81,8 @@ export function KenarCubugu({
     }
   }, [yol]);
   // Yalniz ana sayfadayken gecerli: son modulun yolu bu oge ile basliyorsa "son" sayilir.
-  const sonVar = yol === "/kokpit" && !!sonModul;
+  // Kullanici istegi: ana sayfada son acilan modul isaretli kalmaz (yalniz Ana Sayfa satiri secili).
+  const sonVar = false as boolean;
   function sonMu(modulYol: string) {
     return sonVar && modulYol !== "/kokpit" && !!sonModul && (sonModul === modulYol || sonModul.startsWith(modulYol + "/"));
   }
