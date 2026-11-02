@@ -212,7 +212,7 @@ html:is([data-palet="gumus"], [data-palet="grafit"]) .glass h2.uppercase::before
   border-radius: 9999px; background: var(--accent); vertical-align: 0.08em;
   box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 70%, transparent);
 }
-html:is([data-palet="gumus"], [data-palet="grafit"]) .glass {
+html[data-palet="gumus"] .glass {
   box-shadow: inset 0 2px 0 color-mix(in srgb, var(--accent) 38%, transparent), 0 14px 34px -18px var(--glass-golge);
 }
 html:is([data-palet="gumus"], [data-palet="grafit"]) nav a[aria-current="page"] { background: var(--accent-soft); color: var(--link); }
@@ -222,6 +222,7 @@ html[data-palet="hiperekran"] body { font-family: var(--font-geist-sans), "Segoe
 html:is([data-palet="gumus"], [data-palet="grafit"]) strong, html:is([data-palet="gumus"], [data-palet="grafit"]) h1, html:is([data-palet="gumus"], [data-palet="grafit"]) h2,
 html[data-palet="hiperekran"] strong, html[data-palet="hiperekran"] h1, html[data-palet="hiperekran"] h2 { font-weight: 600; }
 html[data-palet="bmw"] .glass, html[data-palet="bmw"] .glass-strong,
+html[data-palet="grafit"] .glass, html[data-palet="grafit"] .glass-strong,
 html[data-palet="hiperekran"] .glass, html[data-palet="hiperekran"] .glass-strong {
   box-shadow: inset 0 1px 0 var(--glass-parilti), inset 0 0 24px color-mix(in srgb, var(--accent) 7%, transparent), 0 14px 34px -16px var(--glass-golge);
 }
@@ -236,14 +237,16 @@ html[data-palet="hiperekran"] .glass, html[data-palet="hiperekran"] .glass-stron
   display: grid; place-items: center; flex: none; width: 1.875rem; height: 1.875rem;
   border-radius: 0.5rem; font-size: 0.8rem; background: var(--accent-soft); color: var(--link);
 }
-html[data-palet="bmw"] .tsatir { border-radius: 1.25rem; box-shadow: inset 0 0 18px color-mix(in srgb, var(--accent) 8%, transparent); }
+html:is([data-palet="bmw"], [data-palet="grafit"]) .tsatir { border-radius: 1.25rem; box-shadow: inset 0 0 18px color-mix(in srgb, var(--accent) 8%, transparent); }
+html[data-palet="grafit"] .tikon { border-radius: 0.75rem; color: #fff; background: linear-gradient(135deg, #3aa6d8, #1d6f98); box-shadow: 0 0 12px rgba(58, 166, 216, 0.4); }
+html[data-palet="grafit"] .tikon-karsi { background: linear-gradient(135deg, #d12a2a, #7a1a1a); box-shadow: 0 0 12px rgba(209, 42, 42, 0.4); }
 html[data-palet="bmw"] .tikon { border-radius: 0.75rem; color: #fff; background: linear-gradient(135deg, #1c69d4, #0653b6); box-shadow: 0 0 12px rgba(28, 105, 212, 0.4); }
 html[data-palet="bmw"] .tikon-karsi { background: linear-gradient(135deg, #d12a2a, #7a1a1a); box-shadow: 0 0 12px rgba(209, 42, 42, 0.4); }
 html[data-palet="hiperekran"] .tsatir { border-radius: 1rem; box-shadow: inset 0 0 20px rgba(0, 173, 239, 0.08), 0 0 12px rgba(0, 173, 239, 0.07); }
 html[data-palet="hiperekran"] .tikon { border-radius: 9999px; color: #fff; background: radial-gradient(circle at 35% 30%, #2fc6ff, #0a5f87); box-shadow: 0 0 10px rgba(0, 173, 239, 0.5); }
 html[data-palet="hiperekran"] .tikon-karsi { background: radial-gradient(circle at 35% 30%, #ff8a80, #7a2a24); box-shadow: 0 0 10px rgba(255, 106, 94, 0.5); }
-html:is([data-palet="gumus"], [data-palet="grafit"]) .tsatir { background: none; border: 0; border-bottom: 1px solid; border-image: linear-gradient(90deg, transparent, var(--glass-cizgi) 25%, var(--glass-cizgi) 75%, transparent) 1; border-radius: 0; padding-inline: 0.125rem; }
-html:is([data-palet="gumus"], [data-palet="grafit"]) .tikon { border-radius: 9999px; background: none; border: 1px solid var(--accent); color: var(--link); }
+html[data-palet="gumus"] .tsatir { background: none; border: 0; border-bottom: 1px solid; border-image: linear-gradient(90deg, transparent, var(--glass-cizgi) 25%, var(--glass-cizgi) 75%, transparent) 1; border-radius: 0; padding-inline: 0.125rem; }
+html[data-palet="gumus"] .tikon { border-radius: 9999px; background: none; border: 1px solid var(--accent); color: var(--link); }
 
 /* Gece mavisi: derin lacivert, keskin kose, secili/uzerine gelinen kartin beyaz parlamasi. */
 html[data-palet="gece"][data-tema="koyu"] {
@@ -320,7 +323,7 @@ html[data-palet="sahne"] .tikon { border-radius: 9999px; background: var(--accen
   border-radius: 0.75rem; padding: 0.5rem 0.75rem;
 }
 .alan-hucre:has(> div:empty) { opacity: 0.7; }
-html[data-palet="bmw"] .alan-hucre { border-radius: 1.1rem; border-left: 3px solid var(--accent); box-shadow: inset 0 0 16px color-mix(in srgb, var(--accent) 7%, transparent); }
+html:is([data-palet="bmw"], [data-palet="grafit"]) .alan-hucre { border-radius: 1.1rem; border-left: 3px solid var(--accent); box-shadow: inset 0 0 16px color-mix(in srgb, var(--accent) 7%, transparent); }
 html[data-palet="hiperekran"] .alan-hucre { border-radius: 1rem; box-shadow: inset 0 0 18px rgba(0, 173, 239, 0.07); }
 html:is([data-palet="gumus"], [data-palet="grafit"]) .alan-hucre { background: none; border: 0; border-bottom: 1px solid; border-image: linear-gradient(90deg, transparent, var(--glass-cizgi) 20%, var(--glass-cizgi) 80%, transparent) 1; border-radius: 0; padding-inline: 0.125rem; }
 html[data-palet="apple"] .alan-hucre { border-radius: 0.875rem; border-color: transparent; background: rgb(255 255 255 / 0.06); }

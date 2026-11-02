@@ -202,3 +202,13 @@ export async function maddeTasi(maddeId: string, yon: -1 | 1) {
   await prisma.$transaction(liste.map((x, k) => prisma.isMaddesi.update({ where: { id: x.id }, data: { sira: k + 1 } })));
   revalidatePath("/kokpit/isler");
 }
+
+// Alt gorevlerin yeni sirasi (surukle-birak): kimliklerin istenen sirasi.
+export async function maddeSirala(isId: string, idSirasi: string[]) {
+  await girisli();
+  const mevcut = await prisma.isMaddesi.findMany({ where: { isId }, select: { id: true } });
+  const izinli = new Set(mevcut.map((m) => m.id));
+  const liste = idSirasi.filter((id) => izinli.has(id));
+  await prisma.$transaction(liste.map((id, k) => prisma.isMaddesi.update({ where: { id }, data: { sira: k + 1 } })));
+  revalidatePath("/kokpit/isler");
+}

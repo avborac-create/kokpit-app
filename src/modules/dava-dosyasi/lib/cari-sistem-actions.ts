@@ -307,6 +307,13 @@ export async function satirGuncelle(tip: "hareket" | "virman", id: string, formD
         const satirlar = await tx.cariHareketi.findMany({ where: { virmanId: id } });
         if (satirlar.length === 0) throw new Error("Virman bulunamadı.");
         await tx.cariHareketi.updateMany({ where: { virmanId: id }, data: { tarih, tutar } });
+        if (formData.has("aciklama")) {
+          const not = metin(formData, "aciklama");
+          for (const s of satirlar) {
+            const taban = (s.aciklama ?? "").split(" — ")[0];
+            await tx.cariHareketi.update({ where: { id: s.id }, data: { aciklama: not ? `${taban} — ${not}` : taban } });
+          }
+        }
         const gorulen = new Set<string>();
         for (const s of satirlar) {
           const anahtar = `${s.musteriId}|${s.dosyaId ?? ""}`;
@@ -324,7 +331,11 @@ export async function satirGuncelle(tip: "hareket" | "virman", id: string, formD
         if (h.virmanId) throw new Error("Virman kayıtları bu yoldan düzenlenemez.");
         await tx.cariHareketi.update({
           where: { id },
-          data: { tarih, tutar, aciklama, ...(yontemId !== undefined ? { odemeYontemiId: yontemId } : {}) },
+          data: {
+            tarih, tutar, aciklama,
+            ...(yontemId !== undefined ? { odemeYontemiId: yontemId } : {}),
+            ...(formData.has("borcludanForm") ? { borcludanMi: formData.get("borcludan") === "1" } : {}),
+          },
         });
         await eksiyeDusmeKontrolu(tx, h.musteriId, h.dosyaId);
       });

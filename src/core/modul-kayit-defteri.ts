@@ -29,8 +29,8 @@ export type ModulTanimi = {
 // menusunden tamamen kaldirilip Ayarlar sekmelerine (sadece YONETICI
 // rolune) tasindi - bkz. ayarlar/ayarlar-sekmeleri.tsx.
 // YENI MODUL EKLERKEN: menu simgesi ve rengi mevcut modullerinkinden FARKLI olmalidir
-// (kenar-cubugu-ikonlari.tsx + kenar-cubugu.tsx). Kullanilan renkler: ana sayfa mavi, takvim kirmizi,
-// gorevler turkuaz, muvekkiller mor, yargi turuncu, CMK yesil, finans limon, oneriler pembe.
+// (kenar-cubugu-ikonlari.tsx + kenar-cubugu.tsx). Kullanilan renkler: ana sayfa mavi, takvim turuncu,
+// gorevler turkuaz, muvekkiller mor, yargi turuncu, CMK kirmizi, finans limon, oneriler pembe.
 export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
   { anahtar: "ana-sayfa", ad: "Ana Sayfa", yol: "/kokpit", aktif: true },
   { anahtar: "buro-takvimi", ad: "Büro Takvimi", yol: "/kokpit/takvim", aktif: true },

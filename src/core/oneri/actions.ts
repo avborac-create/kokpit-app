@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
+import { pushGonder } from "@/core/bildirim/push";
 
 export async function oneriGonder(formData: FormData) {
   const kullanici = await mevcutKullanici();
@@ -28,6 +29,9 @@ export async function oneriGonder(formData: FormData) {
     },
   });
 
+  // Yoneticilere anlik bildirim (gonderenin kendisi yoneticiyse ona gitmez).
+  const yoneticiler = await prisma.kullanici.findMany({ where: { aktifMi: true, rol: "YONETICI", id: { not: kullanici.kullaniciId } }, select: { id: true } });
+  await pushGonder(yoneticiler.map((y) => y.id), { baslik: `Yeni öneri · ${kullanici.adSoyad}`, metin: metin.slice(0, 150), url: "/kokpit/oneriler", etiket: "oneri" });
   revalidatePath("/kokpit/oneriler");
 }
 

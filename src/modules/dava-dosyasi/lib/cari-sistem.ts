@@ -50,6 +50,7 @@ export type SatirDuzenleme = {
   tutar: number;
   aciklama: string;
   yontemId?: string;
+  borcludan?: boolean;
 };
 type SilmeKaynagi = SatirSilme;
 
@@ -323,8 +324,10 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
         id: virmanMi ? h.virmanId! : h.id,
         tarih: h.tarih.toISOString().slice(0, 10),
         tutar: sayi(h.tutar),
-        aciklama: h.aciklama ?? "",
+        // Virmanda otomatik metin korunur; yalniz " — " sonrasi kullanici notu duzenlenir.
+        aciklama: virmanMi ? (h.aciklama ?? "").split(" — ").slice(1).join(" — ") : (h.aciklama ?? ""),
         yontemId: h.odemeYontemiId ?? undefined,
+        borcludan: h.borcludanMi,
       },
     });
   }

@@ -3,7 +3,7 @@
 import { upload } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { type YeniEk, durumDegistir, isBilgisiniGuncelle, isSil, maddeDurumu, maddeEkle, maddeSil, maddeTasi, sorumluDegistir, vadeGuncelle, yardimIste, yardimKaldir, yorumEkle, operasyonYapildi, operasyonKaydiSil, hedefGuncelle } from "../actions";
+import { type YeniEk, durumDegistir, isBilgisiniGuncelle, isSil, maddeDurumu, maddeEkle, maddeSil, maddeSirala, maddeTasi, sorumluDegistir, vadeGuncelle, yardimIste, yardimKaldir, yorumEkle, operasyonYapildi, operasyonKaydiSil, hedefGuncelle } from "../actions";
 import { DURUMLAR, turBilgisi } from "../durum";
 import type { Detay } from "../detay-veri";
 
@@ -23,6 +23,8 @@ export function IsDetayi({ is, kisiler, benimId, kapatHref }: { is: Detay; kisil
   const [yukleniyor, setYukleniyor] = useState(false);
   const [yukHata, setYukHata] = useState("");
   const [yardimKisi, setYardimKisi] = useState("");
+  const [surukle, setSurukle] = useState<string | null>(null);
+  const [yerel, setYerel] = useState<{ imza: string; idler: string[] } | null>(null);
 
   const yenile = () => yonlendirici.refresh();
 
@@ -60,6 +62,16 @@ export function IsDetayi({ is, kisiler, benimId, kapatHref }: { is: Detay; kisil
     });
   }
 
+  const imza = is.maddeler.map((m) => m.id).join(",");
+  const maddeListesi = yerel && yerel.imza === imza ? (yerel.idler.map((id) => is.maddeler.find((m) => m.id === id)).filter(Boolean) as typeof is.maddeler) : is.maddeler;
+  function birak(hedefId: string) {
+    if (!surukle || surukle === hedefId) return;
+    const idler = maddeListesi.map((m) => m.id).filter((id) => id !== surukle);
+    idler.splice(idler.indexOf(hedefId), 0, surukle);
+    setYerel({ imza, idler });
+    setSurukle(null);
+    basla(() => maddeSirala(is.id, idler).then(yenile));
+  }
   const biten = is.maddeler.filter((m) => m.tamam).length;
   const yuzde = is.maddeler.length ? Math.round((biten / is.maddeler.length) * 100) : 0;
   const degisti = baslik !== is.baslik || aciklama !== (is.aciklama ?? "");
@@ -200,14 +212,15 @@ export function IsDetayi({ is, kisiler, benimId, kapatHref }: { is: Detay; kisil
           </div>
         )}
         <ul className="flex flex-col">
-          {is.maddeler.map((m, i) => (
-            <li key={m.id} className="flex items-center gap-2 border-b border-white/5 py-1.5 last:border-0">
+          {maddeListesi.map((m, i) => (
+            <li key={m.id} draggable onDragStart={() => setSurukle(m.id)} onDragEnd={() => setSurukle(null)} onDragOver={(e) => e.preventDefault()} onDrop={() => birak(m.id)} className={`flex items-center gap-2 border-b border-white/5 py-1.5 last:border-0 ${surukle === m.id ? "opacity-40" : ""}`}>
+              <span aria-hidden title="Sürükleyip bırakarak sırala" className="cursor-grab select-none px-0.5 text-white/30">⋮⋮</span>
               <input type="checkbox" checked={m.tamam} disabled={bekliyor} onChange={(e) => basla(() => maddeDurumu(m.id, e.target.checked).then(yenile))} className="h-5 w-5 shrink-0 accent-[var(--accent)]" />
               <span className={`min-w-0 flex-1 break-words text-[15px] ${m.tamam ? "text-white/40 line-through" : "text-white"}`}>{m.metin}</span>
               <button type="button" aria-label="Yukarı taşı" disabled={bekliyor || i === 0} onClick={() => basla(() => maddeTasi(m.id, -1).then(yenile))} className="px-1.5 text-white/45 hover:text-white disabled:opacity-20">
                 ▲
               </button>
-              <button type="button" aria-label="Aşağı taşı" disabled={bekliyor || i === is.maddeler.length - 1} onClick={() => basla(() => maddeTasi(m.id, 1).then(yenile))} className="px-1.5 text-white/45 hover:text-white disabled:opacity-20">
+              <button type="button" aria-label="Aşağı taşı" disabled={bekliyor || i === maddeListesi.length - 1} onClick={() => basla(() => maddeTasi(m.id, 1).then(yenile))} className="px-1.5 text-white/45 hover:text-white disabled:opacity-20">
                 ▼
               </button>
               <button type="button" aria-label="Alt görevi sil" onClick={() => basla(() => maddeSil(m.id).then(yenile))} className="px-1.5 text-white/35 hover:text-red-300">

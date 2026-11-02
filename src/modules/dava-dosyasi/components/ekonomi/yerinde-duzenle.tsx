@@ -52,8 +52,8 @@ export function YerindeDuzenle({
               <h3 className="mb-1 text-base font-semibold text-white">{virmanMi ? "Virmanı Düzenle" : "Kaydı Düzenle"}</h3>
               <p className="mb-4 text-xs text-white/45">
                 {virmanMi
-                  ? "Tarih ve tutar, virmanın iki tarafındaki kayıtta birlikte değişir. Para Trafiği eksiye düşemez."
-                  : "Tarih, tutar ve açıklama düzeltilebilir. Para Trafiği, virmanla kullanılmış tutarın altına indirilemez."}
+                  ? "Tarih, tutar ve not, virmanın iki tarafındaki kayıtta birlikte değişir. Para Trafiği eksiye düşemez."
+                  : "Tarih, tutar, açıklama, ödeme şekli ve para kaynağı düzeltilebilir. Para Trafiği, virmanla kullanılmış tutarın altına indirilemez."}
               </p>
               <Alan>
                 <Etiket htmlFor="yd-tarih">Tarih</Etiket>
@@ -63,12 +63,10 @@ export function YerindeDuzenle({
                 <Etiket htmlFor="yd-tutar">Tutar</Etiket>
                 <ParaGirdisi id="yd-tutar" name="tutar" required defaultValue={duzenle.tutar} />
               </Alan>
-              {!virmanMi && (
-                <Alan>
-                  <Etiket htmlFor="yd-aciklama">Açıklama</Etiket>
-                  <Girdi id="yd-aciklama" name="aciklama" defaultValue={duzenle.aciklama} />
-                </Alan>
-              )}
+              <Alan>
+                <Etiket htmlFor="yd-aciklama">{virmanMi ? "Not (virman açıklamasına eklenir)" : "Açıklama"}</Etiket>
+                <Girdi id="yd-aciklama" name="aciklama" defaultValue={duzenle.aciklama} />
+              </Alan>
               {!virmanMi && yontemler && (
                 <Alan>
                   <Etiket htmlFor="yd-yontem">Ödeme Şekli</Etiket>
@@ -81,6 +79,13 @@ export function YerindeDuzenle({
                     ))}
                   </Secim>
                 </Alan>
+              )}
+              {!virmanMi && yontemler && (
+                <label className="mb-3 flex cursor-pointer items-center gap-2 text-sm text-white/85">
+                  <input type="hidden" name="borcludanForm" value="1" />
+                  <input type="checkbox" name="borcludan" value="1" defaultChecked={duzenle.borcludan} className="h-4 w-4 accent-[var(--accent)]" />
+                  Para borçludan (karşı taraftan) geldi
+                </label>
               )}
               {hata && <p className="mb-3 text-sm text-[#ff7a70]">{hata}</p>}
               <div className="flex justify-end gap-2">

@@ -44,6 +44,7 @@ export function KenarCubugu({
   menuDuzeni,
   cmkDikkatSayisi = 0,
   isSayisi = 0,
+  oneriSayisi = 0,
 }: {
   kullaniciRol?: KullaniciRolu;
   buroRolu?: BuroRolu;
@@ -54,6 +55,7 @@ export function KenarCubugu({
   cmkDikkatSayisi?: number;
   // Giris yapan kullaniciya atanmis, tamamlanmamis is sayisi.
   isSayisi?: number;
+  oneriSayisi?: number;
 }) {
   const yol = usePathname();
   const gizliSeti = new Set(menuDuzeni.filter((oge) => oge.gizliMi).map((oge) => oge.anahtar));
@@ -95,7 +97,7 @@ export function KenarCubugu({
         <Grup>
           <MenuBagi modul={anaSayfa} ikon={AnaSayfaIkonu} renk="#3b82f6" seciliMi={yol === "/kokpit"} telefondaSoluk={sonVar} />
           {gorunurMu("buro-takvimi") && (
-            <MenuBagi modul={modulHaritasi.get("buro-takvimi")!} ikon={TakvimIkonu} renk="#ef6a5b" seciliMi={yol.startsWith("/kokpit/takvim")} sonMu={sonMu(modulHaritasi.get("buro-takvimi")!.yol)} />
+            <MenuBagi modul={modulHaritasi.get("buro-takvimi")!} ikon={TakvimIkonu} renk="#f97316" seciliMi={yol.startsWith("/kokpit/takvim")} sonMu={sonMu(modulHaritasi.get("buro-takvimi")!.yol)} />
           )}
           {gorunurMu("isler") && (
             <MenuBagi modul={modulHaritasi.get("isler")!} ikon={GorevlerIkonu} renk="#14b8c4" seciliMi={yol.startsWith("/kokpit/isler")} sonMu={sonMu(modulHaritasi.get("isler")!.yol)} rozetSayisi={isSayisi} />
@@ -113,7 +115,7 @@ export function KenarCubugu({
                 <MenuBagi modul={modulHaritasi.get("dava-dosyalari")!} ikon={HukukDosyalariIkonu} renk="#e8a33d" seciliMi={yol.startsWith("/kokpit/dava-dosyalari")} sonMu={sonMu(modulHaritasi.get("dava-dosyalari")!.yol)} />
               )}
               {gorunurMu("cmk-dosyalari") && (
-                <MenuBagi modul={modulHaritasi.get("cmk-dosyalari")!} ikon={CezaDosyalariIkonu} renk="#2fb58a" seciliMi={yol.startsWith("/kokpit/cmk-dosyalari")} sonMu={sonMu(modulHaritasi.get("cmk-dosyalari")!.yol)} rozetSayisi={cmkDikkatSayisi} />
+                <MenuBagi modul={modulHaritasi.get("cmk-dosyalari")!} ikon={CezaDosyalariIkonu} renk="#e5373d" seciliMi={yol.startsWith("/kokpit/cmk-dosyalari")} sonMu={sonMu(modulHaritasi.get("cmk-dosyalari")!.yol)} rozetSayisi={cmkDikkatSayisi} />
               )}
               {gorunurMu("finans") && (
                 <MenuBagi modul={modulHaritasi.get("finans")!} ikon={FinansIkonu} renk="#a3c639" seciliMi={yol.startsWith("/kokpit/finans")} sonMu={sonMu(modulHaritasi.get("finans")!.yol)} />
@@ -126,7 +128,7 @@ export function KenarCubugu({
           <div className="flex flex-col gap-1.5">
             <BolumBasligi>Yönetim</BolumBasligi>
             <Grup>
-              <MenuBagi modul={modulHaritasi.get("oneriler")!} ikon={OnerilerIkonu} renk="#d65db1" seciliMi={yol.startsWith("/kokpit/oneriler")} sonMu={sonMu(modulHaritasi.get("oneriler")!.yol)} />
+              <MenuBagi modul={modulHaritasi.get("oneriler")!} ikon={OnerilerIkonu} renk="#d65db1" seciliMi={yol.startsWith("/kokpit/oneriler")} sonMu={sonMu(modulHaritasi.get("oneriler")!.yol)} rozetSayisi={oneriSayisi} />
             </Grup>
           </div>
         )}
