@@ -89,34 +89,6 @@ function DurumSeridi({
   const para = ozet.hesaplar.find((h) => h.paraHesabiMi);
   return (
     <div className="mb-5">
-      <div
-        className={`mb-3 rounded-xl border px-4 py-3 ${
-          ozet.net > 0
-            ? "border-[#ff7a70]/40 bg-[#ff7a70]/[0.07]"
-            : ozet.net < 0
-              ? "border-[#32d74b]/40 bg-[#32d74b]/[0.07]"
-              : "border-white/10 bg-white/[0.02]"
-        }`}
-      >
-        <p className="text-xs text-white/50">GENEL DURUM</p>
-        <p className="mt-1 text-xl font-semibold text-white">
-          {ozet.net > 0 ? (
-            <>
-              Müvekkil bize <span className="text-[#ff7a70]">{paraYaz.format(ozet.net)}</span> borçlu
-            </>
-          ) : ozet.net < 0 ? (
-            <>
-              Müvekkil bizden <span className="text-[#32d74b]">{paraYaz.format(-ozet.net)}</span> alacaklı
-            </>
-          ) : (
-            "Müvekkil ile büro arasında net bakiye yok"
-          )}
-        </p>
-        <p className="mt-1 text-xs text-white/45">
-          Net = hesaplardaki kalan borçlar − para trafiğinde bekleyen para ({paraYaz.format(ozet.digerBorclar)} −{" "}
-          {paraYaz.format(ozet.paraBakiyesi)}).
-        </p>
-      </div>
       {havuzBakiyesi !== undefined && havuzBakiyesi > 0 && (
         <Link
           href={hrefYaz({ alt: String(paraHesapNo ?? 101) })}
@@ -461,7 +433,6 @@ async function OzetSekmesi({
   // Muvekkil Ozeti (100) yalniz 1xx hesaplari gosterir; 200 (karsi taraf) ve 300 (adliye) kendi ozetlerindedir.
   const ozetHesaplari = ozet.hesaplar.filter((h) => h.no < 200);
   const digerHesaplar = ozetHesaplari.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi);
-  const netteGizli = ozet.hesaplar.filter((h) => h.no >= 200 && !h.tutulanHesapMi && Math.abs(h.bakiye) > 0.001);
 
   return (
     <div>
@@ -510,21 +481,9 @@ async function OzetSekmesi({
                 </AcilirHesapSatiri>
               );
             })}
-            <tr className="border-t border-white/10 font-medium">
-              <td className="px-2 py-2 md:px-4 md:py-3 text-white">Net (diğer hesaplar − para trafiği)</td>
-              <td colSpan={2} />
-              <td className="px-2 py-2 md:px-4 md:py-3 whitespace-nowrap text-right">
-                <Bakiye b={ozet.net} />
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
-      {netteGizli.length > 0 && (
-        <p className="mt-2 text-xs text-white/45">
-          Net tutara şu hesaplar da dahildir (kendi özetlerinde görünür): {netteGizli.map((h) => `${h.no} - ${h.ad}`).join(", ")}.
-        </p>
-      )}
 
       {kirilim.length > 0 && (
         <div className="mt-6">
