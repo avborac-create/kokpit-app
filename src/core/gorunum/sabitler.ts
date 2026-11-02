@@ -22,7 +22,7 @@ export type Logo = (typeof LOGOLAR)[number];
 
 export type GorunumTercihi = { tema: TemaModu; cam: CamKademesi; palet: Palet; punto: PuntoKademesi; logo: Logo };
 
-export const VARSAYILAN_GORUNUM: GorunumTercihi = { tema: "sistem", cam: "orta", palet: "grafit", punto: "normal", logo: "k2" };
+export const VARSAYILAN_GORUNUM: GorunumTercihi = { tema: "koyu", cam: "orta", palet: "grafit", punto: "normal", logo: "k2" };
 
 export const GORUNUM_COOKIE_ADI = "kokpit_gorunum";
 export const GORUNUM_COOKIE_OMRU_SN = 60 * 60 * 24 * 365;
@@ -92,4 +92,4 @@ export function etkinTema(tema: TemaModu, sistemAcikMi: boolean): "acik" | "koyu
 
 // <head> icinde ilk boyamadan once calisan satir ici betik. Hata olursa
 // (cookie/matchMedia yok) sunucunun yazdigi varsayilan nitelikler kalir.
-export const GORUNUM_BASLATMA_BETIGI = `(function(){try{var m=document.cookie.match(/(?:^|; )${GORUNUM_COOKIE_ADI}=([^;]*)/);var p=m?decodeURIComponent(m[1]).split("."):[];var T=["acik","koyu","sistem"],C=["kapali","hafif","orta","yogun"],K=["bmw","hiperekran","gumus","grafit"],P=["kucuk","normal","buyuk","cokbuyuk"],G=["k2","k1","k5","s4"];var t=T.indexOf(p[0])>-1?p[0]:"sistem",c=C.indexOf(p[1])>-1?p[1]:"orta",k=K.indexOf(p[2])>-1?p[2]:"grafit",u=P.indexOf(p[3])>-1?p[3]:"normal",g=G.indexOf(p[4])>-1?p[4]:"k2";if(t==="sistem")t=matchMedia("(prefers-color-scheme: light)").matches?"acik":"koyu";var d=document.documentElement;d.setAttribute("data-tema",t);d.setAttribute("data-cam","kapali");d.setAttribute("data-palet",k);d.setAttribute("data-punto",u);d.setAttribute("data-logo",g)}catch(e){}})()`;
+export const GORUNUM_BASLATMA_BETIGI = `(function(){try{var m=document.cookie.match(/(?:^|; )${GORUNUM_COOKIE_ADI}=([^;]*)/);var p=m?decodeURIComponent(m[1]).split("."):[];var T=["acik","koyu","sistem"],C=["kapali","hafif","orta","yogun"],K=["bmw","hiperekran","gumus","grafit"],P=["kucuk","normal","buyuk","cokbuyuk"],G=["k2","k1","k5","s4"];var t=T.indexOf(p[0])>-1?p[0]:"koyu",c=C.indexOf(p[1])>-1?p[1]:"orta",k=K.indexOf(p[2])>-1?p[2]:"grafit",u=P.indexOf(p[3])>-1?p[3]:"normal",g=G.indexOf(p[4])>-1?p[4]:"k2";if(t==="sistem")t=matchMedia("(prefers-color-scheme: light)").matches?"acik":"koyu";var d=document.documentElement;d.setAttribute("data-tema",t);d.setAttribute("data-cam","kapali");d.setAttribute("data-palet",k);d.setAttribute("data-punto",u);d.setAttribute("data-logo",g)}catch(e){}})()`;
