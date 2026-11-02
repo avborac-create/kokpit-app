@@ -167,20 +167,25 @@ export function Defter({
               const t = tutarOf(s);
               const ik = simge(s);
               return (
-                <div key={s.id} className={`group flex items-center gap-2.5 border-t border-white/[0.07] py-2.5 first:border-t-0 ${s.turetilmis ? "italic opacity-70" : ""}`}>
-                  {kutu(s)}
-                  <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm ${ik.c}`} aria-hidden>
-                    {ik.m}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <span className="block whitespace-pre-line text-[13px] leading-snug text-white/90">
-                      {s.aciklama}
-                      {etiketler(s)}
+                <div key={s.id} className={`group flex flex-col gap-1.5 border-t border-white/[0.07] py-2.5 first:border-t-0 sm:flex-row sm:items-center sm:gap-2.5 ${s.turetilmis ? "italic opacity-70" : ""}`}>
+                  {/* Telefonda iki satir: ustte simge + aciklama, altta tutar + islemler; genis ekranda tek satir */}
+                  <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center">
+                    {kutu(s)}
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm ${ik.c}`} aria-hidden>
+                      {ik.m}
                     </span>
-                    <span className="block text-[11px] text-white/45">{altBilgi(s)}</span>
+                    <div className="min-w-0 flex-1">
+                      <span className="block whitespace-pre-line break-words text-[13px] leading-snug text-white/90">
+                        {s.aciklama}
+                        {etiketler(s)}
+                      </span>
+                      <span className="block text-[11px] text-white/45">{altBilgi(s)}</span>
+                    </div>
                   </div>
-                  <span className={`whitespace-nowrap text-sm font-semibold tabular-nums ${tutarRenk(t)}`}>{tutarYaz(t)}</span>
-                  {islemler(s)}
+                  <div className="flex items-center justify-between gap-2 pl-[2.75rem] sm:contents sm:pl-0">
+                    <span className={`whitespace-nowrap text-sm font-semibold tabular-nums ${tutarRenk(t)}`}>{tutarYaz(t)}</span>
+                    {islemler(s)}
+                  </div>
                 </div>
               );
             })}
@@ -223,17 +228,21 @@ export function Defter({
           const t = tutarOf(s);
           const kenar = virmanMi(s) || s.turetilmis ? "#8b5cf6" : iyiMi(t) ? "#32d74b" : "#ff7a70";
           return (
-            <div key={s.id} className={`group flex items-center gap-2.5 rounded-md border-l-[3px] bg-white/[0.05] px-2.5 py-2 ${s.turetilmis ? "italic opacity-70" : ""}`} style={{ borderLeftColor: kenar }}>
-              {kutu(s)}
-              <div className="min-w-0 flex-1">
-                <span className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--link)]">{altBilgi(s)}</span>
-                <span className="block whitespace-pre-line text-[13px] leading-snug text-white/90">
-                  {s.aciklama}
-                  {etiketler(s)}
-                </span>
+            <div key={s.id} className={`group flex flex-col gap-1.5 rounded-md border-l-[3px] bg-white/[0.05] px-2.5 py-2 sm:flex-row sm:items-center sm:gap-2.5 ${s.turetilmis ? "italic opacity-70" : ""}`} style={{ borderLeftColor: kenar }}>
+              <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center">
+                {kutu(s)}
+                <div className="min-w-0 flex-1">
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--link)]">{altBilgi(s)}</span>
+                  <span className="block whitespace-pre-line break-words text-[13px] leading-snug text-white/90">
+                    {s.aciklama}
+                    {etiketler(s)}
+                  </span>
+                </div>
               </div>
-              <span className={`whitespace-nowrap text-sm font-semibold tabular-nums ${tutarRenk(t)}`}>{tutarYaz(t)}</span>
-              {islemler(s)}
+              <div className="flex items-center justify-between gap-2 sm:contents">
+                <span className={`whitespace-nowrap text-sm font-semibold tabular-nums ${tutarRenk(t)}`}>{tutarYaz(t)}</span>
+                {islemler(s)}
+              </div>
             </div>
           );
         })}
