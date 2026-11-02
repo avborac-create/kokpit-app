@@ -97,7 +97,7 @@ export function KenarCubugu({
             <MenuBagi modul={modulHaritasi.get("buro-takvimi")!} ikon={TakvimIkonu} renk="#ef6a5b" seciliMi={yol.startsWith("/kokpit/takvim")} sonMu={sonMu(modulHaritasi.get("buro-takvimi")!.yol)} />
           )}
           {gorunurMu("isler") && (
-            <MenuBagi modul={modulHaritasi.get("isler")!} ikon={GorevlerIkonu} renk="#8b5cf6" seciliMi={yol.startsWith("/kokpit/isler")} sonMu={sonMu(modulHaritasi.get("isler")!.yol)} rozetSayisi={isSayisi} />
+            <MenuBagi modul={modulHaritasi.get("isler")!} ikon={GorevlerIkonu} renk="#14b8c4" seciliMi={yol.startsWith("/kokpit/isler")} sonMu={sonMu(modulHaritasi.get("isler")!.yol)} rozetSayisi={isSayisi} />
           )}
         </Grup>
 
