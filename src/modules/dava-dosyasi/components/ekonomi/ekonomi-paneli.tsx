@@ -696,6 +696,7 @@ async function HesapSekmesi({
             sabitDosyaId={kapsam.dosyaId}
             yontemler={yontemler}
             yontemListesi={yontemListesi ?? undefined}
+            hedefler={hedefler}
           />
           <PanelBasligi
             baslik="⇄ Virman"

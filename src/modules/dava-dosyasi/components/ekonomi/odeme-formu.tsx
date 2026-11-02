@@ -24,11 +24,14 @@ export function OdemeFormu({
   sabitDosyaId,
   yontemler,
   yontemListesi,
+  hedefler = [],
 }: {
   action: (formData: FormData) => void;
   dosyalar: DosyaSecenegi[];
   sabitDosyaId?: string;
   yontemler: Yontem[];
+  // Aynı anda virman için hedef hesaplar (Para Trafiği dışındakiler).
+  hedefler?: { id: string; etiket: string }[];
   // Sadece yonetici: yontem listesini yerinde duzenleme penceresi
   yontemListesi?: {
     id: string;
@@ -41,6 +44,8 @@ export function OdemeFormu({
     { anahtar: 2, yontemId: yontemler[1]?.id ?? yontemler[0]?.id ?? "" },
   ]);
   const [tutarlar, setTutarlar] = useState<Record<number, number>>({});
+  const [virman, setVirman] = useState(false);
+  const varsayilanHedef = hedefler.find((h) => /akdi vekalet/i.test(h.etiket))?.id ?? hedefler[0]?.id ?? "";
   const parcaliMi = sekil === PARCALI;
   const toplam = satirlar.reduce((t, s) => t + (tutarlar[s.anahtar] ?? 0), 0);
   const bugun = new Date().toISOString().slice(0, 10);
@@ -161,8 +166,39 @@ export function OdemeFormu({
         </>
       )}
 
+      {hedefler.length > 0 && (
+        <div className="col-span-1 border-t border-white/10 pt-3 sm:col-span-2 md:col-span-4">
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-white">
+            <input type="checkbox" name="virman" value="1" checked={virman} onChange={(e) => setVirman(e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
+            Bu parayı aynı anda virmana aktar
+          </label>
+          {virman && (
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
+              <Alan>
+                <Etiket htmlFor="od-virman-hedef">Hedef Hesap</Etiket>
+                <Secim id="od-virman-hedef" name="virmanHedefId" defaultValue={varsayilanHedef} required>
+                  {hedefler.map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {h.etiket}
+                    </option>
+                  ))}
+                </Secim>
+              </Alan>
+              <Alan>
+                <Etiket htmlFor="od-virman-tutar">Virman Tutarı</Etiket>
+                <ParaGirdisi id="od-virman-tutar" name="virmanTutari" />
+                <span className="mt-1 block text-xs text-white/45">Boş bırakırsanız ödemenin tamamı aktarılır.</span>
+              </Alan>
+              <p className="self-end pb-4 text-xs text-white/50 sm:col-span-2">
+                Virman, ödemeyle aynı tarihte yapılır; dosya seçili olmalıdır. Para önce Para Trafiği’ne girer, sonra seçilen hesaba geçer; her iki kayıt da defterde görünür.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex items-end">
-        <GonderButonu>Ödemeyi Ekle</GonderButonu>
+        <GonderButonu>{virman ? "Ödemeyi Ekle ve Virman Yap" : "Ödemeyi Ekle"}</GonderButonu>
       </div>
     </form>
   );

@@ -80,6 +80,21 @@ export async function odemeEkle(musteriId: string, formData: FormData) {
   if (tutarlar.length === 0 || tutarlar.some((t) => !Number.isFinite(t) || t <= 0)) {
     throw new Error("Her satırın tutarı sıfırdan büyük bir sayı olmalıdır.");
   }
+  // "Ayni anda virman yap": odeme kaydedildikten hemen sonra, ayni tarihle, secilen hesaba aktarilir.
+  const virmanIstendi = metin(formData, "virman") === "1";
+  const virmanHedefId = metin(formData, "virmanHedefId");
+  const toplam = Math.round(tutarlar.reduce((a, b) => a + b, 0) * 100) / 100;
+  let virmanTutari = toplam;
+  if (virmanIstendi) {
+    if (!dosyaId) throw new Error("Aynı anda virman için bir dosya seçilmelidir.");
+    if (!virmanHedefId) throw new Error("Virman için hedef hesap seçilmelidir.");
+    const ozel = metin(formData, "virmanTutari");
+    if (ozel) {
+      virmanTutari = Math.round(Number(ozel.replace(",", ".")) * 100) / 100;
+      if (!Number.isFinite(virmanTutari) || virmanTutari <= 0) throw new Error("Virman tutarı sıfırdan büyük olmalıdır.");
+      if (virmanTutari > toplam + 0.001) throw new Error("Virman tutarı, girilen ödemeden fazla olamaz.");
+    }
+  }
   await prisma.cariHareketi.createMany({
     data: tutarlar.map((t, i) => ({
       musteriId,
@@ -93,6 +108,20 @@ export async function odemeEkle(musteriId: string, formData: FormData) {
       borcludanMi: metin(formData, "paraKaynagi") === "borclu",
     })),
   });
+  if (virmanIstendi && dosyaId) {
+    const vf = new FormData();
+    vf.set("hedefHesapId", virmanHedefId);
+    vf.set("dosyaId", dosyaId);
+    vf.set("kaynak", "dosya");
+    vf.set("tarih", String(formData.get("tarih") ?? ""));
+    vf.set("tutar", String(virmanTutari));
+    if (aciklama !== "GELEN ÖDEME") vf.set("aciklama", aciklama);
+    try {
+      await virmanYap(musteriId, dosyaId, vf);
+    } catch (hata) {
+      throw new Error(`Ödeme kaydedildi ancak virman yapılamadı: ${hata instanceof Error ? hata.message : "bilinmeyen hata"}`);
+    }
+  }
   yenile();
 }
 
