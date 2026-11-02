@@ -253,7 +253,7 @@ export async function EkonomiPaneli({
   type Sekme = { anahtar: string; etiket: string; rozet?: string };
   const hesapSekmesi = (h: (typeof aktifHesaplar)[number]): Sekme => {
     const o = ozetOf(h.id);
-    return { anahtar: String(h.no), etiket: `${h.no} - ${h.ad}`, rozet: o && o.bakiye !== 0 ? para.format(Math.abs(o.bakiye)) : undefined };
+    return { anahtar: String(h.no), etiket: h.paraHesabiMi ? `${h.no} - ${h.ad} (Müvekkil)` : `${h.no} - ${h.ad}`, rozet: o && o.bakiye !== 0 ? para.format(Math.abs(o.bakiye)) : undefined };
   };
   // Katlar: genel / muvekkil (100'ler) / borclu (200'ler) / adliye (300'ler)
   const genelKat: Sekme[] = [
@@ -266,14 +266,14 @@ export async function EkonomiPaneli({
   ];
   const katlar: { baslik: string; sekmeler: Sekme[] }[] = [
     { baslik: "", sekmeler: genelKat },
-    { baslik: "PARA TRAFİĞİ-MÜVEKKİL (100)", sekmeler: aktifHesaplar.filter((h) => h.grup === "MUVEKKIL").map(hesapSekmesi) },
+    { baslik: "MÜVEKKİL-100", sekmeler: aktifHesaplar.filter((h) => h.grup === "MUVEKKIL").map(hesapSekmesi) },
     {
-      baslik: "PARA TRAFİĞİ-KARŞI TARAF (200)",
-      sekmeler: [{ anahtar: "borclu", etiket: "200 - Karşı Taraf" }, ...aktifHesaplar.filter((h) => h.grup === "BORCLU").map(hesapSekmesi)],
+      baslik: "KARŞI TARAF-200",
+      sekmeler: [{ anahtar: "borclu", etiket: "200 - Para Trafiği (Karşı Taraf)" }, ...aktifHesaplar.filter((h) => h.grup === "BORCLU").map(hesapSekmesi)],
     },
     {
-      baslik: "PARA TRAFİĞİ-ADLİYE (300)",
-      sekmeler: [{ anahtar: "adliye", etiket: "300 - Adliye (eski hareketler)" }, ...aktifHesaplar.filter((h) => h.grup === "ADLIYE").map(hesapSekmesi)],
+      baslik: "ADLİYE-300",
+      sekmeler: [{ anahtar: "adliye", etiket: "300 - Para Trafiği (Adliye)" }, ...aktifHesaplar.filter((h) => h.grup === "ADLIYE").map(hesapSekmesi)],
     },
   ];
 
