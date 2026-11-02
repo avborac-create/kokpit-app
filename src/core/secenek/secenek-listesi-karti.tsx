@@ -19,8 +19,8 @@ type Liste = {
 
 export function SecenekListesiKarti({ liste }: { liste: Liste }) {
   return (
-    <div className="glass rounded-2xl p-5">
-      <div className="mb-3 flex items-baseline justify-between">
+    <div className="glass rounded-2xl p-3 md:p-5">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3">
         <h2 className="text-base font-semibold text-white">{liste.ad}</h2>
         <span className="text-xs text-white/35">{liste.anahtar}</span>
       </div>
@@ -29,7 +29,7 @@ export function SecenekListesiKarti({ liste }: { liste: Liste }) {
         <p className="mb-3 text-sm text-white/40">Henüz değer yok.</p>
       ) : (
         <div className="mb-3 overflow-x-auto rounded-xl border border-white/[0.06]">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm max-md:[&_td]:!px-2 max-md:[&_th]:!px-2 max-md:[&_td:nth-child(2)]:hidden max-md:[&_th:nth-child(2)]:hidden">
             <thead className="text-white/40">
               <tr>
                 <th className="px-4 py-2 font-medium">Etiket</th>

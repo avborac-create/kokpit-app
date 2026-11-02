@@ -28,16 +28,12 @@ export function AyarlarSekmeleri({
   const yol = usePathname();
   const sekmeler =
     kullaniciRol === "YONETICI"
-      ? [
-          ...SEKMELER,
-          { yol: "/kokpit/ayarlar/kullanicilar", ad: "Kullanıcılar" },
-          { yol: "/kokpit/gelistirme-kutusu", ad: "Geliştirme Kutusu" },
-        ]
+      ? [...SEKMELER, { yol: "/kokpit/gelistirme-kutusu", ad: "Geliştirme Kutusu" }]
       : SEKMELER;
 
   return (
     <div className="pt-3">
-      <div className="mb-6 flex gap-2 border-b border-white/10">
+      <div className="mb-6 flex gap-2 overflow-x-auto whitespace-nowrap border-b border-white/10">
         {sekmeler.map((sekme) => (
           <Link
             key={sekme.yol}
