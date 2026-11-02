@@ -2,7 +2,23 @@
 
 import { useEffect, useState } from "react";
 
-const ESIK = 64;
+const ESIK = 80;
+// Hareket belirgin sekilde DIKEY degilse (yatay kaydirma, capraz hareket) yenileme hic devreye girmez.
+const OLU_BOLGE = 14; // bu kadar piksel asagi cekilmeden gosterge cikmaz
+const DIKEYLIK_ORANI = 2; // dikey hareket, yatay hareketin en az 2 kati olmali
+
+// Dokunulan yer yatay kaydirilabilir bir alanin (ornegin genis tablo) icindeyse yenileme istenmez.
+function yatayKaydirilabilirMi(hedef: EventTarget | null, kok: HTMLElement) {
+  let n = hedef instanceof HTMLElement ? hedef : null;
+  while (n && n !== kok) {
+    if (n.scrollWidth > n.clientWidth + 1) {
+      const ox = getComputedStyle(n).overflowX;
+      if (ox === "auto" || ox === "scroll") return true;
+    }
+    n = n.parentElement;
+  }
+  return false;
+}
 
 // Ana ekrana eklenmis (standalone) uygulamada tarayicinin kendi "asagi cekip
 // yenile" hareketi yoktur. Kaydirma alani en ustteyken parmakla asagi
@@ -15,30 +31,42 @@ export function AsagiCekYenile({ hedef }: { hedef: React.RefObject<HTMLElement |
     const el = hedef.current;
     if (!el) return;
     let baslangic: number | null = null;
+    let baslangicX = 0;
+    let iptal = false;
     let son = 0;
 
     const basla = (e: TouchEvent) => {
-      baslangic = el.scrollTop <= 0 && e.touches.length === 1 ? e.touches[0].clientY : null;
+      iptal = false;
+      baslangic = el.scrollTop <= 0 && e.touches.length === 1 && !yatayKaydirilabilirMi(e.target, el) ? e.touches[0].clientY : null;
+      baslangicX = e.touches[0]?.clientX ?? 0;
       son = 0;
     };
     const kaydir = (e: TouchEvent) => {
-      if (baslangic === null) return;
+      if (baslangic === null || iptal) return;
       const fark = e.touches[0].clientY - baslangic;
-      if (fark <= 0) {
+      const yatay = Math.abs(e.touches[0].clientX - baslangicX);
+      if (yatay > 10 && fark < yatay * DIKEYLIK_ORANI) {
+        iptal = true; // yatay / capraz hareket: bu dokunus yenileme icin sayilmaz
         son = 0;
         setMesafe(0);
         return;
       }
-      son = Math.min(fark * 0.5, ESIK + 16);
+      if (fark <= OLU_BOLGE) {
+        son = 0;
+        setMesafe(0);
+        return;
+      }
+      son = Math.min((fark - OLU_BOLGE) * 0.5, ESIK + 16);
       setMesafe(son);
     };
     const bitir = () => {
-      if (baslangic !== null && son >= ESIK) {
+      if (baslangic !== null && !iptal && son >= ESIK) {
         setYukleniyor(true);
         window.location.reload();
         return;
       }
       baslangic = null;
+      iptal = false;
       son = 0;
       setMesafe(0);
     };
