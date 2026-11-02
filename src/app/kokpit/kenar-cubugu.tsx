@@ -11,7 +11,7 @@ import {
   GorevlerIkonu,
   MuvekkillerIkonu,
   HukukDosyalariIkonu,
-  MuvekkilFinansIkonu,
+  FinansIkonu,
   CezaDosyalariIkonu,
   OnerilerIkonu,
   AyarlarIkonu,
@@ -116,7 +116,7 @@ export function KenarCubugu({
                 <MenuBagi modul={modulHaritasi.get("cmk-dosyalari")!} ikon={CezaDosyalariIkonu} renk="#2fb58a" seciliMi={yol.startsWith("/kokpit/cmk-dosyalari")} sonMu={sonMu(modulHaritasi.get("cmk-dosyalari")!.yol)} rozetSayisi={cmkDikkatSayisi} />
               )}
               {gorunurMu("finans") && (
-                <MenuBagi modul={modulHaritasi.get("finans")!} ikon={MuvekkilFinansIkonu} renk="#3fb27f" seciliMi={yol.startsWith("/kokpit/finans")} sonMu={sonMu(modulHaritasi.get("finans")!.yol)} />
+                <MenuBagi modul={modulHaritasi.get("finans")!} ikon={FinansIkonu} renk="#a3c639" seciliMi={yol.startsWith("/kokpit/finans")} sonMu={sonMu(modulHaritasi.get("finans")!.yol)} />
               )}
             </Grup>
           </div>

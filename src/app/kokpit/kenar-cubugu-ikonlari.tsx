@@ -130,6 +130,17 @@ export function HacizArtcilariIkonu(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+// Finans: banknot (ortasinda daire) - Muvekkil Finans kart simgesinden farkli.
+export function FinansIkonu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Taban {...props}>
+      <rect x="2.25" y="5" width="15.5" height="10" rx="1.5" />
+      <circle cx="10" cy="10" r="2.5" />
+      <path d="M5 8v.01M15 12v.01" />
+    </Taban>
+  );
+}
+
 export function MuvekkilFinansIkonu(props: SVGProps<SVGSVGElement>) {
   return (
     <Taban {...props}>
