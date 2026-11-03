@@ -264,8 +264,9 @@ export function Defter({
               <th className="hidden px-4 py-3 font-medium md:table-cell">Tarih</th>
               {dosyaSutunu && <th className="px-4 py-3 font-medium">Dosya</th>}
               <th className="px-4 py-3 font-medium">Açıklama</th>
-              <th className="px-4 py-3 text-right font-medium text-[#ff7a70]/85">Borç</th>
-              <th className="px-4 py-3 text-right font-medium text-[#32d74b]/85">Alacak</th>
+              <th className="hidden px-4 py-3 text-right font-medium text-[#ff7a70]/85 md:table-cell">Borç</th>
+              <th className="hidden px-4 py-3 text-right font-medium text-[#32d74b]/85 md:table-cell">Alacak</th>
+              <th className="px-2 py-3 text-right font-medium md:hidden">Tutar</th>
               <th className="hidden px-4 py-3 text-right font-medium md:table-cell">Bakiye</th>
               <th className="hidden px-4 py-3 md:table-cell" />
             </tr>
@@ -317,8 +318,9 @@ export function Defter({
                     {islemler(s)}
                   </div>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right text-white/85">{s.borc > 0 ? para.format(s.borc) : "—"}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-right text-white/85">{s.alacak > 0 ? para.format(s.alacak) : "—"}</td>
+                <td className="hidden whitespace-nowrap px-4 py-3 text-right text-white/85 md:table-cell">{s.borc > 0 ? para.format(s.borc) : "—"}</td>
+                <td className="hidden whitespace-nowrap px-4 py-3 text-right text-white/85 md:table-cell">{s.alacak > 0 ? para.format(s.alacak) : "—"}</td>
+                <td className={`whitespace-nowrap px-2 py-3 text-right text-[13px] font-semibold md:hidden ${tutarRenk(tutarOf(s))}`}>{tutarYaz(tutarOf(s))}</td>
                 <td className={`hidden whitespace-nowrap px-4 py-3 text-right font-medium md:table-cell ${renk(s.bakiye)}`}>{para.format(s.bakiye)}</td>
                 <td className="hidden px-4 py-3 md:table-cell">
                   <div className={`flex items-center justify-end gap-2 ${kompakt ? "[&_button]:!px-2 [&_button]:!py-0.5 [&_button]:!text-[11px]" : ""}`}>
@@ -341,8 +343,9 @@ export function Defter({
                 Toplam
               </td>
               <td className="hidden md:table-cell" />
-              <td className="px-4 py-3 text-right text-white">{para.format(toplamBorc)}</td>
-              <td className="px-4 py-3 text-right text-white">{para.format(toplamAlacak)}</td>
+              <td className="hidden px-4 py-3 text-right text-white md:table-cell">{para.format(toplamBorc)}</td>
+              <td className="hidden px-4 py-3 text-right text-white md:table-cell">{para.format(toplamAlacak)}</td>
+              <td className={`whitespace-nowrap px-2 py-3 text-right text-[13px] md:hidden ${renk(birikim)}`}>{para.format(birikim)}</td>
               <td className={`hidden px-4 py-3 text-right md:table-cell ${renk(birikim)}`}>{para.format(birikim)}</td>
               <td className="hidden md:table-cell" />
             </tr>

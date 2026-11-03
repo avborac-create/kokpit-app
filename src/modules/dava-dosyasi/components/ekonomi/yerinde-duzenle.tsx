@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { Dugme } from "@/core/ui/button";
-import { satirGuncelle } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
+import { satirGuncelle, virmanDuzenleBilgisi } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
 import type { SatirDuzenleme } from "@/modules/dava-dosyasi/lib/cari-sistem";
 
 // Defter satirinda "Duzenle": baska sayfaya gitmeden ayni ekranda pencere acar.
@@ -22,6 +22,12 @@ export function YerindeDuzenle({
   const [hata, setHata] = useState<string | null>(null);
   const [beklemede, baslat] = useTransition();
   const virmanMi = duzenle.tip === "virman";
+  const [hedefBilgisi, setHedefBilgisi] = useState<{ hedefId: string | null; hedefler: { id: string; etiket: string }[] } | null>(null);
+
+  function ac() {
+    setAcik(true);
+    if (virmanMi) void virmanDuzenleBilgisi(duzenle.id).then(setHedefBilgisi).catch(() => setHedefBilgisi(null));
+  }
 
   function kaydet(formData: FormData) {
     setHata(null);
@@ -38,7 +44,7 @@ export function YerindeDuzenle({
 
   return (
     <>
-      <button type="button" onClick={() => setAcik(true)} className="text-xs text-[#6db8ff] hover:underline">
+      <button type="button" onClick={ac} className="text-xs text-[#6db8ff] hover:underline">
         Düzenle
       </button>
       {acik &&
@@ -52,9 +58,21 @@ export function YerindeDuzenle({
               <h3 className="mb-1 text-base font-semibold text-white">{virmanMi ? "Virmanı Düzenle" : "Kaydı Düzenle"}</h3>
               <p className="mb-4 text-xs text-white/45">
                 {virmanMi
-                  ? "Tarih, tutar ve not, virmanın iki tarafındaki kayıtta birlikte değişir. Para Trafiği eksiye düşemez."
+                  ? "Hedef hesap, tarih, tutar ve not, virmanın iki tarafındaki kayıtta birlikte değişir. Para Trafiği eksiye düşemez."
                   : "Tarih, tutar, açıklama, ödeme şekli ve para kaynağı düzeltilebilir. Para Trafiği, virmanla kullanılmış tutarın altına indirilemez."}
               </p>
+              {virmanMi && hedefBilgisi && hedefBilgisi.hedefId && (
+                <Alan>
+                  <Etiket htmlFor="yd-hedef">Hedef Hesap</Etiket>
+                  <Secim id="yd-hedef" name="hedefHesapId" defaultValue={hedefBilgisi.hedefId}>
+                    {hedefBilgisi.hedefler.map((h) => (
+                      <option key={h.id} value={h.id}>
+                        {h.etiket}
+                      </option>
+                    ))}
+                  </Secim>
+                </Alan>
+              )}
               <Alan>
                 <Etiket htmlFor="yd-tarih">Tarih</Etiket>
                 <Girdi id="yd-tarih" name="tarih" type="date" required defaultValue={duzenle.tarih} />

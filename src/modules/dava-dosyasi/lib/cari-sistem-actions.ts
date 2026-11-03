@@ -300,9 +300,23 @@ async function satirGuncelle_(tip: "hareket" | "virman", id: string, formData: F
     if (tip === "virman") {
       await yoneticiyiDogrula();
       await prisma.$transaction(async (tx) => {
-        const satirlar = await tx.cariHareketi.findMany({ where: { virmanId: id } });
+        let satirlar = await tx.cariHareketi.findMany({ where: { virmanId: id } });
         if (satirlar.length === 0) throw new Error("Virman bulunamadı.");
         await tx.cariHareketi.updateMany({ where: { virmanId: id }, data: { tarih, tutar } });
+        // Hedef hesap yerinde degistirilebilir: ALACAK satiri yeni hesaba tasinir, BORC satirinin metni yeni hesabi gosterir.
+        const yeniHedefId = metin(formData, "hedefHesapId");
+        const alacakSatiri = satirlar.find((s) => s.yon === "ALACAK");
+        const borcSatiri = satirlar.find((s) => s.yon === "BORC");
+        if (yeniHedefId && alacakSatiri && borcSatiri && yeniHedefId !== alacakSatiri.hesapId) {
+          const yeni = await tx.cariHesap.findUnique({ where: { id: yeniHedefId } });
+          if (!yeni || yeni.paraHesabiMi) throw new Error("Geçerli bir hedef hesap seçin.");
+          if (yeni.id === borcSatiri.hesapId) throw new Error("Hedef hesap, paranın çıktığı hesapla aynı olamaz.");
+          const not = (borcSatiri.aciklama ?? "").split(" — ").slice(1).join(" — ");
+          const taban = `${yeni.no}-${yeni.ad.toLocaleUpperCase("tr-TR")} VİRMAN`;
+          await tx.cariHareketi.update({ where: { id: alacakSatiri.id }, data: { hesapId: yeni.id } });
+          await tx.cariHareketi.update({ where: { id: borcSatiri.id }, data: { aciklama: not ? `${taban} — ${not}` : taban } });
+          satirlar = await tx.cariHareketi.findMany({ where: { virmanId: id } });
+        }
         if (formData.has("aciklama")) {
           const not = metin(formData, "aciklama");
           for (const s of satirlar) {
@@ -341,6 +355,16 @@ async function satirGuncelle_(tip: "hareket" | "virman", id: string, formData: F
   } catch (e) {
     return { hata: e instanceof Error ? e.message : "İşlem başarısız oldu." };
   }
+}
+
+// Virman duzenleme penceresi icin: virmanin su anki hedef hesabi ve secilebilecek hesaplar (Para Trafigi haric).
+export async function virmanDuzenleBilgisi(virmanId: string): Promise<{ hedefId: string | null; hedefler: { id: string; etiket: string }[] }> {
+  await yoneticiyiDogrula();
+  const [satirlar, hesaplar] = await Promise.all([
+    prisma.cariHareketi.findMany({ where: { virmanId, yon: "ALACAK" }, select: { hesapId: true } }),
+    prisma.cariHesap.findMany({ where: { paraHesabiMi: false }, orderBy: { no: "asc" }, select: { id: true, no: true, ad: true } }),
+  ]);
+  return { hedefId: satirlar[0]?.hesapId ?? null, hedefler: hesaplar.map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` })) };
 }
 
 // Defterde coklu secim: toplu silme (sifreli) ve toplu tarih degistirme. Yalniz yonetici.
