@@ -3,6 +3,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { prisma } from "@/core/db/prisma";
 import { dovizKurlari, hukukHaberleri, resmiGazeteFihristi, tbbHaberleri } from "@/core/ana-sayfa/veri";
 import { AnaSayfaDuzeni, type Duzen } from "./ana-sayfa-duzeni";
+import { OnemliDuyuruBandi } from "./onemli-duyuru";
 import { HaberSekmeleri, type HaberKaynagi } from "./haber-sekmeleri";
 import { DogumGunuPaneli, TakvimPaneli } from "./takvim-paneli";
 
@@ -36,6 +37,10 @@ export default async function KokpitAnaSayfa({ searchParams }: { searchParams: P
         </h1>
         <p className="mt-2 text-white/60">Kokpit’e hoş geldiniz. Çalışmaya menüden devam edebilirsiniz.</p>
       </section>
+
+      <Suspense fallback={null}>
+        <OnemliDuyuruBandi />
+      </Suspense>
 
       <AnaSayfaDuzeni
         tanimlar={[
