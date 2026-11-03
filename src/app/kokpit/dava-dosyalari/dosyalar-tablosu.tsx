@@ -11,6 +11,8 @@ import {
   buroNoGoster,
 } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { TopluIslemCubugu } from "./toplu-islem-cubugu";
+import { dosyaDurumSinifi } from "@/modules/dava-dosyasi/lib/durum-rengi";
+import { BOS_FILTRE, SutunFiltresi, filtreleriAbone, filtreleriOku, filtreleriYaz } from "./sutun-filtresi";
 
 type Dosya = Awaited<ReturnType<typeof davaDosyalariniListele>>[number];
 
@@ -45,6 +47,16 @@ const OLCU_METINLERI: Record<string, (dosya: Dosya) => string> = {
     d.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—",
   durum: (d) => d.durum.etiket,
   sorumluAvukat: (d) => d.sorumluAvukat?.adSoyad ?? "—",
+};
+
+// Sutun filtresi: sutundaki (birden cok olabilen) degerler. Bos olan "—" sayilir.
+const FILTRE_DEGERLERI: Record<string, (dosya: Dosya) => string[]> = {
+  tur: (d) => [turMetni(d)],
+  birimAdi: (d) => [d.birimAdi ?? "—"],
+  karsiTaraflar: (d) => (d.karsiTaraflar.length > 0 ? d.karsiTaraflar.map((kt) => kt.karsiTaraf.ad) : ["—"]),
+  muvekkiller: (d) => (d.muvekkiller.length > 0 ? d.muvekkiller.map((m) => m.musteri.adSoyadUnvan) : ["—"]),
+  durum: (d) => [d.durum.etiket],
+  sorumluAvukat: (d) => [d.sorumluAvukat?.adSoyad ?? "—"],
 };
 
 const KARAKTER_GENISLIGI = 7.4;
@@ -82,7 +94,7 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
   muvekkiller: (dosya) =>
     dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—",
   durum: (dosya) => (
-    <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-xs text-[#6db8ff]">
+    <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${dosyaDurumSinifi(dosya.durum.kod)}`}>
       {dosya.durum.etiket}
     </span>
   ),
@@ -227,7 +239,9 @@ function SutunBasligi({
   suruklemeBaslat,
   ilk,
   bas,
+  filtre,
 }: {
+  filtre?: ReactNode;
   ilk?: boolean;
   bas?: ReactNode;
   etiket: string;
@@ -245,6 +259,7 @@ function SutunBasligi({
         <span className="truncate" title={aciklama ?? etiket}>
           {etiket}
         </span>
+        {filtre}
       </div>
       {/* Sutun kenarindan surukleyerek genislik ayarlama tutamaci - drag&drop
           (HTML5 draggable) ile karismasin diye ayri bir pointer temelli
@@ -304,7 +319,7 @@ function agacSatirlari(dosyalar: Dosya[], daraltilmis: Set<string>): Satir[] {
 }
 
 export function DosyalarTablosu({
-  dosyalar,
+  dosyalar: tumDosyalar,
   gorunurSutunlar: tumSutunlar,
   sutunEtiketleri,
   silmeYetkisiVar,
@@ -318,6 +333,27 @@ export function DosyalarTablosu({
   durumlar: { id: string; etiket: string }[];
   avukatlar: { id: string; adSoyad: string }[];
 }) {
+  const sutunFiltreleri = useSyncExternalStore(filtreleriAbone, filtreleriOku, () => BOS_FILTRE);
+  const etkinFiltreSayisi = Object.keys(sutunFiltreleri).length;
+  const dosyalar = tumDosyalar.filter((d) =>
+    Object.entries(sutunFiltreleri).every(([sutun, gizli]) => {
+      const al = FILTRE_DEGERLERI[sutun];
+      return !al || al(d).some((v) => !gizli.includes(v));
+    }),
+  );
+  function filtreDegerleri(sutun: string): string[] {
+    const al = FILTRE_DEGERLERI[sutun];
+    const kume = new Set<string>();
+    for (const d of tumDosyalar) for (const v of al(d)) kume.add(v);
+    return [...kume].sort((a, b) => a.localeCompare(b, "tr-TR"));
+  }
+  const durumKodlari = new Map(tumDosyalar.map((d) => [d.durum.etiket, d.durum.kod]));
+  function filtreDegistir(sutun: string, gizli: string[]) {
+    const yeni = { ...sutunFiltreleri };
+    if (gizli.length === 0) delete yeni[sutun];
+    else yeni[sutun] = gizli;
+    filtreleriYaz(yeni);
+  }
   const gizliSutunlar = useSyncExternalStore(gizlileriAbone, gizlileriOku, () => BOS_LISTE);
   const gorunurSutunlar = tumSutunlar.filter((a) => !gizliSutunlar.includes(a));
   function sutunGizlemeDegistir(anahtar: string) {
@@ -498,7 +534,17 @@ export function DosyalarTablosu({
 
   return (
     <>
-      <div className="mb-2 flex justify-end gap-2 text-xs">
+      <div className="mb-2 flex flex-wrap items-center justify-end gap-2 text-xs">
+        {etkinFiltreSayisi > 0 && (
+          <>
+            <span className="text-white/50">
+              Sütun filtresi: {dosyalar.length} / {tumDosyalar.length} dosya gösteriliyor
+            </span>
+            <button type="button" onClick={() => filtreleriYaz({})} className="rounded-full px-3 py-1 text-[var(--link)] hover:bg-white/10">
+              Filtreleri temizle ✕
+            </button>
+          </>
+        )}
         <details className="relative">
           <summary className="cursor-pointer list-none rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
             Sütunlar{gizliSutunlar.length > 0 ? ` (${gizliSutunlar.length} gizli)` : ""}
@@ -593,6 +639,17 @@ export function DosyalarTablosu({
                   etiket={sutunEtiketleri[anahtar] ?? anahtar}
                   aciklama={DAVA_DOSYALARI_SUTUN_ACIKLAMALARI[anahtar]}
                   genislik={genislikler[anahtar] ?? VARSAYILAN_GENISLIK}
+                  filtre={
+                    FILTRE_DEGERLERI[anahtar] ? (
+                      <SutunFiltresi
+                        etiket={sutunEtiketleri[anahtar] ?? anahtar}
+                        degerler={filtreDegerleri(anahtar)}
+                        gizli={sutunFiltreleri[anahtar] ?? []}
+                        degistir={(g) => filtreDegistir(anahtar, g)}
+                        rozetSinifi={anahtar === "durum" ? (d) => dosyaDurumSinifi(durumKodlari.get(d)) : undefined}
+                      />
+                    ) : undefined
+                  }
                   suruklemeBaslat={(e) => genislikSuruklemeBaslat(anahtar, e)}
                 />
               ))}

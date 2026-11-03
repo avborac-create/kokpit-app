@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { dosyaDurumSinifi } from "@/modules/dava-dosyasi/lib/durum-rengi";
 import { KunyeSeridi } from "@/core/ui/kunye-seridi";
 import { MobilSabitBaslik } from "@/core/ui/mobil-sabit-baslik";
 import { notFound } from "next/navigation";
@@ -405,7 +406,7 @@ export default async function DavaDosyasiDetaySayfasi({
                   {buroNoGoster(dosya.buroNo)}
                 </span>
               )}
-              <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-medium text-[#8fb4e8]">
+              <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${dosyaDurumSinifi(dosya.durum.kod)}`}>
                 {dosya.durum.etiket}
               </span>
             </div>

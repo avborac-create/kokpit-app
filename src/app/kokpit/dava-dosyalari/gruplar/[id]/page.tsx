@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { dosyaDurumSinifi } from "@/modules/dava-dosyasi/lib/durum-rengi";
 import { kokpitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { notFound } from "next/navigation";
 import {
@@ -107,7 +108,7 @@ export default async function UyusmazlikGrubuSayfasi({
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
+                    <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${dosyaDurumSinifi(dosya.durum.kod)}`}>
                       {dosya.durum.etiket}
                     </span>
                   </td>

@@ -1,5 +1,6 @@
 "use client";
 
+import { dosyaDurumSinifi } from "@/modules/dava-dosyasi/lib/durum-rengi";
 import { useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -189,7 +190,7 @@ function sutunHucresiOlustur(anahtar: SutunAnahtari, dosya: Dosya): React.ReactN
     case "durum":
       return (
         <KisaMetin genislik="9rem">
-          <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">
+          <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${dosyaDurumSinifi(dosya.durum.kod)}`}>
             {dosya.durum.etiket}
           </span>
         </KisaMetin>
