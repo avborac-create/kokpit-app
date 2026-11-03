@@ -104,7 +104,7 @@ export function DuzenlenebilirKart({
   }
 
   return (
-    <div className={duz ? "py-3.5 first:pt-1 last:pb-1" : "glass mb-4 rounded-2xl p-4 sm:p-5"}>
+    <div className={duz ? (duzenleniyor ? "glass mb-5 rounded-2xl p-4" : "mb-5") : "glass mb-4 rounded-2xl p-4 sm:p-5"}>
       <div className={`${duz ? "mb-2" : "mb-4"} flex items-center justify-between gap-2`}>
         {duzenleniyor && etiketDuzenleyebilir ? (
           <input
@@ -127,6 +127,16 @@ export function DuzenlenebilirKart({
         )}
       </div>
 
+      {duz && !duzenleniyor ? (
+        <div className="glass divide-y divide-white/[0.08] overflow-hidden rounded-2xl">
+          {alanlar.map((a) => (
+            <div key={a.anahtar} className="flex items-start justify-between gap-4 px-4 py-3 text-[15px]">
+              <span className="shrink-0 pt-px text-white/65">{gecerliEtiket(a)}</span>
+              <div className="min-w-0 max-w-[65%] break-words text-right font-medium text-white">{a.gosterim}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
       <div className={`grid grid-cols-2 gap-x-4 sm:gap-x-6 ${duz ? "gap-y-2 sm:gap-y-2.5" : "gap-y-3"} sm:grid-cols-2 xl:grid-cols-3`}>
       {alanlar.map((a) => (
         <div
@@ -185,6 +195,7 @@ export function DuzenlenebilirKart({
         </div>
       ))}
       </div>
+      )}
 
       {children}
 

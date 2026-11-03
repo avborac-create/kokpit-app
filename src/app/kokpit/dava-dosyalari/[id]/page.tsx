@@ -549,7 +549,7 @@ export default async function DavaDosyasiDetaySayfasi({
         </div>
       ) : aktifSekme === "genel" ? (
         <>
-          <div className="glass mb-6 max-w-5xl divide-y divide-white/10 rounded-2xl px-5 py-3">
+          <div className="mb-6 max-w-5xl">
             <DuzenlenebilirKart
               duz
               etiketOnEki="dosya-detay.kunye"
