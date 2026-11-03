@@ -42,6 +42,8 @@ export type DefterSatiri = {
   // Defterde sayfa acmadan (yerinde) duzenleme icin; virmanda yalniz tarih + tutar
   duzenle?: SatirDuzenleme;
   turetilmis?: boolean;
+  // Kaydin girildigi an: ayni tarihli satirlar girilme sirasina gore dizilir (yeni kayit en altta).
+  olusturma?: Date;
 };
 export type SatirDuzenleme = {
   tip: "hareket" | "virman";
@@ -305,6 +307,7 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
         borc: 0,
         alacak: turetilen,
         turetilmis: true,
+        olusturma: new Date(h.olusturmaTarihi.getTime() - 1),
       });
     }
     satirlar.push({
@@ -317,6 +320,7 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
       borcludan: h.borcludanMi,
       borc: h.yon === "BORC" ? sayi(h.tutar) : 0,
       alacak: h.yon === "ALACAK" ? sayi(h.tutar) : 0,
+      olusturma: h.olusturmaTarihi,
       silme: virmanMi ? { tip: "virman", id: h.virmanId! } : { tip: "hareket", id: h.id },
       duzenleHref: virmanMi ? undefined : `/kokpit/finans/musteri-iliskileri/${kapsam.musteriId}/hareket/${h.id}/duzenle`,
       duzenle: {
@@ -392,10 +396,10 @@ export async function hesapDefteri(kapsam: Kapsam, hesap: { id: string; paraHesa
       silme: { tip: "avansAktarimi", id: a.id },
     });
   }
-  // Ayni gun: para hesabinda once gelen para (ALACAK), digerlerinde once BORC; aksi halde
-  // sirasi belirsiz kalir ve bakiye gecici olarak eksiye dusmus gorunur.
+  // Ayni gun: once girilme sirasi (yeni kayit altta); esitlikte para hesabinda gelen para (ALACAK), digerlerinde BORC once.
   const once = (x: { borc: number; alacak: number }) => (hesap.paraHesabiMi ? (x.alacak > 0 ? 0 : 1) : x.borc > 0 ? 0 : 1);
-  return satirlar.sort((a, b) => a.tarih.getTime() - b.tarih.getTime() || once(a) - once(b));
+  const an = (x: DefterSatiri) => (x.olusturma ?? x.tarih).getTime();
+  return satirlar.sort((a, b) => a.tarih.getTime() - b.tarih.getTime() || an(a) - an(b) || once(a) - once(b));
 }
 
 // Muvekkilin dosyalari (sayfa sekmeleri ve secim kutulari icin).

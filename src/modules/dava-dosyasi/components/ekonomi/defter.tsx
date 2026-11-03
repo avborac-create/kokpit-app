@@ -80,6 +80,7 @@ export function Defter({
   const hesaplanan = satirlar.map((s, i) => ({
     ...s,
     bakiye: isaret * satirlar.slice(0, i + 1).reduce((t, x) => t + x.borc - x.alacak, 0) || 0,
+    sira: i + 1,
   }));
   const birikim = hesaplanan[hesaplanan.length - 1].bakiye;
   const toplamBorc = satirlar.reduce((t, s) => t + s.borc, 0);
@@ -149,9 +150,11 @@ export function Defter({
     </div>
   );
 
+  // Gorunumler bir siralamayla uretilir: varsayilan eskiden yeniye (yeni kayit altta), istege bagli tersi.
+  const goster = (liste: Satir[]) => {
   // A) Akis: ay basliklari altinda yuvarlak simgeli satirlar
   const aylar: { baslik: string; satirlar: Satir[] }[] = [];
-  for (const s of hesaplanan) {
+  for (const s of liste) {
     const b = ay.format(s.tarih);
     const son = aylar[aylar.length - 1];
     if (son && son.baslik === b) son.satirlar.push(s);
@@ -224,7 +227,7 @@ export function Defter({
         ))}
       </div>
       <div className="space-y-1.5">
-        {hesaplanan.map((s) => {
+        {liste.map((s) => {
           const t = tutarOf(s);
           const kenar = virmanMi(s) || s.turetilmis ? "#8b5cf6" : iyiMi(t) ? "#32d74b" : "#ff7a70";
           return (
@@ -268,7 +271,7 @@ export function Defter({
             </tr>
           </thead>
           <tbody>
-            {hesaplanan.map((s, sira) => (
+            {liste.map((s) => (
               <tr key={s.id} className={`border-t border-white/[0.06] ${s.turetilmis ? "italic opacity-70" : ""}`}>
                 {silmeYetkisiVar && (
                   <td className={`dar py-3 ${kompakt ? "w-5 px-1" : "w-8 px-3"}`}>
@@ -282,7 +285,7 @@ export function Defter({
                     )}
                   </td>
                 )}
-                <td className={`dar py-3 text-right text-xs tabular-nums text-white/45 ${kompakt ? "w-5 px-1" : "w-10 px-2"}`}>{sira + 1}</td>
+                <td className={`dar py-3 text-right text-xs tabular-nums text-white/45 ${kompakt ? "w-5 px-1" : "w-10 px-2"}`}>{s.sira}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-white/60">{tarihBicimi.format(s.tarih)}</td>
                 {dosyaSutunu && (
                   <td className="px-4 py-3">
@@ -340,9 +343,19 @@ export function Defter({
         </table>
       </div>
   );
+  return { akis, gosterge, tablo };
+  };
+  const eski = goster(hesaplanan);
+  const ters = kompakt ? eski : goster([...hesaplanan].reverse());
   return (
     <div>
-      <Sarmal>{kompakt ? tablo : <DefterGorunumSecici akis={akis} gosterge={gosterge} tablo={tablo} />}</Sarmal>
+      <Sarmal>
+        {kompakt ? (
+          eski.tablo
+        ) : (
+          <DefterGorunumSecici akis={eski.akis} gosterge={eski.gosterge} tablo={eski.tablo} tersAkis={ters.akis} tersGosterge={ters.gosterge} tersTablo={ters.tablo} />
+        )}
+      </Sarmal>
       <p className="mt-2 text-xs text-white/35">
         {tutulanHesapMi
           ? "Bakiye = Alacak − Borç (bu hesapta/adliyede şu an duran tutar; iade edilince Borç olarak düşer)."
