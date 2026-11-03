@@ -42,7 +42,11 @@ export async function dovizKurlari(): Promise<KurOzeti | null> {
 export type Haber = { baslik: string; baglanti: string; tarih: Date | null };
 
 const VARLIKLAR: Record<string, string> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&apos;": "'", "&nbsp;": " " };
-const varlikCoz = (s: string) => s.replace(/&(amp|lt|gt|quot|apos|nbsp|#39);/g, (m) => VARLIKLAR[m] ?? m);
+const varlikCoz = (s: string) =>
+  s
+    .replace(/&#(d+);/g, (m, n) => (Number(n) < 0x110000 ? String.fromCodePoint(Number(n)) : m))
+    .replace(/&#x([0-9a-f]+);/gi, (m, h) => (parseInt(h, 16) < 0x110000 ? String.fromCodePoint(parseInt(h, 16)) : m))
+    .replace(/&(amp|lt|gt|quot|apos|nbsp);/g, (m) => VARLIKLAR[m] ?? m);
 const sadeMetin = (s: string) => varlikCoz(s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")).replace(/\s+/g, " ").trim();
 
 // Hukuk haberleri (hukukihaber.net RSS). Baglanti haber sitesinin kendi sayfasina gider.
