@@ -261,13 +261,13 @@ export function Defter({
             <tr>
               {silmeYetkisiVar && <th className={`dar py-3 ${kompakt ? "w-5 px-1" : "w-8 px-3"}`} />}
               <th className={`dar py-3 text-right font-medium text-white/50 ${kompakt ? "w-5 px-1 text-[11px]" : "w-10 px-2"}`}>{kompakt ? "#" : "Sıra"}</th>
-              <th className="px-4 py-3 font-medium">Tarih</th>
+              <th className="hidden px-4 py-3 font-medium md:table-cell">Tarih</th>
               {dosyaSutunu && <th className="px-4 py-3 font-medium">Dosya</th>}
               <th className="px-4 py-3 font-medium">Açıklama</th>
               <th className="px-4 py-3 text-right font-medium text-[#ff7a70]/85">Borç</th>
               <th className="px-4 py-3 text-right font-medium text-[#32d74b]/85">Alacak</th>
-              <th className="px-4 py-3 text-right font-medium">Bakiye</th>
-              <th className="px-4 py-3" />
+              <th className="hidden px-4 py-3 text-right font-medium md:table-cell">Bakiye</th>
+              <th className="hidden px-4 py-3 md:table-cell" />
             </tr>
           </thead>
           <tbody>
@@ -286,7 +286,7 @@ export function Defter({
                   </td>
                 )}
                 <td className={`dar py-3 text-right text-xs tabular-nums text-white/45 ${kompakt ? "w-5 px-1" : "w-10 px-2"}`}>{s.sira}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-white/60">{tarihBicimi.format(s.tarih)}</td>
+                <td className="hidden whitespace-nowrap px-4 py-3 text-white/60 md:table-cell">{tarihBicimi.format(s.tarih)}</td>
                 {dosyaSutunu && (
                   <td className="px-4 py-3">
                     {s.dosyaEtiketi ? (
@@ -298,7 +298,7 @@ export function Defter({
                     )}
                   </td>
                 )}
-                <td className={`px-4 py-3 text-white/85 ${kompakt ? "min-w-[12rem]" : ""}`}>
+                <td className={`px-4 py-3 text-white/85 ${kompakt ? "md:min-w-[12rem]" : ""}`}>
                   <span className="whitespace-pre-line">{s.aciklama}</span>
                   {s.borcludan && (
                     <span className="ml-2 whitespace-nowrap rounded-full bg-[#ffb340]/15 px-2 py-0.5 text-[11px] text-[#ffb340]">
@@ -310,11 +310,17 @@ export function Defter({
                       {s.odemeYontemi}
                     </span>
                   )}
+                  <div className="mt-1 space-y-1.5 md:hidden">
+                    <span className="block text-[11px] text-white/45">
+                      {tarihBicimi.format(s.tarih)} · Bakiye: <span className={renk(s.bakiye)}>{para.format(s.bakiye)}</span>
+                    </span>
+                    {islemler(s)}
+                  </div>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right text-white/85">{s.borc > 0 ? para.format(s.borc) : "—"}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right text-white/85">{s.alacak > 0 ? para.format(s.alacak) : "—"}</td>
-                <td className={`whitespace-nowrap px-4 py-3 text-right font-medium ${renk(s.bakiye)}`}>{para.format(s.bakiye)}</td>
-                <td className="px-4 py-3">
+                <td className={`hidden whitespace-nowrap px-4 py-3 text-right font-medium md:table-cell ${renk(s.bakiye)}`}>{para.format(s.bakiye)}</td>
+                <td className="hidden px-4 py-3 md:table-cell">
                   <div className={`flex items-center justify-end gap-2 ${kompakt ? "[&_button]:!px-2 [&_button]:!py-0.5 [&_button]:!text-[11px]" : ""}`}>
                     {s.duzenle && (s.duzenle.tip === "hareket" || silmeYetkisiVar) ? (
                       <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} />
@@ -331,13 +337,14 @@ export function Defter({
               </tr>
             ))}
             <tr className="border-t border-white/10 font-medium">
-              <td className="px-4 py-3 text-white" colSpan={(dosyaSutunu ? 4 : 3) + (silmeYetkisiVar ? 1 : 0)}>
+              <td className="px-4 py-3 text-white" colSpan={(dosyaSutunu ? 3 : 2) + (silmeYetkisiVar ? 1 : 0)}>
                 Toplam
               </td>
+              <td className="hidden md:table-cell" />
               <td className="px-4 py-3 text-right text-white">{para.format(toplamBorc)}</td>
               <td className="px-4 py-3 text-right text-white">{para.format(toplamAlacak)}</td>
-              <td className={`px-4 py-3 text-right ${renk(birikim)}`}>{para.format(birikim)}</td>
-              <td />
+              <td className={`hidden px-4 py-3 text-right md:table-cell ${renk(birikim)}`}>{para.format(birikim)}</td>
+              <td className="hidden md:table-cell" />
             </tr>
           </tbody>
         </table>
