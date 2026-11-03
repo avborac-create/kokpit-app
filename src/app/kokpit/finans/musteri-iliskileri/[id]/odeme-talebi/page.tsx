@@ -10,7 +10,7 @@ export default async function OdemeTalebiSayfasi({ params }: { params: Promise<{
   const [varsayilan, dokum] = await Promise.all([odemeTalebiVarsayilanlari(id), masrafDokumu(id)]);
   if (!varsayilan.musteriAdi) notFound();
   const bekleyenler = await prisma.hesapOzetiKaydi.findMany({
-    where: { musteriId: id, sonuc: null },
+    where: { musteriId: id, sonuc: null, OR: [{ ertelemeTarihi: null }, { ertelemeTarihi: { lte: new Date() } }] },
     orderBy: { olusturmaTarihi: "desc" },
     select: { id: true, toplam: true, olusturmaTarihi: true },
   });

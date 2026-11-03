@@ -1906,6 +1906,8 @@ model HesapOzetiKaydi {
   sonucTarihi     DateTime?
   // Gonderildi ise hangi yoldan istendigi: WHATSAPP | EPOSTA | POSTA | ELDEN | TELEFON | DIGER
   yol             String?
+  // "Belli tarihe kadar beklet": bu tarihe kadar uyari gosterilmez.
+  ertelemeTarihi  DateTime? @db.Date
 
   @@index([musteriId])
   @@map("hesap_ozeti_kayitlari")

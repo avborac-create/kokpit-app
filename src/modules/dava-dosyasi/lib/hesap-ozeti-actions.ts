@@ -40,3 +40,15 @@ export async function hesapOzetiSonucuYaz(id: string, sonuc: "GONDERILDI" | "VAZ
   }
   revalidatePath(`/kokpit/finans/musteri-iliskileri/${kayit.musteriId}/odeme-talebi`);
 }
+
+// Uyariyi belli bir tarihe kadar gizler (o tarihte yeniden sorulur).
+export async function hesapOzetiErtele(id: string, tarih: string): Promise<void> {
+  if (!(await mevcutKullanici())) throw new Error("Bu işlem için yetkiniz yok.");
+  if (!/^d{4}-d{2}-d{2}$/.test(tarih)) throw new Error("Geçerli bir tarih seçin.");
+  const kayit = await prisma.hesapOzetiKaydi.update({
+    where: { id },
+    data: { ertelemeTarihi: new Date(`${tarih}T12:00:00`) },
+    select: { musteriId: true },
+  });
+  revalidatePath(`/kokpit/finans/musteri-iliskileri/${kayit.musteriId}/odeme-talebi`);
+}

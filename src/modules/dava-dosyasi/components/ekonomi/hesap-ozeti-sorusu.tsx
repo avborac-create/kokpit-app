@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { hesapOzetiSonucuYaz } from "../../lib/hesap-ozeti-actions";
+import { UyariEylemleri } from "@/core/uyari/uyari-eylemleri";
+import { hesapOzetiErtele, hesapOzetiSonucuYaz } from "../../lib/hesap-ozeti-actions";
 import { YOL_ADLARI } from "../../lib/hesap-ozeti-yollari";
 
 type Kayit = { id: string; toplam: number; tarih: string };
@@ -48,6 +49,14 @@ export function HesapOzetiSorusu({ kayitlar }: { kayitlar: Kayit[] }) {
                 Göndermeyeceğim
               </button>
             </div>
+            <UyariEylemleri
+              baslik="Hesap özetini müvekkile gönder"
+              aciklama={`${tarihi.format(new Date(k.tarih))} tarihli ${para.format(k.toplam)} tutarındaki hesap özeti müvekkile gönderilecek.`}
+              onErtele={async (t) => {
+                await hesapOzetiErtele(k.id, t);
+                setCevaplanan((l) => [...l, k.id]);
+              }}
+            />
             {yolSorulan === k.id && (
               <div className="flex w-full flex-wrap items-center gap-2 text-xs text-white/70">
                 Hangi yoldan istendi?
