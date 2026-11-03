@@ -232,7 +232,7 @@ export function DavaDosyasiFormIcerik({
           </div>
         )}
       </FormKarti>
-      <FormKarti baslik="2 · Dosya Bilgileri (Tür · Birim · Dosya No)">
+      <FormKarti baslik="2 · Dosya Bilgileri">
         {sinifVarMi && (
           <div key={`${anahtar}-t`}>
             <DosyaSinifiAlanlari {...sinifOzellikleri} bolum="tur" />
@@ -252,7 +252,7 @@ export function DavaDosyasiFormIcerik({
           />
         </div>
       </FormKarti>
-      <FormKarti baslik="3 · İçerik Bilgileri (Hukuk Dalı · Dava Türü · Dava Konusu · Dava Değeri)">
+      <FormKarti baslik="3 · İçerik Bilgileri">
         <div key={`${anahtar}-b`}>
           {yeniAlanlar.map((a) => (
             <div key={a}>{alanRenderHaritasi[a]?.()}</div>
