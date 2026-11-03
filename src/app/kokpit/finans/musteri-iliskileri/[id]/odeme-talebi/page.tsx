@@ -1,19 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { masrafDokumu, odemeTalebiVarsayilanlari } from "@/modules/dava-dosyasi/lib/odeme-talebi";
-import { prisma } from "@/core/db/prisma";
-import { HesapOzetiSorusu } from "@/modules/dava-dosyasi/components/ekonomi/hesap-ozeti-sorusu";
+import { ParaTalebiKarti } from "@/modules/dava-dosyasi/components/ekonomi/para-talebi-karti";
+import { kullanilmisBankalar, paraTalebiVerileri } from "@/modules/dava-dosyasi/lib/hesap-ozeti-sorgu";
 import { OdemeTalebiFormu } from "@/modules/dava-dosyasi/components/ekonomi/odeme-talebi-formu";
 
 export default async function OdemeTalebiSayfasi({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [varsayilan, dokum] = await Promise.all([odemeTalebiVarsayilanlari(id), masrafDokumu(id)]);
   if (!varsayilan.musteriAdi) notFound();
-  const bekleyenler = await prisma.hesapOzetiKaydi.findMany({
-    where: { musteriId: id, sonuc: null, OR: [{ ertelemeTarihi: null }, { ertelemeTarihi: { lte: new Date() } }] },
-    orderBy: { olusturmaTarihi: "desc" },
-    select: { id: true, toplam: true, olusturmaTarihi: true },
-  });
+  const [talepler, bankalar] = await Promise.all([paraTalebiVerileri({ musteriId: id, NOT: { sonuc: "VAZGECILDI" } }), kullanilmisBankalar()]);
+  const acikTalepler = talepler.filter((t) => !t.geldiMi || !t.geldiTarihi || !t.bankaHesabi);
 
   // Muvekkilin bizde bekleyen parasi varsa, toplamdan dusulecek eksi tutarli bir satir olarak onerilir.
   const satirlar = [...varsayilan.satirlar];
@@ -37,9 +34,14 @@ export default async function OdemeTalebiSayfasi({ params }: { params: Promise<{
       <p className="mb-6 text-sm text-white/45">
         Müvekkile gönderilecek, ne için ne kadar ödenmesi gerektiğini sade bir dille anlatan A4 belge.
       </p>
-      <HesapOzetiSorusu
-        kayitlar={bekleyenler.map((k) => ({ id: k.id, toplam: k.toplam, tarih: k.olusturmaTarihi.toISOString() }))}
-      />
+      {acikTalepler.length > 0 && (
+        <div className="mb-6 space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-white/65">Müvekkilden istenen paralar</h2>
+          {acikTalepler.map((t) => (
+            <ParaTalebiKarti key={t.id} veri={t} bankalar={bankalar} />
+          ))}
+        </div>
+      )}
       <OdemeTalebiFormu
         musteriId={id}
         musteriAdi={varsayilan.musteriAdi}

@@ -6,6 +6,7 @@ import { kullanicilariListele } from "@/core/kullanici/queries";
 import { BURO_ROLU_ETIKETLERI, UYGULAMA_ROLU_ETIKETLERI, uygulamaRoluOf } from "@/core/kullanici/rol-etiketleri";
 import { KullaniciFormu } from "@/core/kullanici/kullanici-formu";
 import { KullaniciSilButonu } from "@/core/kullanici/kullanici-sil-butonu";
+import { FinansYetkilisiKutusu } from "@/core/kullanici/finans-yetkilisi-kutusu";
 import { KullaniciDurumButonu } from "@/core/kullanici/kullanici-durum-butonu";
 
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -35,6 +36,7 @@ export default async function KullanicilarSayfasi() {
               <th className="px-4 py-3 font-medium">E-posta</th>
               <th className="px-4 py-3 font-medium">Uygulama Rolü</th>
               <th className="px-4 py-3 font-medium">Büro Rolü</th>
+              <th className="px-4 py-3 font-medium">Finans yetkilisi</th>
               <th className="px-4 py-3 font-medium">Katılım</th>
               <th className="px-4 py-3 font-medium">Durum</th>
               <th className="px-4 py-3 font-medium" />
@@ -47,6 +49,7 @@ export default async function KullanicilarSayfasi() {
                 <td className="px-4 py-3 text-white/60">{k.eposta}</td>
                 <td className="px-4 py-3 text-white/60">{UYGULAMA_ROLU_ETIKETLERI[uygulamaRoluOf(k.rol)]}</td>
                 <td className="px-4 py-3 text-white/60">{BURO_ROLU_ETIKETLERI[k.buroRolu]}</td>
+                <td className="px-4 py-3"><FinansYetkilisiKutusu id={k.id} adSoyad={k.adSoyad} isaretli={k.finansYetkilisiMi} degistirebilir={sistemYoneticisiMi(kullanici.rol)} /></td>
                 <td className="px-4 py-3 text-white/60">{tarihFormatlayici.format(k.olusturmaTarihi)}</td>
                 <td className="px-4 py-3">
                   {k.aktifMi ? (

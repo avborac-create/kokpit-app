@@ -16,6 +16,13 @@ const ALT_MODULLER = [
     aktif: true,
   },
   {
+    anahtar: "istenen-paralar", renk: "#f5a524",
+    ad: "Müvekkilden İstenen Paralar",
+    aciklama: "Müvekkillerden istenen ödemeler: ne zaman istendi, geldi mi, hangi hesaba geldi; para geldi teyidi.",
+    yol: "/kokpit/finans/istenen-paralar",
+    aktif: true,
+  },
+  {
     anahtar: "buro-giderleri", renk: "#ef6a5b",
     ad: "Büro Genel Giderleri",
     aciklama: "Kira, personel, sabit giderler gibi büronun kendi masrafları.",

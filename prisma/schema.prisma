@@ -69,6 +69,10 @@ model Kullanici {
   rol              KullaniciRolu @default(PERSONEL)
   buroRolu         BuroRolu      @default(PERSONEL)
   aktifMi          Boolean       @default(true)
+  // Finans yetkilisi: muvekkilden istenen paralarin bildirimlerini alir, para geldi teyidini verir.
+  finansYetkilisiMi Boolean      @default(false)
+  // Kullanicinin KAPATTIGI bildirim turleri (para-istendi, para-geldi, para-gecikti ...).
+  bildirimKapali   String[]      @default([])
   // Ana sayfadaki takvim/dogum gunu paneli icin (yalniz gun ve ay kullanilir).
   dogumTarihi      DateTime?     @db.Date
   // Ana sayfa panel duzeni (JSON: sira / gizli / genis); bos = varsayilan.
@@ -1908,6 +1912,16 @@ model HesapOzetiKaydi {
   yol             String?
   // "Belli tarihe kadar beklet": bu tarihe kadar uyari gosterilmez.
   ertelemeTarihi  DateTime? @db.Date
+  // Musteriden istendigi tarih (kullanici girer), isi yapan sorumlu, konu ozeti
+  istenmeTarihi   DateTime? @db.Date
+  sorumluId       String?
+  konu            String?
+  // Para geldi teyidi: ne zaman, hangi banka hesabina, kim isaretledi
+  geldiMi         Boolean   @default(false)
+  geldiTarihi     DateTime? @db.Date
+  bankaHesabi     String?
+  teyitEdenId     String?
+  teyitZamani     DateTime?
 
   @@index([musteriId])
   @@map("hesap_ozeti_kayitlari")

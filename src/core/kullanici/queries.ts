@@ -9,6 +9,7 @@ export function kullanicilariListele() {
       rol: true,
       buroRolu: true,
       aktifMi: true,
+      finansYetkilisiMi: true,
       dogumTarihi: true,
       olusturmaTarihi: true,
     },

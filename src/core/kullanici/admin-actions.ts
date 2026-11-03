@@ -93,3 +93,10 @@ export async function kullaniciAktifligiDegistir(id: string, aktifMi: boolean) {
   await prisma.kullanici.update({ where: { id }, data: { aktifMi } });
   revalidatePath(AYARLAR_YOLU);
 }
+
+// Finans yetkilisi: muvekkilden istenen para bildirimlerini alir ve "para geldi" teyidini verir.
+export async function finansYetkilisiDegistir(id: string, deger: boolean) {
+  await yetkiKontrolEt();
+  await prisma.kullanici.update({ where: { id }, data: { finansYetkilisiMi: deger } });
+  revalidatePath(AYARLAR_YOLU);
+}

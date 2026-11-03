@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     .slice(0, 40)}.pdf`;
   const kullanici = await mevcutKullanici();
   const kayit = await prisma.hesapOzetiKaydi.create({
-    data: { musteriId, olusturanId: kullanici?.kullaniciId ?? null, toplam: Math.round(satirlar.reduce((t, x) => t + x.tutar, 0) * 100) / 100 },
+    data: { musteriId, olusturanId: kullanici?.kullaniciId ?? null, sorumluId: kullanici?.kullaniciId ?? null, konu: satirlar.map((x) => x.baslik).filter((b) => !/bekleyen/i.test(b)).join(", ").slice(0, 300), toplam: Math.round(satirlar.reduce((t, x) => t + x.tutar, 0) * 100) / 100 },
     select: { id: true },
   });
   return new NextResponse(pdf as unknown as BodyInit, {

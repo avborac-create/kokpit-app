@@ -43,3 +43,13 @@ export async function kayitliCihazSayisi(): Promise<number> {
   const k = await girisli();
   return prisma.pushAboneligi.count({ where: { kullaniciId: k.kullaniciId } });
 }
+
+// Bildirim turunu (para-istendi, para-geldi, ...) kullanici icin kapatir / acar.
+export async function bildirimTuruDegistir(tur: string, kapat: boolean): Promise<void> {
+  const k = await girisli();
+  const mevcut = await prisma.kullanici.findUnique({ where: { id: k.kullaniciId }, select: { bildirimKapali: true } });
+  const liste = new Set(mevcut?.bildirimKapali ?? []);
+  if (kapat) liste.add(tur);
+  else liste.delete(tur);
+  await prisma.kullanici.update({ where: { id: k.kullaniciId }, data: { bildirimKapali: [...liste] } });
+}
