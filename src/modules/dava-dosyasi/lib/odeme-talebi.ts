@@ -6,13 +6,14 @@ export type TalepSatiri = { baslik: string; aciklama: string; tutar: number; tah
 export type MasrafDokumuSatiri = { dosya: string; karsiTaraf?: string; tarih: string; tur: string; aciklama: string; tutar: number };
 
 // Cari hesabin, belgeyi okuyan musterinin anlayacagi dildeki karsiligi.
-const HESAP_ACIKLAMALARI: Record<number, { baslik: string; aciklama: string }> = {
-  101: { baslik: "Avukatlık ücreti", aciklama: "Akdi vekalet (hizmet) bedeli" },
-  102: { baslik: "Dosya masrafları", aciklama: "Adınıza yapılan harç, posta, tebligat ve benzeri giderler" },
-  108: { baslik: "Avans", aciklama: "Dosya giderleri için avans" },
-  103: { baslik: "Bloke / avans tutarı", aciklama: "Dosya için ayrı tutulması gereken tutar" },
-  107: { baslik: "Harç", aciklama: "Dosya için yatırılacak harçlar" },
-};
+// Hesap numaralari kurulumda degisebildigi icin hesap ADIYLA eslenir.
+const HESAP_ACIKLAMALARI: { ad: RegExp; baslik: string; aciklama: string }[] = [
+  { ad: /vekalet|vekâlet/i, baslik: "Avukatlık ücreti (vekâlet ücreti)", aciklama: "Büromuzun hizmet bedeli; vekâlet sözleşmesi gereği ödenecek ücret" },
+  { ad: /harcama/i, baslik: "Dosya masrafları", aciklama: "Adınıza yapılan harç, posta, tebligat ve benzeri giderler" },
+  { ad: /avans/i, baslik: "Masraf avansı", aciklama: "Dosya giderleri için büroya bırakılması istenen tutar" },
+  { ad: /bloke/i, baslik: "Bloke / teminat tutarı", aciklama: "Dosya için ayrı tutulması gereken tutar" },
+  { ad: /harç|harc/i, baslik: "Harç", aciklama: "Dosya için yatırılacak harçlar" },
+];
 
 const para2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -27,7 +28,7 @@ export async function odemeTalebiVarsayilanlari(musteriId: string) {
   const satirlar: TalepSatiri[] = ozet.hesaplar
     .filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi && h.bakiye > 0.009)
     .map((h) => {
-      const tanim = HESAP_ACIKLAMALARI[h.no];
+      const tanim = HESAP_ACIKLAMALARI.find((t) => t.ad.test(h.ad));
       return {
         baslik: tanim?.baslik ?? h.ad,
         aciklama: tanim?.aciklama ?? "Cari hesap bakiyesi",

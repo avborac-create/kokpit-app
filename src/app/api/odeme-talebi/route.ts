@@ -93,8 +93,14 @@ export async function POST(request: Request) {
     .replace(/[^A-Za-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 40)}.pdf`;
+  const kullanici = await mevcutKullanici();
+  const kayit = await prisma.hesapOzetiKaydi.create({
+    data: { musteriId, olusturanId: kullanici?.kullaniciId ?? null, toplam: Math.round(satirlar.reduce((t, x) => t + x.tutar, 0) * 100) / 100 },
+    select: { id: true },
+  });
   return new NextResponse(pdf as unknown as BodyInit, {
     headers: {
+      "X-Hesap-Ozeti-Id": kayit.id,
       "Content-Type": "application/pdf",
       "Content-Disposition": `inline; filename="${dosyaAdi}"`,
       "Cache-Control": "no-store",

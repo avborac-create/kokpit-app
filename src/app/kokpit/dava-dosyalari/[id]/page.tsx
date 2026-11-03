@@ -16,6 +16,7 @@ import { davaDegeriKalemlerden, davaDegeriYaz, ekstralariAyikla } from "@/module
 import { TalepKalemleriPaneli } from "@/modules/dava-dosyasi/components/talep-kalemleri-paneli";
 import { VekilPaneli } from "@/modules/dava-dosyasi/components/vekil-paneli";
 import { prisma } from "@/core/db/prisma";
+import { YOL_ADLARI } from "@/modules/dava-dosyasi/lib/hesap-ozeti-yollari";
 import { IhtarGonderimPaneli } from "@/modules/ihtar/components/ihtar-gonderim-paneli";
 import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
 import { DosyaBaglayici } from "@/modules/dava-dosyasi/components/dosya-baglayici";
@@ -112,6 +113,13 @@ export default async function DavaDosyasiDetaySayfasi({
     adliBirimleriListele(),
   ]);
   if (!dosya) notFound();
+  const istenenOzet = dosya.muvekkiller.length > 0
+    ? await prisma.hesapOzetiKaydi.findFirst({
+        where: { musteriId: { in: dosya.muvekkiller.map((m) => m.musteriId) }, sonuc: "GONDERILDI" },
+        orderBy: { sonucTarihi: "desc" },
+        select: { toplam: true, sonucTarihi: true, yol: true },
+      })
+    : null;
   const ihtarGonderimi = dosya.tur?.kod === "ihtar_dosyasi" ? await prisma.ihtarGonderimi.findUnique({ where: { dosyaId: id } }) : null;
 
   // Dosya Evrakları sekmesi: baska avukatların "avukata özel" evrakları hiç çekilmez.
@@ -484,6 +492,11 @@ export default async function DavaDosyasiDetaySayfasi({
                   {e.artiMi ? " · müvekkile iade / virman" : " · müvekkilden istenecek"}
                 </span>
               ))}
+              {istenenOzet && bakiyeEtiketleri.some((e) => !e.artiMi) && (
+                <span className="rounded-full bg-[#ffd60a]/15 px-2.5 py-0.5 text-xs font-medium text-[#ffd60a]">
+                  Müvekkilden istendi: {istenenOzet.sonucTarihi ? tarihFormatlayici.format(istenenOzet.sonucTarihi) : ""} · {YOL_ADLARI[istenenOzet.yol ?? ""] ?? "yol belirtilmedi"} · {paraFormatlayici.format(istenenOzet.toplam)}
+                </span>
+              )}
               {agacNet !== null && (
                 <span className="whitespace-nowrap rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs font-medium text-white/90">
                   Alt dosyalar dahil net: {paraFormatlayici.format(agacNet)}

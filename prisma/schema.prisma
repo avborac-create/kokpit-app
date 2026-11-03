@@ -177,6 +177,7 @@ model SecenekDegeri {
 // Musteri Fihristi
 model Musteri {
   id               String        @id @default(cuid())
+  hesapOzetleri    HesapOzetiKaydi[]
   adSoyadUnvan     String
   tipId            String
   tip              SecenekDegeri @relation("MusteriTipi", fields: [tipId], references: [id])
@@ -1888,4 +1889,24 @@ model IhtarGonderimi {
   guncellemeTarihi DateTime  @updatedAt
 
   @@map("ihtar_gonderimleri")
+}
+
+// Muvekkile gonderilmek uzere olusturulan "Muvekkil Hesap Ozeti" belgelerinin kaydi:
+// belge uretilince BEKLIYOR; kullanici "gonderdim" ya da "gondermeyecegim" diyene kadar
+// sistem "musteriye gonderdiniz mi?" diye sorar.
+model HesapOzetiKaydi {
+  id              String    @id @default(cuid())
+  musteriId       String
+  musteri         Musteri   @relation(fields: [musteriId], references: [id], onDelete: Cascade)
+  olusturanId     String?
+  toplam          Float
+  olusturmaTarihi DateTime  @default(now())
+  // GONDERILDI | VAZGECILDI; bos = henuz cevaplanmadi
+  sonuc           String?
+  sonucTarihi     DateTime?
+  // Gonderildi ise hangi yoldan istendigi: WHATSAPP | EPOSTA | POSTA | ELDEN | TELEFON | DIGER
+  yol             String?
+
+  @@index([musteriId])
+  @@map("hesap_ozeti_kayitlari")
 }

@@ -1,12 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { masrafDokumu, odemeTalebiVarsayilanlari } from "@/modules/dava-dosyasi/lib/odeme-talebi";
+import { prisma } from "@/core/db/prisma";
+import { HesapOzetiSorusu } from "@/modules/dava-dosyasi/components/ekonomi/hesap-ozeti-sorusu";
 import { OdemeTalebiFormu } from "@/modules/dava-dosyasi/components/ekonomi/odeme-talebi-formu";
 
 export default async function OdemeTalebiSayfasi({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [varsayilan, dokum] = await Promise.all([odemeTalebiVarsayilanlari(id), masrafDokumu(id)]);
   if (!varsayilan.musteriAdi) notFound();
+  const bekleyenler = await prisma.hesapOzetiKaydi.findMany({
+    where: { musteriId: id, sonuc: null },
+    orderBy: { olusturmaTarihi: "desc" },
+    select: { id: true, toplam: true, olusturmaTarihi: true },
+  });
 
   // Muvekkilin bizde bekleyen parasi varsa, toplamdan dusulecek eksi tutarli bir satir olarak onerilir.
   const satirlar = [...varsayilan.satirlar];
@@ -30,6 +37,9 @@ export default async function OdemeTalebiSayfasi({ params }: { params: Promise<{
       <p className="mb-6 text-sm text-white/45">
         Müvekkile gönderilecek, ne için ne kadar ödenmesi gerektiğini sade bir dille anlatan A4 belge.
       </p>
+      <HesapOzetiSorusu
+        kayitlar={bekleyenler.map((k) => ({ id: k.id, toplam: k.toplam, tarih: k.olusturmaTarihi.toISOString() }))}
+      />
       <OdemeTalebiFormu
         musteriId={id}
         musteriAdi={varsayilan.musteriAdi}
