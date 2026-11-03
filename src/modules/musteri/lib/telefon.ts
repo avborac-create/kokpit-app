@@ -6,7 +6,7 @@
 export type TelefonTipi = "CEP" | "SABIT";
 export type TelefonSonucu = { deger: string; tip: TelefonTipi | null } | { hata: string };
 
-export const TELEFON_YARDIMI = "Başında 0 yazmayın: +90 otomatik eklenir (ör. 506 875 28 05). Yabancı numara + ile başlar.";
+export const TELEFON_YARDIMI = "+90 hazır yazılıdır, başına 0 yazmayın; yalnızca 10 rakam girin: (506) 875 28 05. Yabancı numara için + ile başlayın.";
 
 export function telefonuDuzenle(ham: string, secilenTip?: string | null): TelefonSonucu {
   const sade = ham.trim().replace(/[\s().\-]/g, "");

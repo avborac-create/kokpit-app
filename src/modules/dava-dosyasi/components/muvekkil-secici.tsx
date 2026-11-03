@@ -1,5 +1,6 @@
 "use client";
 
+import { TelefonGirdisi } from "@/core/ui/telefon-girdisi";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Etiket, Girdi, Secim } from "@/core/ui/form";
@@ -202,7 +203,8 @@ export function MuvekkilSecici({
                 </div>
                 <div className="mb-3">
                   <Etiket htmlFor="hm-tel">Telefon (isteğe bağlı)</Etiket>
-                  <Girdi id="hm-tel" value={yeniTel} onChange={(e) => setYeniTel(e.target.value)} inputMode="tel" />
+                  <TelefonGirdisi id="hm-tel" value={yeniTel} onChange={setYeniTel} />
+                  <p className="mt-1 text-xs text-white/45">+90 hazır yazılıdır, başına 0 yazmayın; 10 rakam girin. Yabancı numara için + ile başlayın.</p>
                 </div>
                 {yeniKisa && (
                   <div className="mb-3 rounded-xl border border-[#f2b04c]/40 bg-[#f2b04c]/10 p-3 text-sm text-[#f3d9a8]">

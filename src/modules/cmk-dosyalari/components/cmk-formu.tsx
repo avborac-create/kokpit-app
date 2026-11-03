@@ -1,4 +1,5 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
+import { TelefonGirdisi } from "@/core/ui/telefon-girdisi";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { CMK_DOSYA_DURUMLARI } from "@/modules/cmk-dosyalari/lib/sabitler";
 import type { cmkDosyasiGetir } from "@/modules/cmk-dosyalari/lib/queries";
@@ -57,7 +58,7 @@ export function CMKFormu({
       </Alan>
       <Alan>
         <Etiket htmlFor="telefon">Telefon</Etiket>
-        <Girdi id="telefon" name="telefon" type="tel" defaultValue={dosya?.telefon ?? ""} />
+        <TelefonGirdisi id="telefon" name="telefon" defaultValue={dosya?.telefon ?? ""} />
       </Alan>
       <div className="flex flex-col justify-end gap-2 pb-4">
         <label className="flex items-center gap-2 text-sm text-white/70">

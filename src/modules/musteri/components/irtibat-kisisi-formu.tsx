@@ -1,4 +1,5 @@
 import { Alan, Etiket, Girdi, MetinAlani } from "@/core/ui/form";
+import { TelefonGirdisi } from "@/core/ui/telefon-girdisi";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 
 export function IrtibatKisisiFormu({ action }: { action: (formData: FormData) => void }) {
@@ -14,7 +15,7 @@ export function IrtibatKisisiFormu({ action }: { action: (formData: FormData) =>
       </Alan>
       <Alan>
         <Etiket htmlFor="telefon">Telefon</Etiket>
-        <Girdi id="telefon" name="telefon" type="tel" />
+        <TelefonGirdisi id="telefon" name="telefon" />
       </Alan>
       <Alan>
         <Etiket htmlFor="eposta">E-posta</Etiket>

@@ -1,5 +1,6 @@
 "use client";
 
+import { TelefonGirdisi } from "@/core/ui/telefon-girdisi";
 import { useState } from "react";
 import { Etiket, Girdi, Secim } from "@/core/ui/form";
 import { SecenekDuzenleyiciPenceresi } from "@/core/secenek/secenek-duzenleyici-penceresi";
@@ -82,20 +83,13 @@ export function TelefonSatirlari({
         {satirlar.map((s) => (
           <div key={s.anahtar} className="glass flex flex-col gap-2 rounded-xl p-2">
             <div className="grid grid-cols-[1fr_6rem_auto] gap-2">
-              <Girdi
+              <TelefonGirdisi
                 name="tel_no"
-                type="tel"
-                inputMode="tel"
-                autoComplete="off"
                 required
-                placeholder={s.telefonTipi === "SABIT" ? "+90 2XX XXX XX XX" : "+90 5XX XXX XX XX"}
-                title={TELEFON_YARDIMI}
+                tip={s.telefonTipi}
                 aria-label="Telefon numarası"
                 value={s.telefon}
-                onChange={(e) => {
-                  e.currentTarget.setCustomValidity("");
-                  guncelle(s.anahtar, "telefon", e.target.value);
-                }}
+                onChange={(v) => guncelle(s.anahtar, "telefon", v)}
                 onBlur={(e) => dogrula(s.anahtar, e.currentTarget, s.telefonTipi)}
               />
               <Secim
