@@ -64,17 +64,25 @@ async function odemeEkle_(musteriId: string, formData: FormData) {
   }
   // "Ayni anda virman yap": odeme kaydedildikten hemen sonra, ayni tarihle, secilen hesaba aktarilir.
   const virmanIstendi = metin(formData, "virman") === "1";
-  const virmanHedefId = metin(formData, "virmanHedefId");
-  const toplam = Math.round(tutarlar.reduce((a, b) => a + b, 0) * 100) / 100;
-  let virmanTutari = toplam;
+  const hedefIdleri = formData.getAll("virmanHedefId").map((x) => String(x).trim());
+  const hamTutarlar = formData.getAll("virmanTutari").map((x) => String(x).trim());
+  const hamBorclar = formData.getAll("virmanBorcu").map((x) => String(x).trim());
+  const toplam = Math.round(tutarlar.reduce((x, y) => x + y, 0) * 100) / 100;
+  // Her virman satiri: hedef hesap + tutar (+ istege bagli borclandirma). Tek satirda tutar bos ise odemenin tamami aktarilir.
+  const virmanSatirlari: { hedefId: string; tutar: number; borc: string }[] = [];
   if (virmanIstendi) {
     if (!dosyaId) throw new Error("Aynı anda virman için bir dosya seçilmelidir.");
-    if (!virmanHedefId) throw new Error("Virman için hedef hesap seçilmelidir.");
-    const ozel = metin(formData, "virmanTutari");
-    if (ozel) {
-      virmanTutari = Math.round(Number(ozel.replace(",", ".")) * 100) / 100;
-      if (!Number.isFinite(virmanTutari) || virmanTutari <= 0) throw new Error("Virman tutarı sıfırdan büyük olmalıdır.");
-      if (virmanTutari > toplam + 0.001) throw new Error("Virman tutarı, girilen ödemeden fazla olamaz.");
+    if (hedefIdleri.length === 0 || hedefIdleri.some((h) => !h)) throw new Error("Virman için hedef hesap seçilmelidir.");
+    hedefIdleri.forEach((hedefId, i) => {
+      const ham = hamTutarlar[i] ?? "";
+      if (!ham && hedefIdleri.length > 1) throw new Error("Birden fazla virman varsa her satırın tutarı yazılmalıdır.");
+      const t = ham ? Math.round(Number(ham.replace(",", ".")) * 100) / 100 : toplam;
+      if (!Number.isFinite(t) || t <= 0) throw new Error("Virman tutarı sıfırdan büyük olmalıdır.");
+      virmanSatirlari.push({ hedefId, tutar: t, borc: hamBorclar[i] ?? "" });
+    });
+    const virmanToplami = Math.round(virmanSatirlari.reduce((x, y) => x + y.tutar, 0) * 100) / 100;
+    if (virmanToplami > toplam + 0.001) {
+      throw new Error(`Virman toplamı (${virmanToplami.toLocaleString("tr-TR")} TL), girilen ödemeden (${toplam.toLocaleString("tr-TR")} TL) fazla olamaz.`);
     }
   }
   await prisma.cariHareketi.createMany({
@@ -91,18 +99,20 @@ async function odemeEkle_(musteriId: string, formData: FormData) {
     })),
   });
   if (virmanIstendi && dosyaId) {
-    const vf = new FormData();
-    vf.set("hedefHesapId", virmanHedefId);
-    vf.set("dosyaId", dosyaId);
-    vf.set("kaynak", "dosya");
-    vf.set("tarih", String(formData.get("tarih") ?? ""));
-    vf.set("tutar", String(virmanTutari));
-    if (metin(formData, "borcTutari")) vf.set("borcTutari", metin(formData, "borcTutari"));
-    if (aciklama !== "GELEN ÖDEME") vf.set("aciklama", aciklama);
-    try {
-      await virmanYap(musteriId, dosyaId, vf);
-    } catch (hata) {
-      throw new Error(`Ödeme kaydedildi ancak virman yapılamadı: ${hata instanceof Error ? hata.message : "bilinmeyen hata"}`);
+    for (const [i, v] of virmanSatirlari.entries()) {
+      const vf = new FormData();
+      vf.set("hedefHesapId", v.hedefId);
+      vf.set("dosyaId", dosyaId);
+      vf.set("kaynak", "dosya");
+      vf.set("tarih", String(formData.get("tarih") ?? ""));
+      vf.set("tutar", String(v.tutar));
+      if (v.borc) vf.set("borcTutari", v.borc);
+      if (aciklama !== "GELEN ÖDEME") vf.set("aciklama", aciklama);
+      try {
+        await virmanYap(musteriId, dosyaId, vf);
+      } catch (hata) {
+        throw new Error(`Ödeme kaydedildi ancak ${i + 1}. virman yapılamadı: ${hata instanceof Error ? hata.message : "bilinmeyen hata"}`);
+      }
     }
   }
   yenile();

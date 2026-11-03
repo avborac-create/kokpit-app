@@ -10,6 +10,7 @@ import type { DosyaSecenegi } from "@/modules/dava-dosyasi/components/ekonomi/fo
 
 type Yontem = { id: string; etiket: string };
 type Satir = { anahtar: number; yontemId: string };
+type VirmanSatiri = { anahtar: number; hedef: string; tutar: string };
 
 const PARCALI = "__parcali__";
 const para = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
@@ -47,7 +48,19 @@ export function OdemeFormu({
   const [virman, setVirman] = useState(false);
   const varsayilanHedef = hedefler.find((h) => /akdi vekalet/i.test(h.etiket))?.id ?? hedefler[0]?.id ?? "";
   const parcaliMi = sekil === PARCALI;
-  const toplam = satirlar.reduce((t, s) => t + (tutarlar[s.anahtar] ?? 0), 0);
+  const [tekTutar, setTekTutar] = useState(0);
+  const toplam = parcaliMi ? satirlar.reduce((t, s) => t + (tutarlar[s.anahtar] ?? 0), 0) : tekTutar;
+  const [virmanlar, setVirmanlar] = useState<VirmanSatiri[]>([{ anahtar: 1, hedef: varsayilanHedef, tutar: "" }]);
+  const ayrilan = virmanlar.reduce((t, v) => t + (Number(v.tutar) || 0), 0);
+  const kalan = Math.round((toplam - ayrilan) * 100) / 100;
+  const harcamaHedefi = hedefler.find((h) => /harcama/i.test(h.etiket))?.id ?? varsayilanHedef;
+  const kalaniEkle = () =>
+    setVirmanlar((o) => {
+      const kalanKayit = Math.round((toplam - o.reduce((t, v) => t + (Number(v.tutar) || 0), 0)) * 100) / 100;
+      const kullanilan = new Set(o.map((v) => v.hedef));
+      const hedef = [harcamaHedefi, ...hedefler.map((h) => h.id)].find((id) => !kullanilan.has(id)) ?? harcamaHedefi;
+      return [...o, { anahtar: Math.max(...o.map((x) => x.anahtar)) + 1, hedef, tutar: kalanKayit > 0 ? String(kalanKayit) : "" }];
+    });
   const bugun = new Date().toISOString().slice(0, 10);
 
   return (
@@ -161,7 +174,7 @@ export function OdemeFormu({
           <input type="hidden" name="yontemId" value={sekil} />
           <Alan>
             <Etiket htmlFor="od-tutar">Tutar</Etiket>
-            <ParaGirdisi key="tek" id="od-tutar" name="tutar" required />
+            <ParaGirdisi key="tek" id="od-tutar" name="tutar" required onDegerDegisti={(v) => setTekTutar(Number(v) || 0)} />
           </Alan>
         </>
       )}
@@ -173,30 +186,73 @@ export function OdemeFormu({
             Anında virman yap
           </label>
           {virman && (
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
-              <Alan>
-                <Etiket htmlFor="od-virman-hedef">Hedef Hesap</Etiket>
-                <Secim id="od-virman-hedef" name="virmanHedefId" defaultValue={varsayilanHedef} required>
-                  {hedefler.map((h) => (
-                    <option key={h.id} value={h.id}>
-                      {h.etiket}
-                    </option>
-                  ))}
-                </Secim>
-              </Alan>
-              <Alan>
-                <Etiket htmlFor="od-virman-tutar">Virman Tutarı</Etiket>
-                <ParaGirdisi id="od-virman-tutar" name="virmanTutari" />
-                <span className="mt-1 block text-xs text-white/45">Boş bırakırsanız ödemenin tamamı aktarılır.</span>
-              </Alan>
-              <Alan>
-                <Etiket htmlFor="od-virman-borc">Hedef hesabı da borçlandır</Etiket>
-                <ParaGirdisi id="od-virman-borc" name="borcTutari" />
-                <span className="mt-1 block text-xs text-white/45">İsteğe bağlı; virmandan ayrı bir borç kaydı olarak yazılır.</span>
-              </Alan>
-              <p className="self-end pb-4 text-xs text-white/50 sm:col-span-2">
-                Virman, ödemeyle aynı tarihte yapılır; dosya seçili olmalıdır. Para önce Para Trafiği’ne girer, sonra seçilen hesaba geçer; her iki kayıt da defterde görünür.
+            <div className="mt-3 space-y-3">
+              <p className="text-xs text-white/50">
+                Gelen parayı kuruşu kuruşuna birden fazla hesaba bölebilirsiniz (ör. bir kısmı Akdi Vekalet, bir kısmı Harcama). Virman, ödemeyle aynı tarihte yapılır; dosya seçili olmalıdır. Para önce Para Trafiği’ne girer, sonra seçilen hesaplara geçer.
               </p>
+              {virmanlar.map((v, i) => (
+                <div key={v.anahtar} className="rounded-xl border border-white/10 p-3">
+                  <div className="mb-2 flex items-center justify-between text-xs text-white/60">
+                    <span>{virmanlar.length > 1 ? `${i + 1}. virman` : "Virman"}</span>
+                    {virmanlar.length > 1 && (
+                      <button type="button" onClick={() => setVirmanlar((o) => o.filter((x) => x.anahtar !== v.anahtar))} className="rounded-full px-2 text-lg text-[#ff7a70] hover:bg-white/10" title="Satırı kaldır">
+                        ×
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <Alan>
+                      <Etiket>Hedef Hesap</Etiket>
+                      <Secim name="virmanHedefId" value={v.hedef} onChange={(e) => setVirmanlar((o) => o.map((x) => (x.anahtar === v.anahtar ? { ...x, hedef: e.target.value } : x)))} required>
+                        {hedefler.map((h) => (
+                          <option key={h.id} value={h.id}>
+                            {h.etiket}
+                          </option>
+                        ))}
+                      </Secim>
+                    </Alan>
+                    <Alan>
+                      <Etiket>Virman Tutarı</Etiket>
+                      <ParaGirdisi
+                        name="virmanTutari"
+                        defaultValue={v.tutar}
+                        onDegerDegisti={(d) => setVirmanlar((o) => o.map((x) => (x.anahtar === v.anahtar ? { ...x, tutar: d } : x)))}
+                      />
+                      {virmanlar.length === 1 && <span className="mt-1 block text-xs text-white/45">Boş bırakırsanız ödemenin tamamı aktarılır.</span>}
+                    </Alan>
+                    <Alan>
+                      <Etiket>Hedef hesabı da borçlandır</Etiket>
+                      <ParaGirdisi name="virmanBorcu" />
+                      <span className="mt-1 block text-xs text-white/45">İsteğe bağlı; ayrı bir borç kaydı olarak yazılır.</span>
+                    </Alan>
+                  </div>
+                </div>
+              ))}
+
+              {toplam > 0 && !(virmanlar.length === 1 && !virmanlar[0].tutar) && (
+                <div
+                  className={`rounded-xl border p-3 text-sm ${
+                    kalan < -0.005 ? "border-red-400/50 bg-red-400/10 text-red-200" : kalan > 0.005 ? "border-amber-400/40 bg-amber-400/10 text-amber-100" : "border-emerald-400/40 bg-emerald-400/10 text-emerald-100"
+                  }`}
+                >
+                  <p>
+                    Gelen ödeme <b>{para.format(toplam)}</b> · virmana ayrılan <b>{para.format(ayrilan)}</b>
+                  </p>
+                  {kalan > 0.005 && (
+                    <p className="mt-1">
+                      Virman yapabileceğiniz <b>{para.format(kalan)}</b> kaldı. Ayırmazsanız bu tutar Para Trafiği’nde durur.
+                      <button type="button" onClick={kalaniEkle} className="ml-2 font-medium underline">
+                        Kalanı başka hesaba ayır
+                      </button>
+                    </p>
+                  )}
+                  {kalan < -0.005 && <p className="mt-1">Virman toplamı gelen ödemeden {para.format(-kalan)} fazla; kaydedilemez.</p>}
+                  {Math.abs(kalan) <= 0.005 && <p className="mt-1">Ödemenin tamamı dağıtıldı.</p>}
+                </div>
+              )}
+              {toplam > 0 && virmanlar.length === 1 && !virmanlar[0].tutar && (
+                <p className="text-xs text-white/50">Tutar boş: ödemenin tamamı ({para.format(toplam)}) bu hesaba aktarılacak. Bölmek için tutar yazın.</p>
+              )}
             </div>
           )}
         </div>
