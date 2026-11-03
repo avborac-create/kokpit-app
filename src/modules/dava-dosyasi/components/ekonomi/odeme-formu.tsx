@@ -182,7 +182,7 @@ export function OdemeFormu({
       {hedefler.length > 0 && (
         <div className="col-span-1 border-t border-white/10 pt-3 sm:col-span-2 md:col-span-4">
           <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-white">
-            <input type="checkbox" name="virman" value="1" checked={virman} onChange={(e) => setVirman(e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
+            <input type="checkbox" name="virman" value="1" checked={virman} onChange={(e) => setVirman(e.target.checked)} className="onay-kutusu" />
             Anında virman yap
           </label>
           {virman && (

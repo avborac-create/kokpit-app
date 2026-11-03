@@ -651,6 +651,9 @@ table.sutun-ayarli th, table.sutun-ayarli td { overflow: hidden; text-overflow: 
 .alan-bmw[aria-invalid="true"] { border-left-color: #e7222e; }
 .alan-bmw:disabled { opacity: 0.5; cursor: not-allowed; }
 textarea.alan-bmw { min-height: 0; }
+/* iOS'un yerel tarih kutusu kartın dışına taşmasın: genişliği kartla sınırla, native görünümü düzleştir. */
+input[type="date"].alan-bmw, input[type="time"].alan-bmw { display: block; min-width: 0; max-width: 100%; appearance: none; -webkit-appearance: none; text-align: left; }
+input[type="date"].alan-bmw::-webkit-date-and-time-value { text-align: left; min-height: 1.4em; }
 select.alan-bmw {
   appearance: none;
   -webkit-appearance: none;
