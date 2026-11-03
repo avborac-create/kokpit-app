@@ -87,3 +87,22 @@ export async function resmiGazeteFihristi(adet = 20): Promise<{ kalemler: Gazete
   const sirali = [...kalemler].sort((a, b) => yargi(a) - yargi(b));
   return { kalemler: sirali.slice(0, adet), sayi: kalemler.length };
 }
+
+// Turkiye Barolar Birligi (barobirlik.org.tr) ana sayfasi: manset haberleri ve duyurular.
+// Sitenin RSS'i ve haber listesi sayfasi bot istegine kapali; ana sayfa aciktir.
+export async function tbbHaberleri(adet = 16): Promise<Haber[] | null> {
+  const html = await metinGetir("https://www.barobirlik.org.tr/", 900);
+  if (!html) return null;
+  const haberler: Haber[] = [];
+  const goruldu = new Set<string>();
+  const ekle = (yol: string, ham: string) => {
+    const baslik = sadeMetin(ham.replace(/<[^>]+>/g, ""));
+    const baglanti = "https://www.barobirlik.org.tr/Haberler/" + yol;
+    if (!baslik || goruldu.has(yol)) return;
+    goruldu.add(yol);
+    haberler.push({ baslik, baglanti, tarih: null });
+  };
+  for (const m of html.matchAll(/<a name="manset\d+"[^>]*href="\/Haberler\/([^"]+)"[^>]*>\s*<img[^>]*alt="([^"]*)"/g)) ekle(m[1], m[2]);
+  for (const m of html.matchAll(/<li><a href="\/Haberler\/([^"]+)" tabindex="-1">([\s\S]*?)<\/a><\/li>/g)) ekle(m[1], m[2]);
+  return haberler.length > 0 ? haberler.slice(0, adet) : null;
+}

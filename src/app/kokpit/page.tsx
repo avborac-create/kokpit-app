@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { prisma } from "@/core/db/prisma";
-import { dovizKurlari, hukukHaberleri, resmiGazeteFihristi } from "@/core/ana-sayfa/veri";
+import { dovizKurlari, hukukHaberleri, resmiGazeteFihristi, tbbHaberleri } from "@/core/ana-sayfa/veri";
 import { AnaSayfaDuzeni, type Duzen } from "./ana-sayfa-duzeni";
 import { HaberSekmeleri, type HaberKaynagi } from "./haber-sekmeleri";
 import { DogumGunuPaneli, TakvimPaneli } from "./takvim-paneli";
@@ -114,7 +114,7 @@ async function kayitliDuzen(kullaniciId?: string): Promise<Duzen> {
 }
 
 async function HaberPaneli() {
-  const [haberler, gazete] = await Promise.all([hukukHaberleri(), resmiGazeteFihristi()]);
+  const [haberler, gazete, tbb] = await Promise.all([hukukHaberleri(), resmiGazeteFihristi(), tbbHaberleri()]);
   const saatBicimi = new Intl.DateTimeFormat(TR, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: ZONE });
   const kaynaklar: HaberKaynagi[] = [];
   if (haberler)
@@ -130,6 +130,13 @@ async function HaberPaneli() {
       ad: "Resmî Gazete",
       alt: `resmigazete.gov.tr · bugünkü fihrist (${gazete.sayi} kalem), yargı kararları önce`,
       kalemler: gazete.kalemler.map((k) => ({ baslik: k.baslik, baglanti: k.baglanti, ek: k.grup })),
+    });
+  if (tbb)
+    kaynaklar.push({
+      kod: "tbb",
+      ad: "TBB",
+      alt: "barobirlik.org.tr · Türkiye Barolar Birliği haber ve duyuruları",
+      kalemler: tbb.map((h) => ({ baslik: h.baslik, baglanti: h.baglanti })),
     });
   if (kaynaklar.length === 0) return null;
   return <HaberSekmeleri kaynaklar={kaynaklar} />;
