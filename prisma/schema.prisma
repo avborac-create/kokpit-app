@@ -618,6 +618,7 @@ model DavaDosyasi {
   uyapVekilleri          DosyaUyapVekili[]
   evraklar               CMKEvrak[]
   takvimOgeleri          TakvimOgesi[]
+  ihtarGonderimi         IhtarGonderimi?
 
   @@index([buroNo])
   @@index([durumId])
@@ -1864,4 +1865,27 @@ model IslemGunlugu {
 
   @@index([kullaniciId, durum, olusturmaTarihi])
   @@map("islem_gunlugu")
+}
+
+// Ihtar dosyasina ozgu gonderim bilgileri (noter / KEP). Dosya bilgisi formundan bagimsiz,
+// dosya sayfasindaki ayri panelde girilir; yalniz tur=ihtar_dosyasi olan dosyalarda gosterilir.
+model IhtarGonderimi {
+  id            String       @id @default(cuid())
+  dosyaId       String       @unique
+  dosya         DavaDosyasi  @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+  yol           String? // NOTER | KEP
+  noterlik      String?
+  yevmiyeNo     String?
+  kepAdresi     String?
+  kepGonderimNo String?
+  gonderimTarihi DateTime?
+  muhatap       String?
+  tebligDurumu  String? // BEKLIYOR | TEBLIG_EDILDI | IADE
+  tebligTarihi  DateTime?
+  cevapSuresiGun Int?
+  cevapGeldi    Boolean      @default(false)
+  not           String?
+  guncellemeTarihi DateTime  @updatedAt
+
+  @@map("ihtar_gonderimleri")
 }

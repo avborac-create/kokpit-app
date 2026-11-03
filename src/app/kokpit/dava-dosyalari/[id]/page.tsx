@@ -16,6 +16,7 @@ import { davaDegeriKalemlerden, davaDegeriYaz, ekstralariAyikla } from "@/module
 import { TalepKalemleriPaneli } from "@/modules/dava-dosyasi/components/talep-kalemleri-paneli";
 import { VekilPaneli } from "@/modules/dava-dosyasi/components/vekil-paneli";
 import { prisma } from "@/core/db/prisma";
+import { IhtarGonderimPaneli } from "@/modules/ihtar/components/ihtar-gonderim-paneli";
 import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
 import { DosyaBaglayici } from "@/modules/dava-dosyasi/components/dosya-baglayici";
 import { kokpitNoGoster, kayitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
@@ -111,6 +112,7 @@ export default async function DavaDosyasiDetaySayfasi({
     adliBirimleriListele(),
   ]);
   if (!dosya) notFound();
+  const ihtarGonderimi = dosya.tur?.kod === "ihtar_dosyasi" ? await prisma.ihtarGonderimi.findUnique({ where: { dosyaId: id } }) : null;
 
   // Dosya Evrakları sekmesi: baska avukatların "avukata özel" evrakları hiç çekilmez.
   let evrakKayitlari: EvrakKaydi[] = [];
@@ -560,6 +562,26 @@ export default async function DavaDosyasiDetaySayfasi({
             <div className="mb-6 max-w-5xl">
               <FormKarti baslik="Dava Değeri · Talep Kalemleri">
                 <TalepKalemleriPaneli dosyaId={id} maddeler={talepMaddeleri} baslangic={talepEkstralari} />
+              </FormKarti>
+            </div>
+          )}
+
+          {dosya.tur?.kod === "ihtar_dosyasi" && (
+            <div className="mb-6 max-w-5xl">
+              <FormKarti baslik="İhtar Gönderim Bilgileri">
+                <IhtarGonderimPaneli
+                  dosyaId={id}
+                  veri={
+                    ihtarGonderimi
+                      ? {
+                          ...ihtarGonderimi,
+                          gonderimTarihi: ihtarGonderimi.gonderimTarihi?.toISOString().slice(0, 10) ?? null,
+                          tebligTarihi: ihtarGonderimi.tebligTarihi?.toISOString().slice(0, 10) ?? null,
+                        }
+                      : null
+                  }
+                  karsiTaraflar={dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad)}
+                />
               </FormKarti>
             </div>
           )}
