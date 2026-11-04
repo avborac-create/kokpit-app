@@ -24,7 +24,7 @@ export function DavaDosyasiSekmeleri({ dosyaId, aktif, kimlik }: { dosyaId?: str
     <div className="flex w-full max-w-2xl gap-0.5" role="tablist" aria-label="Dosya bölümleri">
       {sekmeler.map((sekme) => {
         const aktifMi = sekme.anahtar === aktif;
-        const siniflar = `min-w-0 flex-1 truncate border-b-[3px] px-1 py-2.5 text-center text-xs font-bold uppercase tracking-wide sm:text-sm ${
+        const siniflar = `min-w-0 flex-1 truncate border-b-[3px] px-1 py-1.5 text-center text-xs font-bold uppercase tracking-wide sm:text-sm ${
           aktifMi
             ? "border-[#e7222e] bg-[var(--accent)] text-white"
             : "border-transparent bg-white/[0.07] text-white/70 hover:bg-white/[0.12] hover:text-white"

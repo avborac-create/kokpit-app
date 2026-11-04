@@ -405,7 +405,11 @@ export default async function DavaDosyasiDetaySayfasi({
       <KunyeSeridi id="dosya-kunye" className="mb-2 md:!static md:mb-3 md:!py-1.5 md:!shadow-none md:!backdrop-blur-none">
         <div className="relative flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
           <div className="min-w-[min(100%,22rem)] flex-1">
+            <div className="md:flex md:flex-wrap md:items-center md:gap-x-3 md:gap-y-1">
             <div className="flex flex-wrap items-center gap-1.5 max-md:pr-28">
+              <span className="hidden rounded-full border border-[var(--accent)]/40 bg-[var(--accent-soft)] px-2 py-0 text-[10px] font-semibold uppercase tracking-widest text-[#8fb4e8] md:inline">
+                Dosya Kartı
+              </span>
               <span
                 className="rounded-md bg-white/[0.08] px-2 py-0.5 font-mono text-xs font-semibold tracking-wide text-white"
                 title={dosya.anaDosya ? `Eski numarası: ${kayitNoGoster(dosya.kayitNo)}` : "Kokpit No"}
@@ -425,7 +429,7 @@ export default async function DavaDosyasiDetaySayfasi({
               </span>
             </div>
 
-            <h1 className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-lg font-semibold tracking-tight text-white sm:text-xl">
+            <h1 className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-lg font-semibold tracking-tight text-white sm:text-xl md:mt-0">
               {dosya.birimAdi || dosya.dosyaNo ? (
                 <>
                   {dosya.birimAdi && <span>{dosya.birimAdi}</span>}
@@ -439,12 +443,13 @@ export default async function DavaDosyasiDetaySayfasi({
                 <span>{dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}</span>
               )}
             </h1>
+            </div>
             {/* Davacı solda, davalı sağda: müvekkil davalıysa karşı taraf kutusu öne (sola), müvekkil kutusu arkaya (sağa) geçer. */}
-            <div className="mt-1.5 grid grid-cols-1 items-stretch gap-1.5 text-sm md:flex md:flex-wrap md:gap-2 [&_.tikon]:!h-6 [&_.tikon]:!w-6 [&_.tikon]:!text-xs [&_.tsatir]:!px-2.5 [&_.tsatir]:!py-1">
+            <div className="mt-1.5 grid grid-cols-1 items-stretch gap-1.5 text-sm md:mt-1 md:flex md:flex-wrap md:gap-1.5 [&_.tikon]:!h-6 [&_.tikon]:!w-6 [&_.tikon]:!text-xs [&_.tsatir]:!px-2.5 [&_.tsatir]:!py-1 md:[&_.tikon]:!hidden md:[&_.tsatir]:!px-2 md:[&_.tsatir]:!py-0.5 md:[&_.tsatir_.etiket-ust]:!mr-1.5 md:[&_.tsatir_.etiket-ust]:!inline">
               <div className={`tsatir ${muvekkilDavali ? "order-2" : "order-1"}`}>
                 <span className="tikon" aria-hidden>👤</span>
                 <div className="min-w-0 flex-1">
-                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">
+                  <span className="etiket-ust block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">
                     Müvekkil{dosya.muvekkilSifatiDegeri && !(dosya.muvekkilSifati === "BORCLU" && dosya.tur?.kod !== "icra_dosyasi") ? ` · ${dosya.muvekkilSifatiDegeri.etiket}` : ""}
                   </span>
                   <span className="break-words text-sm font-medium text-white sm:text-base">
@@ -455,7 +460,7 @@ export default async function DavaDosyasiDetaySayfasi({
               <div className={`tsatir ${muvekkilDavali ? "order-1" : "order-2"}`}>
                 <span className="tikon tikon-karsi" aria-hidden>⚖</span>
                 <div className="min-w-0 flex-1">
-                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">Karşı Taraf</span>
+                  <span className="etiket-ust block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">Karşı Taraf</span>
                   <span className="break-words text-sm font-medium text-white sm:text-base">
                     <NumaraliAdlar adlar={dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad)} />
                   </span>
@@ -465,7 +470,7 @@ export default async function DavaDosyasiDetaySayfasi({
                 <div className="tsatir tsatir-konu order-3">
                   <span className="tikon tikon-konu" aria-hidden>§</span>
                   <div className="min-w-0 flex-1">
-                    <span className="konu-etiket block text-[11px] font-semibold uppercase tracking-wider sm:text-xs">Konu</span>
+                    <span className="konu-etiket etiket-ust block text-[11px] font-semibold uppercase tracking-wider sm:text-xs">Konu</span>
                     <span className="break-words text-sm font-medium text-white sm:text-base">
                       {dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}
                     </span>
