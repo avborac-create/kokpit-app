@@ -6,6 +6,7 @@ import { IsDetayi } from "./[id]/is-detayi";
 import { isDetayiYukle } from "./detay-veri";
 import { donemBasi } from "./hafta";
 import { YanPanel } from "./yan-panel";
+import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
 
 export default async function IslerSayfasi({ searchParams }: { searchParams: Promise<{ kimin?: string; kisi?: string; is?: string }> }) {
   const { kimin, kisi, is: seciliId } = await searchParams;
@@ -21,6 +22,14 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
     prisma.gorevYargiTuru.findMany({ orderBy: [{ sira: "asc" }, { ad: "asc" }], select: { id: true, ad: true } }),
   ]);
   const ad = new Map(kisiler.map((x) => [x.id, x.adSoyad]));
+  // Serbest meslek makbuzu (SMM) kesme uyarilari: finans yetkilisi / yonetici hepsini, digerleri yalniz kendilerine atananlari gorur.
+  const hepsiniGorur = await ekonomiDuzenleyebilirMi();
+  const smmIsleri = await prisma.is.findMany({
+    where: { kaynak: { startsWith: "smm:" }, durum: { not: "TAMAMLANDI" }, ...(hepsiniGorur ? {} : { sorumluId: k?.kullaniciId ?? "-" }) },
+    orderBy: { olusturmaTarihi: "asc" },
+    select: { id: true, baslik: true, kaynak: true },
+  });
+  const smmUyarilari = smmIsleri.map((i) => ({ id: i.id, baslik: i.baslik.replace(/^SMM kesilecek:\s*/, ""), dosyaId: (i.kaynak ?? "").split(":")[1] ?? "" }));
   const bugun = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
   // Soldaki panelde secili kisi ("buro" ya da kisi id'si); yoksa kullanicinin kendisi.
   const secili = kisi && (kisi === "buro" || kisiler.some((x) => x.id === kisi)) ? kisi : kimin === "buro" ? "buro" : (k?.kullaniciId ?? "buro");
@@ -36,6 +45,7 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
         kisiler={kisiler}
         yargiTurleri={yargiTurleri}
         bugun={bugun}
+        smmUyarilari={smmUyarilari}
         seciliId={detay ? seciliId : undefined}
         isler={isler.map((i) => ({
           id: i.id,

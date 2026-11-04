@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, useTransition } from "react";
-import { durumDegistir, isEkle, operasyonYapildi } from "./actions";
+import { durumDegistir, isEkle, operasyonYapildi, smmKestim } from "./actions";
 import { DURUMLAR, durumBilgisi, zamanBaskisiBilgisi } from "./durum";
 import { periyotBilgisi } from "./hafta";
 
@@ -77,7 +77,48 @@ function Avatar({ ad }: { ad: string }) {
   );
 }
 
-export function IsListesi({ isler, kisiler, benimId, secili, bugun, seciliId }: { isler: Is[]; kisiler: { id: string; adSoyad: string }[]; yargiTurleri?: { id: string; ad: string }[]; benimId: string; secili: string; bugun: string; seciliId?: string }) {
+// Sol panelde: serbest meslek makbuzu kesilmesi beklenen vekalet ucreti girisleri. "SMM kestim" kutusu isaretlenince uyari kalkar.
+function SmmUyarilari({ uyarilar }: { uyarilar: { id: string; baslik: string; dosyaId: string }[] }) {
+  const router = useRouter();
+  const [bekliyor, basla] = useTransition();
+  const [hata, setHata] = useState("");
+  if (uyarilar.length === 0) return null;
+  return (
+    <section aria-label="SMM kesme uyarıları" className="rounded-2xl border border-[#ffb340]/40 bg-[#ffb340]/[0.08] p-2.5">
+      <h3 className="mb-2 flex items-center justify-between gap-2 px-1 text-[13px] font-semibold text-[#ffb340]">
+        <span>SMM kesme uyarıları</span>
+        <span className="rounded-full bg-[#ffb340]/25 px-2 text-xs">{uyarilar.length}</span>
+      </h3>
+      <ul className="flex max-h-[50vh] flex-col gap-1.5 overflow-y-auto">
+        {uyarilar.map((u) => (
+          <li key={u.id} className="rounded-lg bg-black/20 px-2.5 py-2 text-xs text-white/80">
+            <Link href={`/kokpit/dava-dosyalari/${u.dosyaId}?sekme=ekonomi`} className="block leading-snug hover:underline">
+              {u.baslik}
+            </Link>
+            <label className="mt-1.5 flex cursor-pointer items-center gap-2 font-medium text-white">
+              <input
+                type="checkbox"
+                disabled={bekliyor}
+                checked={false}
+                onChange={() =>
+                  basla(async () => {
+                    const s = await smmKestim(u.id);
+                    if (s.hata) setHata(s.hata);
+                    else router.refresh();
+                  })
+                }
+              />
+              SMM kestim
+            </label>
+          </li>
+        ))}
+      </ul>
+      {hata && <p className="mt-1 text-xs text-red-300">{hata}</p>}
+    </section>
+  );
+}
+
+export function IsListesi({ isler, kisiler, benimId, secili, bugun, seciliId, smmUyarilari = [] }: { smmUyarilari?: { id: string; baslik: string; dosyaId: string }[]; isler: Is[]; kisiler: { id: string; adSoyad: string }[]; yargiTurleri?: { id: string; ad: string }[]; benimId: string; secili: string; bugun: string; seciliId?: string }) {
   const yonlendirici = useRouter();
   const kayitliGorunum = useSyncExternalStore(gorunumAbone, gorunumOku, () => null);
   const gorunum: Gorunum = GORUNUMLER.some((g) => g.k === kayitliGorunum) ? (kayitliGorunum as Gorunum) : "liste";
@@ -195,7 +236,9 @@ export function IsListesi({ isler, kisiler, benimId, secili, bugun, seciliId }: 
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-start">
       {/* Telegram gibi sol panel: kisiler. Birine tiklayinca sagda onun gorevleri acilir, ona yazilan gorev ona atanir. */}
-      <nav aria-label="Kişiler" className="flex gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.04] p-2 md:sticky md:top-3 md:w-60 md:shrink-0 md:flex-col md:overflow-visible">
+      <div className="flex flex-col gap-3 md:sticky md:top-3 md:w-60 md:shrink-0">
+      <SmmUyarilari uyarilar={smmUyarilari} />
+      <nav aria-label="Kişiler" className="flex gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.04] p-2 md:flex-col md:overflow-visible">
         <Link href="/kokpit/isler?kisi=buro" className={kisiOgesi(tumBuro)}>
           <span className="min-w-0 flex-1 truncate">Tüm büro</span>
         </Link>
@@ -210,6 +253,7 @@ export function IsListesi({ isler, kisiler, benimId, secili, bugun, seciliId }: 
           );
         })}
       </nav>
+      </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">

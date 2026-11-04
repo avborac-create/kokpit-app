@@ -12,6 +12,16 @@ import { dosyaEtiketiYaz, kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-si
 import { MUVEKKILE_ODEME } from "@/modules/dava-dosyasi/lib/tasnif-sabitleri";
 import { eksiyeDusmeKontrolu, paraBakiyesi } from "@/modules/dava-dosyasi/lib/para-bakiye";
 import { cariGunlukle } from "@/core/gunluk/islem-gunlugu";
+import { smmGorevleriniGuncelle } from "@/modules/dava-dosyasi/lib/smm-gorevi";
+
+// Vekalet hesaplarina para girdiyse serbest meslek makbuzu gorevi acilir; gorev acilamazsa asil islem bozulmaz.
+async function smmKontrol(dosyaIdleri: string[]) {
+  try {
+    await smmGorevleriniGuncelle(dosyaIdleri);
+  } catch (hata) {
+    console.error("SMM gorevi acilamadi", hata);
+  }
+}
 
 function yenile() {
   revalidatePath("/kokpit", "layout");
@@ -122,6 +132,7 @@ async function odemeEkle_(musteriId: string, formData: FormData) {
       }
     }
   }
+  if (dosyaId) await smmKontrol([dosyaId]);
   yenile();
 }
 
@@ -248,6 +259,7 @@ async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: Fo
     });
     await borcYaz();
   });
+  await smmKontrol([dosyaId]);
   yenile();
 }
 
@@ -604,6 +616,7 @@ async function topluTasnif_(musteriId: string, kapsamDosyaId: string, formData: 
       });
     }
   });
+  await smmKontrol(kapsamDosyaId ? [kapsamDosyaId] : dosyalar);
   yenile();
 }
 
@@ -667,6 +680,7 @@ async function dosyalarArasiVirman_(musteriId: string, formData: FormData) {
       },
     });
   });
+  await smmKontrol([hedefDosyaId]);
   yenile();
 }
 

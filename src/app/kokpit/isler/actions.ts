@@ -67,6 +67,17 @@ async function durumDegistir_(isId: string, durum: string) {
   revalidatePath("/kokpit/isler");
 }
 
+// "SMM kestim" onay kutusu: serbest meslek makbuzu gorevi kapanir, uyari listeden kalkar.
+export async function smmKestim(isId: string): Promise<{ hata?: string }> {
+  const k = await girisli();
+  const is = await prisma.is.findUnique({ where: { id: isId }, select: { kaynak: true } });
+  if (!is?.kaynak?.startsWith("smm:")) return { hata: "Bu bir SMM görevi değil." };
+  await prisma.is.update({ where: { id: isId }, data: { durum: "TAMAMLANDI", tamamlanmaTarihi: new Date(), guncellemeTarihi: new Date() } });
+  await prisma.isYorumu.create({ data: { isId, yazanId: k.kullaniciId, metin: "Serbest meslek makbuzu kesildi (SMM kestim işaretlendi)." } });
+  revalidatePath("/kokpit/isler");
+  return {};
+}
+
 export async function sorumluDegistir(isId: string, sorumluId: string) {
   const k = await girisli();
   await prisma.is.update({ where: { id: isId }, data: { sorumluId: sorumluId || null, guncellemeTarihi: new Date() } });
