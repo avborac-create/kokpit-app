@@ -82,6 +82,21 @@ function PanelBasligi({ baslik, ipucu }: { baslik: string; ipucu: string }) {
   );
 }
 
+// Cari hesap bakiyesi tek kuralla gösterilir: EKSİ = müvekkil bize borçlu, ARTI = müvekkil bizden alacaklı.
+// (Para Trafiği ve adliyede tutulan hesaplarda kayıtlı bakiye zaten alacak − borçtur; diğerlerinde borç − alacak olduğundan ters çevrilir.)
+function isaretliBakiye(h: { bakiye: number; paraHesabiMi: boolean; tutulanHesapMi: boolean }) {
+  return Math.round((h.paraHesabiMi || h.tutulanHesapMi ? h.bakiye : -h.bakiye) * 100) / 100 + 0;
+}
+function bakiyeYaz(b: number) {
+  return (b > 0.001 ? "+" : "") + paraYaz.format(b);
+}
+function bakiyeRengi(b: number) {
+  return b < -0.001 ? "text-[#ff7a70]" : b > 0.001 ? "text-[#32d74b]" : "text-white/50";
+}
+function bakiyeAcikla(b: number) {
+  return b < -0.001 ? "Müvekkil bize borçlu" : b > 0.001 ? "Müvekkil bizden alacaklı" : "Bakiye yok";
+}
+
 function DurumSeridi({
   ozet,
   hrefYaz,
@@ -119,12 +134,8 @@ function DurumSeridi({
             <p className="text-xs text-white/50">
               {h.no} - {h.ad}
             </p>
-            <p className={`mt-0.5 text-base font-semibold ${h.bakiye > 0 ? "text-[#ff7a70]" : h.bakiye < 0 ? "text-[#32d74b]" : "text-white/50"}`}>
-              {paraYaz.format(Math.abs(h.bakiye))}
-            </p>
-            <p className="text-[11px] text-white/45">
-              {h.bakiye > 0 ? "Kalan: müvekkil bize borçlu" : h.bakiye < 0 ? "Müvekkil bizden alacaklı" : "Kalan borç yok"}
-            </p>
+            <p className={`mt-0.5 text-base font-semibold ${bakiyeRengi(isaretliBakiye(h))}`}>{bakiyeYaz(isaretliBakiye(h))}</p>
+            <p className="text-[11px] text-white/45">{bakiyeAcikla(isaretliBakiye(h))}</p>
             {h.borc > 0 && (
               <div className="mt-2 border-t border-white/10 pt-2 text-[11px] text-white/55">
                 <div className="mb-1.5 h-1 overflow-hidden rounded-full bg-white/10">
@@ -151,8 +162,8 @@ function DurumSeridi({
             <p className="text-xs text-white/50">
               {h.no} - {h.ad}
             </p>
-            <p className="mt-0.5 text-base font-semibold text-[#ffb340]">{paraYaz.format(h.bakiye)}</p>
-            <p className="text-[11px] text-white/45">Adliyede/üçüncü kişide tutulan</p>
+            <p className={`mt-0.5 text-base font-semibold ${bakiyeRengi(h.bakiye)}`}>{bakiyeYaz(h.bakiye)}</p>
+            <p className="text-[11px] text-white/45">{bakiyeAcikla(h.bakiye)}</p>
           </Link>
         ))}
         {para && (
@@ -163,8 +174,8 @@ function DurumSeridi({
             <p className="text-xs text-white/50">
               {para.no} - {para.ad}
             </p>
-            <p className="mt-0.5 text-base font-semibold text-[#6db8ff]">{paraYaz.format(ozet.paraBakiyesi)}</p>
-            <p className="text-[11px] text-white/45">Müvekkilin bizde bekleyen parası</p>
+            <p className={`mt-0.5 text-base font-semibold ${bakiyeRengi(ozet.paraBakiyesi)}`}>{bakiyeYaz(ozet.paraBakiyesi)}</p>
+            <p className="text-[11px] text-white/45">{bakiyeAcikla(ozet.paraBakiyesi)}</p>
           </Link>
         )}
       </div>
@@ -278,8 +289,7 @@ export async function EkonomiPaneli({
   const seritHesaplari = ozet.hesaplar.filter(
     (h) => !h.paraHesabiMi && !h.tutulanHesapMi && h.grup === "MUVEKKIL" && (h.borc !== 0 || h.alacak !== 0 || /akdi vekalet|harcama|avans/i.test(h.ad)),
   );
-  const seritEksikler = seritHesaplari.filter((h) => h.bakiye > 0.001);
-  const seritEksikToplam = seritEksikler.reduce((t, h) => t + h.bakiye, 0);
+  const seritNet = Math.round((seritHesaplari.reduce((t, h) => t + isaretliBakiye(h), 0) + ozet.paraBakiyesi) * 100) / 100 + 0;
   const seritOdenen = seritHesaplari.reduce((t, h) => t + h.alacak, 0);
 
   return (
@@ -345,13 +355,9 @@ export async function EkonomiPaneli({
 
       {/* Bakiye şeridi: her alt menüde görünür; "kim kime ne kadar borçlu" tek satırda. */}
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm">
-        {seritEksikler.length > 0 ? (
-          <span className="font-semibold text-[#ff7a70]">
-            ● {seritEksikler.length} eksik bakiye {para.format(seritEksikToplam)}
-          </span>
-        ) : (
-          <span className="font-semibold text-[#32d74b]">● Eksik bakiye yok</span>
-        )}
+        <span className={`font-semibold ${bakiyeRengi(seritNet)}`}>
+          ● Bakiye {bakiyeYaz(seritNet)} · {bakiyeAcikla(seritNet).toLocaleLowerCase("tr-TR")}
+        </span>
         <span className="text-white/55">
           ödenen <b className="font-medium tabular-nums text-white/85">{para.format(seritOdenen)}</b>
         </span>
@@ -539,61 +545,37 @@ async function OzetSekmesi({
   const ozetHesaplari = ozet.hesaplar.filter((h) => h.no < 200);
   const digerHesaplar = ozetHesaplari.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi);
   // Durum: hesaplardaki kalan borclar (muvekkilin bize borcu) ile para trafigindeki bekleyen para (bizde duran muvekkil parasi) karsilastirilir.
-  const bizeBorclu = digerHesaplar.filter((h) => h.bakiye > 0.001);
-  const lehineHesap = digerHesaplar.filter((h) => h.bakiye < -0.001);
-  const bizeBorcToplam = bizeBorclu.reduce((t, h) => t + h.bakiye, 0);
-  const lehineToplam = lehineHesap.reduce((t, h) => t - h.bakiye, 0) + ozet.paraBakiyesi;
-  const durumFarki = Math.round((bizeBorcToplam - lehineToplam) * 100) / 100;
+  const netBakiye = Math.round((digerHesaplar.reduce((t, h) => t + isaretliBakiye(h), 0) + ozet.paraBakiyesi) * 100) / 100 + 0;
+  const kutuHesaplari = [...digerHesaplar.filter((h) => Math.abs(h.bakiye) > 0.001 || /akdi vekalet|harcama|avans/i.test(h.ad))];
 
   return (
     <div>
       <details
         open
         className={`mb-4 rounded-2xl border px-4 py-3 ${
-          durumFarki > 0.001 ? "border-[#32d74b]/40 bg-[#32d74b]/[0.07]" : durumFarki < -0.001 ? "border-[#ffb340]/40 bg-[#ffb340]/[0.07]" : "border-white/10 bg-white/[0.03]"
+          netBakiye < -0.001 ? "border-[#ff7a70]/40 bg-[#ff7a70]/[0.07]" : netBakiye > 0.001 ? "border-[#32d74b]/40 bg-[#32d74b]/[0.07]" : "border-white/10 bg-white/[0.03]"
         }`}
       >
-        <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-white/50">Müvekkil özetine göre durum (gizle / göster)</summary>
-        <p className="mt-1 text-lg font-semibold text-white md:text-xl">
-          {durumFarki > 0.001 ? (
-            <>
-              Müvekkilden <span className="text-[#32d74b]">{para.format(durumFarki)}</span> alacaklıyız
-            </>
-          ) : durumFarki < -0.001 ? (
-            <>
-              Müvekkile <span className="text-[#ffb340]">{para.format(-durumFarki)}</span> borçluyuz
-            </>
-          ) : (
-            "Müvekkil ile aramızda borç / alacak yok"
-          )}
+        <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-white/50">Net bakiye (gizle / göster)</summary>
+        <p className={`mt-1 text-lg font-semibold md:text-xl ${bakiyeRengi(netBakiye)}`}>
+          {bakiyeYaz(netBakiye)} <span className="text-base font-medium text-white/80">· {bakiyeAcikla(netBakiye)}</span>
         </p>
-        <div className="mt-2 grid gap-x-6 gap-y-1 text-xs text-white/70 md:grid-cols-2 md:text-sm">
-          <div>
-            <p className="mb-0.5 text-white/45">Müvekkilin bize borcu: {para.format(bizeBorcToplam)}</p>
-            {bizeBorclu.length === 0 && <p className="text-white/40">— kalan borç yok</p>}
-            {bizeBorclu.map((h) => (
-              <p key={h.hesapId} className="flex justify-between gap-3">
-                <span>{h.no} - {h.ad}</span>
-                <span className="tabular-nums text-[#ff7a70]">{para.format(h.bakiye)}</span>
-              </p>
-            ))}
-          </div>
-          <div>
-            <p className="mb-0.5 text-white/45">Müvekkil lehine (bizdeki parası): {para.format(lehineToplam)}</p>
-            <p className="flex justify-between gap-3">
-              <span>Para Trafiği’nde bekleyen para</span>
-              <span className="tabular-nums text-[#32d74b]">{para.format(ozet.paraBakiyesi)}</span>
+        <div className="mt-2 grid gap-y-1 text-xs text-white/70 md:text-sm">
+          {kutuHesaplari.map((h) => (
+            <p key={h.hesapId} className="flex justify-between gap-3">
+              <span>{h.no} - {h.ad}</span>
+              <span className={`tabular-nums ${bakiyeRengi(isaretliBakiye(h))}`}>{bakiyeYaz(isaretliBakiye(h))}</span>
             </p>
-            {lehineHesap.map((h) => (
-              <p key={h.hesapId} className="flex justify-between gap-3">
-                <span>{h.no} - {h.ad} (fazla ödeme)</span>
-                <span className="tabular-nums text-[#32d74b]">{para.format(-h.bakiye)}</span>
-              </p>
-            ))}
-          </div>
+          ))}
+          <p className="flex justify-between gap-3">
+            <span>Para Trafiği</span>
+            <span className={`tabular-nums ${bakiyeRengi(ozet.paraBakiyesi)}`}>{bakiyeYaz(ozet.paraBakiyesi)}</span>
+          </p>
         </div>
       </details>
 
+      {!kapsam.dosyaId && (
+        <>
       {kirilim.length > 0 && (
         <div className="mb-6">
           <h3 className="mb-1 text-sm font-semibold text-white">Dosyaların kendi ekonomileri</h3>
@@ -623,8 +605,8 @@ async function OzetSekmesi({
                       <span className="tabular-nums text-[#32d74b]">{para.format(odenen)}</span>
                     </p>
                     <p className="flex justify-between gap-3 font-semibold text-white">
-                      <span>{kalan > 0.001 ? "Kalan (müvekkil bize borçlu)" : kalan < -0.001 ? "Fazla ödeme (müvekkil alacaklı)" : "Kalan"}</span>
-                      <span className={`tabular-nums ${bakiyeRenk(kalan)}`}>{para.format(Math.abs(kalan))}</span>
+                      <span>Bakiye · {bakiyeAcikla(-kalan).toLocaleLowerCase("tr-TR")}</span>
+                      <span className={`tabular-nums ${bakiyeRengi(-kalan)}`}>{bakiyeYaz(-kalan + 0)}</span>
                     </p>
                     {d.ozet.paraBakiyesi !== 0 && (
                       <p className="flex justify-between gap-3 text-white/60">
@@ -644,7 +626,7 @@ async function OzetSekmesi({
                       {satirlar.map((h) => (
                         <p key={h.hesapId} className="flex justify-between gap-3">
                           <span>{h.no} - {h.ad}</span>
-                          <span className="tabular-nums">{para.format(h.bakiye)}</span>
+                          <span className="tabular-nums">{bakiyeYaz(isaretliBakiye(h))}</span>
                         </p>
                       ))}
                     </div>
@@ -771,6 +753,8 @@ async function OzetSekmesi({
             hesaplar={ozet.hesaplar.map((h) => ({ id: h.hesapId, etiket: `${h.no} - ${h.ad}` }))}
           />
         </div>
+      )}
+        </>
       )}
     </div>
   );
