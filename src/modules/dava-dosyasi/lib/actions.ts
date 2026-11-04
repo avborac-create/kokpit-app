@@ -328,13 +328,15 @@ export async function davaDosyasiOlustur(
     },
   });
 
-  // "Alt dosya oluştur" ile açıldıysa ana dosyaya bağlanır (KN-x/n). Bağlanamazsa dosya yine de oluşmuş olur.
-  const anaDosyaId = metinYaAlNull(formData, "anaDosyaId");
-  if (anaDosyaId) {
+  // "Bağlı dosya oluştur" ile açıldıysa seçilen role göre (alt / üst / yalnız bağlı) bağlanır.
+  // Bağlanamazsa (ör. o arada başka biri dosyayı alt yaptıysa) dosya yine de oluşmuş olur.
+  const bagliDosyaId = metinYaAlNull(formData, "bagliDosyaId");
+  const rol = metinYaAlNull(formData, "baglantiRolu");
+  if (bagliDosyaId && (rol === "ALT" || rol === "ANA" || rol === "BILMIYORUM")) {
     try {
-      await anaDosyaBagla(dosya.id, anaDosyaId);
+      await dosyalariBagla(dosya.id, bagliDosyaId, rol);
     } catch {
-      // ana dosya artık alt dosya olmuş / silinmiş olabilir; dosya bağsız kalır, "Dosyaları bağla" ile sonra bağlanır
+      // dosya bağsız kalır; Dosya Ağacı > "Mevcut dosyayı bağla" ile sonra bağlanabilir
     }
   }
 

@@ -6,33 +6,37 @@ import { DavaDosyasiFormu } from "@/modules/dava-dosyasi/components/dava-dosyasi
 export default async function YeniDavaDosyasiSayfasi({
   searchParams,
 }: {
-  searchParams: Promise<{ musteriId?: string; anaDosyaId?: string }>;
+  searchParams: Promise<{ musteriId?: string; bagliDosyaId?: string }>;
 }) {
-  const { musteriId, anaDosyaId } = await searchParams;
+  const { musteriId, bagliDosyaId } = await searchParams;
 
-  // Alt dosya: ana dosyanin müvekkil ve karşı tarafı önceden gelir. Alt dosyanın altına alt dosya açılamaz.
-  const ana = anaDosyaId
+  // Bağlı dosya: bağlanılacak dosyanın müvekkil ve karşı tarafı önceden gelir.
+  const ana = bagliDosyaId
     ? await prisma.davaDosyasi.findUnique({
-        where: { id: anaDosyaId },
+        where: { id: bagliDosyaId },
         select: {
           id: true,
           kayitNo: true,
           anaDosyaId: true,
+          _count: { select: { altDosyalar: true } },
           konu: true,
           muvekkiller: { select: { musteriId: true } },
           karsiTaraflar: { select: { karsiTarafId: true, karsiTaraf: { select: { ad: true, tanimlayiciKod: true, detsisNo: true } } } },
         },
       })
     : null;
-  const anaDosyaOn =
-    ana && !ana.anaDosyaId
-      ? {
+  const anaDosyaOn = ana
+    ? {
+          // Yeni dosya, bağlanılan dosyanın ALTI olabilir (o dosya başka bir dosyanın altında değilse);
+          // ÜSTÜ (ana) olabilir (o dosyanın ne üstü ne de alt dosyası varsa); "yalnız bağlı" her zaman olur.
+          altOlabilir: !ana.anaDosyaId,
+          ustOlabilir: !ana.anaDosyaId && ana._count.altDosyalar === 0,
           id: ana.id,
           etiket: `${kokpitNoGoster({ kayitNo: ana.kayitNo })}${ana.konu ? ` · ${ana.konu}` : ""}`,
           musteriIdleri: ana.muvekkiller.map((m) => m.musteriId),
           karsiTaraflar: ana.karsiTaraflar.map((k) => ({ id: k.karsiTarafId, ad: k.karsiTaraf.ad, tc: k.karsiTaraf.tanimlayiciKod, detsis: k.karsiTaraf.detsisNo })),
         }
-      : undefined;
+    : undefined;
 
   return (
     <div className="pt-3">

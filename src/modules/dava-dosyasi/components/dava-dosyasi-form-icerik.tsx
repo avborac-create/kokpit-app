@@ -77,7 +77,7 @@ export function DavaDosyasiFormIcerik({
   action: (oncekiDurum: DavaDosyasiSonucu, formData: FormData) => Promise<DavaDosyasiSonucu>;
   gonderButonuMetni: string;
   dosyaId?: string;
-  anaDosyaBilgisi?: { id: string; etiket: string };
+  anaDosyaBilgisi?: { id: string; etiket: string; altOlabilir: boolean; ustOlabilir: boolean };
   musteriler: { id: string; adSoyadUnvan: string }[];
   seciliIdler: string[];
   hukukDallari: { id: string; etiket: string }[];
@@ -287,12 +287,31 @@ export function DavaDosyasiFormIcerik({
       }}
     >
       {anaDosyaBilgisi && (
-        <>
-          <input type="hidden" name="anaDosyaId" value={anaDosyaBilgisi.id} />
-          <p className="mb-4 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent-soft)] px-3 py-2 text-sm text-white/90">
-            Bu dosya <b>{anaDosyaBilgisi.etiket}</b> dosyasının alt dosyası olarak açılıyor; kaydedince Kokpit numarası KN-x/1, /2… şeklinde otomatik verilir. Müvekkil ve karşı taraf ana dosyadan geldi, değiştirebilirsiniz.
+        <fieldset className="mb-4 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent-soft)] px-3 py-2.5 text-sm text-white/90">
+          <input type="hidden" name="bagliDosyaId" value={anaDosyaBilgisi.id} />
+          <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-white/70">Bağlı dosya</legend>
+          <p className="mb-2">
+            Bu dosya <b>{anaDosyaBilgisi.etiket}</b> dosyasına bağlı olarak açılıyor. Müvekkil ve karşı taraf o dosyadan geldi, değiştirebilirsiniz. Yeni dosya, o dosyanın:
           </p>
-        </>
+          <div className="flex flex-col gap-1.5">
+            {anaDosyaBilgisi.altOlabilir && (
+              <label className="flex items-start gap-2">
+                <input type="radio" name="baglantiRolu" value="ALT" defaultChecked className="mt-1" />
+                <span><b>Alt dosyası</b> olsun (Kokpit numarası KN-x/1, /2… şeklinde verilir)</span>
+              </label>
+            )}
+            {anaDosyaBilgisi.ustOlabilir && (
+              <label className="flex items-start gap-2">
+                <input type="radio" name="baglantiRolu" value="ANA" defaultChecked={!anaDosyaBilgisi.altOlabilir} className="mt-1" />
+                <span><b>Üst (ana) dosyası</b> olsun (mevcut dosya bunun altına girer, numarası KN-yeni/1 görünür)</span>
+              </label>
+            )}
+            <label className="flex items-start gap-2">
+              <input type="radio" name="baglantiRolu" value="BILMIYORUM" defaultChecked={!anaDosyaBilgisi.altOlabilir && !anaDosyaBilgisi.ustOlabilir} className="mt-1" />
+              <span><b>Yalnız bağlı</b> olsun (alt / üst sonra belirlenir)</span>
+            </label>
+          </div>
+        </fieldset>
       )}
       {taslak && !durum && (
         <p className="mb-4 rounded-xl border border-[#32d74b]/30 bg-[#32d74b]/10 px-3 py-2 text-sm text-[#9be8a8]">

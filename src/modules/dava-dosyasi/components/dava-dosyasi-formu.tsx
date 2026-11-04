@@ -18,7 +18,7 @@ type Props = {
   gonderButonuMetni: string;
   onSecilenMusteriId?: string;
   // Alt dosya olarak aciliyorsa ana dosyanin bilgileri (bkz. yeni/page.tsx).
-  anaDosyaOn?: { id: string; etiket: string; musteriIdleri: string[]; karsiTaraflar: { id: string; ad: string; tc?: string | null; detsis?: string | null }[] };
+  anaDosyaOn?: { id: string; etiket: string; altOlabilir: boolean; ustOlabilir: boolean; musteriIdleri: string[]; karsiTaraflar: { id: string; ad: string; tc?: string | null; detsis?: string | null }[] };
 };
 
 export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSecilenMusteriId, anaDosyaOn }: Props) {
@@ -62,7 +62,7 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
       dosya={dosya}
       dosyaId={dosya?.id}
       baslangicKarsiTaraflar={dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad, tc: kt.karsiTaraf.tanimlayiciKod, detsis: kt.karsiTaraf.detsisNo })) ?? anaDosyaOn?.karsiTaraflar ?? []}
-      anaDosyaBilgisi={anaDosyaOn ? { id: anaDosyaOn.id, etiket: anaDosyaOn.etiket } : undefined}
+      anaDosyaBilgisi={anaDosyaOn ? { id: anaDosyaOn.id, etiket: anaDosyaOn.etiket, altOlabilir: anaDosyaOn.altOlabilir, ustOlabilir: anaDosyaOn.ustOlabilir } : undefined}
       alanSirasi={alanSirasi}
       etiketler={etiketler}
       birimler={birimler}

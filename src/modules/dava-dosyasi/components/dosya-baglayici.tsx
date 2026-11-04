@@ -90,14 +90,12 @@ export function DosyaBaglayici({
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2">
-            {/* Alt dosya, ana dosyanin müvekkil ve karşı tarafıyla önceden doldurulmuş yeni dosya formunu açar; kaydedince KN-x/1, /2... olarak bağlanır. */}
-            {!mevcutAnaDosyaId && (
-              <Link href={`/kokpit/dava-dosyalari/yeni?anaDosyaId=${dosyaId}`}>
-                <Dugme type="button" boyut="kompakt">
-                  + Alt dosya oluştur
-                </Dugme>
-              </Link>
-            )}
+            {/* Bu dosyaya bağlı yeni dosya: müvekkil ve karşı taraf önceden dolu gelir; formda alt / üst / yalnız bağlı seçilir. */}
+            <Link href={`/kokpit/dava-dosyalari/yeni?bagliDosyaId=${dosyaId}`}>
+              <Dugme type="button" boyut="kompakt">
+                + Bağlı dosya oluştur
+              </Dugme>
+            </Link>
             <Dugme type="button" varyant="ikincil" boyut="kompakt" onClick={() => setAdim("sec")}>
               Mevcut dosyayı bağla
             </Dugme>
