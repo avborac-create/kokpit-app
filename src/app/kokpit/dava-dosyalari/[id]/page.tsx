@@ -514,7 +514,7 @@ export default async function DavaDosyasiDetaySayfasi({
       {aktifSekme === "evrak" ? (
         <EvrakPaneli dosyaId={id} evraklar={evrakKayitlari} hedef="dava" />
       ) : aktifSekme === "gorevler" ? (
-        <div className="glass max-w-5xl rounded-2xl p-5">
+        <div className="glass max-w-3xl rounded-2xl p-5">
           <div className="mb-1 flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold text-white">Dosya Görevleri</h2>
             <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] text-white/60">Prototip</span>
@@ -549,7 +549,7 @@ export default async function DavaDosyasiDetaySayfasi({
         </div>
       ) : aktifSekme === "genel" ? (
         <>
-          <div className="mb-6 max-w-5xl">
+          <div className="mb-6 max-w-3xl">
             <DuzenlenebilirKart
               duz
               etiketOnEki="dosya-detay.kunye"
@@ -572,7 +572,7 @@ export default async function DavaDosyasiDetaySayfasi({
           </div>
 
           {talepMaddeleri.length > 0 && (
-            <div className="mb-6 max-w-5xl">
+            <div className="mb-6 max-w-3xl">
               <FormKarti baslik="Dava Değeri · Talep Kalemleri">
                 <TalepKalemleriPaneli dosyaId={id} maddeler={talepMaddeleri} baslangic={talepEkstralari} />
               </FormKarti>
@@ -580,7 +580,7 @@ export default async function DavaDosyasiDetaySayfasi({
           )}
 
           {dosya.tur?.kod === "ihtar_dosyasi" && (
-            <div className="mb-6 max-w-5xl">
+            <div className="mb-6 max-w-3xl">
               <FormKarti baslik="İhtar Gönderim Bilgileri">
                 <IhtarGonderimPaneli
                   dosyaId={id}
@@ -599,7 +599,7 @@ export default async function DavaDosyasiDetaySayfasi({
             </div>
           )}
 
-          <div className="mb-6 max-w-5xl">
+          <div className="mb-6 max-w-3xl">
             <FormKarti baslik="Vekil Bilgileri">
               <VekilPaneli
                 dosyaId={id}
@@ -616,7 +616,7 @@ export default async function DavaDosyasiDetaySayfasi({
             </FormKarti>
           </div>
 
-          <div className="mb-8 max-w-5xl">
+          <div className="mb-8 max-w-3xl">
             <DuzenlenebilirKart
               etiketOnEki="dosya-detay.dosya-agaci"
               varsayilanBaslik="Dosya Ağacı"

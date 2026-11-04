@@ -65,6 +65,7 @@ export function DavaDosyasiFormIcerik({
   yargiKollari,
   dosya,
   dosyaId,
+  anaDosyaBilgisi,
   baslangicKarsiTaraflar,
   alanSirasi,
   etiketler,
@@ -76,6 +77,7 @@ export function DavaDosyasiFormIcerik({
   action: (oncekiDurum: DavaDosyasiSonucu, formData: FormData) => Promise<DavaDosyasiSonucu>;
   gonderButonuMetni: string;
   dosyaId?: string;
+  anaDosyaBilgisi?: { id: string; etiket: string };
   musteriler: { id: string; adSoyadUnvan: string }[];
   seciliIdler: string[];
   hukukDallari: { id: string; etiket: string }[];
@@ -103,7 +105,7 @@ export function DavaDosyasiFormIcerik({
   // Normal bir gezinmeden sonra acilan form bos baslar. Gonderimde taslak silinir.
   const formRef = useRef<HTMLFormElement>(null);
   const [taslak, setTaslak] = useState<[string, string][] | null>(null);
-  const taslakAnahtari = `kokpit_form_taslagi:${dosyaId ?? "yeni"}`;
+  const taslakAnahtari = `kokpit_form_taslagi:${dosyaId ?? (anaDosyaBilgisi ? `yeni-alt-${anaDosyaBilgisi.id}` : "yeni")}`;
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
@@ -284,6 +286,14 @@ export function DavaDosyasiFormIcerik({
         } catch {}
       }}
     >
+      {anaDosyaBilgisi && (
+        <>
+          <input type="hidden" name="anaDosyaId" value={anaDosyaBilgisi.id} />
+          <p className="mb-4 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent-soft)] px-3 py-2 text-sm text-white/90">
+            Bu dosya <b>{anaDosyaBilgisi.etiket}</b> dosyasının alt dosyası olarak açılıyor; kaydedince Kokpit numarası KN-x/1, /2… şeklinde otomatik verilir. Müvekkil ve karşı taraf ana dosyadan geldi, değiştirebilirsiniz.
+          </p>
+        </>
+      )}
       {taslak && !durum && (
         <p className="mb-4 rounded-xl border border-[#32d74b]/30 bg-[#32d74b]/10 px-3 py-2 text-sm text-[#9be8a8]">
           Sayfa yenilendi; yazdıklarınız korundu ve geri yüklendi.

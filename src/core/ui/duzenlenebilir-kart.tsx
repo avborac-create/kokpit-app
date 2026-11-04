@@ -130,7 +130,7 @@ export function DuzenlenebilirKart({
       {duz && !duzenleniyor ? (
         <div className="glass divide-y divide-white/[0.08] overflow-hidden rounded-2xl">
           {alanlar.map((a) => (
-            <div key={a.anahtar} className="flex items-start justify-between gap-4 px-4 py-3 text-[15px]">
+            <div key={a.anahtar} className="flex items-start justify-between gap-4 px-3.5 py-2 text-sm">
               <span className="shrink-0 pt-px text-white/65">{gecerliEtiket(a)}</span>
               <div className="min-w-0 max-w-[65%] break-words text-right font-medium text-white">{a.gosterim}</div>
             </div>

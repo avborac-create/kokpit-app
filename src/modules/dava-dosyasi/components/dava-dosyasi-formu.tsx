@@ -17,9 +17,11 @@ type Props = {
   dosya?: DosyaDetay;
   gonderButonuMetni: string;
   onSecilenMusteriId?: string;
+  // Alt dosya olarak aciliyorsa ana dosyanin bilgileri (bkz. yeni/page.tsx).
+  anaDosyaOn?: { id: string; etiket: string; musteriIdleri: string[]; karsiTaraflar: { id: string; ad: string; tc?: string | null; detsis?: string | null }[] };
 };
 
-export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSecilenMusteriId }: Props) {
+export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSecilenMusteriId, anaDosyaOn }: Props) {
   const [kullanici, hukukDallari, hukukiIliskiTurleri, muvekkilSifatlari, davaTurleri, dosyaTurleri, yargiKollari, musteriler, alanDuzeni, etiketler, birimler] = await Promise.all([
     mevcutKullanici(),
     secenekleriGetir("hukuk_dali"),
@@ -35,7 +37,7 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
   ]);
 
   const seciliIdler =
-    dosya?.muvekkiller.map((m) => m.musteriId) ?? (onSecilenMusteriId ? [onSecilenMusteriId] : []);
+    dosya?.muvekkiller.map((m) => m.musteriId) ?? anaDosyaOn?.musteriIdleri ?? (onSecilenMusteriId ? [onSecilenMusteriId] : []);
   const gizliAlanlar = new Set(alanDuzeni.filter((o) => o.gizliMi).map((o) => o.alanAnahtari));
   const kayitliAlanlar = alanDuzeni.map((o) => o.alanAnahtari).filter((a) => a in DAVA_DOSYASI_ALAN_ETIKETLERI);
   // Sonradan eklenen alanlar (ör. Büro No) seed koşana kadar DB'de satır
@@ -59,7 +61,8 @@ export async function DavaDosyasiFormu({ action, dosya, gonderButonuMetni, onSec
       yargiKollari={yargiKollari.map((y) => ({ id: y.id, etiket: y.etiket, kod: y.kod }))}
       dosya={dosya}
       dosyaId={dosya?.id}
-      baslangicKarsiTaraflar={dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad, tc: kt.karsiTaraf.tanimlayiciKod, detsis: kt.karsiTaraf.detsisNo })) ?? []}
+      baslangicKarsiTaraflar={dosya?.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad, tc: kt.karsiTaraf.tanimlayiciKod, detsis: kt.karsiTaraf.detsisNo })) ?? anaDosyaOn?.karsiTaraflar ?? []}
+      anaDosyaBilgisi={anaDosyaOn ? { id: anaDosyaOn.id, etiket: anaDosyaOn.etiket } : undefined}
       alanSirasi={alanSirasi}
       etiketler={etiketler}
       birimler={birimler}

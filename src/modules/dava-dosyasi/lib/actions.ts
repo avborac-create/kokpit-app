@@ -328,6 +328,16 @@ export async function davaDosyasiOlustur(
     },
   });
 
+  // "Alt dosya oluştur" ile açıldıysa ana dosyaya bağlanır (KN-x/n). Bağlanamazsa dosya yine de oluşmuş olur.
+  const anaDosyaId = metinYaAlNull(formData, "anaDosyaId");
+  if (anaDosyaId) {
+    try {
+      await anaDosyaBagla(dosya.id, anaDosyaId);
+    } catch {
+      // ana dosya artık alt dosya olmuş / silinmiş olabilir; dosya bağsız kalır, "Dosyaları bağla" ile sonra bağlanır
+    }
+  }
+
   revalidatePath("/kokpit/dava-dosyalari");
   redirect(`/kokpit/dava-dosyalari/${dosya.id}`);
 }

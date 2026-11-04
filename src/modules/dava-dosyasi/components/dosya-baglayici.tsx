@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { dosyaBaglantisiniKaldir, dosyalariBagla, anaDosyaBagla } from "@/modules/dava-dosyasi/lib/actions";
 import type { AnaDosyaAdayi } from "@/modules/dava-dosyasi/lib/queries";
 import { kayitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
@@ -89,8 +90,16 @@ export function DosyaBaglayici({
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2">
-            <Dugme type="button" boyut="kompakt" onClick={() => setAdim("sec")}>
-              Dosyaları bağla
+            {/* Alt dosya, ana dosyanin müvekkil ve karşı tarafıyla önceden doldurulmuş yeni dosya formunu açar; kaydedince KN-x/1, /2... olarak bağlanır. */}
+            {!mevcutAnaDosyaId && (
+              <Link href={`/kokpit/dava-dosyalari/yeni?anaDosyaId=${dosyaId}`}>
+                <Dugme type="button" boyut="kompakt">
+                  + Alt dosya oluştur
+                </Dugme>
+              </Link>
+            )}
+            <Dugme type="button" varyant="ikincil" boyut="kompakt" onClick={() => setAdim("sec")}>
+              Mevcut dosyayı bağla
             </Dugme>
             {mevcutAnaDosyaId && (
               <Dugme

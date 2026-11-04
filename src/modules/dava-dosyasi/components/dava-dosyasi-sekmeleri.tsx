@@ -18,7 +18,7 @@ export function DavaDosyasiSekmeleri({ dosyaId, aktif }: { dosyaId?: string; akt
   ];
 
   return (
-    <div className="mb-5 flex gap-0.5" role="tablist" aria-label="Dosya bölümleri">
+    <div className="mb-5 flex max-w-xl gap-0.5" role="tablist" aria-label="Dosya bölümleri">
       {sekmeler.map((sekme) => {
         const aktifMi = sekme.anahtar === aktif;
         const siniflar = `min-w-0 flex-1 truncate border-b-[3px] px-1 py-2.5 text-center text-xs font-bold uppercase tracking-wide sm:text-sm ${
