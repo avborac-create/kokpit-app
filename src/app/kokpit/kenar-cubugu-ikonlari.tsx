@@ -141,6 +141,17 @@ export function FinansIkonu(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+// Avukat: adalet terazisi.
+export function AvukatIkonu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Taban {...props}>
+      <path d="M10 3v13M6.5 16.5h7" />
+      <path d="M4 6h12" />
+      <path d="M4 6l-2 5a2.2 2.2 0 004 0L4 6zM16 6l-2 5a2.2 2.2 0 004 0l-2-5z" />
+    </Taban>
+  );
+}
+
 export function MuvekkilFinansIkonu(props: SVGProps<SVGSVGElement>) {
   return (
     <Taban {...props}>

@@ -620,6 +620,7 @@ model DavaDosyasi {
   paraTrafigiDagitimlari ParaTrafigiDagitimi[]
   finansHareketleri      MusteriFinansHareketi[]
   hukukiMudahaleler      HukukiMudahale[]
+  dilekceler             Dilekce[]
   hacizRaporlari         HacizRaporu[]
   adliBirimHareketleri   AdliBirimHareketi[]
   gidenAvansAktarimlari  DosyaAvansAktarimi[]    @relation("AvansAktarimiKaynak")
@@ -1929,4 +1930,30 @@ model HesapOzetiKaydi {
 
   @@index([musteriId])
   @@map("hesap_ozeti_kayitlari")
+}
+
+// Avukat modulu > Dilekce Yonetimi. Dilekce bir "is" degil, dosyaya bagli hukuki bir BELGEDIR
+// (taslak -> gonderildi; UYAP evrak no, gonderim yolu, sonraki adim tarihi). Hazirlama/isleme
+// emri ise Gorevler modulundeki bir Is ile verilir (isId; Is.kaynak = "dilekce:<id>").
+model Dilekce {
+  id               String      @id @default(cuid())
+  davaDosyasiId    String
+  davaDosyasi      DavaDosyasi @relation(fields: [davaDosyasiId], references: [id], onDelete: Cascade)
+  tur              String
+  baslik           String
+  durum            String      @default("TASLAK") // TASLAK | GONDERILDI
+  gonderimTarihi   DateTime?   @db.Date
+  gonderimYolu     String?
+  uyapEvrakNo      String?
+  sonrakiAdimVade  DateTime?   @db.Date
+  notlar           String?
+  isId             String?
+  olusturanId      String?
+  olusturmaTarihi  DateTime    @default(now())
+  guncellemeTarihi DateTime    @default(now())
+
+  @@index([davaDosyasiId])
+  @@index([durum])
+  @@index([isId])
+  @@map("dilekceler")
 }

@@ -5,6 +5,7 @@ import { mevcutKullanici } from "./mevcut-kullanici";
 // (Ayarlar/Oneriler guvenlik geregi bilerek burada yok.)
 export const IZIN_VERILEBILIR_MODULLER: { anahtar: string; ad: string }[] = [
   { anahtar: "finans", ad: "Finans" },
+  { anahtar: "avukat", ad: "Avukat" },
 ];
 
 export async function kullaniciModulIzinleri(kullaniciId: string): Promise<string[]> {
