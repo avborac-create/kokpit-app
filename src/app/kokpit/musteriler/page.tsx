@@ -2,7 +2,7 @@ import Link from "next/link";
 import { musterileriListele, avukatlariListele } from "@/modules/musteri/lib/queries";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { Dugme } from "@/core/ui/button";
-import { Girdi, Secim } from "@/core/ui/form";
+import { MusteriFiltre } from "./musteri-filtre";
 
 export default async function MusterilerSayfasi({
   searchParams,
@@ -29,34 +29,13 @@ export default async function MusterilerSayfasi({
         </Link>
       </div>
 
-      <form className="mb-6 flex flex-wrap gap-3" method="get">
-        <Girdi
-          type="search"
-          name="arama"
-          placeholder="Ad, soyad, unvan ara…"
-          defaultValue={params.arama}
-          className="max-w-xs"
-        />
-        <Secim name="durum" defaultValue={params.durum ?? ""} className="max-w-[10rem]">
-          <option value="">Tüm durumlar</option>
-          {durumlar.map((durum) => (
-            <option key={durum.id} value={durum.kod}>
-              {durum.etiket}
-            </option>
-          ))}
-        </Secim>
-        <Secim name="avukat" defaultValue={params.avukat ?? ""} className="max-w-[12rem]">
-          <option value="">Tüm sorumlu avukatlar</option>
-          {avukatlar.map((avukat) => (
-            <option key={avukat.id} value={avukat.id}>
-              {avukat.adSoyad}
-            </option>
-          ))}
-        </Secim>
-        <Dugme type="submit" varyant="ikincil">
-          Filtrele
-        </Dugme>
-      </form>
+      <MusteriFiltre
+        arama={params.arama ?? ""}
+        durum={params.durum ?? ""}
+        avukat={params.avukat ?? ""}
+        durumlar={durumlar.map((d) => ({ id: d.id, kod: d.kod, etiket: d.etiket }))}
+        avukatlar={avukatlar.map((a) => ({ id: a.id, adSoyad: a.adSoyad }))}
+      />
 
       <div className="glass overflow-x-auto rounded-2xl">
         <table className="w-full whitespace-nowrap text-left text-sm">
