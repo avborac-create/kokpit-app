@@ -404,7 +404,7 @@ export default async function DavaDosyasiDetaySayfasi({
       </MobilSabitBaslik>
       <KunyeSeridi id="dosya-kunye" className="mb-4 md:mb-6">
         <div className="relative flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-[min(100%,22rem)] flex-1">
             <div className="flex flex-wrap items-center gap-1.5 max-md:pr-28">
               <span
                 className="rounded-md bg-white/[0.08] px-2 py-0.5 font-mono text-xs font-semibold tracking-wide text-white"
@@ -475,7 +475,7 @@ export default async function DavaDosyasiDetaySayfasi({
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-2 max-md:contents">
+          <div className="flex max-w-full flex-col items-end gap-2 max-md:contents">
             <div className="flex gap-2 max-md:absolute max-md:right-0 max-md:top-0">
               <Link href={`/kokpit/dava-dosyalari/${id}/duzenle`}>
                 <Dugme varyant="ikincil" className="!px-3 !py-1 !text-xs md:!px-4 md:!py-2 md:!text-sm">Düzenle</Dugme>
@@ -489,7 +489,7 @@ export default async function DavaDosyasiDetaySayfasi({
                 <span
                   key={e.hesapId}
                   title={e.artiMi ? "Müvekkil adına dosyada duran para: dosya için kullanılabilir, başka hesaba virman yapılabilir ya da müvekkile iade edilir." : "Müvekkilden istenmesi gereken tutar."}
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  className={`max-w-full whitespace-normal rounded-2xl px-2.5 py-0.5 text-xs font-medium ${
                     e.artiMi ? "bg-[#32d74b]/15 text-[#32d74b]" : "bg-[#ff7a70]/15 text-[#ff7a70]"
                   }`}
                 >
