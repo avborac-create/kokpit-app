@@ -669,3 +669,21 @@ select.alan-bmw {
    koyu yazi kullanilir. Yari saydam tonlar (.../25 gibi) etkilenmez. */
 html[data-palet="grafit"][data-tema="koyu"] [class*="bg-[var(--accent)]"]:not([class*="bg-[var(--accent)]/"]) { color: #0a1a26 !important; text-shadow: none; }
 html[data-palet="grafit"][data-tema="koyu"] [class*="bg-[var(--accent)]"]:not([class*="bg-[var(--accent)]/"]):hover { background-color: color-mix(in srgb, var(--accent) 82%, white) !important; }
+
+/* DOSYA KARTI KUNYESI (masaustu): taraflar kutu degil, tek satirlik etiket-deger seridi. */
+@media (min-width: 768px) {
+  html .kunye-duz { gap: 0.25rem 0 !important; align-items: baseline; }
+  html .kunye-duz .tsatir,
+  html[data-palet] .kunye-duz .tsatir {
+    background: none !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+    padding: 0 !important; transform: none !important;
+  }
+  html .kunye-duz .tsatir + .tsatir::before { content: "·"; margin: 0 0.6rem; opacity: 0.4; }
+  html .kunye-duz .tsatir { display: inline-flex; align-items: baseline; }
+  html .kunye-duz .tsatir > div { display: inline; }
+  html .kunye-duz .etiket-ust {
+    font-size: 0.7rem !important; font-weight: 500 !important; text-transform: none !important; letter-spacing: 0 !important;
+    color: rgb(255 255 255 / 0.5) !important;
+  }
+  html .kunye-duz .tsatir span.break-words { font-size: 0.875rem !important; font-weight: 500 !important; }
+}

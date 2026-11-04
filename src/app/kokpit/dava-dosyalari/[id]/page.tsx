@@ -10,6 +10,7 @@ import { EkonomiPaneli } from "@/modules/dava-dosyasi/components/ekonomi/ekonomi
 import { kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { DavaDosyasiSekmeleri } from "@/modules/dava-dosyasi/components/dava-dosyasi-sekmeleri";
+import { BakiyeUyariOzeti } from "@/modules/dava-dosyasi/components/bakiye-uyari-ozeti";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
@@ -445,7 +446,7 @@ export default async function DavaDosyasiDetaySayfasi({
             </h1>
             </div>
             {/* Davacı solda, davalı sağda: müvekkil davalıysa karşı taraf kutusu öne (sola), müvekkil kutusu arkaya (sağa) geçer. */}
-            <div className="mt-1.5 grid grid-cols-1 items-stretch gap-1.5 text-sm md:mt-1 md:flex md:flex-wrap md:gap-1.5 [&_.tikon]:!h-6 [&_.tikon]:!w-6 [&_.tikon]:!text-xs [&_.tsatir]:!px-2.5 [&_.tsatir]:!py-1 md:[&_.tikon]:!hidden md:[&_.tsatir]:!px-2 md:[&_.tsatir]:!py-0.5 md:[&_.tsatir_.etiket-ust]:!mr-1.5 md:[&_.tsatir_.etiket-ust]:!inline">
+            <div className="kunye-duz mt-1.5 grid grid-cols-1 items-stretch gap-1.5 text-sm md:mt-1 md:flex md:flex-wrap md:gap-1.5 [&_.tikon]:!h-6 [&_.tikon]:!w-6 [&_.tikon]:!text-xs [&_.tsatir]:!px-2.5 [&_.tsatir]:!py-1 md:[&_.tikon]:!hidden md:[&_.tsatir]:!px-2 md:[&_.tsatir]:!py-0.5 md:[&_.tsatir_.etiket-ust]:!mr-1.5 md:[&_.tsatir_.etiket-ust]:!inline">
               <div className={`tsatir ${muvekkilDavali ? "order-2" : "order-1"}`}>
                 <span className="tikon" aria-hidden>👤</span>
                 <div className="min-w-0 flex-1">
@@ -489,7 +490,22 @@ export default async function DavaDosyasiDetaySayfasi({
                 <DavaDosyasiSilmeButonu dosyaId={id} sonrasindaYonlendir="/kokpit/dava-dosyalari" boyut="kompakt" />
               )}
             </div>
-            <div className="flex flex-wrap justify-end gap-1.5 max-md:basis-full max-md:justify-start">
+            <div className="max-md:basis-full">
+            <BakiyeUyariOzeti
+              ton={bakiyeEtiketleri.some((e) => !e.artiMi) ? "eksik" : bakiyeEtiketleri.length > 0 ? "arti" : "notr"}
+              ozet={(() => {
+                const eksikler = bakiyeEtiketleri.filter((e) => !e.artiMi);
+                const artilar = bakiyeEtiketleri.filter((e) => e.artiMi);
+                const parcalar: string[] = [];
+                if (eksikler.length > 0) {
+                  parcalar.push(`${eksikler.length} eksik bakiye · ${paraFormatlayici.format(eksikler.reduce((t, e) => t + Math.abs(e.tutar), 0))}`);
+                }
+                if (artilar.length > 0) parcalar.push(`${artilar.length} artı bakiye`);
+                if (istenenOzet && eksikler.some((e) => !e.karsiTarafMi)) parcalar.push("istendi");
+                if (parcalar.length === 0 && agacNet !== null) parcalar.push(`Alt dosyalar dahil net: ${paraFormatlayici.format(agacNet)}`);
+                return parcalar.join(" · ") || "Bakiye ayrıntısı";
+              })()}
+            >
               {bakiyeEtiketleri.map((e) => (
                 <span
                   key={e.hesapId}
@@ -512,6 +528,7 @@ export default async function DavaDosyasiDetaySayfasi({
                   Alt dosyalar dahil net: {paraFormatlayici.format(agacNet)}
                 </span>
               )}
+            </BakiyeUyariOzeti>
             </div>
           </div>
         </div>

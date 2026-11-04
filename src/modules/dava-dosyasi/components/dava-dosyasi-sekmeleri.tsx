@@ -36,13 +36,13 @@ export function DavaDosyasiSekmeleri({ dosyaId, aktif, kimlik }: { dosyaId?: str
     <>
     <div ref={nobetci} aria-hidden className="h-px w-full" />
     <div className="sticky top-0 z-30 -mx-3 mb-4 flex items-center gap-4 border-b border-white/[0.08] bg-[color-mix(in_srgb,var(--background-2)_95%,transparent)] px-3 py-1.5 backdrop-blur-md md:-mx-6 md:px-6">
-    <div className="flex w-full max-w-2xl shrink-0 gap-0.5" role="tablist" aria-label="Dosya bölümleri">
+    <div className="flex w-full max-w-2xl shrink-0 gap-1 md:gap-5" role="tablist" aria-label="Dosya bölümleri">
       {sekmeler.map((sekme) => {
         const aktifMi = sekme.anahtar === aktif;
-        const siniflar = `min-w-0 flex-1 truncate border-b-[3px] px-1 py-1.5 text-center text-xs font-bold uppercase tracking-wide sm:text-sm ${
+        const siniflar = `min-w-0 flex-1 truncate border-b-2 px-1 py-1.5 text-center text-xs font-medium sm:text-sm md:flex-none md:px-0.5 ${
           aktifMi
-            ? "border-[#e7222e] bg-[var(--accent)] text-white"
-            : "border-transparent bg-white/[0.07] text-white/70 hover:bg-white/[0.12] hover:text-white"
+            ? "border-[var(--link)] font-semibold text-white"
+            : "border-transparent text-white/60 hover:text-white"
         }`;
         if (!dosyaId || aktifMi) {
           return (
