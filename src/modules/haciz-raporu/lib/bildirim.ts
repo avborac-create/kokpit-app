@@ -1,6 +1,7 @@
 import { resendIstemcisiGetir } from "@/core/email/resend-istemcisi";
 import { HACIZ_ISLEMI_DURUMU_ETIKETLERI, TEMINAT_MUVAFAKAT_ETIKETLERI } from "./sabitler";
 import type { hacizRaporuGetir } from "./queries";
+import { hacizDosyaBasligi, hacizMuvekkilleri } from "@/modules/haciz-raporu/lib/dosya-bilgisi";
 
 type HacizRaporuDetay = NonNullable<Awaited<ReturnType<typeof hacizRaporuGetir>>>;
 
@@ -18,10 +19,8 @@ function satirHtml(etiket: string, deger: string): string {
 }
 
 function hacizRaporuBildirimHtmlOlustur(rapor: HacizRaporuDetay): string {
-  const muvekkiller = rapor.davaDosyasi.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—";
-  const dosyaBilgisi = rapor.davaDosyasi.dosyaNo
-    ? `${rapor.davaDosyasi.dosyaNo} — ${rapor.davaDosyasi.konu}`
-    : rapor.davaDosyasi.konu;
+  const muvekkiller = hacizMuvekkilleri(rapor);
+  const dosyaBilgisi = hacizDosyaBasligi(rapor);
 
   const satirlar = [
     satirHtml("Haciz Tarihi", tarihFormatlayici.format(rapor.hacizTarihi)),

@@ -2,12 +2,14 @@ import { varyantlarla } from "@/core/arama";
 import { prisma } from "@/core/db/prisma";
 
 // Haciz Raporu formundaki dosya secicisini doldurur - sadece Dosya Turu
-// "İcra Dosyası" olan DavaDosyasi kayitlari (Esas/Talimat alt turu ile
-// birlikte, secim listesinde ayirt edilebilsin diye).
+// "İcra Dosyası" olan ve muvekkilin ALACAKLI oldugu DavaDosyasi kayitlari
+// (Esas/Talimat alt turu ile birlikte, secim listesinde ayirt edilebilsin diye).
 export async function icraDosyalariniListele(arama?: string) {
   return prisma.davaDosyasi.findMany({
     where: {
       tur: { kod: "icra_dosyasi" },
+      // Yalniz muvekkilin ALACAKLI oldugu icra dosyalari (borclu tarafi haciz yaptirmaz).
+      muvekkilSifati: "ALACAKLI",
       ...(arama
         ? {
             OR: [

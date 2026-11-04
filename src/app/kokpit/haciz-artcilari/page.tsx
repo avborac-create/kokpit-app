@@ -3,6 +3,7 @@ import { hacizRaporlariniListele } from "@/modules/haciz-raporu/lib/queries";
 import { Dugme } from "@/core/ui/button";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { hacizAvukatiMi } from "@/core/auth/yetki";
+import { hacizDosyaBasligi, hacizMuvekkilleri } from "@/modules/haciz-raporu/lib/dosya-bilgisi";
 
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" });
 
@@ -44,11 +45,10 @@ export default async function HacizArtcilariSayfasi() {
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-white/60">
-                  {rapor.davaDosyasi.dosyaNo ? `${rapor.davaDosyasi.dosyaNo} — ` : ""}
-                  {rapor.davaDosyasi.konu}
+                  {hacizDosyaBasligi(rapor)}
                 </td>
                 <td className="px-4 py-3 text-white/60">
-                  {rapor.davaDosyasi.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
+                  {hacizMuvekkilleri(rapor)}
                 </td>
                 <td className="px-4 py-3 text-white/60">{rapor.avukat.adSoyad}</td>
                 <td className="px-4 py-3 text-white/60">

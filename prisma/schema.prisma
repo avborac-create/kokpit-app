@@ -1294,8 +1294,11 @@ enum BelgeTuru {
 model HacizRaporu {
   id String @id @default(cuid())
 
-  davaDosyasiId String
-  davaDosyasi   DavaDosyasi @relation(fields: [davaDosyasiId], references: [id])
+  // Dosya Kokpit'te kayitli degilse bos kalir; bu durumda dosya bilgisi
+  // `kokpitteOlmayanDosya` serbest metninde tutulur.
+  davaDosyasiId String?
+  davaDosyasi   DavaDosyasi? @relation(fields: [davaDosyasiId], references: [id])
+  kokpitteOlmayanDosya String?
 
   avukatId String
   avukat   Kullanici @relation("HacizRaporuAvukat", fields: [avukatId], references: [id])

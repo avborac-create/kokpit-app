@@ -69,7 +69,10 @@ async function belgeKaydet(
 export async function hacizRaporuOlustur(formData: FormData) {
   const kullanici = await yetkiKontrolEt();
 
-  const davaDosyasiId = String(formData.get("davaDosyasiId") ?? "");
+  const dosyaSecimi = String(formData.get("davaDosyasiId") ?? "");
+  const kokpitteYok = dosyaSecimi === "__kokpitte_yok";
+  const davaDosyasiId = kokpitteYok ? "" : dosyaSecimi;
+  const kokpitteOlmayanDosya = kokpitteYok ? String(formData.get("kokpitteOlmayanDosya") ?? "").trim() : "";
   const hacizTarihiHam = String(formData.get("hacizTarihi") ?? "");
   const islemYapilanBorclular = String(formData.get("islemYapilanBorclular") ?? "").trim();
   const muhafazaDurumu = String(formData.get("muhafazaDurumu") ?? "") as HacizIslemDurumu;
@@ -80,7 +83,7 @@ export async function hacizRaporuOlustur(formData: FormData) {
   const protokolYapildiMi = String(formData.get("protokolYapildiMi") ?? "evet") === "evet";
 
   if (
-    !davaDosyasiId ||
+    (!davaDosyasiId && !kokpitteOlmayanDosya) ||
     !hacizTarihiHam ||
     !islemYapilanBorclular ||
     !muhafazaDurumu ||
@@ -99,7 +102,8 @@ export async function hacizRaporuOlustur(formData: FormData) {
 
   const rapor = await prisma.hacizRaporu.create({
     data: {
-      davaDosyasiId,
+      davaDosyasiId: davaDosyasiId || null,
+      kokpitteOlmayanDosya: kokpitteOlmayanDosya || null,
       avukatId: kullanici.kullaniciId,
       hacizTarihi: new Date(hacizTarihiHam),
       islemYapilanBorclular,

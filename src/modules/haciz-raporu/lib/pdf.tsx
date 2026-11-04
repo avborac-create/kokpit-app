@@ -5,6 +5,7 @@ import {
   TEMINAT_MUVAFAKAT_ETIKETLERI,
 } from "./sabitler";
 import { LIBERATION_SANS_REGULAR, LIBERATION_SANS_BOLD } from "./yazi-tipleri/liberation-sans";
+import { hacizDosyaBasligi, hacizMuvekkilleri } from "@/modules/haciz-raporu/lib/dosya-bilgisi";
 
 type HacizRaporuDetay = NonNullable<Awaited<ReturnType<typeof hacizRaporuGetir>>>;
 
@@ -53,15 +54,14 @@ function Satir({ etiket, deger }: { etiket: string; deger: string }) {
 }
 
 export function HacizRaporuBelgesi({ rapor }: { rapor: HacizRaporuDetay }) {
-  const muvekkiller = rapor.davaDosyasi.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—";
+  const muvekkiller = hacizMuvekkilleri(rapor);
 
   return (
     <Document>
       <Page size="A4" style={stiller.sayfa}>
         <Text style={stiller.baslik}>HACİZ RAPORU</Text>
         <Text style={stiller.altBaslik}>
-          {rapor.davaDosyasi.dosyaNo ? `${rapor.davaDosyasi.dosyaNo} — ` : ""}
-          {rapor.davaDosyasi.konu}
+          {hacizDosyaBasligi(rapor)}
         </Text>
 
         <View style={stiller.bolum}>
@@ -69,7 +69,7 @@ export function HacizRaporuBelgesi({ rapor }: { rapor: HacizRaporuDetay }) {
           <Satir etiket="Avukat" deger={rapor.avukat.adSoyad} />
           <Satir etiket="Haciz Tarihi" deger={tarihFormatlayici.format(rapor.hacizTarihi)} />
           <Satir etiket="Müvekkil" deger={muvekkiller} />
-          <Satir etiket="Dosya No" deger={rapor.davaDosyasi.dosyaNo ?? "—"} />
+          <Satir etiket="Dosya No" deger={rapor.davaDosyasi?.dosyaNo ?? "—"} />
         </View>
 
         <View style={stiller.bolum}>

@@ -22,15 +22,18 @@ export function HacizRaporuFormIcerik({ icraDosyalari, tahsilatKanallari }: Prop
   // kaybolabilirdi.
   const [yukleniyorHaritasi, setYukleniyorHaritasi] = useState<Record<string, boolean>>({});
   const herhangiBiriYukleniyor = Object.values(yukleniyorHaritasi).some(Boolean);
+  const [dosyaSecimi, setDosyaSecimi] = useState("");
+  const kokpitteYok = dosyaSecimi === "__kokpitte_yok";
 
   return (
     <form action={hacizRaporuOlustur} className="max-w-xl">
       <Alan>
         <Etiket htmlFor="davaDosyasiId">İcra Dosyası</Etiket>
-        <Secim id="davaDosyasiId" name="davaDosyasiId" required defaultValue="">
+        <Secim id="davaDosyasiId" name="davaDosyasiId" required value={dosyaSecimi} onChange={(e) => setDosyaSecimi(e.target.value)}>
           <option value="" disabled>
             Seçiniz…
           </option>
+          <option value="__kokpitte_yok">{"Kokpit'te yok"}</option>
           {icraDosyalari.map((dosya) => (
             <option key={dosya.id} value={dosya.id}>
               KN-{dosya.kayitNo}
@@ -40,8 +43,14 @@ export function HacizRaporuFormIcerik({ icraDosyalari, tahsilatKanallari }: Prop
             </option>
           ))}
         </Secim>
+        {kokpitteYok && (
+          <div className="mt-3">
+            <Etiket htmlFor="kokpitteOlmayanDosya">Dosya Bilgisi (müvekkil, borçlu, icra dairesi, dosya no…)</Etiket>
+            <Girdi id="kokpitteOlmayanDosya" name="kokpitteOlmayanDosya" required />
+          </div>
+        )}
         <p className="mt-1 text-xs text-white/35">
-          Dosya listede yoksa{" "}
+          Listede yalnızca müvekkilin alacaklı olduğu icra dosyaları yer alır. Dosya listede yoksa{" "}
           <Link href="/kokpit/dava-dosyalari/yeni" target="_blank" className="text-[#6db8ff] hover:underline">
             önce buradan İcra Dosyası olarak oluşturun
           </Link>

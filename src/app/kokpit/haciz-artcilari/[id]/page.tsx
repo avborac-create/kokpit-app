@@ -10,6 +10,7 @@ import { HacizRaporuSilmeButonu } from "@/modules/haciz-raporu/components/haciz-
 import { Dugme } from "@/core/ui/button";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { hacizAvukatiMi } from "@/core/auth/yetki";
+import { hacizDosyaBasligi, hacizMuvekkilleri } from "@/modules/haciz-raporu/lib/dosya-bilgisi";
 
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "long", year: "numeric" });
 const paraFormatlayici = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
@@ -29,8 +30,7 @@ export default async function HacizRaporuDetaySayfasi({ params }: { params: Prom
             Haciz Raporu — {tarihFormatlayici.format(rapor.hacizTarihi)}
           </h1>
           <p className="mt-1 text-sm text-white/55">
-            {rapor.davaDosyasi.dosyaNo ? `${rapor.davaDosyasi.dosyaNo} — ` : ""}
-            {rapor.davaDosyasi.konu}
+            {hacizDosyaBasligi(rapor)}
           </p>
         </div>
         <div className="flex gap-2">
@@ -49,7 +49,7 @@ export default async function HacizRaporuDetaySayfasi({ params }: { params: Prom
         <div>
           <p className="text-white/45">Müvekkil</p>
           <p className="text-white">
-            {rapor.davaDosyasi.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"}
+            {hacizMuvekkilleri(rapor)}
           </p>
         </div>
         <div>
