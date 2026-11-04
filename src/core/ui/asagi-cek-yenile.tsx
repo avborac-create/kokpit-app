@@ -20,6 +20,20 @@ function yatayKaydirilabilirMi(hedef: EventTarget | null, kok: HTMLElement) {
   return false;
 }
 
+// Dokunulan yerin ustundeki kaydirilabilir alanlardan biri en ustte degilse (ana sayfada kaydiran kap ana alanin
+// disindadir) yenileme istenmez; aksi halde sayfa ortasinda yukari kaydirirken gosterge cikip kaydirmayi bozuyordu.
+function ustteDegilMi(hedef: EventTarget | null) {
+  let n = hedef instanceof HTMLElement ? hedef : null;
+  while (n) {
+    if (n.scrollHeight > n.clientHeight + 1) {
+      const oy = getComputedStyle(n).overflowY;
+      if ((oy === "auto" || oy === "scroll") && n.scrollTop > 0) return true;
+    }
+    n = n.parentElement;
+  }
+  return false;
+}
+
 // Ana ekrana eklenmis (standalone) uygulamada tarayicinin kendi "asagi cekip
 // yenile" hareketi yoktur. Kaydirma alani en ustteyken parmakla asagi
 // cekilirse sayfa bastan yuklenir (yeni yayinlanan surum de boylece gelir).
@@ -37,7 +51,7 @@ export function AsagiCekYenile({ hedef }: { hedef: React.RefObject<HTMLElement |
 
     const basla = (e: TouchEvent) => {
       iptal = false;
-      baslangic = el.scrollTop <= 0 && e.touches.length === 1 && !yatayKaydirilabilirMi(e.target, el) ? e.touches[0].clientY : null;
+      baslangic = el.scrollTop <= 0 && e.touches.length === 1 && !ustteDegilMi(e.target) &&!yatayKaydirilabilirMi(e.target, el) ? e.touches[0].clientY : null;
       baslangicX = e.touches[0]?.clientX ?? 0;
       son = 0;
     };
