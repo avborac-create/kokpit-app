@@ -122,7 +122,7 @@ export function KarsiTarafEkleyici({
           {cipler.map((cip, i) => (
             <span
               key={`${cip.mevcutMu ? "m" : "y"}-${cip.id}-${i}`}
-              className="flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1 text-xs text-white/85"
+              className="flex items-center gap-1.5 rounded-full bg-white/[0.08] px-4 py-1.5 text-base font-semibold text-white"
             >
               {cip.mevcutMu ? (
                 <input type="hidden" name="karsiTarafIds" value={cip.id} />
@@ -135,12 +135,12 @@ export function KarsiTarafEkleyici({
                 </>
               )}
               {cip.ad}
-              {cip.tc && <span className="text-white/45">· {cip.tc}</span>}
-              {cip.detsis && <span className="text-white/45">· DETSİS {cip.detsis}</span>}
+              {cip.tc && <span className="text-sm font-normal text-white/50">· {cip.tc}</span>}
+              {cip.detsis && <span className="text-sm font-normal text-white/50">· DETSİS {cip.detsis}</span>}
               <button
                 type="button"
                 onClick={() => kaldir(i)}
-                className="text-white/40 hover:text-[#ff7a70]"
+                className="text-lg leading-none text-white/50 hover:text-[#ff7a70]"
                 aria-label={`${cip.ad} kaldır`}
               >
                 ×
