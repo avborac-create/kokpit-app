@@ -3,6 +3,7 @@ import { musterileriListele, avukatlariListele } from "@/modules/musteri/lib/que
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { Dugme } from "@/core/ui/button";
 import { MusteriFiltre } from "./musteri-filtre";
+import { MusteriSatiri } from "./musteri-satiri";
 
 export default async function MusterilerSayfasi({
   searchParams,
@@ -51,7 +52,7 @@ export default async function MusterilerSayfasi({
           </thead>
           <tbody>
             {musteriler.map((musteri) => (
-              <tr key={musteri.id} className="border-t border-white/[0.06] hover:bg-white/[0.04]">
+              <MusteriSatiri key={musteri.id} musteriId={musteri.id}>
                 <td className="max-w-[15rem] truncate px-4 py-3" title={musteri.adSoyadUnvan}>
                   <Link
                     href={`/kokpit/musteriler/${musteri.id}`}
@@ -70,12 +71,12 @@ export default async function MusterilerSayfasi({
                 <td className="px-4 py-3 text-white/60">{musteri.telefon ?? "—"}</td>
                 <td className="px-4 py-3">
                   <Link href={`/kokpit/dava-dosyalari?musteri=${musteri.id}`}>
-                    <Dugme type="button" varyant="ikincil">
+                    <Dugme type="button" className="px-5 font-semibold">
                       Dosyalar
                     </Dugme>
                   </Link>
                 </td>
-              </tr>
+              </MusteriSatiri>
             ))}
             {musteriler.length === 0 && (
               <tr>
