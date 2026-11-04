@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
-import { silebilirMi } from "@/core/auth/yetki";
+import { ekonomiYetkisiniDogrula } from "@/core/auth/finans-yetki";
 import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { etkinAnlasma, kdvliTutar } from "@/modules/dava-dosyasi/lib/anlasma";
 
@@ -59,8 +59,7 @@ export async function anlasmaKaydet(musteriId: string, dosyaId: string, formData
 
 export async function anlasmaSil(id: string, sifre?: string) {
   await silmeSifresiniDogrula(sifre);
-  const kullanici = await mevcutKullanici();
-  if (!kullanici || !silebilirMi(kullanici.rol)) throw new Error("Bu işlem için yetkiniz yok.");
+  await ekonomiYetkisiniDogrula();
   await prisma.muvekkilAnlasma.delete({ where: { id } });
   yenile();
 }

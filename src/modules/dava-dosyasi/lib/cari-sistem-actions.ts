@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
-import { silebilirMi } from "@/core/auth/yetki";
+import { ekonomiYetkisiniDogrula } from "@/core/auth/finans-yetki";
 import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { dosyaMasrafiEkle } from "@/modules/dava-dosyasi/lib/actions";
 import { dosyaEtiketiYaz, kapsamOzeti } from "@/modules/dava-dosyasi/lib/cari-sistem";
@@ -17,9 +17,9 @@ function yenile() {
   revalidatePath("/kokpit", "layout");
 }
 
+// Ekonomi kayitlarini degistirme/silme: sistem yoneticisi ya da finans yetkilisi.
 async function yoneticiyiDogrula() {
-  const kullanici = await mevcutKullanici();
-  if (!kullanici || !silebilirMi(kullanici.rol)) throw new Error("Bu işlem için yetkiniz yok.");
+  await ekonomiYetkisiniDogrula();
 }
 
 async function silmeYetkisiniDogrula(sifre: string | undefined) {
@@ -244,26 +244,41 @@ async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: Fo
   yenile();
 }
 
-async function hareketSil_(id: string, sifre?: string) {
-  await silmeYetkisiniDogrula(sifre);
-  await prisma.$transaction(async (tx) => {
-    const h = await tx.cariHareketi.findUnique({ where: { id } });
-    if (!h) return;
-    await tx.cariHareketi.delete({ where: { id } });
-    await eksiyeDusmeKontrolu(tx, h.musteriId, h.dosyaId);
-  });
-  yenile();
+// Canlida (production) Server Action'dan firlatilan hata mesaji istemciye ulasmaz ("Minified React error #441"
+// gorunur); bu yuzden beklenen hatalar (yanlis sifre, eksiye dusme...) {hata} olarak DONDURULUR ve pencerede okunur gosterilir.
+async function hataDondur(is: () => Promise<void>): Promise<{ hata?: string }> {
+  try {
+    await is();
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "İşlem başarısız oldu." };
+  }
 }
 
-async function virmanSil_(virmanId: string, sifre?: string) {
-  await silmeYetkisiniDogrula(sifre);
-  await prisma.$transaction(async (tx) => {
-    const satirlar = await tx.cariHareketi.findMany({ where: { virmanId } });
-    await tx.cariHareketi.deleteMany({ where: { virmanId } });
-    const ilk = satirlar[0];
-    if (ilk) await eksiyeDusmeKontrolu(tx, ilk.musteriId, ilk.dosyaId);
+async function hareketSil_(id: string, sifre?: string): Promise<{ hata?: string }> {
+  return hataDondur(async () => {
+    await silmeYetkisiniDogrula(sifre);
+    await prisma.$transaction(async (tx) => {
+      const h = await tx.cariHareketi.findUnique({ where: { id } });
+      if (!h) return;
+      await tx.cariHareketi.delete({ where: { id } });
+      await eksiyeDusmeKontrolu(tx, h.musteriId, h.dosyaId);
+    });
+    yenile();
   });
-  yenile();
+}
+
+async function virmanSil_(virmanId: string, sifre?: string): Promise<{ hata?: string }> {
+  return hataDondur(async () => {
+    await silmeYetkisiniDogrula(sifre);
+    await prisma.$transaction(async (tx) => {
+      const satirlar = await tx.cariHareketi.findMany({ where: { virmanId } });
+      await tx.cariHareketi.deleteMany({ where: { virmanId } });
+      const ilk = satirlar[0];
+      if (ilk) await eksiyeDusmeKontrolu(tx, ilk.musteriId, ilk.dosyaId);
+    });
+    yenile();
+  });
 }
 
 // Tarih / tutar / aciklama sonradan duzeltilebilir (virman satirlari haric -

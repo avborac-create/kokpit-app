@@ -12,6 +12,7 @@ import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { DavaDosyasiSekmeleri } from "@/modules/dava-dosyasi/components/dava-dosyasi-sekmeleri";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
+import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
 import { davaDegeriKalemlerden, davaDegeriYaz, ekstralariAyikla } from "@/modules/dava-dosyasi/lib/dava-degeri";
 import { TalepKalemleriPaneli } from "@/modules/dava-dosyasi/components/talep-kalemleri-paneli";
 import { VekilPaneli } from "@/modules/dava-dosyasi/components/vekil-paneli";
@@ -173,6 +174,8 @@ export default async function DavaDosyasiDetaySayfasi({
     .filter((e) => e.tutar !== 0);
 
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
+  // Ekonomi panelinde kayit degistirme/silme: yonetici + finans yetkilisi.
+  const ekonomiYetkisiVar = await ekonomiDuzenleyebilirMi();
   // Baslik/etiket degisikligi tum kullanicilari etkiledigi icin yalniz yonetici.
   const etiketDuzenleyebilir = silmeYetkisiVar;
   const davaMi = dosya.tur?.kod === "dava_dosyasi";
@@ -670,7 +673,7 @@ export default async function DavaDosyasiDetaySayfasi({
             kapsam={{ musteriId, dosyaId: id }}
             alt={alt ?? "ozet"}
             hrefYaz={({ alt: a }) => `/kokpit/dava-dosyalari/${id}?sekme=ekonomi&alt=${a ?? "ozet"}`}
-            silmeYetkisiVar={silmeYetkisiVar}
+            silmeYetkisiVar={ekonomiYetkisiVar}
           />
         ) : (
           <p className="text-sm text-white/55">Ekonomi için dosyaya bir müvekkil bağlanmalıdır.</p>

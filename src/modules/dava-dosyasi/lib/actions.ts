@@ -8,6 +8,7 @@ import { ekstralariAyikla } from "./dava-degeri";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi, sistemYoneticisiMi } from "@/core/auth/yetki";
+import { ekonomiYetkisiniDogrula } from "@/core/auth/finans-yetki";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { dosyaCariHesapOzeti } from "./queries";
 import { dosyaKimligiHatasi } from "./dosya-kimligi";
@@ -994,10 +995,7 @@ export async function avansAktarimiEkle(kaynakDosyaId: string, formData: FormDat
 
 export async function avansAktarimiSil(id: string, dosyaId: string, sifre?: string) {
   await silmeSifresiniDogrula(sifre);
-  const kullanici = await mevcutKullanici();
-  if (!kullanici || !silebilirMi(kullanici.rol)) {
-    throw new Error("Bu işlem için yetkiniz yok.");
-  }
+  await ekonomiYetkisiniDogrula();
   const aktarim = await prisma.dosyaAvansAktarimi.delete({ where: { id } });
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
   revalidatePath(`/kokpit/dava-dosyalari/${aktarim.kaynakDosyaId}`);
@@ -1007,10 +1005,7 @@ export async function avansAktarimiSil(id: string, dosyaId: string, sifre?: stri
 
 export async function dosyaMasrafiSil(id: string, dosyaId: string, sifre?: string) {
   await silmeSifresiniDogrula(sifre);
-  const kullanici = await mevcutKullanici();
-  if (!kullanici || !silebilirMi(kullanici.rol)) {
-    throw new Error("Bu işlem için yetkiniz yok.");
-  }
+  await ekonomiYetkisiniDogrula();
 
   await prisma.dosyaMasrafi.delete({ where: { id } });
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
