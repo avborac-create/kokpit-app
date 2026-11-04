@@ -24,7 +24,7 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
   const kapatHref = kimin === "buro" ? "/kokpit/isler?kimin=buro" : "/kokpit/isler";
 
   return (
-    <div className={`mx-auto max-w-6xl pt-3 ${detay ? "xl:pr-[500px]" : ""}`}>
+    <div className={`max-w-6xl pt-3 ${detay ? "xl:pr-[500px]" : ""}`}>
       <h1 className="text-2xl font-semibold tracking-tight text-white">Görevler</h1>
       <p className="mb-5 mt-1 text-sm text-white/55">Sizden beklenen her şey burada. Görünümü (liste ya da kanban) kendiniz seçebilirsiniz; bir göreve tıklayınca sağda ayrıntısı açılır.</p>
       <IsListesi

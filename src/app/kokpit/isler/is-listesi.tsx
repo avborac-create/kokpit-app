@@ -207,10 +207,10 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
       {/* Yeni gorev / atama */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5">
         <div className="flex flex-col gap-2 lg:flex-row">
-          <input value={baslik} onChange={(e) => setBaslik(e.target.value)} onKeyDown={(e) => e.key === "Enter" && baslik.trim() && ekle()} placeholder="Yeni görev başlığı…" className={`${alan} flex-1`} />
+          <input value={baslik} onChange={(e) => setBaslik(e.target.value)} onKeyDown={(e) => e.key === "Enter" && baslik.trim() && ekle()} placeholder="Yeni görev başlığı yazın…" className={`${alan} lg:min-w-0 lg:flex-1`} />
           <label className="flex items-center gap-1.5 text-sm text-white/65">
             <span className="whitespace-nowrap">Kime:</span>
-            <select value={sorumlu} onChange={(e) => setSorumlu(e.target.value)} className={alan}>
+            <select value={sorumlu} onChange={(e) => setSorumlu(e.target.value)} className={`${alan} lg:w-60`}>
               {kisiler.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.id === benimId ? `${c.adSoyad} (ben)` : c.adSoyad}
