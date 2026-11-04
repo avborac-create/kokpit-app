@@ -572,6 +572,7 @@ model DavaDosyasi {
   // sekmelerine ve secim kutularina girmez; kayitlari SILINMEZ (ör. muvekkilin
   // alacakli oldugu, ayri takip edilen icra dosyalari).
   ekonomiDisi          Boolean          @default(false)
+  ekonomiNotlari       DosyaEkonomiNotu[]
   anaDosyaId           String?
   anaDosya             DavaDosyasi?     @relation("DosyaAgaci", fields: [anaDosyaId], references: [id])
   altDosyalar          DavaDosyasi[]    @relation("DosyaAgaci")
@@ -1956,4 +1957,19 @@ model Dilekce {
   @@index([durum])
   @@index([isId])
   @@map("dilekceler")
+}
+
+// Dosya Ekonomisi > Not: dosya basina birden cok serbest yazi sekmesi; sekme adlarini kullanici verir.
+model DosyaEkonomiNotu {
+  id          String       @id @default(cuid())
+  dosyaId     String
+  dosya       DavaDosyasi  @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+  baslik      String       @default("Yeni not")
+  icerik      String       @default("")
+  sira        Int          @default(0)
+  olusturma   DateTime     @default(now())
+  guncelleme  DateTime     @updatedAt
+
+  @@index([dosyaId, sira])
+  @@map("dosya_ekonomi_notlari")
 }

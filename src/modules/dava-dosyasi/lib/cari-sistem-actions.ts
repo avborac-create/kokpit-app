@@ -555,6 +555,33 @@ export async function dosyaEkonomiDurumuDegistir(dosyaId: string, disi: boolean)
   yenile();
 }
 
+// Dosya Ekonomisi > Not: dosya basina birden cok serbest yazi sekmesi (yalniz buro ici); sekme adini kullanici verir.
+export async function dosyaNotuEkle(dosyaId: string): Promise<{ id: string }> {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için oturum açmalısınız.");
+  const son = await prisma.dosyaEkonomiNotu.findFirst({ where: { dosyaId }, orderBy: { sira: "desc" }, select: { sira: true } });
+  const yeni = await prisma.dosyaEkonomiNotu.create({ data: { dosyaId, sira: (son?.sira ?? -1) + 1 } });
+  yenile();
+  return { id: yeni.id };
+}
+
+export async function dosyaNotuGuncelle(notId: string, veri: { baslik?: string; icerik?: string }) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için oturum açmalısınız.");
+  const data: { baslik?: string; icerik?: string } = {};
+  if (veri.baslik !== undefined) data.baslik = veri.baslik.trim().slice(0, 60) || "Yeni not";
+  if (veri.icerik !== undefined) data.icerik = veri.icerik.slice(0, 20000);
+  await prisma.dosyaEkonomiNotu.update({ where: { id: notId }, data });
+  yenile();
+}
+
+export async function dosyaNotuSil(notId: string) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için oturum açmalısınız.");
+  await prisma.dosyaEkonomiNotu.delete({ where: { id: notId } });
+  yenile();
+}
+
 // TOPLU TASNIF: para trafigindeki bir parayi tek seferde birden fazla dosya ve hesaba boler.
 // Her satir: hedef hesap (virman) ya da "Muvekkile Odeme" (para buroyu terk eder) + dosya + tutar.
 // ör. borcludan gelen 50.000 TL -> 36.000 masraf iadesi (Harcama), 14.000 vekalet ucreti

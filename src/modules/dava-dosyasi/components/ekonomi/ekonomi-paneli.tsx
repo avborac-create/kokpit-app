@@ -9,6 +9,7 @@ import { MasrafListesi } from "@/modules/dava-dosyasi/components/masraf-listesi"
 import { AdliBirimHareketFormu } from "@/modules/dava-dosyasi/components/adli-birim-hareket-formu";
 import { KarsiTarafAlacagiFormu } from "@/modules/dava-dosyasi/components/karsi-taraf-alacagi-formu";
 import { Defter } from "@/modules/dava-dosyasi/components/ekonomi/defter";
+import { DosyaNotlari } from "@/modules/dava-dosyasi/components/ekonomi/dosya-notlari";
 import { AcilirHesapSatiri } from "@/modules/dava-dosyasi/components/ekonomi/acilir-hesap-satiri";
 import {
   BorcFormu,
@@ -216,6 +217,8 @@ export async function EkonomiPaneli({
     ? String(seciliHesap.no)
     : alt === "anlasma"
       ? "anlasma"
+      : alt === "not" && kapsam.dosyaId
+      ? "not"
       : alt === "dosyalar" && musteriDuzeyi
       ? "dosyalar"
       : alt === "yonet" && silmeYetkisiVar
@@ -259,13 +262,14 @@ export async function EkonomiPaneli({
   ];
 
   // Alt menü (Genel durum / Cari hesaplar / Anlaşma / Müvekkile hesap özeti ...): hangi bölümde olduğumuz `aktif`ten türer.
-  const navAktif = aktif === "ozet100" ? "genel" : aktif === "anlasma" ? "anlasma" : aktif === "dosyalar" ? "dosyalar" : aktif === "yonet" ? "yonet" : "cari";
+  const navAktif = aktif === "ozet100" ? "genel" : aktif === "anlasma" ? "anlasma" : aktif === "not" ? "not" : aktif === "dosyalar" ? "dosyalar" : aktif === "yonet" ? "yonet" : "cari";
   const paraNo = aktifHesaplar.find((h) => h.paraHesabiMi)?.no ?? 101;
   const altMenu: { anahtar: string; etiket: string; href: string; rozet?: string }[] = [
     { anahtar: "genel", etiket: "Genel durum", href: hrefYaz({ alt: "ozet100" }) },
     { anahtar: "cari", etiket: "Cari hesaplar", href: hrefYaz({ alt: String(paraNo) }), rozet: String(aktifHesaplar.length) },
     { anahtar: "anlasma", etiket: "Anlaşma", href: hrefYaz({ alt: "anlasma" }) },
     ...(musteriDuzeyi ? [{ anahtar: "dosyalar", etiket: "Dosyaları Seç", href: hrefYaz({ alt: "dosyalar" }), rozet: disindakiSayisi > 0 ? `${disindakiSayisi} dışında` : undefined }] : []),
+    ...(kapsam.dosyaId ? [{ anahtar: "not", etiket: "Not", href: hrefYaz({ alt: "not" }) }] : []),
     { anahtar: "hesap-ozeti", etiket: "Müvekkile hesap özeti", href: `/kokpit/finans/musteri-iliskileri/${kapsam.musteriId}/odeme-talebi` },
     ...(silmeYetkisiVar ? [{ anahtar: "yonet", etiket: "Hesapları yönet", href: hrefYaz({ alt: "yonet" }) }] : []),
   ];
@@ -463,6 +467,7 @@ export async function EkonomiPaneli({
       {aktif === "anlasma" && (
         <AnlasmaSekmesi musteriId={kapsam.musteriId} dosyaId={kapsam.dosyaId} silmeYetkisiVar={silmeYetkisiVar} />
       )}
+      {aktif === "not" && kapsam.dosyaId && <NotSekmesi dosyaId={kapsam.dosyaId} />}
       {aktif === "dosyalar" && musteriDuzeyi && <DosyaSecimi musteriId={kapsam.musteriId} />}
       {aktif === "yonet" && <HesapYonetimi hesaplar={hesaplar} />}
 
@@ -486,6 +491,12 @@ export async function EkonomiPaneli({
       )}
     </div>
   );
+}
+
+// Dosya ekonomisi notlari: birden cok serbest yazi sekmesi, adlari yerinde degistirilir.
+async function NotSekmesi({ dosyaId }: { dosyaId: string }) {
+  const notlar = await prisma.dosyaEkonomiNotu.findMany({ where: { dosyaId }, orderBy: [{ sira: "asc" }, { olusturma: "asc" }], select: { id: true, baslik: true, icerik: true } });
+  return <DosyaNotlari dosyaId={dosyaId} notlar={notlar} />;
 }
 
 async function OzetSekmesi({
