@@ -1,13 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
 import { FormKarti } from "@/core/ui/form-karti";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import type { DavaDosyasiSonucu } from "@/modules/dava-dosyasi/lib/actions";
 import { MuvekkilSecici } from "./muvekkil-secici";
 import { IcerikSiniflandirma } from "./icerik-siniflandirma";
-import { KarsiTarafEkleyici } from "./karsi-taraf-ekleyici";
+import { KarsiTarafEkleyici, type KarsiTarafCipi } from "./karsi-taraf-ekleyici";
 import { DosyaSinifiAlanlari } from "./dosya-sinifi-alanlari";
 import { TalepSonucuListesi } from "./talep-sonucu-listesi";
 import { DavaDosyasiSekmeleri } from "./dava-dosyasi-sekmeleri";
@@ -97,6 +97,68 @@ export function DavaDosyasiFormIcerik({
     etiketler[`dosya-detay.talep-durusma.alan.${alan}`] ?? varsayilan;
   const [durum, formAction] = useActionState(action, undefined);
 
+  // TASLAK KORUMASI: Form her degisiklikte tarayicinin oturum belleginde (sessionStorage) yedeklenir.
+  // Sayfa herhangi bir nedenle yeniden yuklenir ya da form yeniden kurulursa (ornegin yeni surum
+  // yayinlandiginda, liste duzenlerken) yazilanlar, ayrilmadan hemen sonraki ilk 8 saniyede geri yuklenir.
+  // Normal bir gezinmeden sonra acilan form bos baslar. Gonderimde taslak silinir.
+  const formRef = useRef<HTMLFormElement>(null);
+  const [taslak, setTaslak] = useState<[string, string][] | null>(null);
+  const taslakAnahtari = `kokpit_form_taslagi:${dosyaId ?? "yeni"}`;
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const isaret = taslakAnahtari + ":ayrilma";
+    try {
+      const ayrilma = Number(sessionStorage.getItem(isaret) ?? 0);
+      const ham = sessionStorage.getItem(taslakAnahtari);
+      if (ham && ayrilma && Date.now() - ayrilma < 8000) {
+        const geriYuklenen = JSON.parse(ham) as [string, string][];
+        queueMicrotask(() => setTaslak(geriYuklenen));
+      }
+      sessionStorage.removeItem(isaret);
+    } catch {}
+    let zamanlayici: ReturnType<typeof setTimeout> | undefined;
+    const kaydet = () => {
+      clearTimeout(zamanlayici);
+      zamanlayici = setTimeout(() => {
+        try {
+          const girdiler: [string, string][] = [];
+          for (const [k, v] of new FormData(form).entries()) {
+            if (typeof v === "string" && k !== "surum" && k !== "gorunenAlanlar") girdiler.push([k, v]);
+          }
+          sessionStorage.setItem(taslakAnahtari, JSON.stringify(girdiler));
+        } catch {}
+      }, 300);
+    };
+    const isaretle = () => {
+      try {
+        sessionStorage.setItem(isaret, String(Date.now()));
+      } catch {}
+    };
+    form.addEventListener("input", kaydet);
+    form.addEventListener("change", kaydet);
+    // Secici bilesenlerin gizli alanlari React tarafindan degistirilir; onlar da yakalanir.
+    const gozlemci = new MutationObserver(kaydet);
+    gozlemci.observe(form, { childList: true, subtree: true, attributes: true, attributeFilter: ["value"] });
+    window.addEventListener("pagehide", isaretle);
+    return () => {
+      clearTimeout(zamanlayici);
+      form.removeEventListener("input", kaydet);
+      form.removeEventListener("change", kaydet);
+      gozlemci.disconnect();
+      window.removeEventListener("pagehide", isaretle);
+      isaretle();
+    };
+  }, [taslakAnahtari]);
+  const taslakDegerleri = taslak ? Object.fromEntries(taslak) : undefined;
+  const taslakCipler = (() => {
+    try {
+      return taslakDegerleri?.karsiTarafTaslagi ? (JSON.parse(taslakDegerleri.karsiTarafTaslagi) as KarsiTarafCipi[]) : undefined;
+    } catch {
+      return undefined;
+    }
+  })();
+
   // React, action tamamlaninca (hata donse de - throw etmedigi surece)
   // uncontrolled alanlari otomatik sifirlar. Bunu asmak icin: hata sonrasi
   // "son gonderilen degerler" defaultValue olarak kullanilir VE alanlarin
@@ -105,10 +167,11 @@ export function DavaDosyasiFormIcerik({
   // defaultValue ile. KarsiTarafEkleyici bu sorundan ETKILENMEZ (kendi
   // React state'i var, controlled hidden input kullanir) - kasitli olarak
   // bu keyli sarmalayicinin DISINDA birakildi.
-  const g = durum?.gonderilenAlanlar;
-  const anahtar = durum ? JSON.stringify(durum) : "ilk";
-  const seciliIdlerGuncel = durum?.gonderilenMusteriIdleri ?? seciliIdler;
-  const talepMaddeleriGuncel = durum?.gonderilenTalepMaddeleri ?? dosya?.talepSonucu?.split("\n") ?? [];
+  const g = durum?.gonderilenAlanlar ?? taslakDegerleri;
+  const anahtar = durum ? JSON.stringify(durum) : taslak ? "taslak" : "ilk";
+  const taslaktanDegerler = (ad: string) => (taslak ?? []).filter(([k]) => k === ad).map(([, v]) => v);
+  const seciliIdlerGuncel = durum?.gonderilenMusteriIdleri ?? (taslak ? taslaktanDegerler("musteriIds") : seciliIdler);
+  const talepMaddeleriGuncel = durum?.gonderilenTalepMaddeleri ?? (taslak ? taslaktanDegerler("talepMaddeleri") : dosya?.talepSonucu?.split("\n") ?? []);
 
   // Hukuk dali + dava turu + dava konusu tek blok olarak, ilk gorunen alanin
   // yerinde cizilir (ortak dal secimini paylastiklari icin).
@@ -210,7 +273,22 @@ export function DavaDosyasiFormIcerik({
   const ekDoluMu = Boolean(dosya?.buroNo);
 
   return (
-    <form action={formAction} className="max-w-2xl" autoComplete="off">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="max-w-2xl"
+      autoComplete="off"
+      onSubmit={() => {
+        try {
+          sessionStorage.removeItem(taslakAnahtari);
+        } catch {}
+      }}
+    >
+      {taslak && !durum && (
+        <p className="mb-4 rounded-xl border border-[#32d74b]/30 bg-[#32d74b]/10 px-3 py-2 text-sm text-[#9be8a8]">
+          Sayfa yenilendi; yazdıklarınız korundu ve geri yüklendi.
+        </p>
+      )}
       {/* Iyimser kilitleme: sunucu, form acildigindaki surumle karsilastirir
           (bkz. davaDosyasiGuncelle). Controlled hidden input oldugu icin
           React'in form sifirlamasindan etkilenmez. */}
@@ -225,7 +303,7 @@ export function DavaDosyasiFormIcerik({
         <div key={anahtar}>
           <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdlerGuncel} />
         </div>
-        <KarsiTarafEkleyici baslangicKarsiTaraflar={baslangicKarsiTaraflar} />
+        <KarsiTarafEkleyici key={taslak ? "taslak" : "ilk"} baslangicKarsiTaraflar={baslangicKarsiTaraflar} taslakCipler={taslakCipler} />
         {sinifVarMi && (
           <div key={`${anahtar}-s`}>
             <DosyaSinifiAlanlari {...sinifOzellikleri} bolum="sifat" />

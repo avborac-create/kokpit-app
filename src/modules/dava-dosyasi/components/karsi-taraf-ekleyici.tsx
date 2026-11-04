@@ -7,7 +7,7 @@ import { MersisAra } from "@/core/unvan/mersis-ara";
 import { DetsisAra } from "@/core/unvan/detsis-ara";
 import { KISA_UNVAN_ONAY_METNI, KISA_UNVAN_UYARISI, unvanKisaMi } from "@/core/unvan/unvan-kontrol";
 
-type KarsiTarafCipi = { id: string; ad: string; tc?: string | null; detsis?: string | null; mevcutMu: boolean; kisa?: boolean };
+export type KarsiTarafCipi = { id: string; ad: string; tc?: string | null; detsis?: string | null; mevcutMu: boolean; kisa?: boolean };
 
 // Eskiden ayri iki bilesendi: "var olan karsi taraflardan sec" (checkbox
 // listesi) + "yeni ekle" (isim yaz + buton). Kullanici checkbox listesinin
@@ -20,11 +20,14 @@ type KarsiTarafCipi = { id: string; ad: string; tc?: string | null; detsis?: str
 // olusturmaz - kullaniciya bunu secmesi hic gosterilmez.
 export function KarsiTarafEkleyici({
   baslangicKarsiTaraflar = [],
+  taslakCipler,
 }: {
   baslangicKarsiTaraflar?: { id: string; ad: string; tc?: string | null; detsis?: string | null }[];
+  // Form taslaktan geri yuklenirken (sayfa yenilenirse) yazilmis chip'ler oldugu gibi gelir.
+  taslakCipler?: KarsiTarafCipi[];
 }) {
   const [cipler, setCipler] = useState<KarsiTarafCipi[]>(
-    baslangicKarsiTaraflar.map((kt) => ({ ...kt, mevcutMu: true })),
+    taslakCipler ?? baslangicKarsiTaraflar.map((kt) => ({ ...kt, mevcutMu: true })),
   );
   const [girdi, setGirdi] = useState("");
   const [tcGirdi, setTcGirdi] = useState("");
@@ -115,6 +118,7 @@ export function KarsiTarafEkleyici({
       )}
       {cipler.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2">
+          <input type="hidden" name="karsiTarafTaslagi" value={JSON.stringify(cipler)} />
           {cipler.map((cip, i) => (
             <span
               key={`${cip.mevcutMu ? "m" : "y"}-${cip.id}-${i}`}
