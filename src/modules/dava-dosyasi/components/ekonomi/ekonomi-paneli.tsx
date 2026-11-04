@@ -50,6 +50,11 @@ import { AnlasmaSekmesi } from "@/modules/dava-dosyasi/components/ekonomi/anlasm
 const para = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 const paraYaz = para;
 
+// Hesap sekmesi rozeti rengi: KIRMIZI = bize odenmesi gereken (borclu / alacagimiz var), YESIL = bizde duran para ya da fazla odeme (alacakli taraf onlar).
+// Normal hesapta bakiye = Borc - Alacak (+ : kalan borc, - : fazla odeme); Para Trafigi ve adliyede tutulan hesaplarda bakiye = Alacak - Borc (+ : orada duran para).
+const rozetRengiBul = (h: { paraHesabiMi: boolean; tutulanHesapMi: boolean }, bakiye: number): "kirmizi" | "yesil" =>
+  h.paraHesabiMi || h.tutulanHesapMi ? (bakiye > 0 ? "yesil" : "kirmizi") : bakiye > 0 ? "kirmizi" : "yesil";
+const ROZET_SINIFI = { kirmizi: "bg-[#ff453a]/25 text-[#ff8a80] ring-1 ring-[#ff453a]/50", yesil: "bg-[#32d74b]/25 text-[#5ee878] ring-1 ring-[#32d74b]/50" } as const;
 const bakiyeRenk = (b: number) => (b > 0 ? "text-[#ff7a70]" : b < 0 ? "text-[#32d74b]" : "text-white/60");
 const Bakiye = ({ b }: { b: number }) => <span className={bakiyeRenk(b)}>{para.format(b)}</span>;
 
@@ -222,10 +227,10 @@ export async function EkonomiPaneli({
     : [];
   const dosyaSecenekleri: DosyaSecenegi[] = dosyalar.map((d) => ({ id: d.id, etiket: d.etiket, ayrinti: d.ayrinti }));
 
-  type Sekme = { anahtar: string; etiket: string; rozet?: string };
+  type Sekme = { anahtar: string; etiket: string; rozet?: string; rozetRengi?: "kirmizi" | "yesil" };
   const hesapSekmesi = (h: (typeof aktifHesaplar)[number]): Sekme => {
     const o = ozetOf(h.id);
-    return { anahtar: String(h.no), etiket: h.paraHesabiMi ? `${h.no} - ${h.ad} (Müvekkil)` : `${h.no} - ${h.ad}`, rozet: o && o.bakiye !== 0 ? para.format(Math.abs(o.bakiye)) : undefined };
+    return { anahtar: String(h.no), etiket: h.paraHesabiMi ? `${h.no} - ${h.ad} (Müvekkil)` : `${h.no} - ${h.ad}`, rozet: o && o.bakiye !== 0 ? para.format(Math.abs(o.bakiye)) : undefined, rozetRengi: o && o.bakiye !== 0 ? rozetRengiBul(h, o.bakiye) : undefined };
   };
   // Katlar: genel / muvekkil (100'ler) / borclu (200'ler) / adliye (300'ler)
   const genelKat: Sekme[] = [
@@ -322,7 +327,7 @@ export async function EkonomiPaneli({
                   }`}
                 >
                   {sk.etiket}
-                  {sk.rozet && <span className="rounded-full bg-white/15 px-1.5 py-0.5 text-[10px]">{sk.rozet}</span>}
+                  {sk.rozet && <span className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${sk.rozetRengi ? ROZET_SINIFI[sk.rozetRengi] : "bg-white/15"}`}>{sk.rozet}</span>}
                 </Link>
               ))}
             </div>
@@ -341,7 +346,7 @@ export async function EkonomiPaneli({
                     }`}
                   >
                     {sk.etiket}
-                    {sk.rozet && <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-white/70">{sk.rozet}</span>}
+                    {sk.rozet && <span className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${sk.rozetRengi ? ROZET_SINIFI[sk.rozetRengi] : "bg-white/10 text-white/70"}`}>{sk.rozet}</span>}
                   </Link>
                 ))}
               </div>
