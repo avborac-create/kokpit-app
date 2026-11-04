@@ -45,3 +45,26 @@ export async function sutunGorunurlukDegistir(tabloAnahtari: string, sutunAnahta
   revalidatePath("/kokpit/ayarlar/sutun-duzeni");
   revalidatePath("/kokpit/dava-dosyalari", "layout");
 }
+
+// Yonetici kendi (kisiye ozel) sutun siralamasini buronun varsayilani yapar: verilen siralama basa gelir,
+// listede olmayan (ornegin yonetici tarafindan gizlenmis) sutunlar eski goreli sirayla arkasina eklenir.
+export async function sutunSirasiniVarsayilanYap(tabloAnahtari: string, sutunAnahtarSirasi: string[]) {
+  await yetkiKontrolEt();
+
+  const mevcut = await prisma.tabloSutunDuzeni.findMany({ where: { tabloAnahtari }, orderBy: { siraNo: "asc" } });
+  const bilinen = new Set(mevcut.map((m) => m.sutunAnahtari));
+  const bas = sutunAnahtarSirasi.filter((a) => bilinen.has(a));
+  const yeniSira = [...bas, ...mevcut.map((m) => m.sutunAnahtari).filter((a) => !bas.includes(a))];
+
+  await prisma.$transaction(
+    yeniSira.map((sutunAnahtari, index) =>
+      prisma.tabloSutunDuzeni.update({
+        where: { tabloAnahtari_sutunAnahtari: { tabloAnahtari, sutunAnahtari } },
+        data: { siraNo: index },
+      }),
+    ),
+  );
+
+  revalidatePath("/kokpit/ayarlar/sutun-duzeni");
+  revalidatePath("/kokpit/dava-dosyalari", "layout");
+}

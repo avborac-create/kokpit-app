@@ -11,6 +11,7 @@ import {
   buroNoGoster,
 } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { etiketleriKaydet } from "@/core/arayuz-etiketi/actions";
+import { sutunSirasiniVarsayilanYap } from "@/core/tablo-duzeni/actions";
 import { TopluIslemCubugu } from "./toplu-islem-cubugu";
 import { dosyaDurumSinifi } from "@/modules/dava-dosyasi/lib/durum-rengi";
 import { BOS_FILTRE, SutunFiltresi, filtreleriAbone, filtreleriOku, filtreleriYaz } from "./sutun-filtresi";
@@ -506,6 +507,17 @@ export function DosyalarTablosu({
     const hedef = siraliSutunlar[siraliSutunlar.indexOf(anahtar) + yon];
     if (hedef && hedef !== "kayitNo") sutunTasi(anahtar, hedef);
   }
+  const [varsayilanMesaji, setVarsayilanMesaji] = useState("");
+  async function siraVarsayilanYap() {
+    if (!window.confirm("Şu anki sütun sırası bütün kullanıcılar için varsayılan olsun mu? (Kişisel sırasını kendisi değiştirmiş olanlar kendi sırasında kalır.)")) return;
+    try {
+      await sutunSirasiniVarsayilanYap("dava-dosyalari", siraliSutunlar);
+      siraYaz([]); // artik kisisel sira gereksiz: varsayilan zaten bu
+      setVarsayilanMesaji("Bu sıralama herkes için varsayılan yapıldı.");
+    } catch {
+      setVarsayilanMesaji("Kaydedilemedi; yönetici yetkisi gerekir.");
+    }
+  }
   async function sutunAdiniKaydet(anahtar: string, yeni: string) {
     await etiketleriKaydet({
       [`tablo.dava-dosyalari.sutun.${anahtar}`]: yeni === varsayilanEtiketler[anahtar] ? "" : yeni,
@@ -742,6 +754,12 @@ export function DosyalarTablosu({
                 )}
               </div>
             ))}
+            {etiketDuzenlenebilir && kisiSirasi.length > 0 && (
+              <button type="button" onClick={siraVarsayilanYap} className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm font-semibold text-[var(--link)] hover:bg-white/10">
+                Bu sıralamayı herkes için varsayılan yap
+              </button>
+            )}
+            {varsayilanMesaji && <p className="px-2 py-1 text-xs text-white/60">{varsayilanMesaji}</p>}
             {kisiSirasi.length > 0 && (
               <button type="button" onClick={() => siraYaz([])} className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm text-[var(--link)] hover:bg-white/10">
                 Sıralamayı varsayılana döndür
