@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, useTransition } from "react";
-import { durumDegistir, isEkle, operasyonYapildi, smmKestim } from "./actions";
+import { durumDegistir, eksiBakiyeErtele, eksiBakiyeIstendi, isEkle, operasyonYapildi, smmKestim } from "./actions";
 import { DURUMLAR, durumBilgisi, zamanBaskisiBilgisi } from "./durum";
 import { periyotBilgisi } from "./hafta";
 import { OdakDugmesi } from "./odak-dugmesi";
@@ -119,7 +119,70 @@ function SmmUyarilari({ uyarilar }: { uyarilar: { id: string; baslik: string; do
   );
 }
 
-export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bugun, seciliId, smmUyarilari = [] }: { odakIdleri?: string[]; smmUyarilari?: { id: string; baslik: string; dosyaId: string }[]; isler: Is[]; kisiler: { id: string; adSoyad: string }[]; yargiTurleri?: { id: string; ad: string }[]; benimId: string; secili: string; bugun: string; seciliId?: string }) {
+// Sol panelde: eksi bakiye veren dosyada muvekkilden para istenmesi hatirlatmasi. "Istedim" kapatir; "Ertele" ileri tarih secer.
+function EksiBakiyeUyarilari({ uyarilar, ertelenen, bugun }: { uyarilar: { id: string; baslik: string; dosyaId: string }[]; ertelenen: number; bugun: string }) {
+  const router = useRouter();
+  const [bekliyor, basla] = useTransition();
+  const [hata, setHata] = useState("");
+  const [aciktaki, setAciktaki] = useState<string | null>(null);
+  const [tarih, setTarih] = useState("");
+  if (uyarilar.length === 0 && ertelenen === 0) return null;
+  const yarin = new Date(new Date(`${bugun}T00:00:00Z`).getTime() + 86_400_000).toISOString().slice(0, 10);
+  const islem = (f: () => Promise<{ hata?: string }>) =>
+    basla(async () => {
+      const s = await f();
+      if (s.hata) setHata(s.hata);
+      else {
+        setHata("");
+        setAciktaki(null);
+        router.refresh();
+      }
+    });
+  return (
+    <section aria-label="Bakiye hatırlatmaları" className="rounded-2xl border border-[#ff7a70]/40 bg-[#ff7a70]/[0.08] p-2.5">
+      <h3 className="mb-2 flex items-center justify-between gap-2 px-1 text-[13px] font-semibold text-[#ff7a70]">
+        <span>Müvekkilden bakiye istenecek</span>
+        <span className="rounded-full bg-[#ff7a70]/25 px-2 text-xs">{uyarilar.length}</span>
+      </h3>
+      <ul className="flex max-h-[50vh] flex-col gap-1.5 overflow-y-auto">
+        {uyarilar.map((u) => (
+          <li key={u.id} className="rounded-lg bg-black/20 px-2.5 py-2 text-xs text-white/80">
+            <Link href={`/kokpit/dava-dosyalari/${u.dosyaId}?sekme=ekonomi`} className="block leading-snug hover:underline">
+              {u.baslik}
+            </Link>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <button type="button" disabled={bekliyor} onClick={() => islem(() => eksiBakiyeIstendi(u.id))} className="rounded-md bg-white/10 px-2 py-0.5 font-medium text-white hover:bg-white/20">
+                İstedim
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAciktaki(aciktaki === u.id ? null : u.id);
+                  setTarih(yarin);
+                }}
+                className="rounded-md px-2 py-0.5 text-white/70 hover:bg-white/10 hover:text-white"
+              >
+                Ertele…
+              </button>
+            </div>
+            {aciktaki === u.id && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <input type="date" value={tarih} min={yarin} onChange={(e) => setTarih(e.target.value)} className="alan-bmw [color-scheme:dark] !py-0.5 text-xs" aria-label="Hatırlatma tarihi" />
+                <button type="button" disabled={bekliyor || !tarih} onClick={() => islem(() => eksiBakiyeErtele(u.id, tarih))} className="rounded-md bg-[var(--accent)]/30 px-2 py-0.5 font-medium text-white hover:bg-[var(--accent)]/50">
+                  Bu tarihte hatırlat
+                </button>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+      {ertelenen > 0 && <p className="mt-1.5 px-1 text-[11px] text-white/50">{ertelenen} hatırlatma ileri bir tarihe ertelendi.</p>}
+      {hata && <p className="mt-1 text-xs text-red-300">{hata}</p>}
+    </section>
+  );
+}
+
+export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bugun, seciliId, smmUyarilari = [], eksiUyarilari = [], eksiErtelenen = 0 }: { odakIdleri?: string[]; smmUyarilari?: { id: string; baslik: string; dosyaId: string }[]; eksiUyarilari?: { id: string; baslik: string; dosyaId: string }[]; eksiErtelenen?: number; isler: Is[]; kisiler: { id: string; adSoyad: string }[]; yargiTurleri?: { id: string; ad: string }[]; benimId: string; secili: string; bugun: string; seciliId?: string }) {
   const yonlendirici = useRouter();
   const kayitliGorunum = useSyncExternalStore(gorunumAbone, gorunumOku, () => null);
   const gorunum: Gorunum = GORUNUMLER.some((g) => g.k === kayitliGorunum) ? (kayitliGorunum as Gorunum) : "liste";
@@ -243,6 +306,7 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
     <div className="flex flex-col gap-4 md:flex-row md:items-start">
       {/* Telegram gibi sol panel: kisiler. Birine tiklayinca sagda onun gorevleri acilir, ona yazilan gorev ona atanir. */}
       <div className="flex flex-col gap-3 md:sticky md:top-3 md:w-60 md:shrink-0">
+      <EksiBakiyeUyarilari uyarilar={eksiUyarilari} ertelenen={eksiErtelenen} bugun={bugun} />
       <SmmUyarilari uyarilar={smmUyarilari} />
       <nav aria-label="Kişiler" className="flex gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.04] p-2 md:flex-col md:overflow-visible">
         <Link href="/kokpit/isler?kisi=buro" className={kisiOgesi(tumBuro)}>

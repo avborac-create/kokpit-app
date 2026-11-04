@@ -39,6 +39,16 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
   });
   const smmUyarilari = smmIsleri.map((i) => ({ id: i.id, baslik: i.baslik.replace(/^SMM kesilecek:\s*/, ""), dosyaId: (i.kaynak ?? "").split(":")[1] ?? "" }));
   const bugun = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
+  // Eksi bakiye hatirlatmalari: ertelenenler (vade ileri bir tarihte) tarih gelene kadar listede gorunmez.
+  const eksiIsleri = await prisma.is.findMany({
+    where: { kaynak: { startsWith: "eksi:" }, durum: { not: "TAMAMLANDI" }, ...(hepsiniGorur ? {} : { sorumluId: k?.kullaniciId ?? "-" }) },
+    orderBy: { olusturmaTarihi: "asc" },
+    select: { id: true, baslik: true, kaynak: true, vade: true },
+  });
+  const eksiUyarilari = eksiIsleri
+    .filter((i) => !i.vade || i.vade.toISOString().slice(0, 10) <= bugun)
+    .map((i) => ({ id: i.id, baslik: i.baslik.replace(/^Müvekkilden bakiye istenecek:\s*/, ""), dosyaId: (i.kaynak ?? "").split(":")[1] ?? "" }));
+  const eksiErtelenen = eksiIsleri.length - eksiUyarilari.length;
   // Soldaki panelde secili kisi ("buro" ya da kisi id'si); yoksa kullanicinin kendisi.
   const secili = kisi && (kisi === "buro" || kisiler.some((x) => x.id === kisi)) ? kisi : kimin === "buro" ? "buro" : (k?.kullaniciId ?? "buro");
   const kapatHref = `/kokpit/isler?kisi=${secili}`;
@@ -66,6 +76,8 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
         yargiTurleri={yargiTurleri}
         bugun={bugun}
         smmUyarilari={smmUyarilari}
+        eksiUyarilari={eksiUyarilari}
+        eksiErtelenen={eksiErtelenen}
         seciliId={detay ? seciliId : undefined}
         isler={isler.map((i) => ({
           id: i.id,

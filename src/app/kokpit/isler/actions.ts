@@ -78,6 +78,31 @@ export async function smmKestim(isId: string): Promise<{ hata?: string }> {
   return {};
 }
 
+// "Müvekkilden bakiye istenecek" hatırlatması: "İstedim" görevi kapatır; "Ertele" hatırlatmayı seçilen ileri tarihe kaydırır
+// (vade = hatırlatma tarihi; o güne kadar uyarı listesinde görünmez, günü gelince yeniden çıkar).
+export async function eksiBakiyeIstendi(isId: string): Promise<{ hata?: string }> {
+  const k = await girisli();
+  const is = await prisma.is.findUnique({ where: { id: isId }, select: { kaynak: true } });
+  if (!is?.kaynak?.startsWith("eksi:")) return { hata: "Bu bir bakiye hatırlatması değil." };
+  await prisma.is.update({ where: { id: isId }, data: { durum: "TAMAMLANDI", tamamlanmaTarihi: new Date(), guncellemeTarihi: new Date() } });
+  await prisma.isYorumu.create({ data: { isId, yazanId: k.kullaniciId, metin: "Müvekkilden bakiye istendi (İstedim işaretlendi)." } });
+  revalidatePath("/kokpit/isler");
+  return {};
+}
+
+export async function eksiBakiyeErtele(isId: string, tarih: string): Promise<{ hata?: string }> {
+  const k = await girisli();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(tarih)) return { hata: "Geçerli bir tarih seçin." };
+  const bugun = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
+  if (tarih <= bugun) return { hata: "Erteleme tarihi bugünden sonra olmalıdır." };
+  const is = await prisma.is.findUnique({ where: { id: isId }, select: { kaynak: true } });
+  if (!is?.kaynak?.startsWith("eksi:")) return { hata: "Bu bir bakiye hatırlatması değil." };
+  await prisma.is.update({ where: { id: isId }, data: { vade: new Date(`${tarih}T00:00:00.000Z`), guncellemeTarihi: new Date() } });
+  await prisma.isYorumu.create({ data: { isId, yazanId: k.kullaniciId, metin: `Hatırlatma ${tarih} tarihine ertelendi.` } });
+  revalidatePath("/kokpit/isler");
+  return {};
+}
+
 export async function sorumluDegistir(isId: string, sorumluId: string) {
   const k = await girisli();
   await prisma.is.update({ where: { id: isId }, data: { sorumluId: sorumluId || null, guncellemeTarihi: new Date() } });
