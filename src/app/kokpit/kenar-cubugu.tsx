@@ -214,7 +214,7 @@ function MenuBagi({
       {kutu}
       <span className="flex-1 truncate font-medium md:group-data-[dar=true]/menu:hidden">{modul.ad}</span>
       {rozetSayisi > 0 && (
-        <span className="rounded-full md:group-data-[dar=true]/menu:hidden bg-[var(--danger-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[#ff7a70]">{rozetSayisi}</span>
+        <span className="min-w-[1.375rem] rounded-full bg-[#e7222e] px-1.5 py-0.5 text-center text-xs font-bold leading-4 text-white md:group-data-[dar=true]/menu:hidden">{rozetSayisi}</span>
       )}
       <OkKirilimIkonu className="h-3.5 w-3.5 shrink-0 text-white/30 md:group-data-[dar=true]/menu:hidden" />
     </Link>
