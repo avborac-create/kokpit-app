@@ -18,6 +18,18 @@ function sadelestir(s: string): string {
     .replace(/ç/g, "c");
 }
 
+// "Istanbul Anadolu 16. Sulh Hukuk Mahkemesi" -> adliye / birim no / birim tipi. Dosyada birim yine tek
+// yazi olarak saklanir; parcalar yalnizca secilen birimin altinda bilgi olarak gosterilir.
+function birimAyristir(ad: string): { adliye: string; no: string | null; tip: string } | null {
+  const adliye = [...ADLIYELER]
+    .filter((a) => ad.startsWith(a + " "))
+    .sort((a, b) => b.length - a.length)[0];
+  if (!adliye) return null;
+  const kalan = ad.slice(adliye.length + 1);
+  const m = kalan.match(/^(\d{1,3})\.\s+(.+)$/);
+  return { adliye, no: m ? m[1] : null, tip: m ? m[2] : kalan };
+}
+
 // Mahkeme/icra dairesi adi yazilmaz, katalogdan secilir. Katalogda yoksa
 // adliye + tur + sira numarasi secilerek eklenir; ad UYAP yazimiyla sistem kurar.
 export function BirimSecici({ birimler, varsayilan }: { birimler: string[]; varsayilan: string }) {
@@ -46,6 +58,8 @@ export function BirimSecici({ birimler, varsayilan }: { birimler: string[]; vars
 
   // Listede olmayan bir birim yazildiginda "Eklemek ister misiniz?" satiri: yeni birim panelini acar ve
   // yazidan tanidigi adliye / tur / sira numarasini onceden doldurur (hepsini kullanici onaylar).
+  const parcalar = secili ? birimAyristir(secili) : null;
+
   function yeniBirimOner() {
     const duz = sadelestir(girdi);
     const enUzun = <T,>(adaylar: T[], ad: (t: T) => string) =>
@@ -134,6 +148,20 @@ export function BirimSecici({ birimler, varsayilan }: { birimler: string[]; vars
           }}
         />
         {eskiDeger && <p className="mt-1 text-xs text-[#f3d9a8]">Bu birim katalogda yok; listeden seçerek değiştirin.</p>}
+        {parcalar && (
+          <dl className="mt-2 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 text-sm sm:grid-cols-3">
+            {[
+              ["Adalet Sarayı", parcalar.adliye],
+              ["Birim No", parcalar.no ? `${parcalar.no}.` : "Numarasız"],
+              ["Birim Tipi", parcalar.tip],
+            ].map(([etiket, deger]) => (
+              <div key={etiket} className="min-w-0 bg-[var(--yuzey,#1c2432)] px-3 py-2">
+                <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/50">{etiket}</dt>
+                <dd className={`break-words font-semibold ${deger === "Numarasız" ? "font-medium text-white/50" : "text-white"}`}>{deger}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
         {listeAcik && (
           <ul
             id="birim-listesi"
