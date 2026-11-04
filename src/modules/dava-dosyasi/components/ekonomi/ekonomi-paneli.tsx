@@ -258,6 +258,25 @@ export async function EkonomiPaneli({
     },
   ];
 
+  // Alt menü (Genel durum / Cari hesaplar / Anlaşma / Müvekkile hesap özeti ...): hangi bölümde olduğumuz `aktif`ten türer.
+  const navAktif = aktif === "ozet100" ? "genel" : aktif === "anlasma" ? "anlasma" : aktif === "dosyalar" ? "dosyalar" : aktif === "yonet" ? "yonet" : "cari";
+  const paraNo = aktifHesaplar.find((h) => h.paraHesabiMi)?.no ?? 101;
+  const altMenu: { anahtar: string; etiket: string; href: string; rozet?: string }[] = [
+    { anahtar: "genel", etiket: "Genel durum", href: hrefYaz({ alt: "ozet100" }) },
+    { anahtar: "cari", etiket: "Cari hesaplar", href: hrefYaz({ alt: String(paraNo) }), rozet: String(aktifHesaplar.length) },
+    { anahtar: "anlasma", etiket: "Anlaşma", href: hrefYaz({ alt: "anlasma" }) },
+    ...(musteriDuzeyi ? [{ anahtar: "dosyalar", etiket: "Dosyaları Seç", href: hrefYaz({ alt: "dosyalar" }), rozet: disindakiSayisi > 0 ? `${disindakiSayisi} dışında` : undefined }] : []),
+    { anahtar: "hesap-ozeti", etiket: "Müvekkile hesap özeti", href: `/kokpit/finans/musteri-iliskileri/${kapsam.musteriId}/odeme-talebi` },
+    ...(silmeYetkisiVar ? [{ anahtar: "yonet", etiket: "Hesapları yönet", href: hrefYaz({ alt: "yonet" }) }] : []),
+  ];
+  // Bakiye şeridi: müvekkilden istenecek (eksik bakiye veren hesaplar) ve ödenen tutarlar.
+  const seritHesaplari = ozet.hesaplar.filter(
+    (h) => !h.paraHesabiMi && !h.tutulanHesapMi && h.grup === "MUVEKKIL" && (h.borc !== 0 || h.alacak !== 0 || /akdi vekalet|harcama|avans/i.test(h.ad)),
+  );
+  const seritEksikler = seritHesaplari.filter((h) => h.bakiye > 0.001);
+  const seritEksikToplam = seritEksikler.reduce((t, h) => t + h.bakiye, 0);
+  const seritOdenen = seritHesaplari.reduce((t, h) => t + h.alacak, 0);
+
   return (
     <div className="max-w-5xl rounded-2xl border border-white/10 bg-white/[0.02] p-4 md:p-5">
       {vekaletUyarilari.map((h) => (
@@ -288,20 +307,39 @@ export async function EkonomiPaneli({
         </div>
       </div>
 
-      <Link
-        href={`/kokpit/finans/musteri-iliskileri/${kapsam.musteriId}/odeme-talebi`}
-        className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-2 text-white transition-colors hover:bg-[var(--accent)]/30"
-      >
-        <span>
-          <span className="block text-sm font-semibold">📄 Müvekkil Hesap Özeti Oluştur</span>
-          <span className="block text-xs text-white/60">
-            Müvekkilden ödeme istemek için: ne için ne kadar, banka bilgisi ve masraf dökümüyle A4 belge
+      {/* Bakiye şeridi: her alt menüde görünür; "kim kime ne kadar borçlu" tek satırda. */}
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm">
+        {seritEksikler.length > 0 ? (
+          <span className="font-semibold text-[#ff7a70]">
+            ● {seritEksikler.length} eksik bakiye {para.format(seritEksikToplam)}
           </span>
+        ) : (
+          <span className="font-semibold text-[#32d74b]">● Eksik bakiye yok</span>
+        )}
+        <span className="text-white/55">
+          ödenen <b className="font-medium tabular-nums text-white/85">{para.format(seritOdenen)}</b>
         </span>
-        <span className="shrink-0 text-lg" aria-hidden="true">
-          ›
-        </span>
-      </Link>
+        {havuzBakiyesi !== undefined && havuzBakiyesi > 0 && (
+          <Link href={hrefYaz({ alt: String(aktifHesaplar.find((h) => h.paraHesabiMi)?.no ?? 101) })} className="text-[#6db8ff] hover:underline">
+            havuzda bekleyen <b className="font-medium tabular-nums">{para.format(havuzBakiyesi)}</b> · aktar →
+          </Link>
+        )}
+      </div>
+
+      <nav aria-label="Ekonomi bölümleri" className="mb-4 flex gap-5 overflow-x-auto border-b border-white/[0.1]">
+        {altMenu.map((m) => (
+          <Link
+            key={m.anahtar}
+            href={m.href}
+            className={`-mb-px flex shrink-0 items-center gap-1.5 border-b-2 pb-2 pt-1 text-sm transition-colors ${
+              m.anahtar === navAktif ? "border-[var(--link)] font-semibold text-white" : "border-transparent text-white/60 hover:text-white"
+            }`}
+          >
+            {m.etiket}
+            {m.rozet && <span className="rounded-full bg-white/10 px-1.5 text-[11px] tabular-nums text-white/70">{m.rozet}</span>}
+          </Link>
+        ))}
+      </nav>
 
       {dosyaDisiMi && kapsam.dosyaId && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-sm text-white/80">
@@ -315,10 +353,11 @@ export async function EkonomiPaneli({
           </form>
         </div>
       )}
-      <DurumSeridi ozet={ozet} hrefYaz={hrefYaz} havuzBakiyesi={havuzBakiyesi} paraHesapNo={aktifHesaplar.find((h) => h.paraHesabiMi)?.no} />
+      {navAktif === "genel" && <DurumSeridi ozet={ozet} hrefYaz={hrefYaz} />}
 
+      {navAktif === "cari" && (
       <div className="mb-5 border-b border-white/[0.08] pb-4">
-        {katlar.map((kat, i) =>
+        {katlar.filter((k) => k.baslik).map((kat, i) =>
           !kat.baslik ? (
             <div key={i} className="mb-3 inline-flex flex-wrap gap-0.5 rounded-xl border border-white/10 bg-white/[0.04] p-0.5">
               {kat.sekmeler.map((sk) => (
@@ -375,6 +414,7 @@ export async function EkonomiPaneli({
           ),
         )}
       </div>
+      )}
 
       {aktif === "ozet100" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyaSecenekleri} hesapNesneleri={aktifHesaplar} silmeYetkisiVar={silmeYetkisiVar} havuzBakiyesi={havuzBakiyesi} hrefYaz={hrefYaz} />}
       {seciliHesap && aktif === String(seciliHesap.no) && (
@@ -482,12 +522,13 @@ async function OzetSekmesi({
 
   return (
     <div>
-      <div
+      <details
+        open
         className={`mb-4 rounded-2xl border px-4 py-3 ${
           durumFarki > 0.001 ? "border-[#32d74b]/40 bg-[#32d74b]/[0.07]" : durumFarki < -0.001 ? "border-[#ffb340]/40 bg-[#ffb340]/[0.07]" : "border-white/10 bg-white/[0.03]"
         }`}
       >
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-white/50">Müvekkil özetine göre durum</p>
+        <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-white/50">Müvekkil özetine göre durum (gizle / göster)</summary>
         <p className="mt-1 text-lg font-semibold text-white md:text-xl">
           {durumFarki > 0.001 ? (
             <>
@@ -526,7 +567,7 @@ async function OzetSekmesi({
             ))}
           </div>
         </div>
-      </div>
+      </details>
       <div className="glass overflow-x-auto rounded-2xl">
         <table className="w-full text-left text-xs md:text-sm">
           <thead className="text-white/50">
