@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { modulErisimiVarMi } from "@/core/auth/modul-izni";
 
 const ALT_MODULLER = [
   {
@@ -33,7 +35,8 @@ const ALT_MODULLER = [
   { anahtar: "tahsilat-listesi", renk: "#2fb58a", ad: "Tahsilat Listesi", aciklama: "Tüm tahsilatların tek listede takibi ve raporu.", yol: "/kokpit/finans/tahsilat-listesi", aktif: false },
 ];
 
-export default function FinansSayfasi() {
+export default async function FinansSayfasi() {
+  if (!(await modulErisimiVarMi("finans"))) redirect("/kokpit");
   return (
     <div className="pt-3">
       <h1 className="mb-6 text-2xl font-semibold tracking-tight text-white">Finans / Muhasebe</h1>

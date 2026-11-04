@@ -71,6 +71,8 @@ model Kullanici {
   aktifMi          Boolean       @default(true)
   // Finans yetkilisi: muvekkilden istenen paralarin bildirimlerini alir, para geldi teyidini verir.
   finansYetkilisiMi Boolean      @default(false)
+  // Yonetici disindaki kullaniciya ayrica acilan menu modulleri (orn. "finans"); bkz. core/auth/modul-izni.ts.
+  modulIzinleri    String[]      @default([])
   // Kullanicinin KAPATTIGI bildirim turleri (para-istendi, para-geldi, para-gecikti ...).
   bildirimKapali   String[]      @default([])
   // Ana sayfadaki takvim/dogum gunu paneli icin (yalniz gun ve ay kullanilir).

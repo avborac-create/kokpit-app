@@ -6,6 +6,7 @@ import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { sistemYoneticisiMi } from "@/core/auth/yetki";
 import { sifreyiHashle } from "@/core/auth/password";
+import { IZIN_VERILEBILIR_MODULLER } from "@/core/auth/modul-izni";
 
 const AYARLAR_YOLU = "/kokpit/ayarlar/kullanicilar";
 
@@ -98,5 +99,16 @@ export async function kullaniciAktifligiDegistir(id: string, aktifMi: boolean) {
 export async function finansYetkilisiDegistir(id: string, deger: boolean) {
   await yetkiKontrolEt();
   await prisma.kullanici.update({ where: { id }, data: { finansYetkilisiMi: deger } });
+  revalidatePath(AYARLAR_YOLU);
+}
+
+// Kullanici bazli modul izni (orn. Finans menusu): Yonetici disindaki kisiye modulu acar/kapatir.
+export async function modulIzniDegistir(id: string, anahtar: string, deger: boolean) {
+  await yetkiKontrolEt();
+  if (!IZIN_VERILEBILIR_MODULLER.some((m) => m.anahtar === anahtar)) throw new Error("Geçersiz modül.");
+  const k = await prisma.kullanici.findUnique({ where: { id }, select: { modulIzinleri: true } });
+  if (!k) throw new Error("Kullanıcı bulunamadı.");
+  const yeni = deger ? Array.from(new Set([...k.modulIzinleri, anahtar])) : k.modulIzinleri.filter((a) => a !== anahtar);
+  await prisma.kullanici.update({ where: { id }, data: { modulIzinleri: yeni } });
   revalidatePath(AYARLAR_YOLU);
 }

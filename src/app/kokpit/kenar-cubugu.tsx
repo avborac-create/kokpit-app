@@ -41,6 +41,7 @@ function sonModulAbone() {
 export function KenarCubugu({
   kullaniciRol,
   buroRolu,
+  ekIzinler = [],
   menuDuzeni,
   cmkDikkatSayisi = 0,
   isSayisi = 0,
@@ -48,6 +49,8 @@ export function KenarCubugu({
 }: {
   kullaniciRol?: KullaniciRolu;
   buroRolu?: BuroRolu;
+  // Yonetici disindaki kullaniciya ayrica acilan modul anahtarlari (Ayarlar > Kullanicilar > Menu izni).
+  ekIzinler?: string[];
   menuDuzeni: { anahtar: string; gizliMi: boolean }[];
   // Ceza/CMK listesinde gercekten dikkat/islem gerektiren kayit sayisi
   // (yaklasan durusma + gecikmis sonraki kontrol) - bkz.
@@ -65,7 +68,7 @@ export function KenarCubugu({
     const modul = modulHaritasi.get(anahtar);
     if (!modul) return false;
     if (gizliSeti.has(anahtar)) return false;
-    if (modul.rolGorebilir && !(kullaniciRol && modul.rolGorebilir.includes(kullaniciRol))) return false;
+    if (modul.rolGorebilir && !(kullaniciRol && modul.rolGorebilir.includes(kullaniciRol)) && !ekIzinler.includes(anahtar)) return false;
     if (modul.buroRolGorebilir && !(buroRolu && modul.buroRolGorebilir.includes(buroRolu))) return false;
     return true;
   }

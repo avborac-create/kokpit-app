@@ -2,6 +2,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { menuDuzeniniGetir } from "@/core/menu/queries";
 import { beklenenIsSayisi } from "./isler/sorgu";
 import { cmkOzetSayilariniHesapla } from "@/modules/cmk-dosyalari/lib/queries";
+import { kullaniciModulIzinleri } from "@/core/auth/modul-izni";
 import { silebilirMi } from "@/core/auth/yetki";
 import { islenmemisOneriSayisi } from "@/core/oneri/queries";
 import { KenarCubugu } from "./kenar-cubugu";
@@ -23,12 +24,14 @@ export async function KenarCubuguVerisi() {
     cmkOzetSayilariniHesapla(),
   ]);
   const oneriSayisi = kullanici && silebilirMi(kullanici.rol) ? await islenmemisOneriSayisi() : 0;
+  const ekIzinler = kullanici && !silebilirMi(kullanici.rol) ? await kullaniciModulIzinleri(kullanici.kullaniciId) : [];
   const isSayisi = kullanici ? await beklenenIsSayisi(kullanici.kullaniciId) : 0;
 
   return (
     <KenarCubugu
       kullaniciRol={kullanici?.rol}
       buroRolu={kullanici?.buroRolu}
+      ekIzinler={ekIzinler}
       menuDuzeni={menuDuzeni.map((oge) => ({ anahtar: oge.anahtar, gizliMi: oge.gizliMi }))}
       cmkDikkatSayisi={cmkOzet.yaklasanDurusma + cmkOzet.gecikmisKontrol}
       isSayisi={isSayisi}

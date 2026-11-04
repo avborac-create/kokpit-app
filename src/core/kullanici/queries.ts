@@ -10,6 +10,7 @@ export function kullanicilariListele() {
       buroRolu: true,
       aktifMi: true,
       finansYetkilisiMi: true,
+      modulIzinleri: true,
       dogumTarihi: true,
       olusturmaTarihi: true,
     },
