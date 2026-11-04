@@ -402,7 +402,7 @@ export default async function DavaDosyasiDetaySayfasi({
           {dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—"}
         </p>
       </MobilSabitBaslik>
-      <KunyeSeridi id="dosya-kunye" className="mb-4 md:mb-6">
+      <KunyeSeridi id="dosya-kunye" className="mb-2 md:!static md:mb-3 md:!py-1.5 md:!shadow-none md:!backdrop-blur-none">
         <div className="relative flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
           <div className="min-w-[min(100%,22rem)] flex-1">
             <div className="flex flex-wrap items-center gap-1.5 max-md:pr-28">
@@ -425,7 +425,7 @@ export default async function DavaDosyasiDetaySayfasi({
               </span>
             </div>
 
-            <h1 className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-lg font-semibold tracking-tight text-white sm:text-2xl">
+            <h1 className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-lg font-semibold tracking-tight text-white sm:text-xl">
               {dosya.birimAdi || dosya.dosyaNo ? (
                 <>
                   {dosya.birimAdi && <span>{dosya.birimAdi}</span>}
@@ -440,7 +440,7 @@ export default async function DavaDosyasiDetaySayfasi({
               )}
             </h1>
             {/* Davacı solda, davalı sağda: müvekkil davalıysa karşı taraf kutusu öne (sola), müvekkil kutusu arkaya (sağa) geçer. */}
-            <div className="mt-2 grid grid-cols-1 items-stretch gap-1.5 text-sm md:flex md:flex-wrap md:gap-2">
+            <div className="mt-1.5 grid grid-cols-1 items-stretch gap-1.5 text-sm md:flex md:flex-wrap md:gap-2 [&_.tikon]:!h-6 [&_.tikon]:!w-6 [&_.tikon]:!text-xs [&_.tsatir]:!px-2.5 [&_.tsatir]:!py-1">
               <div className={`tsatir ${muvekkilDavali ? "order-2" : "order-1"}`}>
                 <span className="tikon" aria-hidden>👤</span>
                 <div className="min-w-0 flex-1">
@@ -514,7 +514,7 @@ export default async function DavaDosyasiDetaySayfasi({
 
       <DosyaBirlikteUyarisi dosyaId={id} />
 
-      <DavaDosyasiSekmeleri dosyaId={id} aktif={aktifSekme} />
+      <DavaDosyasiSekmeleri dosyaId={id} aktif={aktifSekme} kimlik={`${kokpitNoGoster(dosya)}${dosya.birimAdi ? ` · ${dosya.birimAdi}` : ""}${dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}`} />
 
       {aktifSekme === "evrak" ? (
         <EvrakPaneli dosyaId={id} evraklar={evrakKayitlari} hedef="dava" />
