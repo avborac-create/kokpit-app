@@ -10,8 +10,8 @@ function anahtarKelimeler(baslik: string): Set<string> {
   return new Set(
     baslik
       .toLocaleLowerCase("tr-TR")
-      .replace(/[^p{L}p{N}s]/gu, " ")
-      .split(/s+/)
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .split(/\s+/)
       .filter((k) => k.length > 2),
   );
 }
