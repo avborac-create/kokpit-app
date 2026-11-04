@@ -13,6 +13,7 @@ import {
   DAVA_DOSYALARI_VARSAYILAN_SUTUN_SIRASI,
   DAVA_DOSYALARI_GIZLENEMEZ_SUTUNLAR,
 } from "@/core/tablo-duzeni/dava-dosyalari-sutunlari";
+import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
 import { SutunDuzeniPaneli } from "@/core/tablo-duzeni/sutun-duzeni-paneli";
 import type { TabloSutunSatiri } from "@/core/tablo-duzeni/tablo-sutun-listesi";
 import { musteriGetir } from "@/modules/musteri/lib/queries";
@@ -37,14 +38,19 @@ export default async function DavaDosyalariSayfasi({
     if (kayitli) redirect(`/kokpit/dava-dosyalari?${decodeURIComponent(kayitli)}`);
   }
   const filtreAktif = Boolean(params.arama || params.durum || params.musteri);
-  const [avukatlar, dosyalar, durumlar, kullanici, sutunDuzeni, filtreMusteri] = await Promise.all([
+  const [avukatlar, dosyalar, durumlar, kullanici, sutunDuzeni, filtreMusteri, etiketDegisiklikleri] = await Promise.all([
     vekilAdaylariniGetir(),
     davaDosyalariniListele({ arama: params.arama, durumKod: params.durum, musteriId: params.musteri }),
     secenekleriGetir("dava_dosyasi_durumu"),
     mevcutKullanici(),
     tabloSutunDuzeniniGetir("dava-dosyalari"),
     params.musteri ? musteriGetir(params.musteri) : null,
+    etiketleriGetir(),
   ]);
+  // Yonetici basliga tiklayip adini degistirebilir (bkz. dosyalar-tablosu.tsx); degisiklikler arayuz_etiketleri'nde durur.
+  const sutunEtiketleri = Object.fromEntries(
+    Object.entries(DAVA_DOSYALARI_SUTUN_ETIKETLERI).map(([a, v]) => [a, etiketDegisiklikleri[`tablo.dava-dosyalari.sutun.${a}`] ?? v]),
+  );
   const silmeYetkisiVar = Boolean(kullanici && silebilirMi(kullanici.rol));
 
   // Admin panelinde henüz seed edilmemiş/eksik bir sütun varsa (ör. yeni
@@ -69,7 +75,7 @@ export default async function DavaDosyalariSayfasi({
     .filter((anahtar) => DAVA_DOSYALARI_SUTUN_ETIKETLERI[anahtar])
     .map((anahtar) => ({
       anahtar,
-      etiket: DAVA_DOSYALARI_SUTUN_ETIKETLERI[anahtar] ?? anahtar,
+      etiket: sutunEtiketleri[anahtar] ?? anahtar,
       gizliMi: gizliSutunlar.has(anahtar),
       gizlenebilirMi: !DAVA_DOSYALARI_GIZLENEMEZ_SUTUNLAR.includes(anahtar),
     }));
@@ -142,7 +148,9 @@ export default async function DavaDosyalariSayfasi({
       <DosyalarTablosu
         dosyalar={dosyalar}
         gorunurSutunlar={gorunurSutunlar}
-        sutunEtiketleri={DAVA_DOSYALARI_SUTUN_ETIKETLERI}
+        sutunEtiketleri={sutunEtiketleri}
+        varsayilanEtiketler={DAVA_DOSYALARI_SUTUN_ETIKETLERI}
+        etiketDuzenlenebilir={silmeYetkisiVar}
         silmeYetkisiVar={silmeYetkisiVar}
         durumlar={durumlar.map((d) => ({ id: d.id, etiket: d.etiket }))}
         avukatlar={avukatlar.map((a) => ({ id: a.id, adSoyad: a.adSoyad }))}

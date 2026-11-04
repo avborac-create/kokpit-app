@@ -303,12 +303,12 @@ export function DavaDosyasiFormIcerik({
         <div key={anahtar}>
           <MuvekkilSecici musteriler={musteriler} seciliIdler={seciliIdlerGuncel} />
         </div>
-        <KarsiTarafEkleyici key={taslak ? "taslak" : "ilk"} baslangicKarsiTaraflar={baslangicKarsiTaraflar} taslakCipler={taslakCipler} />
         {sinifVarMi && (
           <div key={`${anahtar}-s`}>
             <DosyaSinifiAlanlari {...sinifOzellikleri} bolum="sifat" />
           </div>
         )}
+        <KarsiTarafEkleyici key={taslak ? "taslak" : "ilk"} baslangicKarsiTaraflar={baslangicKarsiTaraflar} taslakCipler={taslakCipler} />
       </FormKarti>
       <FormKarti baslik="2 · Dosya Bilgileri">
         {sinifVarMi && (

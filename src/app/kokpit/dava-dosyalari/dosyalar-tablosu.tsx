@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore, useState, useEffect } from "react";
+import { useSyncExternalStore, useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -10,6 +10,7 @@ import {
   kokpitNoGoster,
   buroNoGoster,
 } from "@/modules/dava-dosyasi/lib/kokpit-no";
+import { etiketleriKaydet } from "@/core/arayuz-etiketi/actions";
 import { TopluIslemCubugu } from "./toplu-islem-cubugu";
 import { dosyaDurumSinifi } from "@/modules/dava-dosyasi/lib/durum-rengi";
 import { BOS_FILTRE, SutunFiltresi, filtreleriAbone, filtreleriOku, filtreleriYaz } from "./sutun-filtresi";
@@ -200,6 +201,47 @@ function gizlileriYaz(liste: string[]) {
   gizliDinleyiciler.forEach((d) => d());
 }
 
+// Kisiye ozel sutun sirasi (basliklari surukleyerek ya da Sutunlar menusundeki oklarla); tarayicida saklanir.
+const SIRA_ANAHTARI = "kokpit-dava-dosyalari-sutun-sirasi";
+const siraDinleyicileri = new Set<() => void>();
+let siraOnbellek: { ham: string | null; sonuc: string[] } = { ham: undefined as unknown as string, sonuc: [] };
+
+function siraOku(): string[] {
+  let ham: string | null;
+  try {
+    ham = localStorage.getItem(SIRA_ANAHTARI);
+  } catch {
+    ham = null;
+  }
+  if (ham === siraOnbellek.ham) return siraOnbellek.sonuc;
+  let sonuc = BOS_LISTE;
+  if (ham) {
+    try {
+      const l = JSON.parse(ham);
+      if (Array.isArray(l)) sonuc = l.filter((x): x is string => typeof x === "string");
+    } catch {
+      sonuc = BOS_LISTE;
+    }
+  }
+  siraOnbellek = { ham, sonuc };
+  return sonuc;
+}
+
+function siraYaz(liste: string[]) {
+  try {
+    if (liste.length === 0) localStorage.removeItem(SIRA_ANAHTARI);
+    else localStorage.setItem(SIRA_ANAHTARI, JSON.stringify(liste));
+  } catch {
+    // localStorage erisilemez - sessizce yok say
+  }
+  siraDinleyicileri.forEach((d) => d());
+}
+
+function siraAbone(d: () => void) {
+  siraDinleyicileri.add(d);
+  return () => siraDinleyicileri.delete(d);
+}
+
 function gizlileriAbone(d: () => void) {
   gizliDinleyiciler.add(d);
   return () => gizliDinleyiciler.delete(d);
@@ -231,6 +273,14 @@ function SutunBasligi({
   ilk,
   bas,
   filtre,
+  siralanabilir,
+  suruklenen,
+  hedefMi,
+  suruklemeBasladi,
+  suruklemeUzerinde,
+  suruklemeBirakildi,
+  suruklemeBitti,
+  etiketKaydet,
 }: {
   filtre?: ReactNode;
   ilk?: boolean;
@@ -239,18 +289,100 @@ function SutunBasligi({
   aciklama?: string;
   genislik: number;
   suruklemeBaslat: (e: React.PointerEvent) => void;
+  siralanabilir: boolean;
+  suruklenen: boolean;
+  hedefMi: boolean;
+  suruklemeBasladi: () => void;
+  suruklemeUzerinde: () => void;
+  suruklemeBirakildi: () => void;
+  suruklemeBitti: () => void;
+  // Verilirse (yonetici) baslik yerinde yeniden adlandirilabilir.
+  etiketKaydet?: (yeni: string) => Promise<void>;
 }) {
+  const [duzenliyor, setDuzenliyor] = useState(false);
+  const [deger, setDeger] = useState(etiket);
+  const [, basla] = useTransition();
+  // Genislik tutamacindan baslayan hareket, baslik surukleme (sira) olarak yorumlanmasin.
+  const genislikTutuyor = useRef(false);
+
+  function duzenlemeyiBaslat() {
+    setDeger(etiket);
+    setDuzenliyor(true);
+  }
+  function kaydet() {
+    const yeni = deger.trim();
+    setDuzenliyor(false);
+    if (!etiketKaydet || yeni === etiket) return;
+    basla(async () => {
+      try {
+        await etiketKaydet(yeni);
+      } catch {
+        // yetki/ag hatasi: baslik eski haliyle kalir
+      }
+    });
+  }
+
   return (
     <th
-      className={`relative select-none whitespace-nowrap py-2 text-left text-[13px] font-medium ${ilk ? "pl-3 pr-2.5" : "px-2.5"}`}
+      className={`group/baslik relative select-none whitespace-nowrap py-2 text-left text-[13px] font-medium ${ilk ? "pl-3 pr-2.5" : "px-2.5"} ${siralanabilir && !duzenliyor ? "cursor-grab" : ""} ${suruklenen ? "opacity-40" : ""} ${hedefMi ? "shadow-[inset_3px_0_0_var(--accent)]" : ""}`}
       style={{ width: genislik }}
+      draggable={siralanabilir && !duzenliyor}
+      onDragStart={(e) => {
+        if (genislikTutuyor.current) {
+          e.preventDefault();
+          return;
+        }
+        e.dataTransfer.setData("text/plain", etiket);
+        e.dataTransfer.effectAllowed = "move";
+        suruklemeBasladi();
+      }}
+      onDragOver={(e) => {
+        if (!siralanabilir) return;
+        e.preventDefault();
+        suruklemeUzerinde();
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        suruklemeBirakildi();
+      }}
+      onDragEnd={suruklemeBitti}
     >
       <div className="flex items-center gap-2 pr-2">
         {bas}
-        <span className="truncate" title={aciklama ?? etiket}>
-          {etiket}
-        </span>
-        {filtre}
+        {duzenliyor ? (
+          <input
+            autoFocus
+            value={deger}
+            maxLength={40}
+            onChange={(e) => setDeger(e.target.value)}
+            onBlur={kaydet}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") kaydet();
+              if (e.key === "Escape") setDuzenliyor(false);
+            }}
+            aria-label="Sütun adı"
+            title="Enter: kaydet · Esc: vazgeç · boş bırakırsanız varsayılan ad döner"
+            className="alan-bmw min-w-0 flex-1 select-text !px-1.5 !py-0.5 text-[13px]"
+          />
+        ) : (
+          <>
+            <span className="truncate" title={aciklama ?? etiket}>
+              {etiket}
+            </span>
+            {etiketKaydet && (
+              <button
+                type="button"
+                onClick={duzenlemeyiBaslat}
+                aria-label={`${etiket} sütun adını değiştir`}
+                title="Sütun adını değiştir"
+                className="hidden shrink-0 text-white/40 hover:text-white group-hover/baslik:inline [@media(pointer:coarse)]:inline"
+              >
+                ✎
+              </button>
+            )}
+          </>
+        )}
+        {!duzenliyor && filtre}
       </div>
       {/* Sutun kenarindan surukleyerek genislik ayarlama tutamaci - drag&drop
           (HTML5 draggable) ile karismasin diye ayri bir pointer temelli
@@ -268,6 +400,8 @@ function SutunBasligi({
         onPointerDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          genislikTutuyor.current = true;
+          window.addEventListener("pointerup", () => (genislikTutuyor.current = false), { once: true });
           suruklemeBaslat(e);
         }}
         className="group absolute right-0 top-0 flex h-full w-5 cursor-col-resize touch-none justify-end md:w-2"
@@ -313,6 +447,8 @@ export function DosyalarTablosu({
   dosyalar: tumDosyalar,
   gorunurSutunlar: tumSutunlar,
   sutunEtiketleri,
+  varsayilanEtiketler,
+  etiketDuzenlenebilir,
   silmeYetkisiVar,
   durumlar,
   avukatlar,
@@ -320,6 +456,8 @@ export function DosyalarTablosu({
   dosyalar: Dosya[];
   gorunurSutunlar: string[];
   sutunEtiketleri: Record<string, string>;
+  varsayilanEtiketler: Record<string, string>;
+  etiketDuzenlenebilir: boolean;
   silmeYetkisiVar: boolean;
   durumlar: { id: string; etiket: string }[];
   avukatlar: { id: string; adSoyad: string }[];
@@ -346,7 +484,33 @@ export function DosyalarTablosu({
     filtreleriYaz(yeni);
   }
   const gizliSutunlar = useSyncExternalStore(gizlileriAbone, gizlileriOku, () => BOS_LISTE);
-  const gorunurSutunlar = tumSutunlar.filter((a) => !gizliSutunlar.includes(a));
+  // Kisiye ozel sira (varsa) yonetici sirasinin ustune biner; listede olmayan sutunlar sona eklenir.
+  const kisiSirasi = useSyncExternalStore(siraAbone, siraOku, () => BOS_LISTE);
+  const siraliSutunlar = [...kisiSirasi.filter((a) => tumSutunlar.includes(a)), ...tumSutunlar.filter((a) => !kisiSirasi.includes(a))];
+  const gorunurSutunlar = siraliSutunlar.filter((a) => !gizliSutunlar.includes(a));
+  const [suruklenenSutun, setSuruklenenSutun] = useState<string | null>(null);
+  const [hedefSutun, setHedefSutun] = useState<string | null>(null);
+  function sutunTasi(kaynak: string, hedef: string) {
+    if (kaynak === hedef || kaynak === "kayitNo") return;
+    const kaynakIndex = siraliSutunlar.indexOf(kaynak);
+    const hedefIndex = siraliSutunlar.indexOf(hedef);
+    if (kaynakIndex < 0 || hedefIndex < 0) return;
+    const liste = siraliSutunlar.filter((a) => a !== kaynak);
+    let i = liste.indexOf(hedef) + (kaynakIndex < hedefIndex ? 1 : 0);
+    // Kokpit No (dosyayi acan baglanti) hep ilk sutunda kalir.
+    if (liste[0] === "kayitNo") i = Math.max(i, 1);
+    liste.splice(i, 0, kaynak);
+    siraYaz(liste);
+  }
+  function sutunKaydir(anahtar: string, yon: -1 | 1) {
+    const hedef = siraliSutunlar[siraliSutunlar.indexOf(anahtar) + yon];
+    if (hedef && hedef !== "kayitNo") sutunTasi(anahtar, hedef);
+  }
+  async function sutunAdiniKaydet(anahtar: string, yeni: string) {
+    await etiketleriKaydet({
+      [`tablo.dava-dosyalari.sutun.${anahtar}`]: yeni === varsayilanEtiketler[anahtar] ? "" : yeni,
+    });
+  }
   function sutunGizlemeDegistir(anahtar: string) {
     if (anahtar === "kayitNo") return; // dosyayi acan baglanti bu sutunda
     if (gizliSutunlar.includes(anahtar)) gizlileriYaz(gizliSutunlar.filter((a) => a !== anahtar));
@@ -541,18 +705,48 @@ export function DosyalarTablosu({
             Sütunlar{gizliSutunlar.length > 0 ? ` (${gizliSutunlar.length} gizli)` : ""}
           </summary>
           <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl max-md:fixed max-md:inset-x-3 max-md:w-auto max-md:max-h-[60vh] max-md:overflow-y-auto border border-white/20 bg-[var(--yuzey,#1c2432)] p-2 shadow-2xl">
-            {tumSutunlar.map((anahtar) => (
-              <label key={anahtar} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm text-white hover:bg-white/10">
-                <input
-                  type="checkbox"
-                  className="onay-kutusu"
-                  checked={!gizliSutunlar.includes(anahtar)}
-                  disabled={anahtar === "kayitNo"}
-                  onChange={() => sutunGizlemeDegistir(anahtar)}
-                />
-                {sutunEtiketleri[anahtar] ?? anahtar}
-              </label>
+            <p className="px-2 pb-1 text-[11px] text-white/40">Sırayı değiştirmek için okları kullanın ya da tablo başlığını sürükleyip bırakın.</p>
+            {siraliSutunlar.map((anahtar, i) => (
+              <div key={anahtar} className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-white hover:bg-white/10">
+                <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-1">
+                  <input
+                    type="checkbox"
+                    className="onay-kutusu"
+                    checked={!gizliSutunlar.includes(anahtar)}
+                    disabled={anahtar === "kayitNo"}
+                    onChange={() => sutunGizlemeDegistir(anahtar)}
+                  />
+                  <span className="truncate">{sutunEtiketleri[anahtar] ?? anahtar}</span>
+                </label>
+                {anahtar !== "kayitNo" && (
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Sola taşı"
+                      disabled={i === 0 || siraliSutunlar[i - 1] === "kayitNo"}
+                      onClick={() => sutunKaydir(anahtar, -1)}
+                      className="rounded px-1.5 py-1 text-xs text-white/50 hover:text-white disabled:opacity-25"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Sağa taşı"
+                      disabled={i === siraliSutunlar.length - 1}
+                      onClick={() => sutunKaydir(anahtar, 1)}
+                      className="rounded px-1.5 py-1 text-xs text-white/50 hover:text-white disabled:opacity-25"
+                    >
+                      ↓
+                    </button>
+                  </>
+                )}
+              </div>
             ))}
+            {kisiSirasi.length > 0 && (
+              <button type="button" onClick={() => siraYaz([])} className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm text-[var(--link)] hover:bg-white/10">
+                Sıralamayı varsayılana döndür
+              </button>
+            )}
             {gizliSutunlar.length > 0 && (
               <button type="button" onClick={() => gizlileriYaz([])} className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm text-[var(--link)] hover:bg-white/10">
                 Tümünü göster
@@ -642,6 +836,21 @@ export function DosyalarTablosu({
                     ) : undefined
                   }
                   suruklemeBaslat={(e) => genislikSuruklemeBaslat(anahtar, e)}
+                  siralanabilir={anahtar !== "kayitNo"}
+                  suruklenen={suruklenenSutun === anahtar}
+                  hedefMi={hedefSutun === anahtar && suruklenenSutun !== null && suruklenenSutun !== anahtar && anahtar !== "kayitNo"}
+                  suruklemeBasladi={() => setSuruklenenSutun(anahtar)}
+                  suruklemeUzerinde={() => suruklenenSutun && anahtar !== "kayitNo" && setHedefSutun(anahtar)}
+                  suruklemeBirakildi={() => {
+                    if (suruklenenSutun) sutunTasi(suruklenenSutun, anahtar);
+                    setSuruklenenSutun(null);
+                    setHedefSutun(null);
+                  }}
+                  suruklemeBitti={() => {
+                    setSuruklenenSutun(null);
+                    setHedefSutun(null);
+                  }}
+                  etiketKaydet={etiketDuzenlenebilir ? (yeni) => sutunAdiniKaydet(anahtar, yeni) : undefined}
                 />
               ))}
               {!secimModu && (
