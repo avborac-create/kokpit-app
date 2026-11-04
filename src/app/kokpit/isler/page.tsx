@@ -7,6 +7,7 @@ import { isDetayiYukle } from "./detay-veri";
 import { donemBasi } from "./hafta";
 import { YanPanel } from "./yan-panel";
 import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
+import { sistemYoneticisiMi } from "@/core/auth/yetki";
 
 export default async function IslerSayfasi({ searchParams }: { searchParams: Promise<{ kimin?: string; kisi?: string; is?: string }> }) {
   const { kimin, kisi, is: seciliId } = await searchParams;
@@ -37,7 +38,14 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
 
   return (
     <div className={`max-w-7xl pt-3 ${detay ? "xl:pr-[var(--yan-panel-w,500px)]" : ""}`}>
-      <h1 className="text-2xl font-semibold tracking-tight text-white">Görevler</h1>
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight text-white">Görevler</h1>
+        {k && sistemYoneticisiMi(k.rol) && (
+          <Link href="/kokpit/isler/yonetim" className="ml-auto rounded-lg border border-[var(--accent)]/50 bg-[var(--accent)]/15 px-3 py-1.5 text-sm font-semibold text-white hover:bg-[var(--accent)]/25">
+            Görev Yönetimi (yönetici)
+          </Link>
+        )}
+      </div>
       <p className="mb-5 mt-1 text-sm text-white/55">Sizden beklenen her şey burada. Görünümü (liste ya da kanban) kendiniz seçebilirsiniz; bir göreve tıklayınca sağda ayrıntısı açılır.</p>
       <IsListesi
         benimId={k?.kullaniciId ?? ""}
