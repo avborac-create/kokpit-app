@@ -73,18 +73,9 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
   buroNo: (dosya) => buroNoGoster(dosya.buroNo),
   dosyaNo: (dosya) => dosya.dosyaNo ?? "—",
   tur: (dosya) => {
-    const metin = turMetni(dosya);
-    return (
-      <span className="flex items-center gap-1.5">
-        <span className="truncate">{metin}</span>
-        {dosya.muvekkilSifati === "BORCLU" &&
-          dosya.tur?.kod === "icra_dosyasi" && (
-            <span className="shrink-0 rounded-full bg-[var(--danger-soft)] px-1.5 py-0.5 text-[11px] text-[#ff7a70]">
-              Borçlu
-            </span>
-          )}
-      </span>
-    );
+    const borcluIcra = dosya.muvekkilSifati === "BORCLU" && dosya.tur?.kod === "icra_dosyasi";
+    const metin = borcluIcra ? "Borçlu İcra" : turMetni(dosya);
+    return <span className="truncate">{metin}</span>;
   },
   birimAdi: (dosya) => dosya.birimAdi ?? "—",
   karsiTaraflar: (dosya) =>
