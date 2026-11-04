@@ -233,6 +233,7 @@ export async function EkonomiPaneli({
         (h) => /akdi vekalet/i.test(h.ad) && !h.paraHesabiMi && !h.tutulanHesapMi && h.alacak > 0.001 && h.borc < h.alacak - 0.001,
       )
     : [];
+  const buDosya = kapsam.dosyaId ? dosyalar.find((d) => d.id === kapsam.dosyaId) : undefined;
   const dosyaSecenekleri: DosyaSecenegi[] = dosyalar.map((d) => ({ id: d.id, etiket: d.etiket, ayrinti: d.ayrinti }));
 
   type Sekme = { anahtar: string; etiket: string; rozet?: string; rozetRengi?: "kirmizi" | "yesil" };
@@ -294,21 +295,52 @@ export async function EkonomiPaneli({
           </Link>
         </div>
       ))}
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold tracking-tight text-white">
-          {musteriDuzeyi ? "Müvekkil Ekonomisi — tüm dosyalar" : "Dosya Ekonomisi"}
-        </h2>
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-xs text-white/40">Bir kayıt hem dosya hem müvekkil ekonomisinde görünür; tek yerde girilir.</p>
-          {kapsam.dosyaId ? (
+      {/* Üst gezinme: Müvekkil geneli ↔ her dosyanın kendi ekonomisi (tek tık). */}
+      {sayfaSekmeleri && sayfaSekmeleri.length > 1 && (
+        <div className="mb-4">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/45">Hangi ekonomiyi görüyorsunuz?</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {sayfaSekmeleri.map((s) => (
+              <Link
+                key={s.anahtar}
+                href={hrefYaz({ sayfa: s.anahtar })}
+                title={s.baslik}
+                className={`rounded-full border px-3.5 py-1.5 text-xs transition-colors ${
+                  s.anahtar === aktifSayfa
+                    ? "border-[var(--accent)] bg-[var(--accent)] font-semibold text-white"
+                    : "border-white/15 text-white/70 hover:bg-white/[0.08] hover:text-white"
+                }`}
+              >
+                {s.anahtar === "genel" ? "Müvekkil geneli (tüm dosyalar)" : s.etiket}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="mb-3">
+        {musteriDuzeyi ? (
+          <>
+            <h2 className="text-lg font-semibold tracking-tight text-white">Tüm dosyaların toplamı</h2>
+            <p className="text-xs text-white/45">
+              Müvekkilin bütün dosyalarındaki kayıtların toplamıdır. Her dosyanın kendi ekonomisi aşağıdaki kartlarda; karta tıklayarak dosyanın içine girersiniz.
+            </p>
+          </>
+        ) : (
+          <>
             <Link
               href={`/kokpit/finans/musteri-iliskileri/${kapsam.musteriId}/cari-hesap?sayfa=genel&alt=ozet`}
-              className="whitespace-nowrap rounded-full border border-[var(--accent)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-medium text-white hover:bg-[var(--accent)]/30"
+              className="mb-1 inline-block text-xs text-[#6db8ff] hover:underline"
             >
-              Müvekkil Ekonomisi →
+              ‹ Müvekkil Ekonomisi (tüm dosyalar)
             </Link>
-          ) : null}
-        </div>
+            <h2 className="text-lg font-semibold tracking-tight text-white">
+              Dosya Ekonomisi{buDosya ? ` — ${buDosya.etiket}` : ""}
+            </h2>
+            <p className="text-xs text-white/45">
+              {buDosya?.ayrinti ? `${buDosya.ayrinti}. ` : ""}Burada yalnızca bu dosyanın kayıtları görünür; girdiğiniz her kayıt müvekkilin toplamına da otomatik yansır.
+            </p>
+          </>
+        )}
       </div>
 
       {/* Bakiye şeridi: her alt menüde görünür; "kim kime ne kadar borçlu" tek satırda. */}
@@ -471,24 +503,6 @@ export async function EkonomiPaneli({
       {aktif === "dosyalar" && musteriDuzeyi && <DosyaSecimi musteriId={kapsam.musteriId} />}
       {aktif === "yonet" && <HesapYonetimi hesaplar={hesaplar} />}
 
-      {sayfaSekmeleri && sayfaSekmeleri.length > 0 && (
-        <div className="mt-6 flex flex-wrap items-end gap-1 border-t border-white/[0.08] pt-3">
-          {sayfaSekmeleri.map((s) => (
-            <Link
-              key={s.anahtar}
-              href={hrefYaz({ sayfa: s.anahtar })}
-              title={s.baslik}
-              className={`rounded-t-lg border border-b-0 px-3.5 py-1.5 text-xs transition-colors ${
-                s.anahtar === aktifSayfa
-                  ? "border-[var(--accent)] bg-[var(--accent-soft)] font-semibold text-white"
-                  : "border-white/10 text-white/55 hover:bg-white/[0.06] hover:text-white"
-              }`}
-            >
-              {s.etiket}
-            </Link>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -579,6 +593,73 @@ async function OzetSekmesi({
           </div>
         </div>
       </details>
+
+      {kirilim.length > 0 && (
+        <div className="mb-6">
+          <h3 className="mb-1 text-sm font-semibold text-white">Dosyaların kendi ekonomileri</h3>
+          <p className="mb-2 text-xs text-white/45">Her kart bir dosyanın özetidir. Karta tıklayınca o dosyanın ekonomisi açılır.</p>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {kirilim.map((d) => {
+              const hs = d.ozet.hesaplar.filter((h) => h.no < 200 && !h.paraHesabiMi && !h.tutulanHesapMi);
+              const borc = hs.reduce((t, h) => t + h.borc, 0);
+              const odenen = hs.reduce((t, h) => t + h.alacak, 0);
+              const kalan = hs.reduce((t, h) => t + h.bakiye, 0);
+              const satirlar = hs.filter((h) => Math.abs(h.bakiye) > 0.001);
+              return (
+                <Link
+                  key={d.id}
+                  href={hrefYaz({ sayfa: d.id })}
+                  className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-[var(--accent)] hover:bg-white/[0.06]"
+                >
+                  <p className="font-semibold text-white">{d.etiket}</p>
+                  {d.ayrinti && <p className="mt-0.5 line-clamp-2 text-[11px] text-white/45">{d.ayrinti}</p>}
+                  <div className="mt-3 space-y-1 border-t border-white/10 pt-3 text-xs">
+                    <p className="flex justify-between gap-3 text-white/60">
+                      <span>Borçlandırılan</span>
+                      <span className="tabular-nums text-white/85">{para.format(borc)}</span>
+                    </p>
+                    <p className="flex justify-between gap-3 text-white/60">
+                      <span>Ödenen</span>
+                      <span className="tabular-nums text-[#32d74b]">{para.format(odenen)}</span>
+                    </p>
+                    <p className="flex justify-between gap-3 font-semibold text-white">
+                      <span>{kalan > 0.001 ? "Kalan (müvekkil bize borçlu)" : kalan < -0.001 ? "Fazla ödeme (müvekkil alacaklı)" : "Kalan"}</span>
+                      <span className={`tabular-nums ${bakiyeRenk(kalan)}`}>{para.format(Math.abs(kalan))}</span>
+                    </p>
+                    {d.ozet.paraBakiyesi !== 0 && (
+                      <p className="flex justify-between gap-3 text-white/60">
+                        <span>Dosyada bekleyen para</span>
+                        <span className="tabular-nums text-[#6db8ff]">{para.format(d.ozet.paraBakiyesi)}</span>
+                      </p>
+                    )}
+                    {d.ozet.tutulanToplam !== 0 && (
+                      <p className="flex justify-between gap-3 text-white/60">
+                        <span>Adliyede tutulan</span>
+                        <span className="tabular-nums text-[#ffb340]">{para.format(d.ozet.tutulanToplam)}</span>
+                      </p>
+                    )}
+                  </div>
+                  {satirlar.length > 0 && (
+                    <div className="mt-2 space-y-0.5 border-t border-white/10 pt-2 text-[11px] text-white/50">
+                      {satirlar.map((h) => (
+                        <p key={h.hesapId} className="flex justify-between gap-3">
+                          <span>{h.no} - {h.ad}</span>
+                          <span className="tabular-nums">{para.format(h.bakiye)}</span>
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  <span className="mt-3 text-xs font-medium text-[#6db8ff]">Bu dosyanın ekonomisine git →</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {!kapsam.dosyaId && (
+        <h3 className="mb-1 text-sm font-semibold text-white">Cari hesap türlerine göre toplam (tüm dosyalar)</h3>
+      )}
       <div className="glass overflow-x-auto rounded-2xl">
         <table className="w-full text-left text-xs md:text-sm">
           <thead className="text-white/50">
@@ -649,7 +730,11 @@ async function OzetSekmesi({
               <tbody>
                 {kirilim.map((d) => (
                   <tr key={d.id} className="border-t border-white/[0.06]">
-                    <td className="whitespace-nowrap px-4 py-3 text-white/85">{d.etiket}</td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <Link href={hrefYaz({ sayfa: d.id })} className="text-white/85 hover:text-[#6db8ff] hover:underline">
+                        {d.etiket}
+                      </Link>
+                    </td>
                     {digerHesaplar.map((h) => (
                       <td key={h.hesapId} className="px-4 py-3 text-right">
                         <Bakiye b={d.ozet.hesaplar.find((x) => x.hesapId === h.hesapId)?.bakiye ?? 0} />
