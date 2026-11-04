@@ -6,7 +6,6 @@ import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { SecenekDuzenleyiciPenceresi } from "@/core/secenek/secenek-duzenleyici-penceresi";
 import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
 import { MasrafListesi } from "@/modules/dava-dosyasi/components/masraf-listesi";
-import { CariDefter } from "@/modules/dava-dosyasi/components/cari-defter";
 import { AdliBirimHareketFormu } from "@/modules/dava-dosyasi/components/adli-birim-hareket-formu";
 import { KarsiTarafAlacagiFormu } from "@/modules/dava-dosyasi/components/karsi-taraf-alacagi-formu";
 import { Defter } from "@/modules/dava-dosyasi/components/ekonomi/defter";
@@ -18,6 +17,7 @@ import {
   type DosyaSecenegi,
 } from "@/modules/dava-dosyasi/components/ekonomi/formlar";
 import { adliyeDefteri, borcluDefteri } from "@/modules/dava-dosyasi/lib/cari-defter";
+import type { DefterSatiri } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import {
   hesapDefteri,
   hesaplariGetir,
@@ -1132,24 +1132,51 @@ function GrupOzeti({
   );
 }
 
+// 201 / 301 defterleri eski satir bicimini (cari-defter.ts) kullanir; musteri 100 hesaplarindaki yeni Defter ile
+// (Akis / Gosterge / Tablo gorunumleri, toplu islem, ayni renk ve duzen) gosterilir.
+function yeniDefteraUyarla(satirlar: Awaited<ReturnType<typeof borcluDefteri>>, dosyaId: string): DefterSatiri[] {
+  return satirlar.map((s) => ({
+    id: s.id,
+    tarih: s.tarih,
+    dosyaId,
+    dosyaEtiketi: null,
+    aciklama: s.aciklama,
+    borc: s.borc,
+    alacak: s.alacak,
+    silme: s.silme,
+    duzenleHref: s.duzenleHref,
+    tahsilDegistir: s.tahsilDegistir,
+  }));
+}
+
+const bakiyeYorumuAdliye = (b: number) =>
+  b > 0
+    ? `Adliyede büronun ${para.format(b)} tutarında ödenmiş/bekleyen bakiyesi var.`
+    : b < 0
+      ? `Büro adliyeden ${para.format(-b)} fazla tahsil etmiş.`
+      : "Mutabık — adliye ile bakiye yok.";
+const bakiyeYorumuBorclu = (b: number) =>
+  b > 0
+    ? `Karşı taraftan tahsil edilecek ${para.format(b)} bakiye var.`
+    : b < 0
+      ? `Karşı taraftan ${para.format(-b)} fazla tahsil edilmiş.`
+      : "Mutabık — karşı taraftan beklenen bakiye yok.";
+
 async function AdliyeSekmesi({ dosyaId, silmeYetkisiVar }: { dosyaId: string; silmeYetkisiVar: boolean }) {
   const satirlar = await adliyeDefteri(dosyaId);
   return (
     <div>
       <p className="mb-3 text-sm text-white/55">Büro ile mahkeme/icra dairesi arasındaki ödeme ve iadeler.</p>
-      <CariDefter
-        satirlar={satirlar}
-        dosyaId={dosyaId}
+      <Defter
+        satirlar={yeniDefteraUyarla(satirlar, dosyaId)}
+        paraHesabiMi={false}
+        dosyaSutunu={false}
         silmeYetkisiVar={silmeYetkisiVar}
         bosMesaj="Bu dosyada adliye ile işlenmiş bir hareket yok."
-        bakiyeYorumu={(b) =>
-          b > 0
-            ? `Adliyede büronun ${para.format(b)} tutarında ödenmiş/bekleyen bakiyesi var.`
-            : b < 0
-              ? `Büro adliyeden ${para.format(-b)} fazla tahsil etmiş.`
-              : "Mutabık — adliye ile bakiye yok."
-        }
       />
+      <p className="mt-2 text-xs text-white/55">
+        {bakiyeYorumuAdliye(satirlar.reduce((t, s) => t + s.borc - s.alacak, 0))}
+      </p>
       <h3 className="mb-2 mt-6 text-sm font-semibold text-white">Adliye Hareketi Ekle</h3>
       <AdliBirimHareketFormu action={adliBirimHareketiEkle.bind(null, dosyaId)} />
     </div>
@@ -1161,19 +1188,16 @@ async function BorcluSekmesi({ dosyaId, silmeYetkisiVar }: { dosyaId: string; si
   return (
     <div>
       <p className="mb-3 text-sm text-white/55">Karşı taraftan beklenen ve tahsil edilen tutarlar.</p>
-      <CariDefter
-        satirlar={satirlar}
-        dosyaId={dosyaId}
+      <Defter
+        satirlar={yeniDefteraUyarla(satirlar, dosyaId)}
+        paraHesabiMi={false}
+        dosyaSutunu={false}
         silmeYetkisiVar={silmeYetkisiVar}
         bosMesaj="Bu dosyada karşı taraftan beklenen bir alacak yok."
-        bakiyeYorumu={(b) =>
-          b > 0
-            ? `Karşı taraftan tahsil edilecek ${para.format(b)} bakiye var.`
-            : b < 0
-              ? `Karşı taraftan ${para.format(-b)} fazla tahsil edilmiş.`
-              : "Mutabık — karşı taraftan beklenen bakiye yok."
-        }
       />
+      <p className="mt-2 text-xs text-white/55">
+        {bakiyeYorumuBorclu(satirlar.reduce((t, s) => t + s.borc - s.alacak, 0))}
+      </p>
       <h3 className="mb-2 mt-6 text-sm font-semibold text-white">Karşı Taraf Alacağı Ekle</h3>
       <KarsiTarafAlacagiFormu action={karsiTarafAlacagiEkle.bind(null, dosyaId)} />
     </div>

@@ -23,7 +23,9 @@ export type SatirSilme =
   | { tip: "hareket"; id: string }
   | { tip: "virman"; id: string }
   | { tip: "masraf"; id: string }
-  | { tip: "avansAktarimi"; id: string };
+  | { tip: "avansAktarimi"; id: string }
+  | { tip: "adliBirim"; id: string }
+  | { tip: "karsiTarafAlacagi"; id: string };
 
 export type DefterSatiri = {
   id: string;
@@ -39,6 +41,8 @@ export type DefterSatiri = {
   // Para borcludan (karsi taraftan) gelmisse
   borcludan?: boolean;
   duzenleHref?: string;
+  // Karsi taraf alacagi satirinda "tahsil edildi / edilmedi" degistirme dugmesi
+  tahsilDegistir?: { id: string; tahsilEdildiMi: boolean };
   // Defterde sayfa acmadan (yerinde) duzenleme icin; virmanda yalniz tarih + tutar
   duzenle?: SatirDuzenleme;
   turetilmis?: boolean;

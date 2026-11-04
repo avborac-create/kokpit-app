@@ -6,7 +6,8 @@ import { TopluSecim } from "@/modules/dava-dosyasi/components/ekonomi/toplu-seci
 import { YerindeDuzenle } from "@/modules/dava-dosyasi/components/ekonomi/yerinde-duzenle";
 import type { DefterSatiri } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { hareketSil, virmanSil } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
-import { dosyaMasrafiSil, avansAktarimiSil } from "@/modules/dava-dosyasi/lib/actions";
+import { dosyaMasrafiSil, avansAktarimiSil, adliBirimHareketiSil, karsiTarafAlacagiSil } from "@/modules/dava-dosyasi/lib/actions";
+import { TahsilDegistirButonu } from "@/modules/dava-dosyasi/components/tahsil-degistir-butonu";
 
 const para = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 const tarihBicimi = new Intl.DateTimeFormat("tr-TR");
@@ -44,6 +45,18 @@ function SilButonu({ satir }: { satir: DefterSatiri }) {
           eylem={avansAktarimiSil.bind(null, silme.id, satir.dosyaId ?? "")}
           mesaj="Bu aktarım silinsin mi? Bakiyeler eski haline döner."
         >
+          Sil
+        </OnayliButon>
+      );
+    case "adliBirim":
+      return (
+        <OnayliButon sifreIste eylem={adliBirimHareketiSil.bind(null, silme.id, satir.dosyaId ?? "")} mesaj="Bu hareket silinsin mi?">
+          Sil
+        </OnayliButon>
+      );
+    case "karsiTarafAlacagi":
+      return (
+        <OnayliButon sifreIste eylem={karsiTarafAlacagiSil.bind(null, silme.id, satir.dosyaId ?? "")} mesaj="Bu alacak kaydı silinsin mi?">
           Sil
         </OnayliButon>
       );
@@ -117,11 +130,15 @@ export function Defter({
           </Link>
         )
       );
-    const silBolumu = silmeYetkisiVar && s.silme ? <SilButonu satir={s} /> : null;
-    if (!duzenleBolumu && !silBolumu) return null;
+    const silBolumu = s.silme && (silmeYetkisiVar || s.silme.tip === "adliBirim") ? <SilButonu satir={s} /> : null;
+    const tahsilBolumu = s.tahsilDegistir ? (
+      <TahsilDegistirButonu alacakId={s.tahsilDegistir.id} dosyaId={s.dosyaId ?? ""} tahsilEdildiMi={s.tahsilDegistir.tahsilEdildiMi} />
+    ) : null;
+    if (!duzenleBolumu && !silBolumu && !tahsilBolumu) return null;
     // Düzenle / Sil her zaman görünür (gizli menü yok); dar ekranda alt satıra sarar.
     return (
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 [&_button]:rounded-md [&_button]:border [&_button]:border-white/20 [&_button]:px-2.5 [&_button]:py-1 [&_button]:text-xs [&_a]:rounded-md [&_a]:border [&_a]:border-white/20 [&_a]:px-2.5 [&_a]:py-1">
+        {tahsilBolumu}
         {duzenleBolumu}
         {silBolumu}
       </div>
