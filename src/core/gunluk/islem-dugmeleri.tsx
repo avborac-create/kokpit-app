@@ -51,7 +51,7 @@ export function IslemCubugu({ durum }: { durum: GunlukDurumu }) {
   const taze = aktif ? simdi - new Date(aktif.zaman).getTime() < SAAT_SINIRI : false;
   if (!mesaj && (!aktif || !taze || kapatilan === anahtar)) return null;
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex justify-center px-3 pb-[max(env(safe-area-inset-bottom,0px),1rem)]">
+    <div className="pointer-events-none fixed bottom-0 right-0 z-[60] flex justify-end px-4 pb-[max(env(safe-area-inset-bottom,0px),1rem)]">
       <div className="pointer-events-auto flex max-w-xl flex-1 items-center gap-2 rounded-2xl border border-white/15 bg-[var(--background-2)] px-3.5 py-2.5 text-sm text-white shadow-2xl">
         <span className={`min-w-0 flex-1 ${mesaj?.hata ? "text-red-300" : ""}`}>{mesaj ? mesaj.metin : aktif!.tur === "geri" ? aktif!.ozet : `Geri alındı: ${aktif!.ozet}`}</span>
         {aktif && (
