@@ -97,15 +97,15 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
 const VARSAYILAN_GENISLIK = 130;
 const VARSAYILAN_GENISLIKLER: Record<string, number> = {
   kayitNo: 150,
-  buroNo: 80,
-  dosyaNo: 92,
-  tur: 210,
-  birimAdi: 128,
+  buroNo: 60,
+  tur: 90,
+  birimAdi: 232,
+  dosyaNo: 100,
   konu: 220,
-  karsiTaraflar: 150,
-  muvekkiller: 150,
-  durum: 96,
+  muvekkiller: 175,
+  karsiTaraflar: 219,
   sorumluAvukat: 120,
+  durum: 96,
 };
 
 const MIN_GENISLIK = 56;

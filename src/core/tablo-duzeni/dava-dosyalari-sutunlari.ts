@@ -6,13 +6,13 @@
 export const DAVA_DOSYALARI_SUTUN_ETIKETLERI: Record<string, string> = {
   kayitNo: "Kokpit No",
   buroNo: "BN",
-  dosyaNo: "Dosya No",
   tur: "Tür / Konu",
   birimAdi: "Birim",
-  karsiTaraflar: "Karşı Taraf",
+  dosyaNo: "Dosya No",
   muvekkiller: "Müvekkil",
-  durum: "Durum",
+  karsiTaraflar: "Karşı Taraf",
   sorumluAvukat: "Sorumlu Avukat",
+  durum: "Durum",
 };
 
 // Kisaltilmis etiketlerin imlec uzerine gelince gosterilen tam adi.
