@@ -365,12 +365,19 @@ export async function EkonomiPaneli({
       )}
       {(aktif === "ozet200" || aktif === "ozet300") && (
         <GrupOzeti
-          baslik={aktif === "ozet200" ? "Karşı Taraf Özeti (200)" : "Adliye Özeti (300)"}
+          karsiTarafMi={aktif === "ozet200"}
           hesaplar={aktifHesaplar.filter((h) => h.grup === (aktif === "ozet200" ? "BORCLU" : "ADLIYE"))}
           ozetOf={ozetOf}
           hrefYaz={hrefYaz}
           defterAnahtari={aktif === "ozet200" ? "borclu" : "adliye"}
           defterEtiketi={aktif === "ozet200" ? "201 - Para Trafiği (Karşı Taraf)" : "301 - Para Trafiği (Adliye)"}
+          kapsam={kapsam}
+          aktifHesaplar={aktifHesaplar}
+          dosyalar={dosyaSecenekleri}
+          paraBakiyesi={ozet.paraBakiyesi}
+          havuzBakiyesi={havuzBakiyesi}
+          ozetHesaplar={ozet.hesaplar}
+          silmeYetkisiVar={silmeYetkisiVar}
         />
       )}
       {aktif === "adliye" && kapsam.dosyaId && <AdliyeSekmesi dosyaId={kapsam.dosyaId} silmeYetkisiVar={silmeYetkisiVar} />}
@@ -959,49 +966,163 @@ function HesapYonetimi({ hesaplar }: { hesaplar: Awaited<ReturnType<typeof hesap
   );
 }
 
+// Karsi Taraf (200) ve Adliye (300) ozetleri: Muvekkil Ozeti (100) ile ayni kalip - ustte durum karti,
+// altta Borc / Alacak / Bakiye tablosu; satira tiklaninca o hesabin defteri acilir.
 function GrupOzeti({
-  baslik,
+  karsiTarafMi,
   hesaplar,
   ozetOf,
   hrefYaz,
   defterAnahtari,
   defterEtiketi,
+  kapsam,
+  aktifHesaplar,
+  dosyalar,
+  paraBakiyesi,
+  havuzBakiyesi,
+  ozetHesaplar,
+  silmeYetkisiVar,
 }: {
-  baslik: string;
-  hesaplar: { id: string; no: number; ad: string; tutulanHesapMi: boolean }[];
+  karsiTarafMi: boolean;
+  hesaplar: Awaited<ReturnType<typeof hesaplariGetir>>;
   ozetOf: (hesapId: string) => { borc: number; alacak: number; bakiye: number } | undefined;
   hrefYaz: (p: { sayfa?: string; alt?: string }) => string;
   defterAnahtari: string;
   defterEtiketi: string;
+  kapsam: Kapsam;
+  aktifHesaplar: Awaited<ReturnType<typeof hesaplariGetir>>;
+  dosyalar: DosyaSecenegi[];
+  paraBakiyesi: number;
+  havuzBakiyesi?: number;
+  ozetHesaplar: Awaited<ReturnType<typeof kapsamOzeti>>["hesaplar"];
+  silmeYetkisiVar: boolean;
 }) {
-  const toplam = hesaplar.reduce((t, h) => t + (ozetOf(h.id)?.bakiye ?? 0), 0);
+  const satirlar = hesaplar.map((h) => ({ h, o: ozetOf(h.id) ?? { borc: 0, alacak: 0, bakiye: 0 } }));
+  // Karsi taraf: bakiye = Borc - Alacak (pozitif: karsi taraf bize borclu). Adliye: bakiye = Alacak - Borc (orada duran para).
+  const pozitifler = satirlar.filter((s) => s.o.bakiye > 0.001);
+  const negatifler = satirlar.filter((s) => s.o.bakiye < -0.001);
+  const toplam = Math.round(satirlar.reduce((t, s) => t + s.o.bakiye, 0) * 100) / 100;
+  const durumSinifi =
+    toplam > 0.001
+      ? "border-[#32d74b]/40 bg-[#32d74b]/[0.07]"
+      : toplam < -0.001
+        ? "border-[#ffb340]/40 bg-[#ffb340]/[0.07]"
+        : "border-white/10 bg-white/[0.03]";
+  const ad = karsiTarafMi ? "Karşı taraf" : "Adliye";
+
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold text-white">{baslik}</h3>
-      <div className="glass overflow-x-auto rounded-2xl">
-        <div className="divide-y divide-white/[0.06] text-sm">
-          <Link href={hrefYaz({ alt: defterAnahtari })} className="flex items-center justify-between px-4 py-2 hover:bg-white/[0.05]">
-            <span className="text-white">{defterEtiketi}</span>
-            <span className="text-xs text-white/50">defteri aç →</span>
-          </Link>
-          {hesaplar.map((h) => {
-            const o = ozetOf(h.id);
-            return (
-              <Link key={h.id} href={hrefYaz({ alt: String(h.no) })} className="flex items-center justify-between gap-3 px-4 py-2 hover:bg-white/[0.05]">
-                <span className="text-white">
-                  {h.no} - {h.ad}
+      <div className={`mb-4 rounded-2xl border px-4 py-3 ${durumSinifi}`}>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-white/50">{ad} özetine göre durum</p>
+        <p className="mt-1 text-lg font-semibold text-white md:text-xl">
+          {karsiTarafMi ? (
+            toplam > 0.001 ? (
+              <>
+                Karşı taraftan <span className="text-[#32d74b]">{para.format(toplam)}</span> alacaklıyız
+              </>
+            ) : toplam < -0.001 ? (
+              <>
+                Karşı tarafa <span className="text-[#ffb340]">{para.format(-toplam)}</span> borçluyuz
+              </>
+            ) : (
+              "Karşı taraf ile aramızda borç / alacak yok"
+            )
+          ) : toplam > 0.001 ? (
+            <>
+              Adliyede <span className="text-[#32d74b]">{para.format(toplam)}</span> tutulan paramız var
+            </>
+          ) : toplam < -0.001 ? (
+            <>
+              Adliyeden <span className="text-[#ffb340]">{para.format(-toplam)}</span> fazla tahsil edilmiş
+            </>
+          ) : (
+            "Adliye ile aramızda bekleyen tutar yok"
+          )}
+        </p>
+        <div className="mt-2 grid gap-x-6 gap-y-1 text-xs text-white/70 md:grid-cols-2 md:text-sm">
+          <div>
+            <p className="mb-0.5 text-white/45">
+              {karsiTarafMi ? "Karşı tarafın bize borcu" : "Adliyede tutulan"}: {para.format(pozitifler.reduce((t, s) => t + s.o.bakiye, 0))}
+            </p>
+            {pozitifler.length === 0 && <p className="text-white/40">— kalan tutar yok</p>}
+            {pozitifler.map((s) => (
+              <p key={s.h.id} className="flex justify-between gap-3">
+                <span>
+                  {s.h.no} - {s.h.ad}
                 </span>
-                <span className="flex gap-4 text-xs text-white/60">
-                  <span>Borç {para.format(o?.borc ?? 0)}</span>
-                  <span>Alacak {para.format(o?.alacak ?? 0)}</span>
-                  <span className="font-medium text-white">{para.format(o?.bakiye ?? 0)}</span>
+                <span className="tabular-nums text-[#ff7a70]">{para.format(s.o.bakiye)}</span>
+              </p>
+            ))}
+          </div>
+          <div>
+            <p className="mb-0.5 text-white/45">
+              {karsiTarafMi ? "Karşı taraf lehine (fazla ödeme)" : "Fazla tahsil edilen"}: {para.format(negatifler.reduce((t, s) => t - s.o.bakiye, 0))}
+            </p>
+            {negatifler.length === 0 && <p className="text-white/40">— yok</p>}
+            {negatifler.map((s) => (
+              <p key={s.h.id} className="flex justify-between gap-3">
+                <span>
+                  {s.h.no} - {s.h.ad}
                 </span>
-              </Link>
-            );
-          })}
+                <span className="tabular-nums text-[#32d74b]">{para.format(-s.o.bakiye)}</span>
+              </p>
+            ))}
+          </div>
         </div>
       </div>
-      <p className="mt-2 text-xs text-white/45">Gruptaki hesapların toplam bakiyesi: {para.format(toplam)}</p>
+
+      <div className="glass overflow-x-auto rounded-2xl">
+        <table className="w-full text-left text-xs md:text-sm">
+          <thead className="text-white/50">
+            <tr>
+              <th className="px-2 py-2 font-medium md:px-4 md:py-3">Hesap</th>
+              <th className="whitespace-nowrap px-2 py-2 text-right font-medium text-[#ff7a70]/85 md:px-4 md:py-3">Borç</th>
+              <th className="whitespace-nowrap px-2 py-2 text-right font-medium text-[#32d74b]/85 md:px-4 md:py-3">Alacak</th>
+              <th className="whitespace-nowrap px-2 py-2 text-right font-medium md:px-4 md:py-3">Bakiye</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-t border-white/[0.06] hover:bg-white/[0.04]">
+              <td className="px-2 py-2 md:px-4 md:py-3" colSpan={3}>
+                <Link href={hrefYaz({ alt: defterAnahtari })} className="text-white hover:underline">
+                  {defterEtiketi}
+                </Link>
+              </td>
+              <td className="px-2 py-2 text-right text-xs text-[var(--link)] md:px-4 md:py-3">
+                <Link href={hrefYaz({ alt: defterAnahtari })}>defteri aç →</Link>
+              </td>
+            </tr>
+            {satirlar.map(({ h, o }) => (
+              <AcilirHesapSatiri
+                key={h.id}
+                baslik={`${h.no} - ${h.ad}`}
+                acilabilir={Boolean(o.borc || o.alacak)}
+                hucreler={
+                  <>
+                    <td className="whitespace-nowrap px-2 py-2 text-right text-white/85 md:px-4 md:py-3">{o.borc ? para.format(o.borc) : "—"}</td>
+                    <td className="whitespace-nowrap px-2 py-2 text-right text-white/85 md:px-4 md:py-3">{o.alacak ? para.format(o.alacak) : "—"}</td>
+                    <td className="whitespace-nowrap px-2 py-2 text-right font-medium md:px-4 md:py-3">
+                      {h.tutulanHesapMi ? <span className="text-[#6db8ff]">{para.format(o.bakiye)}</span> : <Bakiye b={o.bakiye} />}
+                    </td>
+                  </>
+                }
+              >
+                <HesapSekmesi
+                  kapsam={kapsam}
+                  hesap={h}
+                  aktifHesaplar={aktifHesaplar}
+                  dosyalar={dosyalar}
+                  paraBakiyesi={paraBakiyesi}
+                  havuzBakiyesi={havuzBakiyesi}
+                  ozetHesaplar={ozetHesaplar}
+                  silmeYetkisiVar={silmeYetkisiVar}
+                  cariSayfaHref={hrefYaz({ alt: String(h.no) })}
+                />
+              </AcilirHesapSatiri>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
