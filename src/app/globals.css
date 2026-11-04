@@ -533,6 +533,13 @@ html[data-tema="acik"] .text-\[\#6e6e73\] { color: #5c6678; }
 @media (prefers-reduced-motion: reduce) {
   .haber-akisi-ic { animation: none; }
 }
+/* Telefon/tablet (dokunmatik): surekli kayan akis iOS'ta sayfanin ataletli (parmak kalkinca devam eden) kaydirmasini
+   kesiyordu; akis durgun, kendi icinde elle kaydirilir. */
+@media (pointer: coarse) {
+  .haber-akisi { overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
+  .haber-akisi-ic { animation: none; }
+  .haber-akisi-ic > [aria-hidden="true"] { display: none; }
+}
 
 /* Telefon: ust cubuk (geri baglantisi + yenile/oneri/gorunum/cikis dugmeleri) opak kalir; arkasindaki
    renk bulutu ile dugmeler ic ice gecip bulanik gorunmesin. */
