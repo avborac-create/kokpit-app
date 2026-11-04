@@ -77,7 +77,7 @@ function Avatar({ ad }: { ad: string }) {
   );
 }
 
-export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }: { isler: Is[]; kisiler: { id: string; adSoyad: string }[]; yargiTurleri?: { id: string; ad: string }[]; benimId: string; tumBuro: boolean; bugun: string; seciliId?: string }) {
+export function IsListesi({ isler, kisiler, benimId, secili, bugun, seciliId }: { isler: Is[]; kisiler: { id: string; adSoyad: string }[]; yargiTurleri?: { id: string; ad: string }[]; benimId: string; secili: string; bugun: string; seciliId?: string }) {
   const yonlendirici = useRouter();
   const kayitliGorunum = useSyncExternalStore(gorunumAbone, gorunumOku, () => null);
   const gorunum: Gorunum = GORUNUMLER.some((g) => g.k === kayitliGorunum) ? (kayitliGorunum as Gorunum) : "liste";
@@ -87,12 +87,16 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
   const [tamamlananlar, setTamamlananlar] = useState(false);
   const [bekliyor, basla] = useTransition();
 
-  const kimin = tumBuro ? "kimin=buro&" : "";
-  const gorevHref = (id: string) => `/kokpit/isler?${kimin}is=${id}`;
+  // Soldaki kisi panelinde secili olan: "buro" (herkes) ya da bir kisinin id'si. Adres cubugunda tasinir.
+  const tumBuro = secili === "buro";
+  const gorevHref = (id: string) => `/kokpit/isler?kisi=${secili}&is=${id}`;
+  const seciliAd = tumBuro ? "Tüm büro" : (kisiler.find((c) => c.id === secili)?.adSoyad ?? "—");
+  const bensem = secili === benimId;
 
   const benim = (i: Is) => i.sorumluId === benimId || i.yardimBenim;
-  // Kimlerin gorevleri: ben (yardim istenenler dahil) ya da tum buro.
-  const turdeki = isler.filter((i) => tumBuro || benim(i));
+  // Secili kisinin gorevleri (kendisi ise yardim istenenler dahil) ya da tum buro.
+  const turdeki = isler.filter((i) => tumBuro || (bensem ? benim(i) : i.sorumluId === secili));
+  const acikSayisi = (id: string) => isler.filter((i) => i.sorumluId === id && i.durum !== "TAMAMLANDI" && i.tur !== "OPERASYONEL").length;
   const acikSonGun = (i: Is) => i.zamanBaskisi === "SON_GUN" && i.durum !== "TAMAMLANDI";
   // Son gunlu (acik) gorevler en ustte, tarihi en yakin olan once; digerlerinin sirasi korunur.
   const sonGunSirasi = (a: Is, b: Is) => (acikSonGun(a) === acikSonGun(b) ? (acikSonGun(a) ? (a.vade || "9999").localeCompare(b.vade || "9999") : 0) : acikSonGun(a) ? -1 : 1);
@@ -103,7 +107,7 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
   function ekle() {
     setHata("");
     basla(async () => {
-      const s = await isEkle(baslik, sorumlu, "", "");
+      const s = await isEkle(baslik, tumBuro ? sorumlu : secili, "", "");
       if (s.hata) setHata(s.hata);
       else if (s.id) {
         setBaslik("");
@@ -112,7 +116,6 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
     });
   }
 
-  const sekme = (secili: boolean) => `rounded-full px-3.5 py-1.5 text-sm ${secili ? "bg-white/15 font-semibold text-white" : "text-white/60 hover:bg-white/10"}`;
   const vadeRenk = (i: Is) => (i.vade && i.durum !== "TAMAMLANDI" && i.vade < bugun ? "#ff7a70" : "rgba(255,255,255,0.6)");
   const vadeYaz = (v: string) => (v ? new Date(v + "T12:00:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "—");
   const BaskiRozeti = ({ i }: { i: Is }) => {
@@ -186,44 +189,57 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
     </label>
   );
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Link href="/kokpit/isler" className={sekme(!tumBuro)}>
-          Benim görevlerim
-        </Link>
-        <Link href="/kokpit/isler?kimin=buro" className={sekme(tumBuro)}>
-          Tüm büro
-        </Link>
-        <div className="ml-auto flex gap-1 rounded-full border border-white/15 p-1" role="tablist" aria-label="Görünüm">
-          {GORUNUMLER.map((g) => (
-            <button key={g.k} type="button" role="tab" aria-selected={gorunum === g.k} onClick={() => gorunumYaz(g.k)} className={`rounded-full px-3.5 py-1 text-sm ${gorunum === g.k ? "bg-[var(--accent)] font-semibold text-white" : "text-white/65 hover:bg-white/10"}`}>
-              {g.ad}
-            </button>
-          ))}
-        </div>
-      </div>
+  const kisiSirasi = [...kisiler].sort((a, b) => Number(b.id === benimId) - Number(a.id === benimId));
+  const kisiOgesi = (aktif: boolean) => `flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm md:w-full ${aktif ? "bg-[var(--accent)]/20 font-semibold text-white" : "text-white/70 hover:bg-white/10"}`;
 
-      {/* Yeni gorev / atama */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5">
-        <div className="flex flex-col gap-2 lg:flex-row">
-          <input value={baslik} onChange={(e) => setBaslik(e.target.value)} onKeyDown={(e) => e.key === "Enter" && baslik.trim() && ekle()} placeholder="Yeni görev başlığı yazın…" className={`${alan} lg:min-w-0 lg:flex-1`} />
-          <label className="flex items-center gap-1.5 text-sm text-white/65">
-            <span className="whitespace-nowrap">Kime:</span>
-            <select value={sorumlu} onChange={(e) => setSorumlu(e.target.value)} className={`${alan} lg:w-60`}>
+  return (
+    <div className="flex flex-col gap-4 md:flex-row md:items-start">
+      {/* Telegram gibi sol panel: kisiler. Birine tiklayinca sagda onun gorevleri acilir, ona yazilan gorev ona atanir. */}
+      <nav aria-label="Kişiler" className="flex gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.04] p-2 md:sticky md:top-3 md:w-60 md:shrink-0 md:flex-col md:overflow-visible">
+        <Link href="/kokpit/isler?kisi=buro" className={kisiOgesi(tumBuro)}>
+          <span className="min-w-0 flex-1 truncate">Tüm büro</span>
+        </Link>
+        {kisiSirasi.map((c) => {
+          const n = acikSayisi(c.id);
+          return (
+            <Link key={c.id} href={`/kokpit/isler?kisi=${c.id}`} className={kisiOgesi(secili === c.id)}>
+              <Avatar ad={c.adSoyad} />
+              <span className="min-w-0 flex-1 truncate">{c.id === benimId ? `${c.adSoyad} (ben)` : c.adSoyad}</span>
+              {n > 0 && <span className="rounded-full bg-white/15 px-2 text-xs font-semibold text-white/85">{n}</span>}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-lg font-semibold text-white">{bensem ? "Benim görevlerim" : seciliAd}</h2>
+          <div className="ml-auto flex gap-1 rounded-full border border-white/15 p-1" role="tablist" aria-label="Görünüm">
+            {GORUNUMLER.map((g) => (
+              <button key={g.k} type="button" role="tab" aria-selected={gorunum === g.k} onClick={() => gorunumYaz(g.k)} className={`rounded-full px-3.5 py-1 text-sm ${gorunum === g.k ? "bg-[var(--accent)] font-semibold text-white" : "text-white/65 hover:bg-white/10"}`}>
+                {g.ad}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Gorev yaz: secili kisiye atanir (tum buroda kime oldugu secilir). */}
+        <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:flex-row">
+          <input value={baslik} onChange={(e) => setBaslik(e.target.value)} onKeyDown={(e) => e.key === "Enter" && baslik.trim() && ekle()} placeholder={tumBuro ? "Görev yazın…" : bensem ? "Kendinize görev yazın…" : `${seciliAd} için görev yazın…`} className={`${alan} sm:min-w-0 sm:flex-1`} />
+          {tumBuro && (
+            <select value={sorumlu} onChange={(e) => setSorumlu(e.target.value)} aria-label="Kime" className={`${alan} sm:w-56`}>
               {kisiler.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.id === benimId ? `${c.adSoyad} (ben)` : c.adSoyad}
                 </option>
               ))}
             </select>
-          </label>
+          )}
           <button type="button" onClick={ekle} disabled={bekliyor || !baslik.trim()} className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
-            {sorumlu && sorumlu !== benimId ? "Ata" : "Aç"}
+            {(tumBuro ? sorumlu !== benimId : !bensem) ? "Ata" : "Ekle"}
           </button>
         </div>
-      </div>
-      {hata && <p className="text-sm text-red-300">{hata}</p>}
+        {hata && <p className="text-sm text-red-300">{hata}</p>}
 
       {gorunum === "liste" && filtreSatirlari}
 
@@ -281,6 +297,7 @@ export function IsListesi({ isler, kisiler, benimId, tumBuro, bugun, seciliId }:
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }
