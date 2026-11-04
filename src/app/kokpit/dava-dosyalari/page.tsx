@@ -105,10 +105,10 @@ export default async function DavaDosyalariSayfasi({
             {filtreMusteri.adSoyadUnvan}
           </Link>
           <Link
-            href={`/kokpit/finans/musteri-iliskileri/${filtreMusteri.id}/cari-hesap`}
-            className="text-[#6db8ff] hover:underline"
+            href={`/kokpit/finans/musteri-iliskileri/${filtreMusteri.id}/cari-hesap?sayfa=genel&alt=ozet`}
+            className="rounded-full border border-[var(--accent)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:bg-[var(--accent)]/30"
           >
-            Cari Hesap
+            Müvekkil Ekonomisi
           </Link>
           <Link href="/kokpit/dava-dosyalari?temizle=1" className="ml-auto text-white/50 hover:text-white">
             Filtreyi kaldır ✕

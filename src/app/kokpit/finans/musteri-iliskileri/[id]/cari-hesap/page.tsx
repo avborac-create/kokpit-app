@@ -49,7 +49,7 @@ export default async function CariHesapSayfasi({
           ‹ {musteri.adSoyadUnvan}
         </Link>
         <div className="mt-1 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Cari Hesap</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">Müvekkil Ekonomisi</h1>
           <Link
             href={`/kokpit/musteriler/${id}`}
             className="text-sm text-white/45 hover:text-[#6db8ff] hover:underline"
