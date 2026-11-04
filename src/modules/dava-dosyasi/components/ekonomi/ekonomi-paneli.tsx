@@ -337,10 +337,26 @@ export async function EkonomiPaneli({
               ))}
             </div>
           ) : (
-            <div key={i} className="grid grid-cols-1 gap-x-4 gap-y-1.5 border-t border-white/[0.06] py-2.5 first-of-type:border-t-0 md:grid-cols-[8.5rem_1fr]">
-              <span className="pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] opacity-80">{kat.baslik}</span>
+            <div key={i} className="grid grid-cols-1 gap-x-4 gap-y-1.5 border-t border-white/[0.06] py-2.5 first-of-type:border-t-0 md:grid-cols-[11rem_1fr]">
+              <div className="flex flex-col items-start gap-1.5">
+                <span className="pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] opacity-80">{kat.baslik}</span>
+                {/* Özet sekmesi (100/200/300 Özeti) grup başlığının altında, sol sütunda durur */}
+                {kat.sekmeler.slice(0, 1).map((sk) => (
+                  <Link
+                    key={sk.anahtar}
+                    href={hrefYaz({ alt: sk.anahtar })}
+                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[13px] transition-colors ${
+                      sk.anahtar === aktif
+                        ? "border-[var(--accent)] bg-[var(--accent-soft)] font-medium text-white"
+                        : "border-white/10 text-white/65 hover:border-white/25 hover:bg-white/[0.06] hover:text-white"
+                    }`}
+                  >
+                    {sk.etiket}
+                  </Link>
+                ))}
+              </div>
               <div className="flex flex-wrap gap-1.5">
-                {kat.sekmeler.map((sk) => (
+                {kat.sekmeler.slice(1).map((sk) => (
                   <Link
                     key={sk.anahtar}
                     href={hrefYaz({ alt: sk.anahtar })}
