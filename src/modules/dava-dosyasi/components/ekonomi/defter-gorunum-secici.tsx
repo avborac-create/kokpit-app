@@ -24,9 +24,10 @@ function abone(f: () => void) {
 function oku(): Gorunum {
   try {
     const k = localStorage.getItem(ANAHTAR);
-    return k === "gosterge" || k === "tablo" ? k : "akis";
+    // Varsayilan gorunum: Tablo (kullanici baska bir gorunum sectiyse o hatirlanir)
+    return k === "gosterge" || k === "akis" ? k : "tablo";
   } catch {
-    return "akis";
+    return "tablo";
   }
 }
 
@@ -54,7 +55,7 @@ export function DefterGorunumSecici({
   tersGosterge: ReactNode;
   tersTablo: ReactNode;
 }) {
-  const gorunum = useSyncExternalStore(abone, oku, () => "akis" as Gorunum);
+  const gorunum = useSyncExternalStore(abone, oku, () => "tablo" as Gorunum);
   const yeniUstte = useSyncExternalStore(abone, siraOku, () => false);
 
   function siraDegistir() {
