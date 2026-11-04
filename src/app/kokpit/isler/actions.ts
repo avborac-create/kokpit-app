@@ -305,3 +305,19 @@ export async function durumDegistir(isId: string, durum: string) {
 export async function isSil(isId: string) {
   return isSilmeyiGunlukle("Görev silindi", isId, () => isSil_(isId));
 }
+
+// ---- Odak Kutusu: kisiye ozel, en cok 5 gorev ----
+const ODAK_SINIRI = 5;
+export async function odakDegistir(isId: string): Promise<{ hata?: string; odakta?: boolean }> {
+  const k = await girisli();
+  const var_ = await prisma.isOdagi.findUnique({ where: { isId_kullaniciId: { isId, kullaniciId: k.kullaniciId } } });
+  if (var_) {
+    await prisma.isOdagi.delete({ where: { id: var_.id } });
+  } else {
+    const n = await prisma.isOdagi.count({ where: { kullaniciId: k.kullaniciId, is: { durum: { not: "TAMAMLANDI" } } } });
+    if (n >= ODAK_SINIRI) return { hata: `Odak kutusu en fazla ${ODAK_SINIRI} görev alır; önce birini çıkarın ya da tamamlayın.` };
+    await prisma.isOdagi.create({ data: { isId, kullaniciId: k.kullaniciId } });
+  }
+  revalidatePath("/kokpit/isler");
+  return { odakta: !var_ };
+}

@@ -1723,12 +1723,26 @@ model Is {
   yorumlar         IsYorumu[]
   yardimlar        IsYardimi[]
   operasyonKayitlari IsOperasyonKaydi[]
+  odaklar          IsOdagi[]
 
   @@index([tur])
   @@index([kaynak])
   @@index([durum])
   @@index([sorumluId, durum])
   @@map("isler")
+}
+
+// Odak Kutusu: kullanicinin su an uzerine odaklandigi gorevler (kisiye ozel, en cok 5).
+model IsOdagi {
+  id          String   @id @default(cuid())
+  isId        String
+  is          Is       @relation(fields: [isId], references: [id], onDelete: Cascade)
+  kullaniciId String
+  tarih       DateTime @default(now())
+
+  @@unique([isId, kullaniciId])
+  @@index([kullaniciId, tarih])
+  @@map("is_odaklari")
 }
 
 model GorevYargiTuru {

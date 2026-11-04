@@ -6,6 +6,7 @@ import { IsDetayi } from "./[id]/is-detayi";
 import { isDetayiYukle } from "./detay-veri";
 import { donemBasi } from "./hafta";
 import { YanPanel } from "./yan-panel";
+import { OdakKutusu } from "./odak-kutusu";
 import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
 import { sistemYoneticisiMi } from "@/core/auth/yetki";
 
@@ -23,6 +24,12 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
     prisma.gorevYargiTuru.findMany({ orderBy: [{ sira: "asc" }, { ad: "asc" }], select: { id: true, ad: true } }),
   ]);
   const ad = new Map(kisiler.map((x) => [x.id, x.adSoyad]));
+  const odaklar = await prisma.isOdagi.findMany({
+    where: { kullaniciId: k?.kullaniciId ?? "-", is: { durum: { not: "TAMAMLANDI" } } },
+    orderBy: { tarih: "asc" },
+    include: { is: { select: { id: true, baslik: true, durum: true, tur: true, vade: true, sorumluId: true, maddeler: { select: { tamam: true } } } } },
+  });
+  const odakIdleri = new Set(odaklar.map((o) => o.isId));
   // Serbest meslek makbuzu (SMM) kesme uyarilari: finans yetkilisi / yonetici hepsini, digerleri yalniz kendilerine atananlari gorur.
   const hepsiniGorur = await ekonomiDuzenleyebilirMi();
   const smmIsleri = await prisma.is.findMany({
@@ -47,7 +54,12 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
         )}
       </div>
       <p className="mb-5 mt-1 text-sm text-white/55">Sizden beklenen her şey burada. Görünümü (liste ya da kanban) kendiniz seçebilirsiniz; bir göreve tıklayınca sağda ayrıntısı açılır.</p>
+      <OdakKutusu
+        bugun={bugun}
+        kartlar={odaklar.map((o) => ({ id: o.is.id, baslik: o.is.baslik, durum: o.is.durum, tur: o.is.tur, vade: o.is.vade ? o.is.vade.toISOString().slice(0, 10) : "", maddeToplam: o.is.maddeler.length, maddeTamam: o.is.maddeler.filter((m) => m.tamam).length, sorumluAd: o.is.sorumluId ? (ad.get(o.is.sorumluId) ?? "—") : "Atanmadı" }))}
+      />
       <IsListesi
+        odakIdleri={[...odakIdleri]}
         benimId={k?.kullaniciId ?? ""}
         secili={secili}
         kisiler={kisiler}
@@ -90,7 +102,7 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
                 Tam sayfada aç ↗
               </Link>
             </div>
-            <IsDetayi key={detay.is.id} benimId={k?.kullaniciId ?? ""} kisiler={detay.kisiler} yargiTurleri={yargiTurleri} is={detay.is} kapatHref={kapatHref} />
+            <IsDetayi key={detay.is.id} odakta={odakIdleri.has(detay.is.id)} benimId={k?.kullaniciId ?? ""} kisiler={detay.kisiler} yargiTurleri={yargiTurleri} is={detay.is} kapatHref={kapatHref} />
           </YanPanel>
         </>
       )}

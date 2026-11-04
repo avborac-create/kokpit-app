@@ -3,6 +3,7 @@
 import { upload } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { OdakDugmesi } from "../odak-dugmesi";
 import { type YeniEk, durumDegistir, isBilgisiniGuncelle, isSil, maddeDurumu, maddeEkle, maddeSil, maddeSirala, maddeTasi, sorumluDegistir, vadeGuncelle, yardimIste, yardimKaldir, yorumEkle, operasyonYapildi, operasyonKaydiSil, hedefGuncelle, turDegistir, zamanBaskisiDegistir, yargiTuruDegistir, periyotDegistir, tetikleyiciGuncelle } from "../actions";
 import { DURUMLAR, TURLER, ZAMAN_BASKILARI, turBilgisi, zamanBaskisiBilgisi } from "../durum";
 import { PERIYOTLAR, periyotBilgisi } from "../hafta";
@@ -12,7 +13,7 @@ const alan = "alan-bmw [color-scheme:dark]";
 const kutu = "rounded-2xl border border-white/10 bg-white/[0.04] p-4";
 const etiket = "pt-1.5 text-[13px] text-white/50";
 
-export function IsDetayi({ is, kisiler, yargiTurleri, benimId, kapatHref }: { is: Detay; kisiler: { id: string; adSoyad: string }[]; yargiTurleri: { id: string; ad: string }[]; benimId: string; kapatHref?: string }) {
+export function IsDetayi({ is, kisiler, yargiTurleri, benimId, kapatHref, odakta }: { odakta?: boolean; is: Detay; kisiler: { id: string; adSoyad: string }[]; yargiTurleri: { id: string; ad: string }[]; benimId: string; kapatHref?: string }) {
   const yonlendirici = useRouter();
   const [bekliyor, basla] = useTransition();
   const [baslik, setBaslik] = useState(is.baslik);
@@ -187,6 +188,11 @@ export function IsDetayi({ is, kisiler, yargiTurleri, benimId, kapatHref }: { is
         ) : (
           <>
             <span className={etiket}>Durum</span>
+            {odakta !== undefined && is.durum !== "TAMAMLANDI" && (
+              <div className="mb-1 flex items-center gap-2">
+                <OdakDugmesi isId={is.id} odakta={odakta} genis />
+              </div>
+            )}
             <div className="flex flex-wrap gap-1.5">
               {DURUMLAR.map((d) => {
                 const secili = is.durum === d.anahtar;

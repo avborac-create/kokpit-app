@@ -6,6 +6,7 @@ import { useState, useSyncExternalStore, useTransition } from "react";
 import { durumDegistir, isEkle, operasyonYapildi, smmKestim } from "./actions";
 import { DURUMLAR, durumBilgisi, zamanBaskisiBilgisi } from "./durum";
 import { periyotBilgisi } from "./hafta";
+import { OdakDugmesi } from "./odak-dugmesi";
 
 type Is = {
   id: string;
@@ -118,7 +119,7 @@ function SmmUyarilari({ uyarilar }: { uyarilar: { id: string; baslik: string; do
   );
 }
 
-export function IsListesi({ isler, kisiler, benimId, secili, bugun, seciliId, smmUyarilari = [] }: { smmUyarilari?: { id: string; baslik: string; dosyaId: string }[]; isler: Is[]; kisiler: { id: string; adSoyad: string }[]; yargiTurleri?: { id: string; ad: string }[]; benimId: string; secili: string; bugun: string; seciliId?: string }) {
+export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bugun, seciliId, smmUyarilari = [] }: { odakIdleri?: string[]; smmUyarilari?: { id: string; baslik: string; dosyaId: string }[]; isler: Is[]; kisiler: { id: string; adSoyad: string }[]; yargiTurleri?: { id: string; ad: string }[]; benimId: string; secili: string; bugun: string; seciliId?: string }) {
   const yonlendirici = useRouter();
   const kayitliGorunum = useSyncExternalStore(gorunumAbone, gorunumOku, () => null);
   const gorunum: Gorunum = GORUNUMLER.some((g) => g.k === kayitliGorunum) ? (kayitliGorunum as Gorunum) : "liste";
@@ -212,6 +213,11 @@ export function IsListesi({ isler, kisiler, benimId, secili, bugun, seciliId, sm
             <span className="ml-auto">{i.tarih}</span>
           </div>
         </Link>
+        {i.durum !== "TAMAMLANDI" && (
+          <div className="flex items-center gap-2 border-t border-white/10 px-4 py-1.5">
+            <OdakDugmesi isId={i.id} odakta={odakIdleri.includes(i.id)} />
+          </div>
+        )}
         {op && i.yapilan < i.hedef && benim(i) && (
           <div className="border-t border-white/10 px-4 py-2">
             <button type="button" disabled={bekliyor} onClick={() => basla(async () => { await operasyonYapildi(i.id); yonlendirici.refresh(); })} className="rounded-lg bg-[#14b8c4]/25 px-4 py-1.5 text-sm font-semibold text-[#7ee8ef] disabled:opacity-50">
@@ -327,6 +333,11 @@ export function IsListesi({ isler, kisiler, benimId, secili, bugun, seciliId, sm
                           </span>
                         )}
                       </div>
+                      {i.durum !== "TAMAMLANDI" && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <OdakDugmesi isId={i.id} odakta={odakIdleri.includes(i.id)} />
+                        </div>
+                      )}
                       {sonraki && (
                         <button type="button" disabled={bekliyor} onClick={() => basla(async () => { await durumDegistir(i.id, sonraki.anahtar); yonlendirici.refresh(); })} className="mt-2 w-full rounded-lg border border-white/12 py-1 text-xs text-white/65 hover:bg-white/10 disabled:opacity-40">
                           {sonraki.ad} →
