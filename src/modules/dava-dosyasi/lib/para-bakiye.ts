@@ -5,8 +5,8 @@ type Tx = Pick<typeof prisma, "cariHareketi" | "cariHesap">;
 
 // Para Trafigi bakiyesi (Alacak - Borc). dosyaId verilirse dosya gorunumu
 // (muvekkil havuzundan o dosyaya aktarilanlar ALACAK sayilir).
-export async function paraBakiyesi(tx: Tx, musteriId: string, dosyaId?: string) {
-  const para = await tx.cariHesap.findFirst({ where: { paraHesabiMi: true } });
+export async function paraBakiyesi(tx: Tx, musteriId: string, dosyaId?: string, grup: "MUVEKKIL" | "BORCLU" = "MUVEKKIL") {
+  const para = await tx.cariHesap.findFirst({ where: { paraHesabiMi: true, grup } });
   if (!para) throw new Error("Para Trafiği hesabı bulunamadı.");
   const where = { musteriId, hesapId: para.id, ...(dosyaId ? { dosyaId } : {}) };
   const gruplar = await tx.cariHareketi.groupBy({ by: ["yon", "havuzKaynakli"], where, _sum: { tutar: true } });
@@ -25,7 +25,9 @@ export async function paraBakiyesi(tx: Tx, musteriId: string, dosyaId?: string) 
 
 // Silme/geri alma sonrasi Para Trafigi'nin (muvekkil ve ilgili dosya) eksiye dusmemesi icin kontrol.
 export async function eksiyeDusmeKontrolu(tx: Tx, musteriId: string, dosyaId: string | null) {
-  if ((await paraBakiyesi(tx, musteriId)) < -0.001 || (dosyaId && (await paraBakiyesi(tx, musteriId, dosyaId)) < -0.001)) {
-    throw new Error("Bu işlem, virmanla kullanılmış parayı eksiye düşürür. Önce ilgili virmanı düzeltin ya da silin.");
+  for (const grup of ["MUVEKKIL", "BORCLU"] as const) {
+    if ((await paraBakiyesi(tx, musteriId, undefined, grup)) < -0.001 || (dosyaId && (await paraBakiyesi(tx, musteriId, dosyaId, grup)) < -0.001)) {
+      throw new Error("Bu işlem, virmanla kullanılmış parayı eksiye düşürür. Önce ilgili virmanı düzeltin ya da silin.");
+    }
   }
 }

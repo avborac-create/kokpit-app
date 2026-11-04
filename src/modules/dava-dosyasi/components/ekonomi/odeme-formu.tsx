@@ -26,7 +26,10 @@ export function OdemeFormu({
   yontemler,
   yontemListesi,
   hedefler = [],
+  paraKaynagiGizli = false,
 }: {
+  // 201 (karşı taraf) para trafiğinde para zaten karşı taraftan gelir; kaynak seçimi gösterilmez.
+  paraKaynagiGizli?: boolean;
   action: (formData: FormData) => void;
   dosyalar: DosyaSecenegi[];
   sabitDosyaId?: string;
@@ -93,13 +96,15 @@ export function OdemeFormu({
           <option value={PARCALI}>Parçalı ödeme (birden fazla yöntem)</option>
         </Secim>
       </Alan>
-      <Alan>
-        <Etiket htmlFor="od-kaynak">Para Kimden Geldi</Etiket>
-        <Secim id="od-kaynak" name="paraKaynagi" defaultValue="muvekkil">
-          <option value="muvekkil">Müvekkilden</option>
-          <option value="borclu">Karşı taraftan (tahsilat)</option>
-        </Secim>
-      </Alan>
+      {!paraKaynagiGizli && (
+        <Alan>
+          <Etiket htmlFor="od-kaynak">Para Kimden Geldi</Etiket>
+          <Secim id="od-kaynak" name="paraKaynagi" defaultValue="muvekkil">
+            <option value="muvekkil">Müvekkilden</option>
+            <option value="borclu">Karşı taraftan (tahsilat)</option>
+          </Secim>
+        </Alan>
+      )}
       <Alan>
         <Etiket htmlFor="od-aciklama">Açıklama</Etiket>
         <Girdi id="od-aciklama" name="aciklama" defaultValue="GELEN ÖDEME" />

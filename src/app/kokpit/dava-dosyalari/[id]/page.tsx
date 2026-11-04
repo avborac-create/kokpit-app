@@ -169,7 +169,7 @@ export default async function DavaDosyasiDetaySayfasi({
     .filter((h) => !h.tutulanHesapMi)
     .map((h) => {
       const tutar = Math.round((h.paraHesabiMi ? h.bakiye : -h.bakiye) * 100) / 100;
-      return { hesapId: h.hesapId, ad: h.ad, tutar, artiMi: tutar > 0, karsiTarafMi: h.grup === "BORCLU" };
+      return { hesapId: h.hesapId, ad: h.ad, tutar, artiMi: tutar > 0, karsiTarafMi: h.grup === "BORCLU", karsiParaMi: h.grup === "BORCLU" && h.paraHesabiMi };
     })
     .filter((e) => e.tutar !== 0);
 
@@ -488,13 +488,13 @@ export default async function DavaDosyasiDetaySayfasi({
               {bakiyeEtiketleri.map((e) => (
                 <span
                   key={e.hesapId}
-                  title={e.karsiTarafMi ? (e.artiMi ? "Karşı tarafın bu hesapta fazla ödediği tutar." : "Karşı taraftan (borçludan) tahsil edilmesi gereken tutar.") : e.artiMi ? "Müvekkil adına dosyada duran para: dosya için kullanılabilir, başka hesaba virman yapılabilir ya da müvekkile iade edilir." : "Müvekkilden istenmesi gereken tutar."}
+                  title={e.karsiParaMi ? "Karşı taraftan gelen ve henüz bir hesaba aktarılmamış para." : e.karsiTarafMi ? (e.artiMi ? "Karşı tarafın bu hesapta fazla ödediği tutar." : "Karşı taraftan (borçludan) tahsil edilmesi gereken tutar.") : e.artiMi ? "Müvekkil adına dosyada duran para: dosya için kullanılabilir, başka hesaba virman yapılabilir ya da müvekkile iade edilir." : "Müvekkilden istenmesi gereken tutar."}
                   className={`max-w-full whitespace-normal rounded-2xl px-2.5 py-0.5 text-xs font-medium ${
                     e.artiMi ? "bg-[#32d74b]/15 text-[#32d74b]" : "bg-[#ff7a70]/15 text-[#ff7a70]"
                   }`}
                 >
                   {e.ad} {e.artiMi ? "artı" : "eksi"} bakiye vermektedir: {paraFormatlayici.format(Math.abs(e.tutar))}
-                  {e.karsiTarafMi ? (e.artiMi ? " · karşı tarafa iade" : " · karşı taraftan istenecek") : e.artiMi ? " · müvekkile iade / virman" : " · müvekkilden istenecek"}
+                  {e.karsiParaMi ? " · karşı taraftan gelen, dağıtılmamış para" : e.karsiTarafMi ? (e.artiMi ? " · karşı tarafa iade" : " · karşı taraftan istenecek") : e.artiMi ? " · müvekkile iade / virman" : " · müvekkilden istenecek"}
                 </span>
               ))}
               {istenenOzet && bakiyeEtiketleri.some((e) => !e.artiMi && !e.karsiTarafMi) && (

@@ -36,6 +36,9 @@ import {
   dosyaEkonomiDurumuDegistir,
   masrafEkle,
   odemeEkle,
+  karsiOdemeEkle,
+  karsiTopluTasnif,
+  karsiVirmanYap,
   topluTasnif,
   virmanYap,
 } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
@@ -206,7 +209,9 @@ export async function EkonomiPaneli({
     ? await prisma.davaDosyasi.count({ where: { muvekkiller: { some: { musteriId: kapsam.musteriId } }, ekonomiDisi: true } })
     : 0;
   const aktifHesaplar = hesaplar.filter((h) => h.aktifMi);
-  const seciliHesap = aktifHesaplar.find((h) => String(h.no) === alt);
+  // Eski baglantilar (alt=borclu) yeni 201 Para Trafigi sekmesine gider.
+  const altNorm = alt === "borclu" ? "201" : alt;
+  const seciliHesap = aktifHesaplar.find((h) => String(h.no) === altNorm);
   const aktif = seciliHesap
     ? String(seciliHesap.no)
     : alt === "anlasma"
@@ -215,7 +220,7 @@ export async function EkonomiPaneli({
       ? "dosyalar"
       : alt === "yonet" && silmeYetkisiVar
         ? "yonet"
-        : ["adliye", "borclu", "ozet200", "ozet300"].includes(alt)
+        : ["adliye", "ozet200", "ozet300"].includes(alt)
           ? alt
           : "ozet100";
   const ozetOf = (hesapId: string) => ozet.hesaplar.find((o) => o.hesapId === hesapId);
@@ -230,7 +235,7 @@ export async function EkonomiPaneli({
   type Sekme = { anahtar: string; etiket: string; rozet?: string; rozetRengi?: "kirmizi" | "yesil" };
   const hesapSekmesi = (h: (typeof aktifHesaplar)[number]): Sekme => {
     const o = ozetOf(h.id);
-    return { anahtar: String(h.no), etiket: h.paraHesabiMi ? `${h.no} - ${h.ad} (Müvekkil)` : `${h.no} - ${h.ad}`, rozet: o && o.bakiye !== 0 ? para.format(Math.abs(o.bakiye)) : undefined, rozetRengi: o && o.bakiye !== 0 ? rozetRengiBul(h, o.bakiye) : undefined };
+    return { anahtar: String(h.no), etiket: h.paraHesabiMi ? `${h.no} - ${h.ad} (${h.grup === "BORCLU" ? "Karşı Taraf" : "Müvekkil"})` : `${h.no} - ${h.ad}`, rozet: o && o.bakiye !== 0 ? para.format(Math.abs(o.bakiye)) : undefined, rozetRengi: o && o.bakiye !== 0 ? rozetRengiBul(h, o.bakiye) : undefined };
   };
   // Katlar: genel / muvekkil (100'ler) / borclu (200'ler) / adliye (300'ler)
   const genelKat: Sekme[] = [
@@ -245,7 +250,7 @@ export async function EkonomiPaneli({
     { baslik: "MÜVEKKİL-100", sekmeler: [{ anahtar: "ozet100", etiket: "100 - Müvekkil Özeti" }, ...aktifHesaplar.filter((h) => h.grup === "MUVEKKIL").map(hesapSekmesi)] },
     {
       baslik: "KARŞI TARAF-200",
-      sekmeler: [{ anahtar: "ozet200", etiket: "200 - Karşı Taraf Özeti" }, { anahtar: "borclu", etiket: "201 - Para Trafiği (Karşı Taraf)" }, ...aktifHesaplar.filter((h) => h.grup === "BORCLU").map(hesapSekmesi)],
+      sekmeler: [{ anahtar: "ozet200", etiket: "200 - Karşı Taraf Özeti" }, ...aktifHesaplar.filter((h) => h.grup === "BORCLU").map(hesapSekmesi)],
     },
     {
       baslik: "ADLİYE-300",
@@ -368,13 +373,21 @@ export async function EkonomiPaneli({
           silmeYetkisiVar={silmeYetkisiVar}
         />
       )}
+      {seciliHesap && aktif === String(seciliHesap.no) && seciliHesap.paraHesabiMi && seciliHesap.grup === "BORCLU" && kapsam.dosyaId && (
+        <details className="mt-6 rounded-2xl border border-white/10 p-4">
+          <summary className="cursor-pointer text-sm text-white/70">Eski kayıtlar: karşı taraftan beklenen alacaklar ve tahsil durumu</summary>
+          <div className="mt-4">
+            <BorcluSekmesi dosyaId={kapsam.dosyaId} silmeYetkisiVar={silmeYetkisiVar} />
+          </div>
+        </details>
+      )}
       {(aktif === "ozet200" || aktif === "ozet300") && (
         <GrupOzeti
           karsiTarafMi={aktif === "ozet200"}
           hesaplar={aktifHesaplar.filter((h) => h.grup === (aktif === "ozet200" ? "BORCLU" : "ADLIYE"))}
           ozetOf={ozetOf}
           hrefYaz={hrefYaz}
-          defterAnahtari={aktif === "ozet200" ? "borclu" : "adliye"}
+          defterAnahtari={aktif === "ozet200" ? "201" : "adliye"}
           defterEtiketi={aktif === "ozet200" ? "201 - Para Trafiği (Karşı Taraf)" : "301 - Para Trafiği (Adliye)"}
           kapsam={kapsam}
           aktifHesaplar={aktifHesaplar}
@@ -386,8 +399,7 @@ export async function EkonomiPaneli({
         />
       )}
       {aktif === "adliye" && kapsam.dosyaId && <AdliyeSekmesi dosyaId={kapsam.dosyaId} silmeYetkisiVar={silmeYetkisiVar} />}
-      {aktif === "borclu" && kapsam.dosyaId && <BorcluSekmesi dosyaId={kapsam.dosyaId} silmeYetkisiVar={silmeYetkisiVar} />}
-      {(aktif === "adliye" || aktif === "borclu") && !kapsam.dosyaId && (
+      {aktif === "adliye" && !kapsam.dosyaId && (
         <p className="text-sm text-white/55">
           201 - Karşı Taraf ve 301 - Adliye para trafiği dosya bazındadır. Aşağıdaki sayfa sekmelerinden bir dosya seçin.
         </p>
@@ -616,7 +628,7 @@ async function HesapSekmesi({
   hesap,
   aktifHesaplar,
   dosyalar,
-  paraBakiyesi,
+  paraBakiyesi: paraBakiyesiGenel,
   havuzBakiyesi,
   ozetHesaplar,
   silmeYetkisiVar,
@@ -633,6 +645,9 @@ async function HesapSekmesi({
   ozetHesaplar: Awaited<ReturnType<typeof kapsamOzeti>>["hesaplar"];
   silmeYetkisiVar: boolean;
 }) {
+  // 201 (karsi taraf) Para Trafigi: musteri Para Trafigi ile ayni islemler, kendi bakiyesi ve kendi havuzu uzerinden.
+  const karsiPara = hesap.paraHesabiMi && hesap.grup === "BORCLU";
+  const paraBakiyesi = karsiPara ? (ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0) : paraBakiyesiGenel;
   // Virman kaynaklari: para trafigi (havuz / dosya) ve baska hesaplardaki fazla odemeler.
   const digerKaynaklar = aktifHesaplar
     .filter((h) => !h.paraHesabiMi && h.id !== hesap.id)
@@ -651,12 +666,12 @@ async function HesapSekmesi({
     .map(({ deger, etiket }) => ({ deger, etiket }));
   const kaynaklar = kapsam.dosyaId
     ? [
-        { deger: "havuz", etiket: `Tüm dosyalar (${para.format(havuzBakiyesi ?? 0)})` },
+        ...(karsiPara ? [] : [{ deger: "havuz", etiket: `Tüm dosyalar (${para.format(havuzBakiyesi ?? 0)})` }]),
         { deger: "dosya", etiket: `Bu dosya (${para.format(paraBakiyesi)})` },
         ...digerKaynaklar,
       ]
     : digerKaynaklar.length > 0
-      ? [{ deger: "havuz", etiket: `Para Trafiği — müvekkil havuzu (${para.format(paraBakiyesi)})` }, ...digerKaynaklar]
+      ? [{ deger: "havuz", etiket: `Para Trafiği — ${karsiPara ? "karşı taraf havuzu" : "müvekkil havuzu"} (${para.format(paraBakiyesi)})` }, ...digerKaynaklar]
       : undefined;
   const satirlar = await hesapDefteri(kapsam, { ...hesap, no: hesap.no, ad: hesap.ad });
   // Para Trafigi: odeme yontemleri (Nakit / Banka / ...), yoneticiye yerinde duzenleme penceresi
@@ -747,7 +762,8 @@ async function HesapSekmesi({
             + Alacak Kaydı (Ödeme Geldi){musteriDuzeyi ? " (dosya seçerseniz o dosyaya da işlenir)" : " (müvekkil ekonomisinde de görünür)"}
           </h3>
           <OdemeFormu
-            action={odemeEkle.bind(null, kapsam.musteriId)}
+            action={(karsiPara ? karsiOdemeEkle : odemeEkle).bind(null, kapsam.musteriId)}
+            paraKaynagiGizli={karsiPara}
             dosyalar={dosyalar}
             sabitDosyaId={kapsam.dosyaId}
             yontemler={yontemler}
@@ -759,7 +775,7 @@ async function HesapSekmesi({
             ipucu="Para trafiğindeki (henüz dağıtılmamış) parayı bir hesaba aktarır, ya da bir hesaptaki fazla ödemeyi başka hesaba taşır. Örn. müvekkilden gelen 5.000 TL'yi 102 - Harcama hesabına aktararak masrafı karşılarsınız. Para Nereden: 'Tüm dosyalar' müvekkilin bütün dosyalarındaki bekleyen parayı, 'Bu dosya' yalnızca bu dosyaya girilen parayı gösterir."
           />
           <VirmanFormu
-            action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
+            action={(karsiPara ? karsiVirmanYap : virmanYap).bind(null, kapsam.musteriId, kapsamDosyaId)}
             hedefler={hedefler}
             dosyalar={dosyalar}
             sabitDosyaId={kapsam.dosyaId}
@@ -771,7 +787,7 @@ async function HesapSekmesi({
             ipucu={'Bir parayı birden fazla dosya / hesaba böler. Örn. karşı taraftan gelen 50.000 TL: 36.000 masraf iadesi (Harcama), 14.000 vekalet ücreti kesintisi (Akdi Vekalet); ya da kalanı müvekkile ödeme. Her satıra "neye mahsup edildiğini" yazın.'}
           />
           <TopluTasnifFormu
-            action={topluTasnif.bind(null, kapsam.musteriId, kapsamDosyaId)}
+            action={(karsiPara ? karsiTopluTasnif : topluTasnif).bind(null, kapsam.musteriId, kapsamDosyaId)}
             hedefler={hedefler}
             dosyalar={dosyalar}
             sabitDosyaId={kapsam.dosyaId}
@@ -779,7 +795,7 @@ async function HesapSekmesi({
             kaynaklar={
               kapsam.dosyaId
                 ? [
-                    { deger: "havuz", etiket: "Tüm dosyalar", bakiye: havuzBakiyesi ?? 0 },
+                    ...(karsiPara ? [] : [{ deger: "havuz", etiket: "Tüm dosyalar", bakiye: havuzBakiyesi ?? 0 }]),
                     { deger: "dosya", etiket: "Bu dosyanın para trafiği", bakiye: paraBakiyesi },
                   ]
                 : undefined
@@ -1004,9 +1020,10 @@ function GrupOzeti({
 }) {
   const satirlar = hesaplar.map((h) => ({ h, o: ozetOf(h.id) ?? { borc: 0, alacak: 0, bakiye: 0 } }));
   // Karsi taraf: bakiye = Borc - Alacak (pozitif: karsi taraf bize borclu). Adliye: bakiye = Alacak - Borc (orada duran para).
-  const pozitifler = satirlar.filter((s) => s.o.bakiye > 0.001);
-  const negatifler = satirlar.filter((s) => s.o.bakiye < -0.001);
-  const toplam = Math.round(satirlar.reduce((t, s) => t + s.o.bakiye, 0) * 100) / 100;
+  const normalSatirlar = satirlar.filter((s) => !s.h.paraHesabiMi);
+  const pozitifler = normalSatirlar.filter((s) => s.o.bakiye > 0.001);
+  const negatifler = normalSatirlar.filter((s) => s.o.bakiye < -0.001);
+  const toplam = Math.round(normalSatirlar.reduce((t, s) => t + s.o.bakiye, 0) * 100) / 100;
   const durumSinifi =
     toplam > 0.001
       ? "border-[#32d74b]/40 bg-[#32d74b]/[0.07]"
@@ -1107,7 +1124,7 @@ function GrupOzeti({
                     <td className="whitespace-nowrap px-2 py-2 text-right text-white/85 md:px-4 md:py-3">{o.borc ? para.format(o.borc) : "—"}</td>
                     <td className="whitespace-nowrap px-2 py-2 text-right text-white/85 md:px-4 md:py-3">{o.alacak ? para.format(o.alacak) : "—"}</td>
                     <td className="whitespace-nowrap px-2 py-2 text-right font-medium md:px-4 md:py-3">
-                      {h.tutulanHesapMi ? <span className="text-[#6db8ff]">{para.format(o.bakiye)}</span> : <Bakiye b={o.bakiye} />}
+                      {h.tutulanHesapMi || h.paraHesabiMi ? <span className="text-[#6db8ff]">{para.format(o.bakiye)}</span> : <Bakiye b={o.bakiye} />}
                     </td>
                   </>
                 }

@@ -41,6 +41,11 @@ function tarihAl(formData: FormData): Date {
 
 const metin = (formData: FormData, alan: string) => String(formData.get(alan) ?? "").trim();
 
+// Para Trafigi hesabi grubu: formdaki gizli "paraGrup" alani BORCLU ise 201 (karsi taraf), degilse musteri para trafigi.
+function paraGrubuAl(formData: FormData): "MUVEKKIL" | "BORCLU" {
+  return String(formData.get("paraGrup") ?? "") === "BORCLU" ? "BORCLU" : "MUVEKKIL";
+}
+
 // Dosya, bu muvekkile ait mi? (baska muvekkilin dosyasina kayit islenmesin)
 async function dosyaMuvekkilinMi(musteriId: string, dosyaId: string) {
   const sayac = await prisma.dosyaMuvekkili.count({ where: { dosyaId, musteriId } });
@@ -52,7 +57,8 @@ async function dosyaMuvekkilinMi(musteriId: string, dosyaId: string) {
 async function odemeEkle_(musteriId: string, formData: FormData) {
   const dosyaId = metin(formData, "dosyaId") || null;
   if (dosyaId) await dosyaMuvekkilinMi(musteriId, dosyaId);
-  const para = await prisma.cariHesap.findFirst({ where: { paraHesabiMi: true } });
+  const paraGrup = paraGrubuAl(formData);
+  const para = await prisma.cariHesap.findFirst({ where: { paraHesabiMi: true, grup: paraGrup } });
   if (!para) throw new Error("Para Trafiği hesabı bulunamadı.");
   const tarih = tarihAl(formData);
   const aciklama = metin(formData, "aciklama") || "GELEN ÖDEME";
@@ -95,7 +101,7 @@ async function odemeEkle_(musteriId: string, formData: FormData) {
       tutar: Math.round(t * 100) / 100,
       aciklama,
       odemeYontemiId: yontemler[i] || null,
-      borcludanMi: metin(formData, "paraKaynagi") === "borclu",
+      borcludanMi: paraGrup === "MUVEKKIL" && metin(formData, "paraKaynagi") === "borclu",
     })),
   });
   if (virmanIstendi && dosyaId) {
@@ -104,6 +110,7 @@ async function odemeEkle_(musteriId: string, formData: FormData) {
       vf.set("hedefHesapId", v.hedefId);
       vf.set("dosyaId", dosyaId);
       vf.set("kaynak", "dosya");
+      vf.set("paraGrup", paraGrup);
       vf.set("tarih", String(formData.get("tarih") ?? ""));
       vf.set("tutar", String(v.tutar));
       if (v.borc) vf.set("borcTutari", v.borc);
@@ -175,7 +182,7 @@ async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: Fo
 
   await prisma.$transaction(async (tx) => {
     const [para, hedef] = await Promise.all([
-      tx.cariHesap.findFirst({ where: { paraHesabiMi: true } }),
+      tx.cariHesap.findFirst({ where: { paraHesabiMi: true, grup: paraGrubuAl(formData) } }),
       tx.cariHesap.findUnique({ where: { id: hedefHesapId } }),
     ]);
     if (!para || !hedef || hedef.paraHesabiMi) throw new Error("Geçerli bir hedef hesap seçin.");
@@ -219,7 +226,7 @@ async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: Fo
       return;
     }
 
-    const kaynak = await paraBakiyesi(tx, musteriId, havuzdan ? undefined : kapsamDosyaId);
+    const kaynak = await paraBakiyesi(tx, musteriId, havuzdan ? undefined : kapsamDosyaId, paraGrubuAl(formData));
     if (tutar > kaynak + 0.001) {
       throw new Error(
         `${havuzdan ? "Müvekkil havuzunda" : "Bu dosyanın para trafiğinde"} ${kaynak.toLocaleString("tr-TR")} TL var; daha fazlası aktarılamaz.`,
@@ -554,10 +561,10 @@ async function topluTasnif_(musteriId: string, kapsamDosyaId: string, formData: 
   const havuzdan = !kapsamDosyaId || metin(formData, "kaynak") === "havuz";
 
   await prisma.$transaction(async (tx) => {
-    const para = await tx.cariHesap.findFirst({ where: { paraHesabiMi: true } });
+    const para = await tx.cariHesap.findFirst({ where: { paraHesabiMi: true, grup: paraGrubuAl(formData) } });
     if (!para) throw new Error("Para Trafiği hesabı bulunamadı.");
     const toplam = Math.round(tutarlar.reduce((t, x) => t + x, 0) * 100) / 100;
-    const mevcut = await paraBakiyesi(tx, musteriId, havuzdan ? undefined : kapsamDosyaId);
+    const mevcut = await paraBakiyesi(tx, musteriId, havuzdan ? undefined : kapsamDosyaId, paraGrubuAl(formData));
     if (toplam > mevcut + 0.001) {
       throw new Error(
         `Tasnif toplamı ${toplam.toLocaleString("tr-TR")} TL; ${havuzdan ? "müvekkil havuzunda" : "bu dosyanın para trafiğinde"} yalnızca ${mevcut.toLocaleString("tr-TR")} TL var.`,
@@ -633,7 +640,7 @@ async function dosyalarArasiVirman_(musteriId: string, formData: FormData) {
 
     let mevcut: number;
     if (kaynakHesap.paraHesabiMi) {
-      mevcut = Math.max(0, await paraBakiyesi(tx, musteriId, kaynakDosyaId));
+      mevcut = Math.max(0, await paraBakiyesi(tx, musteriId, kaynakDosyaId, kaynakHesap.grup === "BORCLU" ? "BORCLU" : "MUVEKKIL"));
     } else {
       const ozet = await kapsamOzeti({ musteriId, dosyaId: kaynakDosyaId });
       const bakiye = ozet.hesaplar.find((h) => h.hesapId === kaynakHesap.id)?.bakiye ?? 0;
@@ -664,6 +671,22 @@ async function dosyalarArasiVirman_(musteriId: string, formData: FormData) {
 }
 
 // ---- Islem gunlugu sarmalayicilari: her islem geri alinabilir / yeniden uygulanabilir ----
+// 201 - Para Trafigi (Karsi Taraf): ayni islemler, karsi taraf para hesabi uzerinde.
+function karsiTarafForm(formData: FormData) {
+  formData.set("paraGrup", "BORCLU");
+  formData.delete("paraKaynagi");
+  return formData;
+}
+export async function karsiOdemeEkle(musteriId: string, formData: FormData) {
+  return odemeEkle(musteriId, karsiTarafForm(formData));
+}
+export async function karsiVirmanYap(musteriId: string, kapsamDosyaId: string, formData: FormData) {
+  return virmanYap(musteriId, kapsamDosyaId, karsiTarafForm(formData));
+}
+export async function karsiTopluTasnif(musteriId: string, kapsamDosyaId: string, formData: FormData) {
+  return topluTasnif(musteriId, kapsamDosyaId, karsiTarafForm(formData));
+}
+
 export async function odemeEkle(...a: Parameters<typeof odemeEkle_>): ReturnType<typeof odemeEkle_> {
   return cariGunlukle("Ödeme kaydı eklendi", [a[0]], () => odemeEkle_(...a));
 }

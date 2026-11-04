@@ -220,7 +220,7 @@ export async function kapsamOzeti(kapsam: Kapsam): Promise<KapsamOzeti> {
     };
   });
 
-  const paraBakiyesi = ozetler.filter((o) => o.paraHesabiMi).reduce((t, o) => t + o.bakiye, 0);
+  const paraBakiyesi = ozetler.filter((o) => o.paraHesabiMi && o.grup === "MUVEKKIL").reduce((t, o) => t + o.bakiye, 0);
   const digerBorclar = ozetler.filter((o) => !o.paraHesabiMi && !o.tutulanHesapMi).reduce((t, o) => t + o.bakiye, 0);
   const tutulanToplam = ozetler.filter((o) => o.tutulanHesapMi).reduce((t, o) => t + o.bakiye, 0);
   return { hesaplar: ozetler, paraBakiyesi, digerBorclar, tutulanToplam, net: digerBorclar - paraBakiyesi };
