@@ -536,7 +536,9 @@ export default async function DavaDosyasiDetaySayfasi({
 
       <DosyaBirlikteUyarisi dosyaId={id} />
 
-      <DavaDosyasiSekmeleri dosyaId={id} aktif={aktifSekme} kimlik={`${kokpitNoGoster(dosya)}${dosya.birimAdi ? ` · ${dosya.birimAdi}` : ""}${dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}`} />
+      <DavaDosyasiSekmeleri dosyaId={id} aktif={aktifSekme} kimlik={`${kokpitNoGoster(dosya)}${dosya.birimAdi ? ` · ${dosya.birimAdi}` : ""}${dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}`}
+        taraflar={`Müvekkil ${dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"} · Karşı Taraf ${dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—"} · Konu ${dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}`}
+      />
 
       {aktifSekme === "evrak" ? (
         <EvrakPaneli dosyaId={id} evraklar={evrakKayitlari} hedef="dava" />
