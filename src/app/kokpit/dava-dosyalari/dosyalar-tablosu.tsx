@@ -277,6 +277,7 @@ function SutunBasligi({
   siralanabilir,
   suruklenen,
   hedefMi,
+  hedefSag,
   suruklemeBasladi,
   suruklemeUzerinde,
   suruklemeBirakildi,
@@ -293,9 +294,11 @@ function SutunBasligi({
   siralanabilir: boolean;
   suruklenen: boolean;
   hedefMi: boolean;
+  hedefSag: boolean;
   suruklemeBasladi: () => void;
-  suruklemeUzerinde: () => void;
-  suruklemeBirakildi: () => void;
+  // sag: imlec basligin sag yarisinda mi (sutun ondan SONRA birakilir), degilse ondan ONCE.
+  suruklemeUzerinde: (sag: boolean) => void;
+  suruklemeBirakildi: (sag: boolean) => void;
   suruklemeBitti: () => void;
   // Verilirse (yonetici) baslik yerinde yeniden adlandirilabilir.
   etiketKaydet?: (yeni: string) => Promise<void>;
@@ -325,7 +328,7 @@ function SutunBasligi({
 
   return (
     <th
-      className={`group/baslik relative select-none whitespace-nowrap py-2 text-left text-[13px] font-medium ${ilk ? "pl-3 pr-2.5" : "px-2.5"} ${siralanabilir && !duzenliyor ? "cursor-grab" : ""} ${suruklenen ? "opacity-40" : ""} ${hedefMi ? "shadow-[inset_3px_0_0_var(--accent)]" : ""}`}
+      className={`group/baslik relative select-none whitespace-nowrap py-2 text-left text-[13px] font-medium ${ilk ? "pl-3 pr-2.5" : "px-2.5"} ${siralanabilir && !duzenliyor ? "cursor-grab" : ""} ${suruklenen ? "opacity-40" : ""} ${hedefMi ? (hedefSag ? "shadow-[inset_-3px_0_0_var(--accent)]" : "shadow-[inset_3px_0_0_var(--accent)]") : ""}`}
       style={{ width: genislik }}
       draggable={siralanabilir && !duzenliyor}
       onDragStart={(e) => {
@@ -340,11 +343,13 @@ function SutunBasligi({
       onDragOver={(e) => {
         if (!siralanabilir) return;
         e.preventDefault();
-        suruklemeUzerinde();
+        const r = e.currentTarget.getBoundingClientRect();
+        suruklemeUzerinde(e.clientX > r.left + r.width / 2);
       }}
       onDrop={(e) => {
         e.preventDefault();
-        suruklemeBirakildi();
+        const r = e.currentTarget.getBoundingClientRect();
+        suruklemeBirakildi(e.clientX > r.left + r.width / 2);
       }}
       onDragEnd={suruklemeBitti}
     >
@@ -491,21 +496,22 @@ export function DosyalarTablosu({
   const gorunurSutunlar = siraliSutunlar.filter((a) => !gizliSutunlar.includes(a));
   const [suruklenenSutun, setSuruklenenSutun] = useState<string | null>(null);
   const [hedefSutun, setHedefSutun] = useState<string | null>(null);
-  function sutunTasi(kaynak: string, hedef: string) {
-    if (kaynak === hedef || kaynak === "kayitNo") return;
-    const kaynakIndex = siraliSutunlar.indexOf(kaynak);
-    const hedefIndex = siraliSutunlar.indexOf(hedef);
-    if (kaynakIndex < 0 || hedefIndex < 0) return;
+  const [hedefSag, setHedefSag] = useState(false);
+  // sonra=true: kaynak, hedefin sagina; false: soluna konur. hedef null ise en sona.
+  function sutunTasi(kaynak: string, hedef: string | null, sonra: boolean) {
+    if (kaynak === hedef) return;
     const liste = siraliSutunlar.filter((a) => a !== kaynak);
-    let i = liste.indexOf(hedef) + (kaynakIndex < hedefIndex ? 1 : 0);
-    // Kokpit No (dosyayi acan baglanti) hep ilk sutunda kalir.
-    if (liste[0] === "kayitNo") i = Math.max(i, 1);
-    liste.splice(i, 0, kaynak);
+    if (hedef === null) liste.push(kaynak);
+    else {
+      const hi = liste.indexOf(hedef);
+      if (hi < 0) return;
+      liste.splice(hi + (sonra ? 1 : 0), 0, kaynak);
+    }
     siraYaz(liste);
   }
   function sutunKaydir(anahtar: string, yon: -1 | 1) {
     const hedef = siraliSutunlar[siraliSutunlar.indexOf(anahtar) + yon];
-    if (hedef && hedef !== "kayitNo") sutunTasi(anahtar, hedef);
+    if (hedef) sutunTasi(anahtar, hedef, yon === 1);
   }
   const [varsayilanMesaji, setVarsayilanMesaji] = useState("");
   async function siraVarsayilanYap() {
@@ -730,12 +736,12 @@ export function DosyalarTablosu({
                   />
                   <span className="truncate">{sutunEtiketleri[anahtar] ?? anahtar}</span>
                 </label>
-                {anahtar !== "kayitNo" && (
+                {(
                   <>
                     <button
                       type="button"
                       aria-label="Sola taşı"
-                      disabled={i === 0 || siraliSutunlar[i - 1] === "kayitNo"}
+                      disabled={i === 0}
                       onClick={() => sutunKaydir(anahtar, -1)}
                       className="rounded px-1.5 py-1 text-xs text-white/50 hover:text-white disabled:opacity-25"
                     >
@@ -854,13 +860,18 @@ export function DosyalarTablosu({
                     ) : undefined
                   }
                   suruklemeBaslat={(e) => genislikSuruklemeBaslat(anahtar, e)}
-                  siralanabilir={anahtar !== "kayitNo"}
+                  siralanabilir
                   suruklenen={suruklenenSutun === anahtar}
-                  hedefMi={hedefSutun === anahtar && suruklenenSutun !== null && suruklenenSutun !== anahtar && anahtar !== "kayitNo"}
+                  hedefMi={hedefSutun === anahtar && suruklenenSutun !== null && suruklenenSutun !== anahtar}
+                  hedefSag={hedefSag}
                   suruklemeBasladi={() => setSuruklenenSutun(anahtar)}
-                  suruklemeUzerinde={() => suruklenenSutun && anahtar !== "kayitNo" && setHedefSutun(anahtar)}
-                  suruklemeBirakildi={() => {
-                    if (suruklenenSutun) sutunTasi(suruklenenSutun, anahtar);
+                  suruklemeUzerinde={(sag) => {
+                    if (!suruklenenSutun) return;
+                    setHedefSutun(anahtar);
+                    setHedefSag(sag);
+                  }}
+                  suruklemeBirakildi={(sag) => {
+                    if (suruklenenSutun) sutunTasi(suruklenenSutun, anahtar, sag);
                     setSuruklenenSutun(null);
                     setHedefSutun(null);
                   }}
@@ -871,6 +882,20 @@ export function DosyalarTablosu({
                   etiketKaydet={etiketDuzenlenebilir ? (yeni) => sutunAdiniKaydet(anahtar, yeni) : undefined}
                 />
               ))}
+              {/* Son sutunun sagindaki bos alan: buraya birakilan sutun en sona gider. */}
+              <th
+                aria-hidden
+                className="p-0"
+                onDragOver={(e) => {
+                  if (suruklenenSutun) e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (suruklenenSutun) sutunTasi(suruklenenSutun, null, true);
+                  setSuruklenenSutun(null);
+                  setHedefSutun(null);
+                }}
+              />
               {!secimModu && (
                 <th className="sticky right-0 hidden w-[52px] bg-[var(--yuzey,#1c2432)] p-0 [@media(pointer:coarse)]:table-cell" />
               )}
