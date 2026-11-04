@@ -1,3 +1,4 @@
+import { varyantlarla } from "@/core/arama";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 
@@ -151,8 +152,8 @@ export async function bagliDosyaAdaylariniAra(arama: string, haricTutulanId?: st
       ...(temizlenmisArama
         ? {
             OR: [
-              { konu: { contains: temizlenmisArama, mode: "insensitive" } },
-              { dosyaNo: { contains: temizlenmisArama, mode: "insensitive" } },
+              ...varyantlarla(temizlenmisArama, (v) => ({ konu: { contains: v, mode: "insensitive" as const } })),
+              ...varyantlarla(temizlenmisArama, (v) => ({ dosyaNo: { contains: v, mode: "insensitive" as const } })),
             ],
           }
         : {}),
@@ -547,8 +548,8 @@ export async function uyusmazlikGruplariniTumListele(filtre: { arama?: string } 
     where: filtre.arama
       ? {
           OR: [
-            { ad: { contains: filtre.arama, mode: "insensitive" } },
-            { musteri: { adSoyadUnvan: { contains: filtre.arama, mode: "insensitive" } } },
+            ...varyantlarla(filtre.arama, (v) => ({ ad: { contains: v, mode: "insensitive" as const } })),
+            ...varyantlarla(filtre.arama, (v) => ({ musteri: { adSoyadUnvan: { contains: v, mode: "insensitive" as const } } })),
           ],
         }
       : {},
@@ -588,14 +589,10 @@ export async function acikHukukiMudahaleleriListele(filtre: AvukatSapkasiFiltre 
       ...(filtre.arama
         ? {
             OR: [
-              { baslik: { contains: filtre.arama, mode: "insensitive" } },
-              { davaDosyasi: { konu: { contains: filtre.arama, mode: "insensitive" } } },
-              { davaDosyasi: { dosyaNo: { contains: filtre.arama, mode: "insensitive" } } },
-              {
-                davaDosyasi: {
-                  muvekkiller: { some: { musteri: { adSoyadUnvan: { contains: filtre.arama, mode: "insensitive" } } } },
-                },
-              },
+              ...varyantlarla(filtre.arama, (v) => ({ baslik: { contains: v, mode: "insensitive" as const } })),
+              ...varyantlarla(filtre.arama, (v) => ({ davaDosyasi: { konu: { contains: v, mode: "insensitive" as const } } })),
+              ...varyantlarla(filtre.arama, (v) => ({ davaDosyasi: { dosyaNo: { contains: v, mode: "insensitive" as const } } })),
+              ...varyantlarla(filtre.arama, (v) => ({ davaDosyasi: { muvekkiller: { some: { musteri: { adSoyadUnvan: { contains: v, mode: "insensitive" as const } } } } } })),
             ],
           }
         : {}),
@@ -631,9 +628,9 @@ export async function kararSonrasiTakipListele(filtre: KararSonrasiTakipFiltre =
       ...(filtre.arama
         ? {
             OR: [
-              { konu: { contains: filtre.arama, mode: "insensitive" } },
-              { dosyaNo: { contains: filtre.arama, mode: "insensitive" } },
-              { muvekkiller: { some: { musteri: { adSoyadUnvan: { contains: filtre.arama, mode: "insensitive" } } } } },
+              ...varyantlarla(filtre.arama, (v) => ({ konu: { contains: v, mode: "insensitive" as const } })),
+              ...varyantlarla(filtre.arama, (v) => ({ dosyaNo: { contains: v, mode: "insensitive" as const } })),
+              ...varyantlarla(filtre.arama, (v) => ({ muvekkiller: { some: { musteri: { adSoyadUnvan: { contains: v, mode: "insensitive" as const } } } } })),
             ],
           }
         : {}),

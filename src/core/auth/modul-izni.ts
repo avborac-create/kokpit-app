@@ -18,5 +18,7 @@ export async function modulErisimiVarMi(anahtar: string): Promise<boolean> {
   const oturum = await mevcutKullanici();
   if (!oturum) return false;
   if (oturum.rol === "YONETICI") return true;
+  // Avukat modulu: buro rolu Avukat olan herkese acik (ayrica izin gerekmez).
+  if (anahtar === "avukat" && oturum.buroRolu === "AVUKAT") return true;
   return (await kullaniciModulIzinleri(oturum.kullaniciId)).includes(anahtar);
 }

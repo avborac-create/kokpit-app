@@ -1,3 +1,4 @@
+import { varyantlarla } from "@/core/arama";
 import { prisma } from "@/core/db/prisma";
 
 // Haciz Raporu formundaki dosya secicisini doldurur - sadece Dosya Turu
@@ -10,9 +11,9 @@ export async function icraDosyalariniListele(arama?: string) {
       ...(arama
         ? {
             OR: [
-              { konu: { contains: arama, mode: "insensitive" } },
-              { dosyaNo: { contains: arama, mode: "insensitive" } },
-              { muvekkiller: { some: { musteri: { adSoyadUnvan: { contains: arama, mode: "insensitive" } } } } },
+              ...varyantlarla(arama, (v) => ({ konu: { contains: v, mode: "insensitive" as const } })),
+              ...varyantlarla(arama, (v) => ({ dosyaNo: { contains: v, mode: "insensitive" as const } })),
+              ...varyantlarla(arama, (v) => ({ muvekkiller: { some: { musteri: { adSoyadUnvan: { contains: v, mode: "insensitive" as const } } } } })),
             ],
           }
         : {}),

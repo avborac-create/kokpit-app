@@ -1,3 +1,4 @@
+import { varyantlarla } from "@/core/arama";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/core/db/prisma";
 import type { CMKDosyaDurumu, Prisma } from "@prisma/client";
@@ -44,11 +45,11 @@ export async function cmkDosyalariniListele(filtre: CMKDosyaFiltre = {}) {
     ...(filtre.arama
       ? {
           OR: [
-            { adSoyad: { contains: filtre.arama, mode: "insensitive" } },
-            { musteri: { adSoyadUnvan: { contains: filtre.arama, mode: "insensitive" } } },
-            { dosyaNo: { contains: filtre.arama, mode: "insensitive" } },
-            { birim: { contains: filtre.arama, mode: "insensitive" } },
-            { suc: { contains: filtre.arama, mode: "insensitive" } },
+            ...varyantlarla(filtre.arama, (v) => ({ adSoyad: { contains: v, mode: "insensitive" as const } })),
+            ...varyantlarla(filtre.arama, (v) => ({ musteri: { adSoyadUnvan: { contains: v, mode: "insensitive" as const } } })),
+            ...varyantlarla(filtre.arama, (v) => ({ dosyaNo: { contains: v, mode: "insensitive" as const } })),
+            ...varyantlarla(filtre.arama, (v) => ({ birim: { contains: v, mode: "insensitive" as const } })),
+            ...varyantlarla(filtre.arama, (v) => ({ suc: { contains: v, mode: "insensitive" as const } })),
           ],
         }
       : {}),
