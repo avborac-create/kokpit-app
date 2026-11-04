@@ -9,7 +9,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { telefonuDuzenle } from "@/modules/musteri/lib/telefon";
 import { KISA_UNVAN_UYARISI, unvanKisaMi } from "@/core/unvan/unvan-kontrol";
-import { unvanGoreviOlustur, unvanGoreviniKapat, eksikBilgiGoreviOlustur, eksikBilgiGoreviniKapat } from "@/core/unvan/unvan-gorevi";
+import { unvanGoreviOlustur, unvanGoreviniKapat, eksikBilgiGoreviOlustur, eksikBilgiGoreviniKapat, adresListeGoreviOlustur } from "@/core/unvan/unvan-gorevi";
 import { eksikBilgiUyarisi, telefonBosMu } from "@/core/unvan/eksik-bilgi-kontrol";
 
 // Kisa unvan kurali: tuzel kisi ya da firma gibi gorunen ad, onay kutusu isaretli degilse kaydedilmez.
@@ -26,9 +26,20 @@ function eksikBilgiler(formData: FormData): string[] {
   const dolu = (d: FormDataEntryValue) => !telefonBosMu(String(d));
   const eksik: string[] = [];
   if (!formData.getAll("tel_no").some(dolu) && !formData.getAll("telefon").some(dolu)) eksik.push("Telefon");
-  if (String(formData.get("adres") ?? "").trim() === "") eksik.push("Adres");
+  if (["adres", "il", "ilce"].some((a) => String(formData.get(a) ?? "").trim() === "")) eksik.push("Adres (il, ilçe, açık adres)");
   if (eksik.length > 0 && formData.get("eksikBilgiOnayi") !== "1") throw new Error(eksikBilgiUyarisi(eksik));
   return eksik;
+}
+
+// "Listede yok" ile elle yazilan il / ilce icin yoneticiye gorev.
+async function adresListeKontrolu(formData: FormData, musteriAdi: string) {
+  const il = String(formData.get("il") ?? "").trim();
+  const ilce = String(formData.get("ilce") ?? "").trim();
+  const ilListeDisi = formData.get("ilListeDisi") === "1" && il !== "";
+  const ilceListeDisi = formData.get("ilceListeDisi") === "1" && ilce !== "";
+  if (!ilListeDisi && !ilceListeDisi) return;
+  const kullanici = await mevcutKullanici();
+  await adresListeGoreviOlustur({ il, ilce, ilListeDisi, ilceListeDisi, musteriAdi, olusturanId: kullanici?.kullaniciId ?? null });
 }
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
@@ -93,10 +104,13 @@ export async function musteriOlustur(formData: FormData) {
       telefon: metinYaAlNull(formData, "telefon"),
       eposta: metinYaAlNull(formData, "eposta"),
       adres: metinYaAlNull(formData, "adres"),
+      il: metinYaAlNull(formData, "il"),
+      ilce: metinYaAlNull(formData, "ilce"),
       sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
       notlar: metinYaAlNull(formData, "notlar"),
     },
   });
+  await adresListeKontrolu(formData, adSoyadUnvan);
 
   if (kisaUnvan) {
     const kullanici = await mevcutKullanici();
@@ -131,10 +145,13 @@ export async function musteriGuncelle(id: string, formData: FormData) {
       telefon: metinYaAlNull(formData, "telefon"),
       eposta: metinYaAlNull(formData, "eposta"),
       adres: metinYaAlNull(formData, "adres"),
+      il: metinYaAlNull(formData, "il"),
+      ilce: metinYaAlNull(formData, "ilce"),
       sorumluAvukatId: metinYaAlNull(formData, "sorumluAvukatId"),
       notlar: metinYaAlNull(formData, "notlar"),
     },
   });
+  await adresListeKontrolu(formData, adSoyadUnvan);
 
   if (kisaUnvan) {
     const kullanici = await mevcutKullanici();

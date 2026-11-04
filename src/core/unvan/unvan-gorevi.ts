@@ -58,3 +58,22 @@ export async function eksikBilgiGoreviniKapat(kayitId: string) {
     data: { durum: "TAMAMLANDI", tamamlanmaTarihi: new Date() },
   });
 }
+
+// Formda "Listede yok" ile yazilan il / ilce icin yoneticiye "listeye ekle" gorevi.
+export async function adresListeGoreviOlustur(opts: { il: string; ilce: string; ilListeDisi: boolean; ilceListeDisi: boolean; musteriAdi: string; olusturanId: string | null }) {
+  const ad = opts.ilListeDisi ? opts.il : `${opts.ilce} (${opts.il})`;
+  const kaynak = `adresliste:${ad.toLocaleLowerCase("tr-TR")}`;
+  const var_ = await prisma.is.findFirst({ where: { kaynak, durum: { not: "TAMAMLANDI" } }, select: { id: true } });
+  if (var_) return;
+  const yonetici = await prisma.kullanici.findFirst({ where: { rol: "YONETICI" }, orderBy: { id: "asc" }, select: { id: true } });
+  await prisma.is.create({
+    data: {
+      tur: "PARCA",
+      baslik: `Adres listesine ekle: ${ad}`,
+      aciklama: `${opts.musteriAdi} müvekkil kaydında il / ilçe listede bulunamadı ve elle yazıldı. Doğruluğunu kontrol edip il-ilçe listesine eklenmesini sağlayın.`,
+      kaynak,
+      sorumluId: yonetici?.id ?? opts.olusturanId,
+      olusturanId: opts.olusturanId,
+    },
+  });
+}

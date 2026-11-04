@@ -15,7 +15,7 @@ export function EksikBilgiOnayi() {
     const hesapla = () => {
       const alan = (ad: string) => Array.from(form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(`[name="${ad}"]`));
       const telefonVar = [...alan("tel_no"), ...alan("telefon")].some((e) => !telefonBosMu(e.value));
-      const adresVar = alan("adres").some((e) => e.value.trim() !== "");
+      const adresVar = alan("adres").some((e) => e.value.trim() !== "") && alan("il").some((e) => e.value.trim() !== "") && alan("ilce").some((e) => e.value.trim() !== "");
       const yeni: string[] = [];
       if (!telefonVar) yeni.push("Telefon");
       if (!adresVar) yeni.push("Adres");
@@ -26,7 +26,8 @@ export function EksikBilgiOnayi() {
     form.addEventListener("change", hesapla);
     // Telefon satiri ekle/sil gibi islemler girdileri DOM'da degistirir.
     const gozlemci = new MutationObserver(hesapla);
-    gozlemci.observe(form, { childList: true, subtree: true });
+    // il / ilce gizli girdileri React tarafindan guncellenir; value ozniteligi degisince de yeniden hesapla.
+    gozlemci.observe(form, { childList: true, subtree: true, attributes: true, attributeFilter: ["value"] });
     return () => {
       form.removeEventListener("input", hesapla);
       form.removeEventListener("change", hesapla);

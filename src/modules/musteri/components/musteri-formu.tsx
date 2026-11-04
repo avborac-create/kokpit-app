@@ -12,6 +12,7 @@ import { TelefonSatirlari } from "@/modules/musteri/components/telefon-satirlari
 import { KisaUnvanOnayi } from "@/core/unvan/kisa-unvan-onayi";
 import { MersisAra } from "@/core/unvan/mersis-ara";
 import { EksikBilgiOnayi } from "@/core/unvan/eksik-bilgi-onayi";
+import { AdresAlani } from "@/core/adres/adres-alani";
 
 const VARSAYILAN_SIFATLAR = ["Firma sahibi", "Firma ortağı", "Genel müdür", "Satış müdürü", "Muhasebe", "Çalışan personel", "Yetkili"];
 
@@ -112,12 +113,13 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
       ),
     adres: (gizli) =>
       gizli ? (
-        <input type="hidden" name="adres" value={musteri?.adres ?? ""} />
+        <>
+          <input type="hidden" name="adres" value={musteri?.adres ?? ""} />
+          <input type="hidden" name="il" value={musteri?.il ?? ""} />
+          <input type="hidden" name="ilce" value={musteri?.ilce ?? ""} />
+        </>
       ) : (
-        <Alan>
-          <Etiket htmlFor="adres">Adres (il / ilçe dahil)</Etiket>
-          <MetinAlani id="adres" name="adres" rows={2} defaultValue={musteri?.adres ?? ""} />
-        </Alan>
+        <AdresAlani il={musteri?.il ?? ""} ilce={musteri?.ilce ?? ""} adres={musteri?.adres ?? ""} />
       ),
     sorumluAvukatId: (gizli) =>
       gizli ? (

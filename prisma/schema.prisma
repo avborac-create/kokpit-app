@@ -188,6 +188,8 @@ model Musteri {
   telefon          String?
   eposta           String?
   adres            String?
+  il               String?
+  ilce             String?
   durumId          String
   durum            SecenekDegeri @relation("MusteriDurumu", fields: [durumId], references: [id])
   sorumluAvukatId  String?
