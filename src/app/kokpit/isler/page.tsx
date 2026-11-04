@@ -30,13 +30,16 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
     include: { is: { select: { id: true, baslik: true, durum: true, tur: true, vade: true, sorumluId: true, maddeler: { select: { tamam: true } } } } },
   });
   const odakIdleri = new Set(odaklar.map((o) => o.isId));
-  // Serbest meslek makbuzu (SMM) kesme uyarilari: finans yetkilisi / yonetici hepsini, digerleri yalniz kendilerine atananlari gorur.
+  // Serbest meslek makbuzu (SMM) kesme uyarilari yalniz gorevin atandigi finans yetkilisine gorunur.
   const hepsiniGorur = await ekonomiDuzenleyebilirMi();
-  const smmIsleri = await prisma.is.findMany({
-    where: { kaynak: { startsWith: "smm:" }, durum: { not: "TAMAMLANDI" }, ...(hepsiniGorur ? {} : { sorumluId: k?.kullaniciId ?? "-" }) },
+  const smmTum = await prisma.is.findMany({
+    where: { kaynak: { startsWith: "smm:" }, durum: { not: "TAMAMLANDI" } },
     orderBy: { olusturmaTarihi: "asc" },
-    select: { id: true, baslik: true, kaynak: true },
+    select: { id: true, baslik: true, kaynak: true, sorumluId: true },
   });
+  const smmIsleri = smmTum.filter((i) => i.sorumluId === k?.kullaniciId);
+  // Yonetici icin "Delegasyon": baskasina devredilen makbuz isleri; gorev sayisina eklenmez, onay kutusu yoktur.
+  const delegasyonlar = k && sistemYoneticisiMi(k.rol) ? smmTum.filter((i) => i.sorumluId !== k.kullaniciId) : [];
   const smmUyarilari = smmIsleri.map((i) => ({ id: i.id, baslik: i.baslik.replace(/^SMM kesilecek:\s*/, ""), dosyaId: (i.kaynak ?? "").split(":")[1] ?? "" }));
   const bugun = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
   // Eksi bakiye hatirlatmalari: ertelenenler (vade ileri bir tarihte) tarih gelene kadar listede gorunmez.
@@ -68,6 +71,19 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
         bugun={bugun}
         kartlar={odaklar.map((o) => ({ id: o.is.id, baslik: o.is.baslik, durum: o.is.durum, tur: o.is.tur, vade: o.is.vade ? o.is.vade.toISOString().slice(0, 10) : "", maddeToplam: o.is.maddeler.length, maddeTamam: o.is.maddeler.filter((m) => m.tamam).length, sorumluAd: o.is.sorumluId ? (ad.get(o.is.sorumluId) ?? "—") : "Atanmadı" }))}
       />
+      {delegasyonlar.length > 0 && (
+        <section aria-label="Delegasyon" className="mb-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
+          <p className="font-semibold text-white/85">Delegasyon <span className="ml-1 rounded-full bg-white/10 px-2 text-xs font-normal">{delegasyonlar.length}</span></p>
+          <p className="mt-0.5 text-xs text-white/50">
+            {ad.get(delegasyonlar[0].sorumluId ?? "") ?? "Finans yetkilisi"} adına devredildi; serbest meslek makbuzu kesilmesi bekleniyor. Bu bir göreviniz değildir.
+          </p>
+          <ul className="mt-1.5 flex flex-col gap-0.5 text-xs text-white/60">
+            {delegasyonlar.map((i) => (
+              <li key={i.id}>• {i.baslik.replace(/^SMM kesilecek:s*/, "")}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       <IsListesi
         odakIdleri={[...odakIdleri]}
         benimId={k?.kullaniciId ?? ""}

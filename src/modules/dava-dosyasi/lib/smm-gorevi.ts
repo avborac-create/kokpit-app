@@ -19,7 +19,9 @@ export async function smmGorevleriniGuncelle(dosyaIdleri: string[], bildirim = t
   });
   if (hesaplar.length === 0) return 0;
   // Gorev finans yetkilisine atanir (kisi degisse de rol uzerinden bulunur).
+  // Yönetici hesapları da finans yetkisine sahip olabilir; makbuz görevi yöneticiye değil, asıl finans yetkilisine (yönetici olmayan) atanır.
   const sorumlu =
+    (await prisma.kullanici.findFirst({ where: { aktifMi: true, finansYetkilisiMi: true, rol: { not: "YONETICI" } }, orderBy: { adSoyad: "asc" }, select: { id: true } })) ??
     (await prisma.kullanici.findFirst({ where: { aktifMi: true, finansYetkilisiMi: true }, select: { id: true } })) ??
     (await prisma.kullanici.findFirst({ where: { aktifMi: true, adSoyad: { contains: "Sınmaz", mode: "insensitive" } }, select: { id: true } }));
 
