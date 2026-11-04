@@ -30,3 +30,31 @@ export async function unvanGoreviniKapat(kayitId: string) {
     data: { durum: "TAMAMLANDI", tamamlanmaTarihi: new Date() },
   });
 }
+
+// Eksik telefon / adres icin takip gorevi ("eksik:<musteriId>"); bilgi tamamlaninca kapatilir.
+export async function eksikBilgiGoreviOlustur(opts: { ad: string; eksikler: string[]; kayitId: string; kullaniciId: string | null }) {
+  const kaynak = `eksik:${opts.kayitId}`;
+  const baslik = `Müvekkil bilgisini tamamla (${opts.eksikler.join(", ")}): ${opts.ad}`;
+  const var_ = await prisma.is.findFirst({ where: { kaynak, durum: { not: "TAMAMLANDI" } }, select: { id: true } });
+  if (var_) {
+    await prisma.is.update({ where: { id: var_.id }, data: { baslik } });
+    return;
+  }
+  await prisma.is.create({
+    data: {
+      tur: "PARCA",
+      baslik,
+      aciklama: "Müvekkil kaydı eksik bilgiyle açıldı. Telefon ve il / ilçe dahil adres müvekkil kartına girilmelidir.",
+      kaynak,
+      sorumluId: opts.kullaniciId,
+      olusturanId: opts.kullaniciId,
+    },
+  });
+}
+
+export async function eksikBilgiGoreviniKapat(kayitId: string) {
+  await prisma.is.updateMany({
+    where: { kaynak: `eksik:${kayitId}`, durum: { not: "TAMAMLANDI" } },
+    data: { durum: "TAMAMLANDI", tamamlanmaTarihi: new Date() },
+  });
+}

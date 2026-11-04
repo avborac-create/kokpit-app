@@ -11,6 +11,7 @@ import { secenekListesiTumDegerlerle } from "@/modules/dava-dosyasi/lib/cari-sis
 import { TelefonSatirlari } from "@/modules/musteri/components/telefon-satirlari";
 import { KisaUnvanOnayi } from "@/core/unvan/kisa-unvan-onayi";
 import { MersisAra } from "@/core/unvan/mersis-ara";
+import { EksikBilgiOnayi } from "@/core/unvan/eksik-bilgi-onayi";
 
 const VARSAYILAN_SIFATLAR = ["Firma sahibi", "Firma ortağı", "Genel müdür", "Satış müdürü", "Muhasebe", "Çalışan personel", "Yetkili"];
 
@@ -114,7 +115,7 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
         <input type="hidden" name="adres" value={musteri?.adres ?? ""} />
       ) : (
         <Alan>
-          <Etiket htmlFor="adres">Adres</Etiket>
+          <Etiket htmlFor="adres">Adres (il / ilçe dahil)</Etiket>
           <MetinAlani id="adres" name="adres" rows={2} defaultValue={musteri?.adres ?? ""} />
         </Alan>
       ),
@@ -153,6 +154,7 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
         return render ? <div key={oge.alanAnahtari}>{render(gizli)}</div> : null;
       })}
 
+      <EksikBilgiOnayi />
       <GonderButonu>{gonderButonuMetni}</GonderButonu>
     </form>
   );

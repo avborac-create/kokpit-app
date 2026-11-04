@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { Etiket, Girdi, Secim } from "@/core/ui/form";
 import { MersisAra } from "@/core/unvan/mersis-ara";
 import { KISA_UNVAN_ONAY_METNI, KISA_UNVAN_UYARISI, unvanKisaMi } from "@/core/unvan/unvan-kontrol";
+import { EKSIK_BILGI_ONAY_METNI, eksikBilgiUyarisi, telefonBosMu } from "@/core/unvan/eksik-bilgi-kontrol";
 import { hizliMusteriOlustur, hizliMusteriSecenekleri } from "@/modules/musteri/lib/actions";
 
 type Musteri = { id: string; adSoyadUnvan: string };
@@ -29,6 +30,7 @@ export function MuvekkilSecici({
   const [yeniTip, setYeniTip] = useState("");
   const [yeniTel, setYeniTel] = useState("");
   const [yeniOnay, setYeniOnay] = useState(false);
+  const [eksikOnay, setEksikOnay] = useState(false);
   const [yeniHata, setYeniHata] = useState("");
   const [yeniMesgul, setYeniMesgul] = useState(false);
   const [tipler, setTipler] = useState<{ id: string; etiket: string; tuzel: boolean }[]>([]);
@@ -69,6 +71,7 @@ export function MuvekkilSecici({
     setYeniAd(arama.trim());
     setYeniHata("");
     setYeniOnay(false);
+    setEksikOnay(false);
     setYeniAcik(true);
     setAcikMi(false);
     if (tipler.length === 0) void hizliMusteriSecenekleri().then((s) => setTipler(s.tipler)).catch(() => setYeniHata("Tip listesi yüklenemedi."));
@@ -80,7 +83,7 @@ export function MuvekkilSecici({
     setYeniHata("");
     setYeniMesgul(true);
     try {
-      const s = await hizliMusteriOlustur({ ad: yeniAd, tipId: yeniTip, telefon: yeniTel, kisaOnay: yeniOnay });
+      const s = await hizliMusteriOlustur({ ad: yeniAd, tipId: yeniTip, telefon: yeniTel, kisaOnay: yeniOnay, eksikOnay });
       if (s.hata || !s.id) {
         setYeniHata(s.hata ?? "Kaydedilemedi.");
         return;
@@ -202,10 +205,19 @@ export function MuvekkilSecici({
                   </Secim>
                 </div>
                 <div className="mb-3">
-                  <Etiket htmlFor="hm-tel">Telefon (isteğe bağlı)</Etiket>
+                  <Etiket htmlFor="hm-tel">Telefon (zorunlu)</Etiket>
                   <TelefonGirdisi id="hm-tel" value={yeniTel} onChange={setYeniTel} />
                   <p className="mt-1 text-xs text-white/45">+90 hazır yazılıdır, başına 0 yazmayın; 10 rakam girin. Yabancı numara için + ile başlayın.</p>
                 </div>
+                {telefonBosMu(yeniTel) && (
+                  <div className="mb-3 rounded-xl border border-[#f2b04c]/40 bg-[#f2b04c]/10 p-3 text-sm text-[#f3d9a8]">
+                    <p>{eksikBilgiUyarisi(["Telefon"])}</p>
+                    <label className="mt-2 flex items-start gap-2 text-white/85">
+                      <input type="checkbox" checked={eksikOnay} onChange={(e) => setEksikOnay(e.target.checked)} className="mt-1 h-4 w-4 accent-[#f2b04c]" />
+                      <span>{EKSIK_BILGI_ONAY_METNI}</span>
+                    </label>
+                  </div>
+                )}
                 {yeniKisa && (
                   <div className="mb-3 rounded-xl border border-[#f2b04c]/40 bg-[#f2b04c]/10 p-3 text-sm text-[#f3d9a8]">
                     <p>{KISA_UNVAN_UYARISI}</p>
@@ -220,7 +232,7 @@ export function MuvekkilSecici({
                   <button type="button" onClick={() => setYeniAcik(false)} className="border border-white/20 px-4 py-2 text-sm text-white/80 hover:bg-white/10">
                     Vazgeç
                   </button>
-                  <button type="button" onClick={yeniKaydet} disabled={yeniMesgul || !yeniAd.trim() || !yeniTip || (yeniKisa && !yeniOnay)} className="bg-[var(--accent)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                  <button type="button" onClick={yeniKaydet} disabled={yeniMesgul || !yeniAd.trim() || !yeniTip || (yeniKisa && !yeniOnay) || (telefonBosMu(yeniTel) && !eksikOnay)} className="bg-[var(--accent)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50">
                     {yeniMesgul ? "Ekleniyor…" : "Müvekkili ekle"}
                   </button>
                 </div>

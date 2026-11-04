@@ -9,7 +9,8 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { telefonuDuzenle } from "@/modules/musteri/lib/telefon";
 import { KISA_UNVAN_UYARISI, unvanKisaMi } from "@/core/unvan/unvan-kontrol";
-import { unvanGoreviOlustur, unvanGoreviniKapat } from "@/core/unvan/unvan-gorevi";
+import { unvanGoreviOlustur, unvanGoreviniKapat, eksikBilgiGoreviOlustur, eksikBilgiGoreviniKapat } from "@/core/unvan/unvan-gorevi";
+import { eksikBilgiUyarisi, telefonBosMu } from "@/core/unvan/eksik-bilgi-kontrol";
 
 // Kisa unvan kurali: tuzel kisi ya da firma gibi gorunen ad, onay kutusu isaretli degilse kaydedilmez.
 async function kisaUnvanDurumu(adSoyadUnvan: string, tipId: string, formData: FormData): Promise<boolean> {
@@ -17,6 +18,17 @@ async function kisaUnvanDurumu(adSoyadUnvan: string, tipId: string, formData: Fo
   const kisa = unvanKisaMi(adSoyadUnvan, tip?.kod === "tuzel_kisi");
   if (kisa && formData.get("kisaUnvanOnayi") !== "1") throw new Error(KISA_UNVAN_UYARISI);
   return kisa;
+}
+
+// Telefon (rehber ya da eski not) ve adres bos mu? Form telefon rehberini hic tasimiyorsa (tel_no yok) kontrol yapilmaz.
+function eksikBilgiler(formData: FormData): string[] {
+  if (!formData.has("tel_no")) return [];
+  const dolu = (d: FormDataEntryValue) => !telefonBosMu(String(d));
+  const eksik: string[] = [];
+  if (!formData.getAll("tel_no").some(dolu) && !formData.getAll("telefon").some(dolu)) eksik.push("Telefon");
+  if (String(formData.get("adres") ?? "").trim() === "") eksik.push("Adres");
+  if (eksik.length > 0 && formData.get("eksikBilgiOnayi") !== "1") throw new Error(eksikBilgiUyarisi(eksik));
+  return eksik;
 }
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
@@ -72,6 +84,7 @@ export async function musteriOlustur(formData: FormData) {
   }
 
   const kisaUnvan = await kisaUnvanDurumu(adSoyadUnvan, tipId, formData);
+  const eksikler = eksikBilgiler(formData);
   const musteri = await prisma.musteri.create({
     data: {
       adSoyadUnvan,
@@ -89,6 +102,10 @@ export async function musteriOlustur(formData: FormData) {
     const kullanici = await mevcutKullanici();
     await unvanGoreviOlustur({ ad: adSoyadUnvan, tur: "Müvekkil", kayitId: musteri.id, kullaniciId: kullanici?.kullaniciId ?? null });
   }
+  if (eksikler.length > 0) {
+    const kullanici = await mevcutKullanici();
+    await eksikBilgiGoreviOlustur({ ad: adSoyadUnvan, eksikler, kayitId: musteri.id, kullaniciId: kullanici?.kullaniciId ?? null });
+  }
   await telefonSatirlariniYaz(musteri.id, formData);
   revalidatePath("/kokpit/musteriler");
   redirect(`/kokpit/musteriler/${musteri.id}`);
@@ -104,6 +121,7 @@ export async function musteriGuncelle(id: string, formData: FormData) {
   }
 
   const kisaUnvan = await kisaUnvanDurumu(adSoyadUnvan, tipId, formData);
+  const eksikler = eksikBilgiler(formData);
   await prisma.musteri.update({
     where: { id },
     data: {
@@ -123,6 +141,14 @@ export async function musteriGuncelle(id: string, formData: FormData) {
     await unvanGoreviOlustur({ ad: adSoyadUnvan, tur: "Müvekkil", kayitId: id, kullaniciId: kullanici?.kullaniciId ?? null });
   } else {
     await unvanGoreviniKapat(id);
+  }
+  if (formData.has("tel_no")) {
+    if (eksikler.length > 0) {
+      const kullanici = await mevcutKullanici();
+      await eksikBilgiGoreviOlustur({ ad: adSoyadUnvan, eksikler, kayitId: id, kullaniciId: kullanici?.kullaniciId ?? null });
+    } else {
+      await eksikBilgiGoreviniKapat(id);
+    }
   }
   await telefonSatirlariniYaz(id, formData);
   revalidatePath("/kokpit/musteriler");
@@ -421,6 +447,7 @@ export async function hizliMusteriOlustur(girdi: {
   tipId: string;
   telefon: string;
   kisaOnay: boolean;
+  eksikOnay?: boolean;
 }): Promise<{ hata?: string; id?: string; ad?: string }> {
   const kullanici = await mevcutKullanici();
   if (!kullanici) return { hata: "Oturum bulunamadı." };
@@ -441,7 +468,12 @@ export async function hizliMusteriOlustur(girdi: {
     telefonSatiri = { telefon: sonuc.deger, tip: sonuc.tip };
   }
 
+  // Hizli formda adres sorulmaz: adres her zaman gorevle takip edilir; telefon bossa ayrica onay gerekir.
+  const eksikler = telefonSatiri ? ["Adres"] : ["Telefon", "Adres"];
+  if (!telefonSatiri && !girdi.eksikOnay) return { hata: eksikBilgiUyarisi(["Telefon"]) };
+
   const musteri = await prisma.musteri.create({ data: { adSoyadUnvan: ad, tipId: girdi.tipId, durumId: durum.id } });
+  await eksikBilgiGoreviOlustur({ ad, eksikler, kayitId: musteri.id, kullaniciId: kullanici.kullaniciId });
   if (telefonSatiri) {
     await prisma.musteriTelefonu.create({ data: { musteriId: musteri.id, siraNo: 0, telefon: telefonSatiri.telefon, telefonTipi: telefonSatiri.tip } });
   }
