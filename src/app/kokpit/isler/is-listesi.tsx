@@ -10,6 +10,7 @@ import { OdakDugmesi } from "./odak-dugmesi";
 
 type Is = {
   id: string;
+  dosyaId: string;
   baslik: string;
   durum: string;
   tur: string;
@@ -276,9 +277,14 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
             <span className="ml-auto">{i.tarih}</span>
           </div>
         </Link>
-        {i.durum !== "TAMAMLANDI" && (
+        {(i.durum !== "TAMAMLANDI" || i.dosyaId) && (
           <div className="flex items-center gap-2 border-t border-white/10 px-4 py-1.5">
-            <OdakDugmesi isId={i.id} odakta={odakIdleri.includes(i.id)} />
+            {i.durum !== "TAMAMLANDI" && <OdakDugmesi isId={i.id} odakta={odakIdleri.includes(i.id)} />}
+            {i.dosyaId && (
+              <Link href={`/kokpit/dava-dosyalari/${i.dosyaId}?sekme=gorevler`} className="rounded-full border border-[#8fd8ff]/40 px-2 py-0.5 text-xs font-semibold text-[#8fd8ff] hover:bg-white/10">
+                📁 Dosyaya git
+              </Link>
+            )}
           </div>
         )}
         {op && i.yapilan < i.hedef && benim(i) && (

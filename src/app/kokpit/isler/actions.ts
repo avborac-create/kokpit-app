@@ -30,7 +30,7 @@ async function ilgililereBildir(isId: string, yapanId: string, baslik: string, m
   await pushGonder([...alicilar], { baslik, metin: `${is.baslik} — ${metin}`.slice(0, 180), url: `/kokpit/isler/${isId}`, etiket: `is-${isId}` });
 }
 
-export async function isEkle(baslik: string, sorumluId: string, aciklama: string, destekId = ""): Promise<{ hata?: string; id?: string }> {
+export async function isEkle(baslik: string, sorumluId: string, aciklama: string, destekId = "", dosyaId = "", vade = ""): Promise<{ hata?: string; id?: string }> {
   const k = await girisli();
   const b = baslik.trim();
   if (!b) return { hata: "Konu başlığı boş olamaz." };
@@ -41,6 +41,8 @@ export async function isEkle(baslik: string, sorumluId: string, aciklama: string
       aciklama: aciklama.trim() || null,
       sorumluId: atanan,
       olusturanId: k.kullaniciId,
+      dosyaId: dosyaId || null,
+      vade: /^\d{4}-\d{2}-\d{2}$/.test(vade) ? new Date(vade) : null,
     },
   });
   if (atanan !== k.kullaniciId) {
@@ -51,6 +53,7 @@ export async function isEkle(baslik: string, sorumluId: string, aciklama: string
     await pushGonder([destekId], { baslik: "Size destek görevi atandı", metin: `${k.adSoyad}: ${b}`.slice(0, 180), url: `/kokpit/isler/${is.id}`, etiket: `is-${is.id}` });
   }
   revalidatePath("/kokpit/isler");
+  if (dosyaId) revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
   return { id: is.id };
 }
 

@@ -90,6 +90,7 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
           yorumSayisi: i._count.yorumlar,
           maddeToplam: i.maddeler.length,
           maddeTamam: i.maddeler.filter((m) => m.tamam).length,
+          dosyaId: i.dosyaId ?? "",
           tur: i.tur,
           hedef: i.haftalikHedef ?? 0,
           periyot: i.periyot,
@@ -110,6 +111,11 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
               <Link href={kapatHref} className="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-white/75 hover:bg-white/10">
                 ✕ Kapat
               </Link>
+              {detay.is.dosyaId && (
+                <Link href={`/kokpit/dava-dosyalari/${detay.is.dosyaId}?sekme=gorevler`} className="text-xs font-semibold text-[#8fd8ff] hover:underline">
+                  📁 Dosyaya git
+                </Link>
+              )}
               <Link href={`/kokpit/isler/${detay.is.id}`} className="text-xs text-white/45 hover:text-white">
                 Tam sayfada aç ↗
               </Link>

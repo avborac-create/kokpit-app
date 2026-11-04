@@ -1717,6 +1717,8 @@ model Is {
   vade             DateTime?    @db.Date
   // Otomatik acilan islerde kaynak kaydi ("unvan:<id>").
   kaynak           String?
+  // Dosya icinden acilan gorevde bagli dava dosyasi.
+  dosyaId          String?
   sorumluId        String?
   olusturanId      String?
   olusturmaTarihi  DateTime     @default(now())
@@ -1730,6 +1732,7 @@ model Is {
 
   @@index([tur])
   @@index([kaynak])
+  @@index([dosyaId])
   @@index([durum])
   @@index([sorumluId, durum])
   @@map("isler")

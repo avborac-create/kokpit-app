@@ -18,6 +18,8 @@ import { davaDegeriKalemlerden, davaDegeriYaz, ekstralariAyikla } from "@/module
 import { TalepKalemleriPaneli } from "@/modules/dava-dosyasi/components/talep-kalemleri-paneli";
 import { VekilPaneli } from "@/modules/dava-dosyasi/components/vekil-paneli";
 import { prisma } from "@/core/db/prisma";
+import { DosyaGorevleri, type DosyaGorevi } from "@/app/kokpit/isler/dosya-gorevleri";
+import { durumBilgisi } from "@/app/kokpit/isler/durum";
 import { YOL_ADLARI } from "@/modules/dava-dosyasi/lib/hesap-ozeti-yollari";
 import { IhtarGonderimPaneli } from "@/modules/ihtar/components/ihtar-gonderim-paneli";
 import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
@@ -99,6 +101,20 @@ export default async function DavaDosyasiDetaySayfasi({
   const { id } = await params;
   const { sekme, alt } = await searchParams;
   const aktifSekme = sekme === "ekonomi" || sekme === "evrak" || sekme === "gorevler" ? sekme : "genel";
+  const dosyaGorevleri: DosyaGorevi[] = [];
+  let gorevKisileri: { id: string; adSoyad: string }[] = [];
+  if (aktifSekme === "gorevler") {
+    const [isler, kisiler] = await Promise.all([
+      prisma.is.findMany({ where: { dosyaId: id }, orderBy: { olusturmaTarihi: "desc" }, select: { id: true, baslik: true, durum: true, sorumluId: true, vade: true } }),
+      prisma.kullanici.findMany({ where: { aktifMi: true }, select: { id: true, adSoyad: true }, orderBy: { adSoyad: "asc" } }),
+    ]);
+    gorevKisileri = kisiler;
+    const adlar = new Map(kisiler.map((x) => [x.id, x.adSoyad]));
+    for (const i of isler) {
+      const d = durumBilgisi(i.durum);
+      dosyaGorevleri.push({ id: i.id, baslik: i.baslik, durumAd: d.ad, renk: d.renk, kapali: i.durum === "TAMAMLANDI", sorumluAd: i.sorumluId ? (adlar.get(i.sorumluId) ?? "—") : "Atanmadı", vade: i.vade ? i.vade.toISOString().slice(0, 10) : "" });
+    }
+  }
   const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri, vekilAdaylari, calisilanAvukatlar, birimKatalogu] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
@@ -546,17 +562,14 @@ export default async function DavaDosyasiDetaySayfasi({
         <div className="glass max-w-3xl rounded-2xl p-5">
           <div className="mb-1 flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold text-white">Dosya Görevleri</h2>
-            <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] text-white/60">Prototip</span>
           </div>
           <p className="mb-4 text-sm text-white/55">
-            Ara karar dahil bu dosyayla ilgili her türlü iş buradan takip edilecek. Panel henüz tasarım aşamasında;
-            şimdilik dosyaya girilmiş mevcut işler (Avukat Şapkası) listeleniyor.
+            Bu dosyayla ilgili her türlü iş buradan yazılır ve kişilere atanır. Burada açılan görev, ana sayfadaki Görevler ekranında da (atanan kişide) görünür.
           </p>
-          {dosya.hukukiMudahaleler.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-white/15 px-4 py-8 text-center text-sm text-white/40">
-              Bu dosya için görev yok.
-            </p>
-          ) : (
+          <DosyaGorevleri dosyaId={id} benimId={kullanici?.kullaniciId ?? ""} kisiler={gorevKisileri} gorevler={dosyaGorevleri} />
+          {dosya.hukukiMudahaleler.length > 0 && (
+            <>
+            <h3 className="mb-2 mt-6 text-sm font-semibold text-white/70">Avukat Şapkası işleri</h3>
             <ul className="flex flex-col gap-2">
               {dosya.hukukiMudahaleler.map((g) => (
                 <li key={g.id} className="alan-hucre flex flex-wrap items-center justify-between gap-2 text-sm">
@@ -574,6 +587,7 @@ export default async function DavaDosyasiDetaySayfasi({
                 </li>
               ))}
             </ul>
+            </>
           )}
         </div>
       ) : aktifSekme === "genel" ? (

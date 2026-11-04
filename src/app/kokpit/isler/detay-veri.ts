@@ -4,6 +4,7 @@ import { donemBasi } from "./hafta";
 export type Detay = {
   id: string;
   baslik: string;
+  dosyaId: string;
   aciklama: string | null;
   durum: string;
   tur: string;
@@ -46,6 +47,7 @@ export async function isDetayiYukle(id: string, benimId: string): Promise<{ is: 
     is: {
       id: is.id,
       baslik: is.baslik,
+      dosyaId: is.dosyaId ?? "",
       aciklama: is.aciklama,
       durum: is.durum,
       tur: is.tur,
