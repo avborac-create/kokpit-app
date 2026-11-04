@@ -267,6 +267,7 @@ export default async function DavaDosyasiDetaySayfasi({
       gosterim: buroNoGoster(dosya.buroNo),
     },
   ];
+  const muvekkilDavali = (dosya.muvekkilSifatiDegeri?.etiket ?? "").toLocaleLowerCase("tr-TR").includes("davalı");
   const konuSecenegi = uyusmazlikTurleri.find((t) => t.id === dosya.hukukiIliskiTuruId);
   const turSecenegi = davaTurleri.find((t) => t.id === dosya.davaTuruId);
   const hukukDali = hukukDallari.find((d) => d.id === (konuSecenegi?.ustId ?? turSecenegi?.ustId));
@@ -435,8 +436,9 @@ export default async function DavaDosyasiDetaySayfasi({
                 <span>{dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}</span>
               )}
             </h1>
+            {/* Davacı solda, davalı sağda: müvekkil davalıysa karşı taraf kutusu öne (sola), müvekkil kutusu arkaya (sağa) geçer. */}
             <div className="mt-2 grid grid-cols-1 items-stretch gap-1.5 text-sm md:flex md:flex-wrap md:gap-2">
-              <div className="tsatir">
+              <div className={`tsatir ${muvekkilDavali ? "order-2" : "order-1"}`}>
                 <span className="tikon" aria-hidden>👤</span>
                 <div className="min-w-0 flex-1">
                   <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">
@@ -447,7 +449,7 @@ export default async function DavaDosyasiDetaySayfasi({
                   </span>
                 </div>
               </div>
-              <div className="tsatir">
+              <div className={`tsatir ${muvekkilDavali ? "order-1" : "order-2"}`}>
                 <span className="tikon tikon-karsi" aria-hidden>⚖</span>
                 <div className="min-w-0 flex-1">
                   <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">Karşı Taraf</span>
@@ -457,7 +459,7 @@ export default async function DavaDosyasiDetaySayfasi({
                 </div>
               </div>
               {(dosya.birimAdi || dosya.dosyaNo) && (
-                <div className="tsatir tsatir-konu">
+                <div className="tsatir tsatir-konu order-3">
                   <span className="tikon tikon-konu" aria-hidden>§</span>
                   <div className="min-w-0 flex-1">
                     <span className="konu-etiket block text-[11px] font-semibold uppercase tracking-wider sm:text-xs">Konu</span>

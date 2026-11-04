@@ -287,28 +287,28 @@ export function DavaDosyasiFormIcerik({
       }}
     >
       {anaDosyaBilgisi && (
-        <fieldset className="mb-4 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent-soft)] px-3 py-2.5 text-sm text-white/90">
+        <fieldset className="mb-4 rounded-xl border-2 border-[#e7222e] bg-[#e7222e]/15 px-3 py-2.5 text-sm text-white">
           <input type="hidden" name="bagliDosyaId" value={anaDosyaBilgisi.id} />
-          <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-white/70">Bağlı dosya</legend>
+          <legend className="rounded bg-[#e7222e] px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-white">⚠ Bağlı dosya açıyorsunuz</legend>
           <p className="mb-2">
             Bu dosya <b>{anaDosyaBilgisi.etiket}</b> dosyasına bağlı olarak açılıyor. Müvekkil ve karşı taraf o dosyadan geldi, değiştirebilirsiniz. Yeni dosya, o dosyanın:
           </p>
           <div className="flex flex-col gap-1.5">
             {anaDosyaBilgisi.altOlabilir && (
               <label className="flex items-start gap-2">
-                <input type="radio" name="baglantiRolu" value="ALT" defaultChecked className="mt-1" />
+                <input type="radio" name="baglantiRolu" value="ALT" className="mt-1" />
                 <span><b>Alt dosyası</b> olsun (Kokpit numarası KN-x/1, /2… şeklinde verilir)</span>
               </label>
             )}
             {anaDosyaBilgisi.ustOlabilir && (
               <label className="flex items-start gap-2">
-                <input type="radio" name="baglantiRolu" value="ANA" defaultChecked={!anaDosyaBilgisi.altOlabilir} className="mt-1" />
+                <input type="radio" name="baglantiRolu" value="ANA" className="mt-1" />
                 <span><b>Üst (ana) dosyası</b> olsun (mevcut dosya bunun altına girer, numarası KN-yeni/1 görünür)</span>
               </label>
             )}
             <label className="flex items-start gap-2">
-              <input type="radio" name="baglantiRolu" value="BILMIYORUM" defaultChecked={!anaDosyaBilgisi.altOlabilir && !anaDosyaBilgisi.ustOlabilir} className="mt-1" />
-              <span><b>Yalnız bağlı</b> olsun (alt / üst sonra belirlenir)</span>
+              <input type="radio" name="baglantiRolu" value="BILMIYORUM" defaultChecked className="mt-1" />
+              <span><b>Henüz bilmiyorum</b>, yalnız bağlı olsun (alt / üst sonra belirlenir)</span>
             </label>
           </div>
         </fieldset>

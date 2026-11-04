@@ -696,7 +696,8 @@ export async function anaDosyaAdaylariniGetir(dosyaId: string): Promise<AnaDosya
 // Dosya kartindaki vekil panelinde secilebilecek avukatlar (buro rolu Avukat olan aktif kullanicilar).
 export async function vekilAdaylariniGetir() {
   return prisma.kullanici.findMany({
-    where: { aktifMi: true, buroRolu: "AVUKAT" },
+    // Büro rolü yönetici olan ama kendisi de avukat olan hesaplar (Bora Çolakoğlu) iç avukat listesinde yer alır.
+    where: { aktifMi: true, OR: [{ buroRolu: "AVUKAT" }, { eposta: "av.bora.c@gmail.com" }] },
     select: { id: true, adSoyad: true },
     orderBy: { adSoyad: "asc" },
   });

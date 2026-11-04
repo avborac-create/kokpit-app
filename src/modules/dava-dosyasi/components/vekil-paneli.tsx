@@ -115,7 +115,7 @@ export function VekilPaneli({
   return (
     <div className={beklemede ? "opacity-80" : undefined}>
       <div className="grid gap-3 md:grid-cols-[minmax(0,18rem)_1fr]">
-        <div className="alan-hucre">
+        <div className="alan-hucre !px-4 !py-3">
           <label htmlFor="sorumlu-avukat" className={etiket}>
             Sorumlu avukat
           </label>
@@ -123,7 +123,7 @@ export function VekilPaneli({
             id="sorumlu-avukat"
             value={sorumlu}
             onChange={(e) => sorumluDegisti(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1.5 text-sm text-white outline-none focus:border-[var(--accent)]"
+            className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.06] px-2.5 py-1.5 text-sm text-white outline-none focus:border-[var(--accent)]"
           >
             <option value="">Seçilmedi</option>
             {avukatlar.map((a) => (
@@ -133,11 +133,11 @@ export function VekilPaneli({
             ))}
           </select>
         </div>
-        <div className="alan-hucre">
+        <div className="alan-hucre !px-4 !py-3">
           <span className={etiket}>UYAP’a kayıtlı vekiller</span>
-          <p className="mb-1 mt-3 text-xs font-semibold text-white/75">Bünye Avukatları</p>
+          <p className="mb-2 mt-3 text-xs font-semibold text-white/75">İç Avukatlar</p>
           {avukatlar.length === 0 ? (
-            <p className="text-sm text-white/55">Bünyede avukat sıfatlı kullanıcı yok.</p>
+            <p className="text-sm text-white/55">İç avukat sıfatlı kullanıcı yok.</p>
           ) : (
             <div className="flex flex-wrap gap-x-5 gap-y-1.5">
               {avukatlar.map((a) => (
@@ -154,7 +154,7 @@ export function VekilPaneli({
             </div>
           )}
 
-          <p className="mb-1 mt-4 border-t border-white/10 pt-3 text-xs font-semibold text-white/75">Dış Avukatlar</p>
+          <p className="mb-2 mt-4 border-t border-white/10 pt-3 text-xs font-semibold text-white/75">Dış Avukatlar</p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
             {disListe.map((a) => (
               <span key={a.id} className="group flex items-center gap-2 text-sm text-white">
