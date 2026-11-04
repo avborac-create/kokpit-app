@@ -22,10 +22,13 @@ function benzerMi(a: Set<string>, b: Set<string>): boolean {
   return ortak / Math.min(a.size, b.size) >= 0.6;
 }
 
-export async function OnemliDuyuruBandi() {
+export type OnemliHaber = Haber & { kaynak: string };
+
+// Hukuk Gundemi panelinin ustunde kucuk bir "Onemli degisiklik" listesi olarak gosterilir.
+export async function onemliHaberleriGetir(adet = 3): Promise<OnemliHaber[]> {
   const [tbb, hukuki] = await Promise.all([tbbHaberleri(30), hukukHaberleri(30)]);
   const goruldu = new Set<string>();
-  const liste: (Haber & { kaynak: string })[] = [];
+  const liste: OnemliHaber[] = [];
   const kelimeler: Set<string>[] = [];
   for (const [kaynak, haberler] of [["TBB", tbb], ["Hukuki Haber", hukuki]] as const) {
     for (const h of haberler ?? []) {
@@ -37,22 +40,5 @@ export async function OnemliDuyuruBandi() {
       liste.push({ ...h, kaynak });
     }
   }
-  if (liste.length === 0) return null;
-  return (
-    <section className="rounded-3xl border-2 border-[#ff5f56] bg-[#ff5f56]/15 p-5 shadow-[0_0_28px_rgba(255,95,86,0.25)]" aria-label="Önemli mevzuat değişiklikleri">
-      <h2 className="flex items-center gap-2 text-base font-extrabold uppercase tracking-wider text-[#ff7a70]">
-        <span aria-hidden="true">⚠️</span> Önemli değişiklik — dosyalarınızı etkileyebilir
-      </h2>
-      <ul className="mt-3 flex flex-col gap-2">
-        {liste.slice(0, 5).map((h) => (
-          <li key={h.baglanti}>
-            <a href={h.baglanti} target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-black/20 px-3 py-2 text-white hover:bg-black/30">
-              <span className="text-[15px] font-bold leading-snug">{h.baslik}</span>
-              <span className="mt-0.5 block text-xs text-white/55">{h.kaynak}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
+  return liste.slice(0, adet);
 }

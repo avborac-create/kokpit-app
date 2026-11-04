@@ -6,7 +6,7 @@ export type HaberKalemi = { baslik: string; baglanti: string; ek?: string };
 export type HaberKaynagi = { kod: string; ad: string; alt: string; kalemler: HaberKalemi[] };
 
 // Hukuk gundemi: birden fazla kaynak sekme olarak; liste kisa, kendi icinde kayar.
-export function HaberSekmeleri({ kaynaklar }: { kaynaklar: HaberKaynagi[] }) {
+export function HaberSekmeleri({ kaynaklar, onemli = [] }: { kaynaklar: HaberKaynagi[]; onemli?: HaberKalemi[] }) {
   const [secili, setSecili] = useState(kaynaklar[0]?.kod ?? "");
   const kaynak = kaynaklar.find((k) => k.kod === secili) ?? kaynaklar[0];
   if (!kaynak) return null;
@@ -43,6 +43,30 @@ export function HaberSekmeleri({ kaynaklar }: { kaynaklar: HaberKaynagi[] }) {
           ))}
         </div>
       </div>
+      {onemli.length > 0 && (
+        <div className="mb-2 border-b border-white/[0.07] pb-2" aria-label="Önemli mevzuat değişiklikleri">
+          <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[#ff8a80]">
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#ff5f56]" />
+            Önemli değişiklik
+          </p>
+          <ul>
+            {onemli.map((h) => (
+              <li key={h.baglanti}>
+                <a
+                  href={h.baglanti}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={h.baslik}
+                  className="flex items-baseline gap-2 py-0.5 text-[13px] text-white/90 hover:text-[#6db8ff]"
+                >
+                  <span className="min-w-0 flex-1 truncate">{h.baslik}</span>
+                  {h.ek && <span className="shrink-0 text-[11px] text-white/35">{h.ek}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <p className="mb-1 text-xs text-white/40">{kaynak.alt}</p>
       {/* Yukari kayan akis (uzerine gelince durur); yukseklik yandaki panele esitlenir. */}
       <div className="relative min-h-60 flex-1">
