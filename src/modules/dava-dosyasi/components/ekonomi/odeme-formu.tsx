@@ -27,7 +27,11 @@ export function OdemeFormu({
   yontemListesi,
   hedefler = [],
   paraKaynagiGizli = false,
+  sabitVirmanHedefi,
 }: {
+  // Vekalet vb. bir hesabin icinden para girisi: para once Para Trafigi'ne ALACAK yazilir, ayni tarihle
+  // bu hesaba virman yapilir (dosya zorunlu, tutarin tamami aktarilir).
+  sabitVirmanHedefi?: { id: string; etiket: string };
   // 201 (karşı taraf) para trafiğinde para zaten karşı taraftan gelir; kaynak seçimi gösterilmez.
   paraKaynagiGizli?: boolean;
   action: (formData: FormData) => void;
@@ -73,7 +77,7 @@ export function OdemeFormu({
       ) : (
         <Alan>
           <Etiket htmlFor="od-dosya">Dosya</Etiket>
-          <DosyaSecici id="od-dosya" name="dosyaId" dosyalar={dosyalar} bosSecenek="Dosyasız (müvekkil havuzu)" />
+          <DosyaSecici id="od-dosya" name="dosyaId" dosyalar={dosyalar} bosSecenek={sabitVirmanHedefi ? "Dosya seçin" : "Dosyasız (müvekkil havuzu)"} required={Boolean(sabitVirmanHedefi)} />
         </Alan>
       )}
       <Alan>
@@ -184,7 +188,17 @@ export function OdemeFormu({
         </>
       )}
 
-      {hedefler.length > 0 && (
+      {sabitVirmanHedefi && (
+        <>
+          <input type="hidden" name="virman" value="1" />
+          <input type="hidden" name="virmanHedefId" value={sabitVirmanHedefi.id} />
+          <p className="col-span-1 text-xs text-white/50 sm:col-span-2 md:col-span-4">
+            Gelen para önce Para Trafiği’ne alacak olarak işlenir, ardından aynı tarihle {sabitVirmanHedefi.etiket} hesabına aktarılır (virman).
+          </p>
+        </>
+      )}
+
+      {!sabitVirmanHedefi && hedefler.length > 0 && (
         <div className="col-span-1 border-t border-white/10 pt-3 sm:col-span-2 md:col-span-4">
           <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-white">
             <input type="checkbox" name="virman" value="1" checked={virman} onChange={(e) => setVirman(e.target.checked)} className="onay-kutusu" />
@@ -264,7 +278,7 @@ export function OdemeFormu({
       )}
 
       <div className="flex items-end">
-        <GonderButonu>{virman ? "Ödemeyi Ekle ve Virman Yap" : "Ödemeyi Ekle"}</GonderButonu>
+        <GonderButonu>{sabitVirmanHedefi ? "Para Girişini Kaydet" : virman ? "Ödemeyi Ekle ve Virman Yap" : "Ödemeyi Ekle"}</GonderButonu>
       </div>
     </form>
   );

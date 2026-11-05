@@ -988,6 +988,23 @@ async function HesapSekmesi({
               />
             </>
           )}
+          {!hesap.tutulanHesapMi && !hesap.masrafHesabiMi && (
+            <>
+              <h3 className="mb-1 mt-6 text-sm font-semibold text-white">+ Para Girişi (Alacak)</h3>
+              <p className="mb-2 text-xs text-white/45">
+                Kayıt arka planda Para Trafiği üzerinden yapılır: para önce Para Trafiği’ne girer (Kasa ve ödeme şekli dahil), ardından bu hesaba virman edilir.
+              </p>
+              <OdemeFormu
+                action={(karsiPara ? karsiOdemeEkle : odemeEkle).bind(null, kapsam.musteriId)}
+                paraKaynagiGizli={karsiPara}
+                dosyalar={dosyalar}
+                sabitDosyaId={kapsam.dosyaId}
+                yontemler={yontemler}
+                yontemListesi={yontemListesi ?? undefined}
+                sabitVirmanHedefi={{ id: hesap.id, etiket: `${hesap.no} - ${hesap.ad}` }}
+              />
+            </>
+          )}
           {!hesap.tutulanHesapMi && (
             <h3 className="mb-2 mt-6 text-sm font-semibold text-white">{hesap.masrafHesabiMi ? "+ Masraf Ekle" : "+ Borçlandırma"}</h3>
           )}
