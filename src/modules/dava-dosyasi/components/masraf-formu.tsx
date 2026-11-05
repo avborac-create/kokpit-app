@@ -22,7 +22,12 @@ export async function MasrafFormu({
   varsayilanCariKod,
   dosyaSecimi,
   karsiTaraflar = [],
+  kompakt = false,
+  idOnEki = "",
 }: {
+  // Dar yan panel: tek sutun. idOnEki: sayfada baska masraf formu da varsa kimlikler cakismasin.
+  kompakt?: boolean;
+  idOnEki?: string;
   action: (formData: FormData) => void;
   duzenlemeVerisi?: MasrafDuzenlemeVerisi;
   turDuzenleyici?: React.ReactNode;
@@ -41,21 +46,21 @@ export async function MasrafFormu({
   const bugun = new Date().toISOString().slice(0, 10);
 
   return (
-    <form action={action} className="glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-2 md:grid-cols-4">
+    <form action={action} className={kompakt ? "grid grid-cols-1 gap-3" : "glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-2 md:grid-cols-4"}>
       {dosyaSecimi?.sabitDosyaId && <input type="hidden" name="dosyaId" value={dosyaSecimi.sabitDosyaId} />}
       {dosyaSecimi && !dosyaSecimi.sabitDosyaId && (
         <Alan>
-          <Etiket htmlFor="dosyaId">Dosya</Etiket>
-          <DosyaSecici id="dosyaId" name="dosyaId" dosyalar={dosyaSecimi.dosyalar ?? []} required />
+          <Etiket htmlFor={`${idOnEki}dosyaId`}>Dosya</Etiket>
+          <DosyaSecici id={`${idOnEki}dosyaId`} name="dosyaId" dosyalar={dosyaSecimi.dosyalar ?? []} required />
         </Alan>
       )}
       <Alan>
-        <Etiket htmlFor="tarih">Tarih</Etiket>
-        <Girdi id="tarih" name="tarih" type="date" required defaultValue={duzenlemeVerisi?.tarih ?? bugun} />
+        <Etiket htmlFor={`${idOnEki}tarih`}>Tarih</Etiket>
+        <Girdi id={`${idOnEki}tarih`} name="tarih" type="date" required defaultValue={duzenlemeVerisi?.tarih ?? bugun} />
       </Alan>
       <Alan>
-        <Etiket htmlFor="cariKodId">Cari Kod</Etiket>
-        <Secim id="cariKodId" name="cariKodId" required defaultValue={duzenlemeVerisi?.cariKodId ?? cariKodlar.find((k) => k.kod === varsayilanCariKod)?.id ?? ""}>
+        <Etiket htmlFor={`${idOnEki}cariKodId`}>Cari Kod</Etiket>
+        <Secim id={`${idOnEki}cariKodId`} name="cariKodId" required defaultValue={duzenlemeVerisi?.cariKodId ?? cariKodlar.find((k) => k.kod === varsayilanCariKod)?.id ?? ""}>
           <option value="" disabled>
             Seçiniz…
           </option>
@@ -71,16 +76,18 @@ export async function MasrafFormu({
         defaultTurId={duzenlemeVerisi?.turId}
         defaultTutar={duzenlemeVerisi?.tutar}
         turDuzenleyici={turDuzenleyici}
+        idOnEki={idOnEki}
       />
       <MasrafYansitmaSecici
+        idOnEki={idOnEki}
         varsayilanHedef={duzenlemeVerisi?.yansitmaHedefi ?? "MUVEKKIL"}
         karsiTaraflar={karsiTaraflar}
         varsayilanKarsiTarafId={duzenlemeVerisi?.karsiTarafId}
       />
       <div className="col-span-1 sm:col-span-2 md:col-span-4">
         <Alan>
-          <Etiket htmlFor="aciklama">Açıklama</Etiket>
-          <MetinAlani id="aciklama" name="aciklama" rows={2} required defaultValue={duzenlemeVerisi?.aciklama ?? ""} />
+          <Etiket htmlFor={`${idOnEki}aciklama`}>Açıklama</Etiket>
+          <MetinAlani id={`${idOnEki}aciklama`} name="aciklama" rows={2} required defaultValue={duzenlemeVerisi?.aciklama ?? ""} />
         </Alan>
       </div>
       <div className="col-span-1 sm:col-span-2 md:col-span-4">

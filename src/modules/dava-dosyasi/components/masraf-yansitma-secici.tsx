@@ -17,7 +17,9 @@ export function MasrafYansitmaSecici({
   varsayilanHedef,
   karsiTaraflar,
   varsayilanKarsiTarafId,
+  idOnEki = "",
 }: {
+  idOnEki?: string;
   varsayilanHedef: Hedef;
   karsiTaraflar: { id: string; ad: string }[];
   varsayilanKarsiTarafId?: string | null;
@@ -47,8 +49,8 @@ export function MasrafYansitmaSecici({
       {hedef === "BORCLU" && (
         <div className="mt-3 max-w-sm">
           <Alan>
-            <Etiket htmlFor="karsiTarafId">Hangi Karşı Taraf? (opsiyonel)</Etiket>
-            <Secim id="karsiTarafId" name="karsiTarafId" defaultValue={varsayilanKarsiTarafId ?? ""}>
+            <Etiket htmlFor={`${idOnEki}karsiTarafId`}>Hangi Karşı Taraf? (opsiyonel)</Etiket>
+            <Secim id={`${idOnEki}karsiTarafId`} name="karsiTarafId" defaultValue={varsayilanKarsiTarafId ?? ""}>
               <option value="">Belirtilmedi</option>
               {karsiTaraflar.map((k) => (
                 <option key={k.id} value={k.id}>

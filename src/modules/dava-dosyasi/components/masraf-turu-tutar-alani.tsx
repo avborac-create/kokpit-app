@@ -15,7 +15,10 @@ export function MasrafTuruTutarAlani({
   defaultTurId,
   defaultTutar,
   turDuzenleyici,
+  idOnEki = "",
 }: {
+  // Ayni sayfada birden fazla masraf formu varsa alan kimlikleri cakismasin.
+  idOnEki?: string;
   turler: Tur[];
   defaultTurId?: string;
   defaultTutar?: number;
@@ -32,11 +35,11 @@ export function MasrafTuruTutarAlani({
     <>
       <Alan>
         <div className="flex items-center justify-between gap-2">
-          <Etiket htmlFor="turId">Tür</Etiket>
+          <Etiket htmlFor={`${idOnEki}turId`}>Tür</Etiket>
           {turDuzenleyici}
         </div>
         <Secim
-          id="turId"
+          id={`${idOnEki}turId`}
           name="turId"
           required
           value={turId}
@@ -57,7 +60,7 @@ export function MasrafTuruTutarAlani({
       </Alan>
       <Alan>
         <div className="mb-1 flex items-center justify-between gap-2">
-          <label htmlFor="tutar" className="text-sm font-medium text-white/70">
+          <label htmlFor={`${idOnEki}tutar`}className="text-sm font-medium text-white/70">
             Tutar
           </label>
           {maktuTutarVarMi && (
@@ -74,7 +77,7 @@ export function MasrafTuruTutarAlani({
         </div>
         <ParaGirdisi
           key={maktuKullan ? `maktu-${turId}` : `serbest-${turId}`}
-          id="tutar"
+          id={`${idOnEki}tutar`}
           name="tutar"
           required
           readOnly={maktuKullan}

@@ -31,6 +31,9 @@ import { adliBirimleriListele } from "@/modules/dava-dosyasi/lib/adli-birim";
 import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
 import { FormKarti } from "@/core/ui/form-karti";
 import { DosyaBirlikteUyarisi } from "@/core/birlikte/dosya-birlikte-uyarisi";
+import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
+import { MasrafPaneliKabugu } from "@/modules/dava-dosyasi/components/masraf-paneli-kabugu";
+import { masrafEkle } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
 
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
 
@@ -405,7 +408,22 @@ export default async function DavaDosyasiDetaySayfasi({
       : []),
   ];
 
-  return (
+  // Soldaki Masraf Girişi paneli: dosyanın müvekkili varsa, Harcama (masraf) hesabının varsayılan cari koduyla.
+  const masrafHesabi = musteriId
+    ? await prisma.cariHesap.findFirst({ where: { masrafHesabiMi: true, aktifMi: true }, orderBy: { no: "asc" }, select: { eskiKod: true } })
+    : null;
+  const masrafPaneli = musteriId ? (
+    <MasrafFormu
+      kompakt
+      idOnEki="panel-"
+      action={masrafEkle.bind(null, musteriId)}
+      varsayilanCariKod={masrafHesabi?.eskiKod ?? undefined}
+      dosyaSecimi={{ sabitDosyaId: id }}
+      karsiTaraflar={dosya.karsiTaraflar.map((kt) => ({ id: kt.karsiTarafId, ad: kt.karsiTaraf.ad }))}
+    />
+  ) : null;
+
+  const sayfa = (
     <div className="pt-2 md:pt-3">
       <MobilSabitBaslik hedefId="dosya-kunye">
         <p className="truncate">
@@ -719,4 +737,6 @@ export default async function DavaDosyasiDetaySayfasi({
       )}
     </div>
   );
+
+  return masrafPaneli ? <MasrafPaneliKabugu panel={masrafPaneli}>{sayfa}</MasrafPaneliKabugu> : sayfa;
 }
