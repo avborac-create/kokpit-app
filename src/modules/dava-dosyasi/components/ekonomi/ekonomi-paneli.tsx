@@ -832,9 +832,6 @@ async function HesapSekmesi({
   const musteriDuzeyi = !kapsam.dosyaId;
   const kapsamDosyaId = kapsam.dosyaId ?? "";
   const hedefler = aktifHesaplar.filter((h) => !h.paraHesabiMi).map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` }));
-  const adliyeHesaplari = aktifHesaplar
-    .filter((h) => h.tutulanHesapMi)
-    .map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` }));
 
   const turListesi = hesap.masrafHesabiMi && silmeYetkisiVar ? await secenekListesiTumDegerlerle("masraf_turu") : null;
   const karsiTaraflar = hesap.masrafHesabiMi
@@ -943,53 +940,26 @@ async function HesapSekmesi({
         </>
       ) : (
         <>
-          {/bloke/i.test(hesap.ad) && adliyeHesaplari.length > 0 && (
-            <>
-              <h3 className="mb-1 mt-6 text-sm font-semibold text-white">🏛 Adliyeye Aktar (bloke paranın tamamını ya da bir kısmını adliyede duran para hesabına)</h3>
-              <p className="mb-2 text-xs text-white/45">
-                Müvekkilden alınan bloke parayı adli birime yatırdığınızda burada kayda geçirin: hesabın adından uygun olanı (teminat,
-                yediemin ücreti, avans vb.) seçin.
-              </p>
-              <VirmanFormu
-                action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
-                hedefler={adliyeHesaplari}
-                dosyalar={dosyalar}
-                sabitDosyaId={kapsam.dosyaId}
-                mevcutBakiye={paraBakiyesi}
-                kaynaklar={[
-                  {
-                    deger: `hesap:${hesap.id}`,
-                    etiket: kapsam.dosyaId
-                      ? `${hesap.no} - ${hesap.ad} — aktarılabilir ${para.format(Math.max(0, -(ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0)))}`
-                      : `${hesap.no} - ${hesap.ad} — seçilen dosyadaki fazla ödeme`,
-                  },
-                ]}
-              />
-            </>
-          )}
-          {hesap.tutulanHesapMi && (
-            <>
-              <h3 className="mb-1 mt-6 text-sm font-semibold text-white">↩ Geri Alındı / İade: Bu Hesaptaki Parayı Başka Hesaba Aktar</h3>
-              <p className="mb-2 text-xs text-white/45">
-                Adliyeden geri gelen teminat gibi tutarları, ilgili hesaba (ör. 103 - Bloke Para) geri aktarın; bu hesaptan Borç olarak düşer.
-              </p>
-              <VirmanFormu
-                action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
-                hedefler={aktifHesaplar.filter((h) => !h.paraHesabiMi && !h.tutulanHesapMi).map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` }))}
-                dosyalar={dosyalar}
-                sabitDosyaId={kapsam.dosyaId}
-                mevcutBakiye={paraBakiyesi}
-                kaynaklar={[
-                  {
-                    deger: `hesap:${hesap.id}`,
-                    etiket: kapsam.dosyaId
-                      ? `${hesap.no} - ${hesap.ad} — orada duran ${para.format(Math.max(0, ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0))}`
-                      : `${hesap.no} - ${hesap.ad} — seçilen dosyadaki tutar`,
-                  },
-                ]}
-              />
-            </>
-          )}
+          <h3 className="mb-1 mt-6 text-sm font-semibold text-white">↪ Bu Hesaptaki Bakiyeyi Başka Hesaba Aktar (hesaplar arası virman)</h3>
+          <p className="mb-2 text-xs text-white/45">
+            Bu hesapta duran tutarı (fazla ödeme / adliyede duran para) istediğiniz başka bir hesaba aktarın; bu hesaptan Borç olarak düşer, hedef hesaba Alacak yazılır.
+            Örn. 108 - Avans bakiyesini 102 - Harcama hesabına, 103 - Bloke Para&apos;yı adliye hesabına, adliyeden dönen parayı geri aktarabilirsiniz.
+          </p>
+          <VirmanFormu
+            action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
+            hedefler={hedefler.filter((h) => h.id !== hesap.id)}
+            dosyalar={dosyalar}
+            sabitDosyaId={kapsam.dosyaId}
+            mevcutBakiye={paraBakiyesi}
+            kaynaklar={[
+              {
+                deger: `hesap:${hesap.id}`,
+                etiket: kapsam.dosyaId
+                  ? `${hesap.no} - ${hesap.ad} — aktarılabilir ${para.format(Math.max(0, hesap.tutulanHesapMi ? (ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0) : -(ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0)))}`
+                  : `${hesap.no} - ${hesap.ad} — seçilen dosyadaki tutar`,
+              },
+            ]}
+          />
           {!hesap.tutulanHesapMi && !hesap.masrafHesabiMi && (
             <>
               <h3 className="mb-1 mt-6 text-sm font-semibold text-white">+ Para Girişi (Alacak)</h3>
