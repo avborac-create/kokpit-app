@@ -58,7 +58,13 @@ export function ParaGirdisi({
         onFocus={() => setOdaklandi(true)}
         onBlur={() => setOdaklandi(false)}
         onChange={(e) => {
-          const temiz = e.target.value.replace(/[^0-9.]/g, "");
+          // Virgul (Turkce ondalik) da nokta gibi kabul edilir; tek ondalik ayraci, en fazla 2 hane.
+          const ham = e.target.value.replace(/,/g, ".").replace(/[^0-9.]/g, "");
+          const ilkNokta = ham.indexOf(".");
+          const temiz =
+            ilkNokta === -1
+              ? ham
+              : ham.slice(0, ilkNokta + 1) + ham.slice(ilkNokta + 1).replace(/\./g, "").slice(0, 2);
           setMetin(temiz);
           onDegerDegisti?.(temiz);
         }}
