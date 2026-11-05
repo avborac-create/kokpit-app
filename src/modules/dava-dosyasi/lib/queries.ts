@@ -74,7 +74,8 @@ export async function davaDosyalariniListele(filtre: DavaDosyasiFiltre = {}) {
       hukukiIliskiTuru: true,
       sorumluAvukat: true,
       anaDosya: { select: { id: true, kayitNo: true } },
-      karsiTaraflar: { include: { karsiTaraf: true } },
+      // İlk kaydedilen taraf başta (listede yalnız o gösterilir).
+      karsiTaraflar: { include: { karsiTaraf: true }, orderBy: { olusturmaTarihi: "asc" } },
       muvekkiller: { include: { musteri: true } },
     },
     orderBy: { olusturmaTarihi: "desc" },

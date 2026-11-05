@@ -58,7 +58,7 @@ const OLCU_METINLERI: Record<string, (dosya: Dosya) => string> = {
   birimAdi: (d) => d.birimAdi ?? "—",
   konu: (d) => d.konu ?? "",
   karsiTaraflar: (d) =>
-    d.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—",
+    (d.karsiTaraflar[0]?.karsiTaraf.ad ?? "—") + (d.karsiTaraflar.length > 1 ? ` +${d.karsiTaraflar.length - 1}` : ""),
   muvekkiller: (d) =>
     d.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—",
   durum: (d) => d.durum.etiket,
@@ -96,10 +96,18 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
     return <span className="truncate">{metin}</span>;
   },
   birimAdi: (dosya) => dosya.birimAdi ?? "—",
-  karsiTaraflar: (dosya) =>
-    dosya.karsiTaraflar.length > 0
-      ? dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ")
-      : "—",
+  // Listede yalnız ilk kaydedilen karşı taraf; fazlası "+N" ile, tamamı imleç üstüne gelince.
+  karsiTaraflar: (dosya) => {
+    const adlar = dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad);
+    if (adlar.length === 0) return "—";
+    if (adlar.length === 1) return adlar[0];
+    return (
+      <span className="flex min-w-0 items-center gap-1.5" title={adlar.join(", ")}>
+        <span className="truncate">{adlar[0]}</span>
+        <span className="shrink-0 rounded-full bg-white/10 px-1.5 text-[11px] text-white/60">+{adlar.length - 1}</span>
+      </span>
+    );
+  },
   muvekkiller: (dosya) =>
     dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—",
   durum: (dosya) => (
