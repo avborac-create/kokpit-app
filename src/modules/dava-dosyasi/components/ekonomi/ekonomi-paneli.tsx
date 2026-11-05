@@ -783,8 +783,11 @@ async function HesapSekmesi({
   silmeYetkisiVar: boolean;
 }) {
   // 201 (karsi taraf) Para Trafigi: musteri Para Trafigi ile ayni islemler, kendi bakiyesi ve kendi havuzu uzerinden.
-  const karsiPara = hesap.paraHesabiMi && hesap.grup === "BORCLU";
-  const paraBakiyesi = karsiPara ? (ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0) : paraBakiyesiGenel;
+  // 200'lu (karsi taraf) grubundaki TUM hesaplar (201 Para Trafigi ve vekalet/yargilama gideri gibi diger hesaplar) karsi taraf
+  // para trafigi uzerinden calisir; musteri (100'lu) hesaplariyla birebir ayni mantik.
+  const karsiPara = hesap.grup === "BORCLU";
+  const karsiParaHesapId = karsiPara ? (hesap.paraHesabiMi ? hesap.id : ozetHesaplar.find((o) => o.paraHesabiMi && o.grup === "BORCLU")?.hesapId) : undefined;
+  const paraBakiyesi = karsiPara ? (ozetHesaplar.find((o) => o.hesapId === karsiParaHesapId)?.bakiye ?? 0) : paraBakiyesiGenel;
   // Virman kaynaklari: para trafigi (havuz / dosya) ve baska hesaplardaki fazla odemeler.
   const digerKaynaklar = aktifHesaplar
     .filter((h) => !h.paraHesabiMi && h.id !== hesap.id)
@@ -812,10 +815,9 @@ async function HesapSekmesi({
       : undefined;
   const satirlar = await hesapDefteri(kapsam, { ...hesap, no: hesap.no, ad: hesap.ad });
   // Para Trafigi: odeme yontemleri (Nakit / Banka / ...), yoneticiye yerinde duzenleme penceresi
-  const yontemler = hesap.paraHesabiMi
-    ? (await secenekleriGetir("odeme_yontemi")).map((y) => ({ id: y.id, etiket: y.etiket }))
-    : [];
-  const yontemListesi = hesap.paraHesabiMi && silmeYetkisiVar ? await secenekListesiTumDegerlerle("odeme_yontemi") : null;
+  // Vekalet vb. hesaplarin "Para Girisi" formu da odeme sekillerini kullanir.
+  const yontemler = (await secenekleriGetir("odeme_yontemi")).map((y) => ({ id: y.id, etiket: y.etiket }));
+  const yontemListesi = silmeYetkisiVar ? await secenekListesiTumDegerlerle("odeme_yontemi") : null;
   const borcludanToplam = hesap.paraHesabiMi
     ? satirlar.filter((x) => x.borcludan && x.alacak > 0).reduce((t, x) => t + x.alacak, 0)
     : 0;
@@ -1040,7 +1042,7 @@ async function HesapSekmesi({
           )}
           <h3 className="mb-2 mt-6 text-sm font-semibold text-white">⇄ Bu Hesaba Virman (Para Trafiğinden ya da Başka Hesaptan)</h3>
           <VirmanFormu
-            action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
+            action={(karsiPara ? karsiVirmanYap : virmanYap).bind(null, kapsam.musteriId, kapsamDosyaId)}
             hedefler={hedefler}
             sabitHedefId={hesap.id}
             dosyalar={dosyalar}
