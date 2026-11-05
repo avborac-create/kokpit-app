@@ -9,6 +9,7 @@ export const DAVA_DOSYALARI_SUTUN_ETIKETLERI: Record<string, string> = {
   tur: "Tür / Konu",
   birimAdi: "Birim",
   dosyaNo: "Dosya No",
+  dosyaTipi: "Dosya Tipi",
   muvekkiller: "Müvekkil",
   karsiTaraflar: "Karşı Taraf",
   sorumluAvukat: "Sorumlu Avukat",

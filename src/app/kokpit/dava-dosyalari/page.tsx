@@ -59,13 +59,16 @@ export default async function DavaDosyalariSayfasi({
   const kayitliSutunlar = sutunDuzeni.map((s) => s.sutunAnahtari);
   // Sonradan eklenen sütunlar (ör. Büro No) seed koşana kadar DB'de satır
   // olarak bulunmaz - eksik olanlar varsayılan konumlarına eklenir.
-  const sutunSirasi =
-    sutunDuzeni.length > 0
-      ? [
-          ...kayitliSutunlar,
-          ...DAVA_DOSYALARI_VARSAYILAN_SUTUN_SIRASI.filter((a) => !kayitliSutunlar.includes(a)),
-        ]
-      : DAVA_DOSYALARI_VARSAYILAN_SUTUN_SIRASI;
+  // Eksik sütun, varsayılan sıradaki öncülünün hemen sağına konur (ör. Dosya Tipi, Dosya No'nun yanına).
+  const sutunSirasi: string[] = [...kayitliSutunlar];
+  if (sutunDuzeni.length === 0) sutunSirasi.push(...DAVA_DOSYALARI_VARSAYILAN_SUTUN_SIRASI);
+  else {
+    DAVA_DOSYALARI_VARSAYILAN_SUTUN_SIRASI.forEach((a, i) => {
+      if (sutunSirasi.includes(a)) return;
+      const oncul = i > 0 ? sutunSirasi.indexOf(DAVA_DOSYALARI_VARSAYILAN_SUTUN_SIRASI[i - 1]) : -1;
+      sutunSirasi.splice(oncul >= 0 ? oncul + 1 : sutunSirasi.length, 0, a);
+    });
+  }
   const gizliSutunlar = new Set(sutunDuzeni.filter((s) => s.gizliMi).map((s) => s.sutunAnahtari));
   const gorunurSutunlar = sutunSirasi.filter(
     (anahtar) => DAVA_DOSYALARI_SUTUN_ETIKETLERI[anahtar] && !gizliSutunlar.has(anahtar),

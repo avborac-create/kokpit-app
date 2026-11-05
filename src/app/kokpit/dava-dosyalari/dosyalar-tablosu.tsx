@@ -10,6 +10,7 @@ import {
   kokpitNoGoster,
   buroNoGoster,
 } from "@/modules/dava-dosyasi/lib/kokpit-no";
+import { dosyaNoAyristir } from "@/modules/dava-dosyasi/lib/dosya-kimligi";
 import { etiketleriKaydet } from "@/core/arayuz-etiketi/actions";
 import { sutunSirasiniVarsayilanYap } from "@/core/tablo-duzeni/actions";
 import { TopluIslemCubugu } from "./toplu-islem-cubugu";
@@ -35,11 +36,24 @@ function turMetni(dosya: Dosya): string {
       : (dosya.tur?.etiket.replace(/ Dosyası$/, "") ?? "—");
 }
 
+// Dosya No yalnız "2026/1" kısmıdır; "Esas / Talimat / Değişik İş" ayrı Dosya Tipi sütununda.
+function dosyaNoMetni(dosya: Dosya): string {
+  const ayri = dosyaNoAyristir(dosya.dosyaNo);
+  return ayri ? `${ayri.yil}/${ayri.sira}` : (dosya.dosyaNo ?? "—");
+}
+function dosyaTipiMetni(dosya: Dosya): string {
+  return dosyaNoAyristir(dosya.dosyaNo)?.tur || "—";
+}
+
+// Her zaman içeriğinin tamamı görünecek kadar geniş olan sütunlar (elle daraltılamaz).
+const HER_ZAMAN_SIGAN_SUTUNLAR = ["dosyaNo", "birimAdi", "dosyaTipi"];
+
 // Genişlik ölçümü için sütunun düz metni (otomatik daralma).
 const OLCU_METINLERI: Record<string, (dosya: Dosya) => string> = {
   kayitNo: (d) => kokpitNoGoster(d),
   buroNo: (d) => String(buroNoGoster(d.buroNo) ?? ""),
-  dosyaNo: (d) => d.dosyaNo ?? "—",
+  dosyaNo: (d) => dosyaNoMetni(d),
+  dosyaTipi: (d) => dosyaTipiMetni(d),
   tur: (d) => turMetni(d),
   birimAdi: (d) => d.birimAdi ?? "—",
   konu: (d) => d.konu ?? "",
@@ -54,6 +68,7 @@ const OLCU_METINLERI: Record<string, (dosya: Dosya) => string> = {
 // Sutun filtresi: sutundaki (birden cok olabilen) degerler. Bos olan "—" sayilir.
 const FILTRE_DEGERLERI: Record<string, (dosya: Dosya) => string[]> = {
   tur: (d) => [turMetni(d)],
+  dosyaTipi: (d) => [dosyaTipiMetni(d)],
   birimAdi: (d) => [d.birimAdi ?? "—"],
   karsiTaraflar: (d) => (d.karsiTaraflar.length > 0 ? d.karsiTaraflar.map((kt) => kt.karsiTaraf.ad) : ["—"]),
   muvekkiller: (d) => (d.muvekkiller.length > 0 ? d.muvekkiller.map((m) => m.musteri.adSoyadUnvan) : ["—"]),
@@ -73,7 +88,8 @@ const SUTUN_HUCRELERI: Record<string, (dosya: Dosya) => ReactNode> = {
     </Link>
   ),
   buroNo: (dosya) => buroNoGoster(dosya.buroNo),
-  dosyaNo: (dosya) => dosya.dosyaNo ?? "—",
+  dosyaNo: (dosya) => dosyaNoMetni(dosya),
+  dosyaTipi: (dosya) => dosyaTipiMetni(dosya),
   tur: (dosya) => {
     const borcluIcra = dosya.muvekkilSifati === "BORCLU" && dosya.tur?.kod === "icra_dosyasi";
     const metin = borcluIcra ? "Borçlu İcra" : turMetni(dosya);
@@ -101,6 +117,7 @@ const VARSAYILAN_GENISLIKLER: Record<string, number> = {
   tur: 90,
   birimAdi: 232,
   dosyaNo: 100,
+  dosyaTipi: 100,
   konu: 220,
   muvekkiller: 175,
   karsiTaraflar: 219,
@@ -643,6 +660,7 @@ export function DosyalarTablosu({
   // Kullanici elle ayarlamadiysa sutun, icerigi kisaysa (ornegin 3-4 karakter) otomatik daralir;
   // varsayilan genislikten buyumez.
   const otomatik: Record<string, number> = {};
+  const sigmaGenisligi: Record<string, number> = {};
   gorunurSutunlar.forEach((anahtar, i) => {
     const olcu = OLCU_METINLERI[anahtar];
     const ust = (VARSAYILAN_GENISLIKLER[anahtar] ?? VARSAYILAN_GENISLIK) + (i === 0 ? ilkEk : 0);
@@ -651,17 +669,23 @@ export function DosyalarTablosu({
     for (const { dosya } of satirlar)
       enUzun = Math.max(enUzun, olcu(dosya).length);
     const ek = 28 + (i === 0 ? 44 + ilkEk : 0) + (anahtar === "durum" ? 16 : 0);
-    otomatik[anahtar] = Math.min(
-      ust,
-      Math.max(MIN_GENISLIK, Math.ceil(enUzun * KARAKTER_GENISLIGI + ek)),
-    );
+    const tam = Math.max(MIN_GENISLIK, Math.ceil(enUzun * KARAKTER_GENISLIGI + ek));
+    if (HER_ZAMAN_SIGAN_SUTUNLAR.includes(anahtar)) {
+      // Üst sınır yok: içerik neyse sütun o kadar geniş olur.
+      otomatik[anahtar] = tam;
+      sigmaGenisligi[anahtar] = tam;
+    } else {
+      otomatik[anahtar] = Math.min(ust, tam);
+    }
   });
-  const genislikler = {
+  const genislikler: Record<string, number> = {
     ...VARSAYILAN_GENISLIKLER,
     ...otomatik,
     ...kayitliGenislikler,
     ...taslakGenislikler,
   };
+  // Elle ayarlanmış/kaydedilmiş genişlik bu sütunlarda içeriği kesemez.
+  for (const [a, tam] of Object.entries(sigmaGenisligi)) genislikler[a] = Math.max(tam, kayitliGenislikler?.[a] ?? 0, taslakGenislikler?.[a] ?? 0);
   const toplamGenislik =
     gorunurSutunlar.reduce(
       (t, a) => t + (genislikler[a] ?? VARSAYILAN_GENISLIK),

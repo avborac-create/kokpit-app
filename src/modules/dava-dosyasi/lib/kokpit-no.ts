@@ -24,7 +24,8 @@ export function kayitNoGoster(kayitNo: number): string {
 // ve formda ham deger (8655) tutulur; "YOK" gibi sayisal olmayan degerler
 // oneksiz birakilir.
 export function buroNoGoster(buroNo: string | null | undefined): string {
-  if (!buroNo) return "—";
+  // "YOK" (büro numarası yok) boş değerle aynı görünür: çizgi.
+  if (!buroNo || buroNo.trim().toLocaleUpperCase("tr-TR") === "YOK") return "—";
   return /^\d/.test(buroNo) ? `BN-${buroNo}` : buroNo;
 }
 
