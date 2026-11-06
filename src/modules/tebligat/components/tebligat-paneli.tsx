@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
-import { tebligatKaydet, tebligatSil } from "../lib/actions";
+import { tebligatDurumGuncelle, tebligatKaydet, tebligatSil } from "../lib/actions";
 
 export type TebligatKaydi = {
   id: string;
@@ -39,20 +39,79 @@ function kalanGun(son: string): number {
   return Math.round((new Date(`${son}T00:00:00Z`).getTime() - bugun) / 86400000);
 }
 
-// PTT Gonderi Takip: barkod PTT'nin kendi sorgu sayfasinda acilir (PTT sayfasi baska sitelerde gomulemez ve
-// dogrulama istedigi icin sonuc burada okunamaz); barkod ayrica panoya kopyalanir, bos kutuya yapistirilabilsin.
-export function pttSorguAc(barkod: string) {
+// PTT sayfasi baska sitelerde gomulemiyor (X-Frame-Options) ve barkodlu dogrudan adresi yok; bu yuzden Kokpit icinde
+// yuzen kucuk bir panel acilir: barkod panoya kopyalanir, kucuk bir PTT penceresi (popup) acilir, sonuc panelden islenir.
+type PttHedef = { barkod: string; tebligat: TebligatKaydi | null };
+
+function pttPenceresiAc(barkod: string) {
   const temiz = barkod.replace(/\s+/g, "");
-  if (!temiz) return;
   try {
     void navigator.clipboard?.writeText(temiz);
   } catch {
-    // pano izni yoksa sorgu yine acilir
+    // pano izni yoksa pencere yine acilir
   }
-  window.open(`https://gonderitakip.ptt.gov.tr/Track/Verify?q=${encodeURIComponent(temiz)}`, "_blank", "noopener,noreferrer");
+  const w = 520;
+  const h = 760;
+  window.open("https://www.ptt.gov.tr/", "kokpit-ptt-sorgu", `popup=yes,width=${w},height=${h},left=${Math.max(0, window.screenX + window.outerWidth - w - 24)},top=${window.screenY + 60},resizable=yes,scrollbars=yes`);
 }
 
-function Form({ dosyaId, kayit, karsiTaraflar, kapat }: { dosyaId: string; kayit: TebligatKaydi | null; karsiTaraflar: string[]; kapat: () => void }) {
+function PttSorguPaneli({ dosyaId, hedef, kapat }: { dosyaId: string; hedef: PttHedef; kapat: () => void }) {
+  const t = hedef.tebligat;
+  const [durum, setDurum] = useState(t?.durum ?? "BEKLIYOR");
+  const [tarih, setTarih] = useState(t?.tebligTarihi ?? "");
+  const [mesaj, setMesaj] = useState<{ hata?: string; tamam?: boolean } | null>(null);
+  const [kopyalandi, setKopyalandi] = useState(false);
+  const [bekliyor, baslat] = useTransition();
+
+  function ac() {
+    pttPenceresiAc(hedef.barkod);
+    setKopyalandi(true);
+  }
+  function isle() {
+    if (!t) return;
+    baslat(async () => {
+      const s = await tebligatDurumGuncelle(dosyaId, t.id, durum, tarih);
+      setMesaj(s.hata ? { hata: s.hata } : { tamam: true });
+    });
+  }
+
+  return (
+    <div className="glass fixed bottom-4 right-4 z-50 w-[min(92vw,22rem)] rounded-2xl border border-white/15 p-4 shadow-2xl">
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-white">PTT gönderi sorgusu</h3>
+        <button type="button" onClick={kapat} aria-label="Kapat" className="text-lg leading-none text-white/60 hover:text-white">×</button>
+      </div>
+      {t && <p className="mb-2 truncate text-xs text-white/55">{t.baslik}</p>}
+      <p className="mb-2 rounded-lg bg-white/[0.06] px-3 py-2 font-mono text-sm text-white">{hedef.barkod}</p>
+      <button type="button" onClick={ac} className="mb-1 w-full rounded-lg bg-[#ffd60a]/90 px-3 py-2 text-sm font-semibold text-black hover:bg-[#ffd60a]">
+        Barkodu kopyala ve PTT penceresini aç
+      </button>
+      <p className="mb-3 text-[11px] text-white/50">
+        {kopyalandi ? "Barkod panoya kopyalandı: açılan küçük PTT penceresinde “Gönderi takip no” kutusuna yapıştırıp Sorgula’ya basın (Ctrl+V)." : "Küçük bir PTT penceresi açılır; barkod panoya kopyalanır, kutuya yapıştırmanız yeterli."}
+      </p>
+      {t ? (
+        <div className="border-t border-white/10 pt-3">
+          <p className="mb-2 text-xs font-medium text-white/70">Sorgu sonucunu buraya işleyin</p>
+          <div className="mb-2 grid grid-cols-2 gap-2">
+            <Secim value={durum} onChange={(e) => { setDurum(e.target.value); setMesaj(null); }}>
+              {Object.entries(DURUM).map(([k, v]) => (
+                <option key={k} value={k}>{v.ad}</option>
+              ))}
+            </Secim>
+            <Girdi type="date" value={tarih} onChange={(e) => { setTarih(e.target.value); setMesaj(null); }} aria-label="Tebliğ tarihi" />
+          </div>
+          <div className="flex items-center gap-3">
+            <Dugme type="button" onClick={isle} disabled={bekliyor}>{bekliyor ? "Kaydediliyor…" : "Kaydet"}</Dugme>
+            {mesaj?.tamam && <span className="text-xs text-emerald-300">Kaydedildi</span>}
+            {mesaj?.hata && <span className="text-xs text-red-300">{mesaj.hata}</span>}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function Form({ dosyaId, kayit, karsiTaraflar, kapat, pttAc }: { dosyaId: string; kayit: TebligatKaydi | null; karsiTaraflar: string[]; kapat: () => void; pttAc: (h: PttHedef) => void }) {
   const [hata, setHata] = useState("");
   const [barkod, setBarkod] = useState(kayit?.barkod ?? "");
   const [bekliyor, baslat] = useTransition();
@@ -104,7 +163,7 @@ function Form({ dosyaId, kayit, karsiTaraflar, kapat }: { dosyaId: string; kayit
           <Etiket htmlFor={`tb-barkod-${on}`}>PTT barkod / takip no</Etiket>
           <div className="flex gap-2">
             <Girdi id={`tb-barkod-${on}`} name="barkod" value={barkod} onChange={(e) => setBarkod(e.target.value)} placeholder="ör. 7270012345678" />
-            <button type="button" disabled={!barkod.trim()} onClick={() => pttSorguAc(barkod)} className="whitespace-nowrap rounded-lg bg-[#ffd60a]/90 px-3 text-xs font-semibold text-black hover:bg-[#ffd60a] disabled:opacity-40">
+            <button type="button" disabled={!barkod.trim()} onClick={() => pttAc({ barkod, tebligat: kayit })} className="whitespace-nowrap rounded-lg bg-[#ffd60a]/90 px-3 text-xs font-semibold text-black hover:bg-[#ffd60a] disabled:opacity-40">
               PTT&apos;de sorgula
             </button>
           </div>
@@ -155,6 +214,7 @@ function Form({ dosyaId, kayit, karsiTaraflar, kapat }: { dosyaId: string; kayit
 export function TebligatPaneli({ dosyaId, tebligatlar, karsiTaraflar }: { dosyaId: string; tebligatlar: TebligatKaydi[]; karsiTaraflar: string[] }) {
   const [form, setForm] = useState<string | null>(null); // "yeni" | tebligat id
   const [hizliBarkod, setHizliBarkod] = useState("");
+  const [ptt, setPtt] = useState<PttHedef | null>(null);
   const [, baslat] = useTransition();
 
   return (
@@ -168,7 +228,7 @@ export function TebligatPaneli({ dosyaId, tebligatlar, karsiTaraflar }: { dosyaI
       </p>
 
       <form
-        onSubmit={(e) => { e.preventDefault(); pttSorguAc(hizliBarkod); }}
+        onSubmit={(e) => { e.preventDefault(); if (hizliBarkod.trim()) setPtt({ barkod: hizliBarkod.replace(/\s+/g, ""), tebligat: null }); }}
         className="alan-hucre mb-4 flex flex-wrap items-center gap-2"
       >
         <span className="text-sm font-medium text-white/80">PTT gönderi takip</span>
@@ -183,11 +243,11 @@ export function TebligatPaneli({ dosyaId, tebligatlar, karsiTaraflar }: { dosyaI
         </button>
       </form>
 
-      {form === "yeni" && <Form dosyaId={dosyaId} kayit={null} karsiTaraflar={karsiTaraflar} kapat={() => setForm(null)} />}
+      {form === "yeni" && <Form dosyaId={dosyaId} kayit={null} karsiTaraflar={karsiTaraflar} kapat={() => setForm(null)} pttAc={setPtt} />}
       {tebligatlar.length === 0 && form !== "yeni" && <p className="text-sm text-white/55">Henüz tebligat kaydı yok.</p>}
       <ul className="flex flex-col gap-2">
         {tebligatlar.map((t) => {
-          if (form === t.id) return <li key={t.id}><Form dosyaId={dosyaId} kayit={t} karsiTaraflar={karsiTaraflar} kapat={() => setForm(null)} /></li>;
+          if (form === t.id) return <li key={t.id}><Form dosyaId={dosyaId} kayit={t} karsiTaraflar={karsiTaraflar} kapat={() => setForm(null)} pttAc={setPtt} /></li>;
           const d = DURUM[t.durum] ?? DURUM.BEKLIYOR;
           const kalan = t.sonTarih && t.durum !== "GECERSIZ" ? kalanGun(t.sonTarih) : null;
           return (
@@ -205,7 +265,7 @@ export function TebligatPaneli({ dosyaId, tebligatlar, karsiTaraflar }: { dosyaI
                 {t.barkod && (
                   <p className="mt-0.5 text-xs text-white/70">
                     Barkod: <span className="font-mono">{t.barkod}</span>{" "}
-                    <button type="button" onClick={() => pttSorguAc(t.barkod!)} className="ml-1 text-[#ffd60a] hover:underline">PTT&apos;de sorgula</button>
+                    <button type="button" onClick={() => setPtt({ barkod: t.barkod!, tebligat: t })} className="ml-1 text-[#ffd60a] hover:underline">PTT&apos;de sorgula</button>
                   </p>
                 )}
                 {t.sonTarih && (
@@ -232,6 +292,7 @@ export function TebligatPaneli({ dosyaId, tebligatlar, karsiTaraflar }: { dosyaI
           );
         })}
       </ul>
+      {ptt && <PttSorguPaneli key={`${ptt.tebligat?.id ?? "hizli"}-${ptt.barkod}`} dosyaId={dosyaId} hedef={ptt} kapat={() => setPtt(null)} />}
     </div>
   );
 }

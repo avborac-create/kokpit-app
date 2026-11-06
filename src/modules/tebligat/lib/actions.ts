@@ -85,3 +85,18 @@ export async function tebligatSil(dosyaId: string, tebligatId: string): Promise<
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
   return {};
 }
+
+// PTT sorgu panelinden: sorgu sonucuna gore yalniz durum ve teblig tarihi islenir (son tarih bossa sureden hesaplanir).
+export async function tebligatDurumGuncelle(dosyaId: string, tebligatId: string, durum: string, tebligTarihi: string): Promise<{ hata?: string }> {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) return { hata: "Bu işlem için yetkiniz yok." };
+  if (!DURUMLAR.includes(durum)) return { hata: "Geçersiz durum." };
+  if (tebligTarihi && !/^\d{4}-\d{2}-\d{2}$/.test(tebligTarihi)) return { hata: "Geçersiz tarih." };
+  const mevcut = await prisma.dosyaTebligati.findFirst({ where: { id: tebligatId, dosyaId } });
+  if (!mevcut) return { hata: "Kayıt bulunamadı." };
+  const teblig = tebligTarihi ? new Date(`${tebligTarihi}T00:00:00.000Z`) : null;
+  const sonTarih = mevcut.sonTarih ?? (teblig && mevcut.sureGun !== null ? new Date(teblig.getTime() + mevcut.sureGun * 86400000) : null);
+  await prisma.dosyaTebligati.update({ where: { id: tebligatId }, data: { durum, tebligTarihi: teblig, sonTarih } });
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+  return {};
+}
