@@ -33,7 +33,7 @@ import { FormKarti } from "@/core/ui/form-karti";
 import { DosyaBirlikteUyarisi } from "@/core/birlikte/dosya-birlikte-uyarisi";
 import { TebligatPaneli, type TebligatKaydi } from "@/modules/tebligat/components/tebligat-paneli";
 import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
-import { MasrafPaneliKabugu } from "@/modules/dava-dosyasi/components/masraf-paneli-kabugu";
+import { MasrafPaneliKabugu, MasrafPaneliDugmesi } from "@/modules/dava-dosyasi/components/masraf-paneli-kabugu";
 import { masrafEkle } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
 
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
@@ -577,7 +577,7 @@ export default async function DavaDosyasiDetaySayfasi({
 
       <DosyaBirlikteUyarisi dosyaId={id} />
 
-      <DavaDosyasiSekmeleri dosyaId={id} aktif={aktifSekme} kimlik={`${kokpitNoGoster(dosya)}${dosya.birimAdi ? ` · ${dosya.birimAdi}` : ""}${dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}`}
+      <DavaDosyasiSekmeleri dosyaId={id} aktif={aktifSekme} ek={masrafPaneli ? <MasrafPaneliDugmesi /> : undefined} kimlik={`${kokpitNoGoster(dosya)}${dosya.birimAdi ? ` · ${dosya.birimAdi}` : ""}${dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}`}
         taraflar={`Müvekkil ${dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"} · Karşı Taraf ${dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—"} · Konu ${dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}`}
       />
 

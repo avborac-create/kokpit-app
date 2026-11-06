@@ -13,7 +13,7 @@ export type DosyaSekmesi = "genel" | "evrak" | "gorevler" | "tebligat" | "ekonom
 // dosyaId verilmezse (ör. Yeni Dosya olusturma ekrani - dosya henuz yok,
 // baska bir sekmeye gidilecek bir yer yok) TUM sekmeler tiklanamaz olur.
 // Sekme cubugu sayfa kaydirilinca da ustte sabit kalir (md ve uzeri); solunda hangi dosyada olundugu kisaca yazar.
-export function DavaDosyasiSekmeleri({ dosyaId, aktif, kimlik, taraflar }: { dosyaId?: string; aktif: DosyaSekmesi; kimlik?: string; taraflar?: string }) {
+export function DavaDosyasiSekmeleri({ dosyaId, aktif, kimlik, taraflar, ek }: { ek?: React.ReactNode; dosyaId?: string; aktif: DosyaSekmesi; kimlik?: string; taraflar?: string }) {
   const sekmeler: { anahtar: DosyaSekmesi; etiket: string }[] = [
     { anahtar: "genel", etiket: "Genel" },
     { anahtar: "evrak", etiket: "Evraklar" },
@@ -66,6 +66,7 @@ export function DavaDosyasiSekmeleri({ dosyaId, aktif, kimlik, taraflar }: { dos
         );
       })}
     </div>
+      {ek}
       {kimlik && (
         <span
           className={`ml-auto hidden min-w-0 text-right leading-tight transition-opacity duration-150 lg:block ${

@@ -22,21 +22,39 @@ function oku() {
   }
 }
 
+function degistir(yeni: boolean) {
+  oturumDegeri = yeni;
+  try {
+    localStorage.setItem(ANAHTAR, yeni ? "1" : "0");
+  } catch {}
+  dinleyiciler.forEach((cb) => cb());
+}
+
+// Sekme cubugunda (Dosya Ekonomisi'nin yaninda) duran, paneli acip kapatan dugme (yalniz masaustu).
+export function MasrafPaneliDugmesi() {
+  const acik = useSyncExternalStore(abone, oku, () => false);
+  return (
+    <button
+      type="button"
+      onClick={() => degistir(!acik)}
+      aria-pressed={acik}
+      title={acik ? "Masraf girişi panelini kapat" : "Masraf girişi panelini aç"}
+      className={`hidden shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-medium md:inline-flex ${
+        acik ? "border-[var(--link)] bg-white/10 text-white" : "border-white/15 text-[var(--link)] hover:bg-white/10"
+      }`}
+    >
+      <span aria-hidden>＋</span> Masraf Girişi
+    </button>
+  );
+}
+
 // Dosya sayfasinin soluna acilip kapanan "Masraf Girisi" paneli. Masaustunde icerigin solunda sabit sutun,
 // telefonda alttan acilan sayfa olarak calisir. Acik/kapali tercihi bu tarayicida hatirlanir.
 export function MasrafPaneliKabugu({ panel, children }: { panel: React.ReactNode; children: React.ReactNode }) {
   const acik = useSyncExternalStore(abone, oku, () => false);
 
-  function degistir(yeni: boolean) {
-    oturumDegeri = yeni;
-    try {
-      localStorage.setItem(ANAHTAR, yeni ? "1" : "0");
-    } catch {}
-    dinleyiciler.forEach((cb) => cb());
-  }
-
   return (
-    <div className="md:relative md:flex md:items-start md:gap-3">
+    <div className="md:flex md:items-start md:gap-3">
       {acik ? (
         <>
           <button
@@ -68,10 +86,9 @@ export function MasrafPaneliKabugu({ panel, children }: { panel: React.ReactNode
           type="button"
           onClick={() => degistir(true)}
           title="Masraf girişi panelini aç"
-          className="glass-strong max-md:fixed max-md:bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] max-md:left-3 max-md:z-30 max-md:rounded-full max-md:px-4 max-md:py-2.5 md:absolute md:-left-6 md:top-28 md:z-30 md:w-6 md:rounded-l-lg md:rounded-r-none md:px-0 md:py-4 inline-flex items-center justify-center gap-2 text-sm font-medium text-[var(--link)] hover:bg-white/10"
+          className="glass-strong fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-3 z-30 inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-medium text-[var(--link)] hover:bg-white/10 md:hidden"
         >
-          <span className="md:hidden">＋ Masraf Girişi</span>
-          <span className="hidden [writing-mode:vertical-rl] md:inline">Masraf Girişi ›</span>
+          ＋ Masraf Girişi
         </button>
       )}
       <div className="min-w-0 flex-1">{children}</div>
