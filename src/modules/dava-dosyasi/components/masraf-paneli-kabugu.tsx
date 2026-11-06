@@ -36,7 +36,7 @@ export function MasrafPaneliKabugu({ panel, children }: { panel: React.ReactNode
   }
 
   return (
-    <div className="md:flex md:items-start md:gap-3">
+    <div className="md:relative md:flex md:items-start md:gap-3">
       {acik ? (
         <>
           <button
@@ -68,7 +68,7 @@ export function MasrafPaneliKabugu({ panel, children }: { panel: React.ReactNode
           type="button"
           onClick={() => degistir(true)}
           title="Masraf girişi panelini aç"
-          className="glass-strong max-md:fixed max-md:bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] max-md:left-3 max-md:z-30 max-md:rounded-full max-md:px-4 max-md:py-2.5 md:sticky md:top-24 md:z-20 md:mt-24 md:w-8 md:shrink-0 md:rounded-lg md:py-4 inline-flex items-center justify-center gap-2 text-sm font-medium text-[var(--link)] hover:bg-white/10"
+          className="glass-strong max-md:fixed max-md:bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] max-md:left-3 max-md:z-30 max-md:rounded-full max-md:px-4 max-md:py-2.5 md:absolute md:-left-6 md:top-28 md:z-30 md:w-6 md:rounded-l-lg md:rounded-r-none md:px-0 md:py-4 inline-flex items-center justify-center gap-2 text-sm font-medium text-[var(--link)] hover:bg-white/10"
         >
           <span className="md:hidden">＋ Masraf Girişi</span>
           <span className="hidden [writing-mode:vertical-rl] md:inline">Masraf Girişi ›</span>

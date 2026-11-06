@@ -46,7 +46,7 @@ export async function MasrafFormu({
   const bugun = new Date().toISOString().slice(0, 10);
 
   return (
-    <form action={action} className={kompakt ? "grid grid-cols-1 gap-3" : "glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-2 md:grid-cols-4"}>
+    <form action={action} className={kompakt ? "flex w-full min-w-0 flex-col gap-1 [&>*]:min-w-0 [&_.col-span-1]:w-full" : "glass grid grid-cols-1 gap-3 rounded-2xl p-4 sm:grid-cols-2 md:grid-cols-4"}>
       {dosyaSecimi?.sabitDosyaId && <input type="hidden" name="dosyaId" value={dosyaSecimi.sabitDosyaId} />}
       {dosyaSecimi && !dosyaSecimi.sabitDosyaId && (
         <Alan>
