@@ -619,7 +619,7 @@ export default async function DavaDosyasiDetaySayfasi({
         </div>
       ) : aktifSekme === "genel" ? (
         <>
-          <div className="mb-6 max-w-3xl">
+          <div className="mb-6 max-w-4xl">
             <DuzenlenebilirKart
               duz
               etiketOnEki="dosya-detay.kunye"

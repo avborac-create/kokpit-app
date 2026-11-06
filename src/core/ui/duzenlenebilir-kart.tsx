@@ -55,6 +55,10 @@ export function DuzenlenebilirKart({
   const gecerliEtiket = (a: KartAlani) => etiketler[alanAnahtari(a.anahtar)] ?? a.varsayilanEtiket;
   const duzenlenebilirDeger = alanlar.some((a) => a.tip !== "salt") && Boolean(onKaydet);
 
+  const bosMu = (a: KartAlani) => typeof a.gosterim === "string" && (a.gosterim.trim() === "" || a.gosterim.trim() === "—");
+  const dolular = duz ? alanlar.filter((a) => !bosMu(a)) : alanlar;
+  const bosAlanlar = duz ? alanlar.filter(bosMu) : [];
+
   function ac() {
     setHata(null);
     setYeniEtiketler({
@@ -104,8 +108,8 @@ export function DuzenlenebilirKart({
   }
 
   return (
-    <div className={duz ? (duzenleniyor ? "glass mb-5 rounded-2xl p-4" : "mb-5") : "glass mb-4 rounded-2xl p-4 sm:p-5"}>
-      <div className={`${duz ? "mb-2" : "mb-4"} flex items-center justify-between gap-2`}>
+    <div className={duz ? "glass mb-4 rounded-2xl p-4 sm:p-5" : "glass mb-4 rounded-2xl p-4 sm:p-5"}>
+      <div className="mb-4 flex items-center justify-between gap-2">
         {duzenleniyor && etiketDuzenleyebilir ? (
           <input
             value={yeniEtiketler[baslikAnahtari] ?? ""}
@@ -114,13 +118,13 @@ export function DuzenlenebilirKart({
             className="w-full rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white outline-none focus:border-[var(--accent)]"
           />
         ) : (
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-white/50">{gecerliBaslik}</h3>
+          <h3 className={`text-xs font-semibold uppercase ${duz ? "tracking-[0.14em] text-white/85" : "tracking-widest text-white/50"}`}>{gecerliBaslik}</h3>
         )}
         {!duzenleniyor && (etiketDuzenleyebilir || duzenlenebilirDeger) && (
           <button
             type="button"
             onClick={ac}
-            className="shrink-0 rounded-full px-2.5 py-1 text-sm text-white/65 hover:bg-white/10 hover:text-white"
+            className={`shrink-0 rounded-full px-2.5 py-1 text-sm hover:bg-white/10 hover:text-white ${duz ? "bg-white/[0.07] text-white/75" : "text-white/65"}`}
           >
             Paneli düzenle
           </button>
@@ -128,14 +132,32 @@ export function DuzenlenebilirKart({
       </div>
 
       {duz && !duzenleniyor ? (
-        <div className="glass divide-y divide-white/[0.08] overflow-hidden rounded-2xl">
-          {alanlar.map((a) => (
-            <div key={a.anahtar} className="flex items-start justify-between gap-4 px-3.5 py-2 text-sm">
-              <span className="shrink-0 pt-px text-white/65">{gecerliEtiket(a)}</span>
-              <div className="min-w-0 max-w-[65%] break-words text-right font-medium text-white">{a.gosterim}</div>
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
+            {dolular.map((a) => {
+              const genis = a.tip === "cokSatir" || (typeof a.gosterim === "string" && a.gosterim.length > 22);
+              return (
+                <div key={a.anahtar} className={`min-w-0 ${genis ? "sm:col-span-2 lg:col-span-3" : ""}`}>
+                  <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-[#8fb4e8]">{gecerliEtiket(a)}</p>
+                  <div className="break-words text-[15px] font-medium text-white">{a.gosterim}</div>
+                </div>
+              );
+            })}
+          </div>
+          {bosAlanlar.length > 0 && (
+            <p className="mt-4 border-t border-white/[0.08] pt-3 text-xs text-white/45">
+              Boş: {bosAlanlar.map((a) => gecerliEtiket(a)).join(" · ")}
+              {duzenlenebilirDeger && (
+                <>
+                  {" · "}
+                  <button type="button" onClick={ac} className="text-[#8fb4e8] hover:underline">
+                    doldur
+                  </button>
+                </>
+              )}
+            </p>
+          )}
+        </>
       ) : (
       <div className={`grid grid-cols-2 gap-x-4 sm:gap-x-6 ${duz ? "gap-y-2 sm:gap-y-2.5" : "gap-y-3"} sm:grid-cols-2 xl:grid-cols-3`}>
       {alanlar.map((a) => (
