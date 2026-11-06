@@ -630,6 +630,7 @@ model DavaDosyasi {
   evraklar               CMKEvrak[]
   takvimOgeleri          TakvimOgesi[]
   ihtarGonderimi         IhtarGonderimi?
+  tebligatlar            DosyaTebligati[]
 
   @@index([buroNo])
   @@index([durumId])
@@ -1992,4 +1993,28 @@ model DosyaEkonomiNotu {
 
   @@index([dosyaId, sira])
   @@map("dosya_ekonomi_notlari")
+}
+
+// Dosyaya gelen / dosyadan giden tebligatlar (UYAP e-Tebligat, PTT, KEP, noter...). Sure ve son gun takibi icin.
+model DosyaTebligati {
+  id               String      @id @default(cuid())
+  dosyaId          String
+  dosya            DavaDosyasi @relation(fields: [dosyaId], references: [id], onDelete: Cascade)
+  yon              String      @default("GELEN") // GELEN | GIDEN
+  baslik           String
+  muhatap          String?
+  yol              String? // UYAP | PTT | KEP | NOTER | ELDEN | DIGER
+  barkod           String? // PTT gonderi takip (barkod) numarasi
+  gonderimTarihi   DateTime?   @db.Date
+  tebligTarihi     DateTime?   @db.Date
+  durum            String      @default("BEKLIYOR") // BEKLIYOR | TEBLIG_EDILDI | IADE | GECERSIZ
+  sureGun          Int?
+  sonTarih         DateTime?   @db.Date
+  gorevId          String?
+  not              String?
+  olusturmaTarihi  DateTime    @default(now())
+  guncellemeTarihi DateTime    @updatedAt
+
+  @@index([dosyaId])
+  @@map("dosya_tebligatlari")
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-export type DosyaSekmesi = "genel" | "evrak" | "gorevler" | "ekonomi";
+export type DosyaSekmesi = "genel" | "evrak" | "gorevler" | "tebligat" | "ekonomi";
 
 // Sayfanin ustunde sekme cubugu (BMW stili: keskin bloklar, aktif sekme dolgulu ve altinda kirmizi serit);
 // sekmeler searchParams (?sekme=) ile calisir. Dort kisa baslik tek satira sigar, yana kayma olmaz.
@@ -18,6 +18,7 @@ export function DavaDosyasiSekmeleri({ dosyaId, aktif, kimlik, taraflar }: { dos
     { anahtar: "genel", etiket: "Genel" },
     { anahtar: "evrak", etiket: "Evraklar" },
     { anahtar: "gorevler", etiket: "Görevler" },
+    { anahtar: "tebligat", etiket: "Tebligatlar" },
     { anahtar: "ekonomi", etiket: "Dosya Ekonomisi" },
   ];
 

@@ -31,6 +31,7 @@ import { adliBirimleriListele } from "@/modules/dava-dosyasi/lib/adli-birim";
 import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
 import { FormKarti } from "@/core/ui/form-karti";
 import { DosyaBirlikteUyarisi } from "@/core/birlikte/dosya-birlikte-uyarisi";
+import { TebligatPaneli, type TebligatKaydi } from "@/modules/tebligat/components/tebligat-paneli";
 import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
 import { MasrafPaneliKabugu } from "@/modules/dava-dosyasi/components/masraf-paneli-kabugu";
 import { masrafEkle } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
@@ -103,7 +104,7 @@ export default async function DavaDosyasiDetaySayfasi({
 }) {
   const { id } = await params;
   const { sekme, alt } = await searchParams;
-  const aktifSekme = sekme === "ekonomi" || sekme === "evrak" || sekme === "gorevler" ? sekme : "genel";
+  const aktifSekme = sekme === "ekonomi" || sekme === "evrak" || sekme === "gorevler" || sekme === "tebligat" ? sekme : "genel";
   const dosyaGorevleri: DosyaGorevi[] = [];
   let gorevKisileri: { id: string; adSoyad: string }[] = [];
   if (aktifSekme === "gorevler") {
@@ -117,6 +118,12 @@ export default async function DavaDosyasiDetaySayfasi({
       const d = durumBilgisi(i.durum);
       dosyaGorevleri.push({ id: i.id, baslik: i.baslik, durumAd: d.ad, renk: d.renk, kapali: i.durum === "TAMAMLANDI", sorumluAd: i.sorumluId ? (adlar.get(i.sorumluId) ?? "—") : "Atanmadı", vade: i.vade ? i.vade.toISOString().slice(0, 10) : "" });
     }
+  }
+  let tebligatKayitlari: TebligatKaydi[] = [];
+  if (aktifSekme === "tebligat") {
+    const t = await prisma.dosyaTebligati.findMany({ where: { dosyaId: id }, orderBy: [{ sonTarih: { sort: "asc", nulls: "last" } }, { olusturmaTarihi: "desc" }] });
+    const gun = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+    tebligatKayitlari = t.map((x) => ({ id: x.id, yon: x.yon, baslik: x.baslik, muhatap: x.muhatap, yol: x.yol, barkod: x.barkod, gonderimTarihi: gun(x.gonderimTarihi), tebligTarihi: gun(x.tebligTarihi), durum: x.durum, sureGun: x.sureGun, sonTarih: gun(x.sonTarih), gorevId: x.gorevId, not: x.not }));
   }
   const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri, vekilAdaylari, calisilanAvukatlar, birimKatalogu] = await Promise.all([
     davaDosyasiGetir(id),
@@ -576,6 +583,8 @@ export default async function DavaDosyasiDetaySayfasi({
 
       {aktifSekme === "evrak" ? (
         <EvrakPaneli dosyaId={id} evraklar={evrakKayitlari} hedef="dava" />
+      ) : aktifSekme === "tebligat" ? (
+        <TebligatPaneli dosyaId={id} tebligatlar={tebligatKayitlari} karsiTaraflar={dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad)} />
       ) : aktifSekme === "gorevler" ? (
         <div className="glass max-w-3xl rounded-2xl p-5">
           <div className="mb-1 flex flex-wrap items-center gap-2">
