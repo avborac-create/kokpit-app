@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { dosyaAlanlariniGuncelle } from "@/modules/dava-dosyasi/lib/actions";
 
@@ -26,14 +26,28 @@ export function DosyaDurumBandi({
   const [bekliyor, startTransition] = useTransition();
   const [hata, setHata] = useState<string | null>(null);
   const [secili, setSecili] = useState(seciliId);
+  const [onayBekleyen, setOnayBekleyen] = useState<string | null>(null); // onay bekleyen durum id'si ("" = secimi kaldir)
+  const aktifRef = useRef<HTMLLIElement | null>(null);
+
+  // Dar ekranda cizgi yatay kayar; secili adim gorunur alana gelsin.
+  useEffect(() => {
+    const el = aktifRef.current;
+    if (el?.parentElement) el.parentElement.scrollLeft = el.offsetLeft - el.parentElement.clientWidth / 2 + el.clientWidth / 2;
+  }, [secili]);
 
   const yol = secenekler.filter((s) => s.kod !== YAN_YOL_KODU);
   const yanYol = secenekler.find((s) => s.kod === YAN_YOL_KODU);
   const seciliSecenek = secenekler.find((s) => s.id === secili) ?? null;
   const seciliSira = yol.findIndex((s) => s.id === secili);
 
-  function sec(id: string) {
-    const yeni = id === secili ? "" : id; // seciliye tekrar tiklamak temizler
+  // Tiklama dogrudan kaydetmez; once kullanicidan onay istenir.
+  function iste(id: string) {
+    setHata(null);
+    setOnayBekleyen(id === secili ? "" : id); // seciliye tekrar tiklamak temizler
+  }
+
+  function sec(yeni: string) {
+    setOnayBekleyen(null);
     setHata(null);
     const onceki = secili;
     setSecili(yeni || null);
@@ -62,19 +76,19 @@ export function DosyaDurumBandi({
           </p>
         </div>
 
-        <ol className="m-0 flex min-w-0 flex-1 list-none gap-0 overflow-x-auto p-0 pb-0.5" aria-label="Dosya durum kodu">
+        <ol className="m-0 flex min-w-0 basis-full list-none gap-0 overflow-x-auto px-1 pb-1 pt-1.5 sm:basis-0 sm:flex-1" aria-label="Dosya durum kodu">
           {yol.map((s, i) => {
             const aktif = s.id === secili;
             const gecildi = seciliSira > i;
             return (
-              <li key={s.id} className="relative min-w-[5.5rem] flex-1">
+              <li key={s.id} ref={aktif ? aktifRef : undefined} className="relative min-w-[6.5rem] flex-1">
                 <span
                   aria-hidden
-                  className={`absolute top-[7px] h-[3px] ${i === 0 ? "left-1/2" : "left-0"} ${i === yol.length - 1 ? "right-1/2" : "right-0"} ${gecildi ? "bg-[var(--accent)]" : "bg-white/15"}`}
+                  className={`absolute top-[14px] h-[3px] ${i === 0 ? "left-1/2" : "left-0"} ${i === yol.length - 1 ? "right-1/2" : "right-0"} ${gecildi ? "bg-[var(--accent)]" : "bg-white/15"}`}
                 />
                 <button
                   type="button"
-                  onClick={() => sec(s.id)}
+                  onClick={() => iste(s.id)}
                   disabled={bekliyor}
                   aria-pressed={aktif}
                   title={aktif ? "Seçimi kaldırmak için tıklayın" : `Durumu "${s.etiket}" yap`}
@@ -101,7 +115,7 @@ export function DosyaDurumBandi({
         {yanYol && (
           <button
             type="button"
-            onClick={() => sec(yanYol.id)}
+            onClick={() => iste(yanYol.id)}
             disabled={bekliyor}
             aria-pressed={yanYol.id === secili}
             title="Kesinleşmiş dosyada açılan yan yol"
@@ -115,6 +129,21 @@ export function DosyaDurumBandi({
           </button>
         )}
       </div>
+      {onayBekleyen !== null && (
+        <div role="alertdialog" className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-amber-100">
+          <span className="min-w-0 flex-1">
+            {onayBekleyen
+              ? <>Dosya durumu <b>“{secenekler.find((x) => x.id === onayBekleyen)?.etiket}”</b> olarak değiştirilecektir. Onaylıyor musunuz?</>
+              : <>Dosya durumu <b>“{seciliSecenek?.etiket}”</b> seçimi kaldırılacaktır. Onaylıyor musunuz?</>}
+          </span>
+          <button type="button" onClick={() => sec(onayBekleyen)} className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-semibold text-[#0b1d36]">
+            Evet, onaylıyorum
+          </button>
+          <button type="button" onClick={() => setOnayBekleyen(null)} className="rounded-full border border-white/30 px-4 py-1.5 text-xs font-semibold text-white/80">
+            Vazgeç
+          </button>
+        </div>
+      )}
       {hata && <p className="mt-2 text-xs text-[#ff7a70]">{hata}</p>}
     </div>
   );
