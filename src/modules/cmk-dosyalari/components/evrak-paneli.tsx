@@ -122,9 +122,8 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
 
   const filtreli = useMemo(() => {
     const q = arama.trim().toLocaleLowerCase("tr");
-    const ekSuzulu = ekleriDahilEt ? evraklar : evraklar.filter((e) => !ekMi(e.ad));
-    return q ? ekSuzulu.filter((e) => `${e.ad} ${e.klasor}`.toLocaleLowerCase("tr").includes(q)) : ekSuzulu;
-  }, [evraklar, arama, ekleriDahilEt]);
+    return q ? evraklar.filter((e) => `${e.ad} ${e.klasor}`.toLocaleLowerCase("tr").includes(q)) : evraklar;
+  }, [evraklar, arama]);
 
   const gruplar = useMemo(() => {
     const harita = new Map<string, EvrakKaydi[]>();
@@ -143,7 +142,9 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
   const klasorler = [...new Set(evraklar.map((e) => e.klasor).concat(KLASOR_SIRASI))];
 
   // Ileri/geri gezinti listede gorunen sirayi izler (klasorlu ya da tek liste; ek filtresi uygulanir).
-  const gezinti = gorunum === "klasor" ? gruplar.flatMap(([, liste]) => liste) : duzListe;
+  // "Ekleri dahil et" kapalıysa hızlı gezinti ek evrakları atlar (liste hepsini göstermeye devam eder).
+  const tumSira = gorunum === "klasor" ? gruplar.flatMap(([, liste]) => liste) : duzListe;
+  const gezinti = ekleriDahilEt ? tumSira : tumSira.filter((e) => !ekMi(e.ad) || e.id === seciliId);
   const sira = gezinti.findIndex((e) => e.id === seciliId);
   const onceki = sira > 0 ? gezinti[sira - 1] : null;
   const sonraki = sira >= 0 && sira < gezinti.length - 1 ? gezinti[sira + 1] : sira === -1 ? (gezinti[0] ?? null) : null;
@@ -251,12 +252,6 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
             {artan ? "Eski → yeni" : "Yeni → eski"}
           </button>
         </div>
-        {ekSayisi > 0 && (
-          <label className="mb-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-sm text-white/75">
-            <input type="checkbox" checked={ekleriDahilEt} onChange={(e) => setEkleriDahilEt(e.target.checked)} className="h-4 w-4" />
-            Ekleri dahil et <span className="text-xs text-white/40">({ekSayisi} ek evrak)</span>
-          </label>
-        )}
         <p className="mb-2 px-1 text-[11px] text-white/35">
           {siralama === "tur" ? "Önce evrak türü, her türün içinde tarih sırası." : "Önce tarih, aynı tarihte evrak türü sırası."}
         </p>
@@ -312,7 +307,7 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
             klasorler={klasorler}
             hedef={hedef}
             listeyeDon={listeyeDonVeOrtala}
-            gezinti={{ onceki: onceki ? () => setSeciliId(onceki.id) : null, sonraki: sonraki ? () => setSeciliId(sonraki.id) : null, sira: sira >= 0 ? sira + 1 : 0, toplam: gezinti.length }}
+            gezinti={{ onceki: onceki ? () => setSeciliId(onceki.id) : null, sonraki: sonraki ? () => setSeciliId(sonraki.id) : null, sira: sira >= 0 ? sira + 1 : 0, toplam: gezinti.length, ekSayisi, ekleriDahilEt, ekDegistir: setEkleriDahilEt }}
           />
         ) : (
           <p className="py-24 text-center text-sm text-white/40">Soldan bir evrak seçin.</p>
@@ -370,7 +365,7 @@ function Onizleme({
   klasorler: string[];
   hedef: EvrakHedefi;
   listeyeDon: () => void;
-  gezinti: { onceki: (() => void) | null; sonraki: (() => void) | null; sira: number; toplam: number };
+  gezinti: { onceki: (() => void) | null; sonraki: (() => void) | null; sira: number; toplam: number; ekSayisi: number; ekleriDahilEt: boolean; ekDegistir: (d: boolean) => void };
 }) {
   const [duzenle, setDuzenle] = useState(false);
   const [bekliyor, basla] = useTransition();
@@ -389,6 +384,12 @@ function Onizleme({
           Sonraki ›
         </Dugme>
       </div>
+      {gezinti.ekSayisi > 0 && (
+        <label className="mb-3 flex cursor-pointer items-center gap-2 px-1 text-sm text-white/75">
+          <input type="checkbox" checked={gezinti.ekleriDahilEt} onChange={(e) => gezinti.ekDegistir(e.target.checked)} className="h-4 w-4" />
+          Ekleri dahil et <span className="text-xs text-white/40">(hızlı gezinti · {gezinti.ekSayisi} ek evrak)</span>
+        </label>
+      )}
       <button type="button" onClick={listeyeDon} className="mb-2 py-1 text-sm text-[#6db8ff] hover:underline lg:hidden">
         ‹ Evrak listesine dön
       </button>
