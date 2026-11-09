@@ -20,7 +20,13 @@ function aramaKosulu(arama?: string): Prisma.DavaDosyasiWhereInput {
       const varyantlar = [
         ...new Set([sozcuk, sozcuk.toLocaleUpperCase("tr"), sozcuk.toLocaleLowerCase("tr")]),
       ];
-      const kayitNoMatch = /^(?:k[np]-?)?0*(\d{1,9})(?:\/(\d{1,4}))?$/i.exec(sozcuk);
+      const kayitNoMatch = /^(?:k[np]-?)?0*(\d{1,9})(?:\/(\d{1,4})|([a-z]))?$/i.exec(sozcuk);
+      // "33a" = ana dosya 33'ün 1. alt dosyası; "33/1" de aynı şeyi bulur.
+      const altSira = kayitNoMatch?.[2]
+        ? Number(kayitNoMatch[2])
+        : kayitNoMatch?.[3]
+          ? kayitNoMatch[3].toLowerCase().charCodeAt(0) - 96
+          : null;
       const metin = (alan: (v: string) => Prisma.DavaDosyasiWhereInput): Prisma.DavaDosyasiWhereInput[] =>
         varyantlar.map(alan);
       const icerir = { contains: "", mode: "insensitive" as const };
@@ -46,8 +52,8 @@ function aramaKosulu(arama?: string): Prisma.DavaDosyasiWhereInput {
           // "KN-19/1" tam o alt dosyayi, "KN-19" ana dosyayi VE alt
           // dosyalarini bulur (ağaç listede birlikte görünsünler diye).
           ...(kayitNoMatch
-            ? kayitNoMatch[2]
-              ? [{ anaDosya: { kayitNo: Number(kayitNoMatch[1]) }, altSiraNo: Number(kayitNoMatch[2]) }]
+            ? altSira
+              ? [{ anaDosya: { kayitNo: Number(kayitNoMatch[1]) }, altSiraNo: altSira }]
               : [{ kayitNo: Number(kayitNoMatch[1]) }, { anaDosya: { kayitNo: Number(kayitNoMatch[1]) } }]
             : []),
         ],

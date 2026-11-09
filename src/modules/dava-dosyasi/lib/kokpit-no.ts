@@ -8,11 +8,15 @@ function doldur(no: number) {
   return `KN-${no}`;
 }
 
-// Bagimsiz dosya "KN-19", alt dosya "KN-19/1" gosterilir (bkz.
-// DavaDosyasi.anaDosyaId). Alt dosyanin kendi kayitNo'su DB'de ve aramada
-// korunur; ana dosyadan ayrilinca eski numarasina doner.
+// Bagimsiz dosya "KN-19", alt dosya "KN-19a", "KN-19b" ... gosterilir (bkz.
+// DavaDosyasi.anaDosyaId). Alt dosyanin kendi kayitNo'su DB'de tutulur ve
+// ekranda gosterilmez; ana dosyadan ayrilinca eski numarasina doner.
+export function altHarf(sira: number): string {
+  return sira >= 1 && sira <= 26 ? String.fromCharCode(96 + sira) : `/${sira}`;
+}
+
 export function kokpitNoGoster(dosya: KokpitNoGirdisi): string {
-  if (dosya.anaDosya && dosya.altSiraNo) return `${doldur(dosya.anaDosya.kayitNo)}/${dosya.altSiraNo}`;
+  if (dosya.anaDosya && dosya.altSiraNo) return `${doldur(dosya.anaDosya.kayitNo)}${altHarf(dosya.altSiraNo)}`;
   return doldur(dosya.kayitNo);
 }
 
