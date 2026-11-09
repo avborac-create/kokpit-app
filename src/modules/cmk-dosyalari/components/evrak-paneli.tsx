@@ -160,6 +160,28 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
     return () => window.removeEventListener("keydown", tus);
   }, [onceki, sonraki]);
 
+  // Listeye dönünce açık evrak listenin ortasına gelsin (klasörü kapalıysa önce açılır).
+  function listeyeDonVeOrtala() {
+    if (secili) {
+      setKapaliKlasorler((onceki) => {
+        if (!onceki.has(secili.klasor)) return onceki;
+        const yeni = new Set(onceki);
+        yeni.delete(secili.klasor);
+        return yeni;
+      });
+    }
+    setTimeout(() => {
+      const oge = listeRef.current?.querySelector(`[data-evrak-id="${seciliId}"]`);
+      (oge ?? listeRef.current)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+  }
+
+  // Geniş ekranda ok tuşlarıyla gezerken seçili evrak liste içinde görünür kalsın.
+  useEffect(() => {
+    if (!seciliId || !window.matchMedia("(min-width: 1024px)").matches) return;
+    listeRef.current?.querySelector(`[data-evrak-id="${seciliId}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [seciliId]);
+
   function sec(id: string) {
     setSeciliId(id);
     // Dar ekranda (telefon) liste ile onizleme alt alta: secince onizlemeye kaydir.
@@ -173,6 +195,7 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
       <button
         key={e.id}
         type="button"
+        data-evrak-id={e.id}
         onClick={() => sec(e.id)}
         className={`flex w-full items-start justify-between gap-2 rounded-lg px-2 py-2.5 text-left text-sm lg:py-1.5 ${
           e.id === seciliId ? "bg-[var(--accent-soft)] text-[#6db8ff]" : "text-white/75 hover:bg-white/[0.06]"
@@ -288,7 +311,7 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
             evrak={secili}
             klasorler={klasorler}
             hedef={hedef}
-            listeyeDon={() => listeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            listeyeDon={listeyeDonVeOrtala}
             gezinti={{ onceki: onceki ? () => setSeciliId(onceki.id) : null, sonraki: sonraki ? () => setSeciliId(sonraki.id) : null, sira: sira >= 0 ? sira + 1 : 0, toplam: gezinti.length }}
           />
         ) : (
@@ -359,9 +382,9 @@ function Onizleme({
         <Dugme type="button" varyant="ikincil" boyut="kompakt" disabled={!gezinti.onceki} onClick={() => gezinti.onceki?.()}>
           ‹ Önceki
         </Dugme>
-        <span className="text-xs text-white/60">
-          {gezinti.sira > 0 ? `${gezinti.sira} / ${gezinti.toplam}` : `— / ${gezinti.toplam}`} <span className="hidden text-white/35 lg:inline">· ← → tuşları</span>
-        </span>
+        <button type="button" onClick={listeyeDon} className="rounded-lg px-2 py-1.5 text-xs text-white/70 hover:bg-white/[0.06]" title="Listede bu evraka dön">
+          {gezinti.sira > 0 ? `${gezinti.sira} / ${gezinti.toplam}` : `— / ${gezinti.toplam}`} <span className="text-[#6db8ff]">· Listede göster</span>
+        </button>
         <Dugme type="button" varyant="ikincil" boyut="kompakt" disabled={!gezinti.sonraki} onClick={() => gezinti.sonraki?.()}>
           Sonraki ›
         </Dugme>
