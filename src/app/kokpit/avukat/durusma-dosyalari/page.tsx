@@ -6,7 +6,7 @@ import { modulErisimiVarMi } from "@/core/auth/modul-izni";
 import { kayitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
 
-const tarihSaat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" });
+const tarihSaat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" });
 
 type Satir = { anahtar: string; hedef: "cmk" | "dava"; id: string; baslik: string; alt: string; tarih: Date };
 

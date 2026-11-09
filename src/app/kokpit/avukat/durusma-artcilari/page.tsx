@@ -8,7 +8,7 @@ import { kayitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { durusmaArtciIsEmriVer } from "@/modules/avukat/lib/dilekce-actions";
 import { kullaniciSecenekleriGetir } from "@/modules/avukat/lib/dosya-secenekleri";
 
-const tarihSaat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" });
+const tarihSaat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" });
 
 export default async function DurusmaArtcilariSayfasi() {
   if (!(await modulErisimiVarMi("avukat"))) redirect("/kokpit");

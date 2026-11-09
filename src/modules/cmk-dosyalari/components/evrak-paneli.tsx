@@ -16,7 +16,7 @@ export type EvrakKaydi = {
   ozel: boolean; // true: yalniz giris yapan avukatin gorebildigi evrak
 };
 
-const CMK_KLASORLERI = ["İddianame", "Duruşma Zabıtları", "İfadeler", "Tutanaklar", "Şikayet"];
+const CMK_KLASORLERI = ["İddianame", "Duruşma Zabıtları", "İfadeler", "Tutanaklar", "Şikayet", "Dilekçeler", "Mahkeme Evrakları", "Kurum Cevapları", "Tebligatlar"];
 const DAVA_KLASORLERI = ["Dilekçeler", "Cevap ve Savunma", "Delil ve Bilirkişi", "Tutanaklar", "Ara Kararlar", "Karar", "Vekâletname"];
 const HEDEF_KLASORLERI = { cmk: CMK_KLASORLERI, dava: DAVA_KLASORLERI };
 
