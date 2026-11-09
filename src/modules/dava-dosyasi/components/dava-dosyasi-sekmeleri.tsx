@@ -25,6 +25,14 @@ export function DavaDosyasiSekmeleri({ dosyaId, aktif, kimlik, taraflar, ek }: {
   // Dosya kimligi (sagda) yalniz cubuk ustte sabitlenince gorunur; sayfa basindayken dosya basligi zaten ekranda.
   const [sabitlendi, setSabitlendi] = useState(false);
   const nobetci = useRef<HTMLDivElement>(null);
+  const sekmeKutusu = useRef<HTMLDivElement>(null);
+  const aktifSekme = useRef<HTMLDivElement>(null);
+  // Dar ekranda sekmeler yana kayar; aktif sekme görünür alana gelsin.
+  useEffect(() => {
+    const k = sekmeKutusu.current;
+    const a = aktifSekme.current;
+    if (k && a) k.scrollLeft = a.offsetLeft - k.clientWidth / 2 + a.clientWidth / 2;
+  }, [aktif]);
   useEffect(() => {
     const el = nobetci.current;
     if (!el) return;
@@ -37,17 +45,17 @@ export function DavaDosyasiSekmeleri({ dosyaId, aktif, kimlik, taraflar, ek }: {
     <>
     <div ref={nobetci} aria-hidden className="h-px w-full" />
     <div className="sticky top-0 z-30 -mx-3 mb-4 flex items-center gap-4 border-b border-white/[0.08] bg-[color-mix(in_srgb,var(--background-2)_95%,transparent)] px-3 py-1.5 backdrop-blur-md md:-mx-6 md:px-6">
-    <div className="flex w-full max-w-2xl shrink-0 gap-1 md:gap-5" role="tablist" aria-label="Dosya bölümleri">
+    <div ref={sekmeKutusu} className="flex w-full min-w-0 max-w-2xl gap-1 overflow-x-auto [scrollbar-width:none] md:shrink-0 md:gap-5 md:overflow-visible [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Dosya bölümleri">
       {sekmeler.map((sekme) => {
         const aktifMi = sekme.anahtar === aktif;
-        const siniflar = `min-w-0 flex-1 truncate border-b-2 px-1 py-1.5 text-center text-xs font-medium sm:text-sm md:flex-none md:px-0.5 ${
+        const siniflar = `shrink-0 whitespace-nowrap border-b-2 px-3 py-1.5 text-center text-sm font-medium md:min-w-0 md:flex-none md:truncate md:px-0.5 ${
           aktifMi
             ? "border-[var(--link)] font-semibold text-white"
             : "border-transparent text-white/60 hover:text-white"
         }`;
         if (!dosyaId || aktifMi) {
           return (
-            <div key={sekme.anahtar} role="tab" aria-selected={aktifMi} className={siniflar}>
+            <div key={sekme.anahtar} role="tab" aria-selected={aktifMi} ref={aktifMi ? aktifSekme : undefined} className={siniflar}>
               {sekme.etiket}
             </div>
           );
