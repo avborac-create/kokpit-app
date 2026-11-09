@@ -881,6 +881,7 @@ async function HesapSekmesi({
         silmeYetkisiVar={silmeYetkisiVar}
         yontemler={yontemler}
         kompakt={Boolean(cariSayfaHref)}
+        baslik={`${hesap.no} - ${hesap.ad} · Hareketler`}
         bosMesaj={`${hesap.no} - ${hesap.ad} hesabında henüz hareket yok.`}
       />
 
@@ -1315,6 +1316,7 @@ async function AdliyeSekmesi({ dosyaId, silmeYetkisiVar }: { dosyaId: string; si
         paraHesabiMi={false}
         dosyaSutunu={false}
         silmeYetkisiVar={silmeYetkisiVar}
+        baslik="Adliye · Hareketler"
         bosMesaj="Bu dosyada adliye ile işlenmiş bir hareket yok."
       />
       <p className="mt-2 text-xs text-white/55">
@@ -1336,6 +1338,7 @@ async function BorcluSekmesi({ dosyaId, silmeYetkisiVar }: { dosyaId: string; si
         paraHesabiMi={false}
         dosyaSutunu={false}
         silmeYetkisiVar={silmeYetkisiVar}
+        baslik="Karşı Taraf Alacağı · Hareketler"
         bosMesaj="Bu dosyada karşı taraftan beklenen bir alacak yok."
       />
       <p className="mt-2 text-xs text-white/55">

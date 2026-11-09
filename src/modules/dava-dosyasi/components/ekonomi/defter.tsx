@@ -74,9 +74,12 @@ export function Defter({
   bosMesaj,
   yontemler,
   kompakt = false,
+  baslik,
 }: {
   // Ozet icinde alt veri gorunumu: kutusuz, kucuk punto, dar satir
   kompakt?: boolean;
+  // Hangi hesabin / akisin hareketlerinin listelendigini gosteren baslik
+  baslik?: string;
   yontemler?: { id: string; etiket: string }[];
   satirlar: DefterSatiri[];
   paraHesabiMi: boolean;
@@ -376,6 +379,9 @@ export function Defter({
   const ters = kompakt ? eski : goster([...hesaplanan].reverse());
   return (
     <div>
+      {baslik && (
+        <h3 className={`mb-2 font-semibold text-white ${kompakt ? "text-xs" : "text-sm"}`}>{baslik}</h3>
+      )}
       <Sarmal>
         {kompakt ? (
           eski.tablo
