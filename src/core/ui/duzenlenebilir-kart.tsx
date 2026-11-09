@@ -108,8 +108,8 @@ export function DuzenlenebilirKart({
   }
 
   return (
-    <div className={duz ? "glass mb-4 rounded-2xl p-4 sm:p-5" : "glass mb-4 rounded-2xl p-4 sm:p-5"}>
-      <div className="mb-4 flex items-center justify-between gap-2">
+    <div className={duz ? "glass mb-3 rounded-2xl p-4 sm:p-5" : "glass mb-4 rounded-2xl p-4 sm:p-5"}>
+      <div className={`flex items-center justify-between gap-2 ${duz && !duzenleniyor ? "mb-3" : "mb-4"}`}>
         {duzenleniyor && etiketDuzenleyebilir ? (
           <input
             value={yeniEtiketler[baslikAnahtari] ?? ""}
@@ -133,16 +133,16 @@ export function DuzenlenebilirKart({
 
       {duz && !duzenleniyor ? (
         <>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
-            {dolular.map((a) => {
-              const genis = a.tip === "cokSatir" || (typeof a.gosterim === "string" && a.gosterim.length > 22);
-              return (
-                <div key={a.anahtar} className={`min-w-0 ${genis ? "sm:col-span-2 lg:col-span-3" : ""}`}>
-                  <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-[#8fb4e8]">{gecerliEtiket(a)}</p>
-                  <div className="break-words text-[15px] font-medium text-white">{a.gosterim}</div>
-                </div>
-              );
-            })}
+          <div className="-mx-4 overflow-hidden border-y border-white/[0.08] sm:-mx-5">
+            {dolular.map((a) => (
+              <div
+                key={a.anahtar}
+                className="grid grid-cols-1 gap-x-4 border-b border-white/[0.06] px-4 py-1.5 last:border-b-0 sm:grid-cols-[minmax(7.5rem,10rem)_minmax(0,1fr)] sm:px-5"
+              >
+                <p className="pt-0.5 text-xs font-medium text-[#8fb4e8] sm:text-[13px]">{gecerliEtiket(a)}</p>
+                <div className="break-words text-[15px] font-semibold text-white">{a.gosterim}</div>
+              </div>
+            ))}
           </div>
           {bosAlanlar.length > 0 && (
             <p className="mt-4 border-t border-white/[0.08] pt-3 text-xs text-white/45">

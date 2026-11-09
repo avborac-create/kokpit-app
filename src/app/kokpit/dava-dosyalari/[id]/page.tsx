@@ -27,6 +27,7 @@ import { DosyaBaglayici } from "@/modules/dava-dosyasi/components/dosya-baglayic
 import { kokpitNoGoster, kayitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { Dugme } from "@/core/ui/button";
 import { DuzenlenebilirKart, type KartAlani } from "@/core/ui/duzenlenebilir-kart";
+import { DosyaDurumBandi } from "@/modules/dava-dosyasi/components/dosya-durum-bandi";
 import { adliBirimleriListele } from "@/modules/dava-dosyasi/lib/adli-birim";
 import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
 import { FormKarti } from "@/core/ui/form-karti";
@@ -272,14 +273,6 @@ export default async function DavaDosyasiDetaySayfasi({
           },
         ]
       : []),
-    {
-      anahtar: "durumKoduId",
-      varsayilanEtiket: "Dosya Durum Kodu",
-      tip: "secim",
-      deger: dosya.durumKoduId ?? "",
-      gosterim: dosya.durumKodu?.etiket ?? "—",
-      secenekler: bosSecenekli(durumKodlari, "Seçiniz…"),
-    },
     {
       anahtar: "birimAdi",
       varsayilanEtiket: "Birim",
@@ -628,7 +621,26 @@ export default async function DavaDosyasiDetaySayfasi({
         </div>
       ) : aktifSekme === "genel" ? (
         <>
-          <div className="mb-6 max-w-4xl">
+          <DosyaDurumBandi
+            dosyaId={id}
+            secenekler={durumKodlari.map((d) => ({ id: d.id, etiket: d.etiket, kod: d.kod }))}
+            seciliId={dosya.durumKoduId}
+          />
+          <div className="glass mb-3 grid grid-cols-2 overflow-hidden rounded-2xl md:grid-cols-4">
+            {[
+              { etiket: "Dava değeri", deger: davaDegeri > 0 ? davaDegeriYaz(davaDegeri) : "—", renk: "border-t-[var(--accent)]" },
+              { etiket: "Müvekkil", deger: dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—", renk: "border-t-[#e6b450]" },
+              { etiket: "Karşı taraf", deger: dosya.karsiTaraflar.length > 0 ? `${dosya.karsiTaraflar.length} kişi` : "—", renk: "border-t-[#32d74b]" },
+              { etiket: "Sorumlu avukat", deger: dosya.sorumluAvukat?.adSoyad ?? "Atanmadı", renk: "border-t-white/40" },
+            ].map((k, i) => (
+              <div key={k.etiket} className={`min-w-0 border-t-2 px-4 py-2.5 ${k.renk} ${i > 0 ? "md:border-l md:border-l-white/[0.08]" : ""}`}>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8fb4e8]">{k.etiket}</p>
+                <p className="truncate text-base font-semibold text-white" title={k.deger}>{k.deger}</p>
+              </div>
+            ))}
+          </div>
+          <div className="grid items-start gap-x-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <div className="min-w-0">
             <DuzenlenebilirKart
               duz
               etiketOnEki="dosya-detay.kunye"
@@ -650,8 +662,9 @@ export default async function DavaDosyasiDetaySayfasi({
             />
           </div>
 
+          <div className="min-w-0">
           {talepMaddeleri.length > 0 && (
-            <div className="mb-6 max-w-3xl">
+            <div className="mb-3">
               <FormKarti baslik="Dava Değeri · Talep Kalemleri">
                 <TalepKalemleriPaneli dosyaId={id} maddeler={talepMaddeleri} baslangic={talepEkstralari} />
               </FormKarti>
@@ -659,7 +672,7 @@ export default async function DavaDosyasiDetaySayfasi({
           )}
 
           {dosya.tur?.kod === "ihtar_dosyasi" && (
-            <div className="mb-6 max-w-3xl">
+            <div className="mb-3">
               <FormKarti baslik="İhtar Gönderim Bilgileri">
                 <IhtarGonderimPaneli
                   dosyaId={id}
@@ -678,7 +691,7 @@ export default async function DavaDosyasiDetaySayfasi({
             </div>
           )}
 
-          <div className="mb-6 max-w-3xl">
+          <div className="mb-3">
             <FormKarti baslik="Vekil Bilgileri">
               <VekilPaneli
                 dosyaId={id}
@@ -695,7 +708,7 @@ export default async function DavaDosyasiDetaySayfasi({
             </FormKarti>
           </div>
 
-          <div className="mb-8 max-w-3xl">
+          <div className="mb-3">
             <DuzenlenebilirKart
               etiketOnEki="dosya-detay.dosya-agaci"
               varsayilanBaslik="Dosya Ağacı"
@@ -719,6 +732,8 @@ export default async function DavaDosyasiDetaySayfasi({
                 adaylar={anaDosyaAdaylari}
               />
             </DuzenlenebilirKart>
+          </div>
+          </div>
           </div>
 
           {dosya.baglananDosyalar.length > 0 && (
