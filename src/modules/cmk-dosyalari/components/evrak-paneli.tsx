@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Dugme } from "@/core/ui/button";
 import { Girdi } from "@/core/ui/form";
+import { PdfGoruntuleyici } from "@/modules/cmk-dosyalari/components/pdf-goruntuleyici";
 import { evrakGuncelle, evrakSil, evrakYukle, type EvrakHedefi } from "@/modules/cmk-dosyalari/lib/evrak-actions";
 
 export type EvrakKaydi = {
@@ -19,6 +20,11 @@ export type EvrakKaydi = {
 const CMK_KLASORLERI = ["İddianame", "Duruşma Zabıtları", "İfadeler", "Tutanaklar", "Şikayet", "Dilekçeler", "Mahkeme Evrakları", "Kurum Cevapları", "Tebligatlar"];
 const DAVA_KLASORLERI = ["Dilekçeler", "Cevap ve Savunma", "Delil ve Bilirkişi", "Tutanaklar", "Ara Kararlar", "Karar", "Vekâletname"];
 const HEDEF_KLASORLERI = { cmk: CMK_KLASORLERI, dava: DAVA_KLASORLERI };
+
+// "Ek 1: ...", "Ek-2", "Ek evrak" gibi adlar ana evraka ek olan belgelerdir.
+function ekMi(ad: string) {
+  return /(^|[\s—-])ek\s*-?\s*\d+\s*[:.)]/i.test(ad) || /\bek evrak\b/i.test(ad);
+}
 
 function tarihYaz(t: string | null) {
   if (!t) return "Tarihsiz";
@@ -109,13 +115,16 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
   });
   const [kapaliKlasorler, setKapaliKlasorler] = useState<Set<string>>(new Set());
   const [yonetimAcik, setYonetimAcik] = useState(false);
+  const [ekleriDahilEt, setEkleriDahilEt] = useState(true);
   const listeRef = useRef<HTMLDivElement>(null);
   const onizlemeRef = useRef<HTMLDivElement>(null);
+  const ekSayisi = evraklar.filter((e) => ekMi(e.ad)).length;
 
   const filtreli = useMemo(() => {
     const q = arama.trim().toLocaleLowerCase("tr");
-    return q ? evraklar.filter((e) => `${e.ad} ${e.klasor}`.toLocaleLowerCase("tr").includes(q)) : evraklar;
-  }, [evraklar, arama]);
+    const ekSuzulu = ekleriDahilEt ? evraklar : evraklar.filter((e) => !ekMi(e.ad));
+    return q ? ekSuzulu.filter((e) => `${e.ad} ${e.klasor}`.toLocaleLowerCase("tr").includes(q)) : ekSuzulu;
+  }, [evraklar, arama, ekleriDahilEt]);
 
   const gruplar = useMemo(() => {
     const harita = new Map<string, EvrakKaydi[]>();
@@ -132,6 +141,24 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
   const duzListe = useMemo(() => [...filtreli].sort((x, y) => evrakSirala(x, y, siralama, artan, KLASOR_SIRASI)), [filtreli, siralama, artan, KLASOR_SIRASI]);
   const secili = evraklar.find((e) => e.id === seciliId) ?? null;
   const klasorler = [...new Set(evraklar.map((e) => e.klasor).concat(KLASOR_SIRASI))];
+
+  // Ileri/geri gezinti listede gorunen sirayi izler (klasorlu ya da tek liste; ek filtresi uygulanir).
+  const gezinti = gorunum === "klasor" ? gruplar.flatMap(([, liste]) => liste) : duzListe;
+  const sira = gezinti.findIndex((e) => e.id === seciliId);
+  const onceki = sira > 0 ? gezinti[sira - 1] : null;
+  const sonraki = sira >= 0 && sira < gezinti.length - 1 ? gezinti[sira + 1] : sira === -1 ? (gezinti[0] ?? null) : null;
+
+  useEffect(() => {
+    const tus = (ev: KeyboardEvent) => {
+      const hedef = ev.target as HTMLElement | null;
+      if (hedef && /^(INPUT|TEXTAREA|SELECT)$/.test(hedef.tagName)) return;
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      if (ev.key === "ArrowRight" && sonraki) setSeciliId(sonraki.id);
+      else if (ev.key === "ArrowLeft" && onceki) setSeciliId(onceki.id);
+    };
+    window.addEventListener("keydown", tus);
+    return () => window.removeEventListener("keydown", tus);
+  }, [onceki, sonraki]);
 
   function sec(id: string) {
     setSeciliId(id);
@@ -201,6 +228,12 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
             {artan ? "Eski → yeni" : "Yeni → eski"}
           </button>
         </div>
+        {ekSayisi > 0 && (
+          <label className="mb-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-sm text-white/75">
+            <input type="checkbox" checked={ekleriDahilEt} onChange={(e) => setEkleriDahilEt(e.target.checked)} className="h-4 w-4" />
+            Ekleri dahil et <span className="text-xs text-white/40">({ekSayisi} ek evrak)</span>
+          </label>
+        )}
         <p className="mb-2 px-1 text-[11px] text-white/35">
           {siralama === "tur" ? "Önce evrak türü, her türün içinde tarih sırası." : "Önce tarih, aynı tarihte evrak türü sırası."}
         </p>
@@ -256,6 +289,7 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
             klasorler={klasorler}
             hedef={hedef}
             listeyeDon={() => listeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            gezinti={{ onceki: onceki ? () => setSeciliId(onceki.id) : null, sonraki: sonraki ? () => setSeciliId(sonraki.id) : null, sira: sira >= 0 ? sira + 1 : 0, toplam: gezinti.length }}
           />
         ) : (
           <p className="py-24 text-center text-sm text-white/40">Soldan bir evrak seçin.</p>
@@ -306,12 +340,14 @@ function Onizleme({
   klasorler,
   hedef,
   listeyeDon,
+  gezinti,
 }: {
   dosyaId: string;
   evrak: EvrakKaydi;
   klasorler: string[];
   hedef: EvrakHedefi;
   listeyeDon: () => void;
+  gezinti: { onceki: (() => void) | null; sonraki: (() => void) | null; sira: number; toplam: number };
 }) {
   const [duzenle, setDuzenle] = useState(false);
   const [bekliyor, basla] = useTransition();
@@ -319,6 +355,17 @@ function Onizleme({
 
   return (
     <div>
+      <div className="mb-3 flex items-center justify-between gap-2 rounded-xl bg-white/[0.05] p-1.5">
+        <Dugme type="button" varyant="ikincil" boyut="kompakt" disabled={!gezinti.onceki} onClick={() => gezinti.onceki?.()}>
+          ‹ Önceki
+        </Dugme>
+        <span className="text-xs text-white/60">
+          {gezinti.sira > 0 ? `${gezinti.sira} / ${gezinti.toplam}` : `— / ${gezinti.toplam}`} <span className="hidden text-white/35 lg:inline">· ← → tuşları</span>
+        </span>
+        <Dugme type="button" varyant="ikincil" boyut="kompakt" disabled={!gezinti.sonraki} onClick={() => gezinti.sonraki?.()}>
+          Sonraki ›
+        </Dugme>
+      </div>
       <button type="button" onClick={listeyeDon} className="mb-2 py-1 text-sm text-[#6db8ff] hover:underline lg:hidden">
         ‹ Evrak listesine dön
       </button>
@@ -376,7 +423,7 @@ function Onizleme({
         </form>
       )}
 
-      {evrak.onizlemeTuru === "PDF" && <iframe src={yol} title={evrak.ad} className="h-[75vh] w-full rounded-xl bg-[#ffffff]" />}
+      {evrak.onizlemeTuru === "PDF" && <PdfGoruntuleyici yol={yol} ad={evrak.ad} />}
       {evrak.onizlemeTuru === "RESIM" && <SayfaGoruntuleyici yol={yol} ad={evrak.ad} cokSayfaliMi={evrak.mimeTipi === "image/tiff"} />}
       {evrak.onizlemeTuru === "METIN" && (
         <iframe src={`${yol}?tur=html`} title={evrak.ad} className="h-[78vh] w-full rounded-xl bg-[#e9ebf0]" />
