@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { pushGonder } from "@/core/bildirim/push";
-import { DURUMLAR, TURLER, ZAMAN_BASKILARI } from "./durum";
+import { DURUMLAR, SINIFLAR, TURLER, ZAMAN_BASKILARI } from "./durum";
 import { PERIYOTLAR } from "./hafta";
 import { isDurumuGunlukle, isSilmeyiGunlukle } from "@/core/gunluk/islem-gunlugu";
 
@@ -30,7 +30,7 @@ async function ilgililereBildir(isId: string, yapanId: string, baslik: string, m
   await pushGonder([...alicilar], { baslik, metin: `${is.baslik} — ${metin}`.slice(0, 180), url: `/kokpit/isler/${isId}`, etiket: `is-${isId}` });
 }
 
-export async function isEkle(baslik: string, sorumluId: string, aciklama: string, destekId = "", dosyaId = "", vade = ""): Promise<{ hata?: string; id?: string }> {
+export async function isEkle(baslik: string, sorumluId: string, aciklama: string, destekId = "", dosyaId = "", vade = "", sinif = ""): Promise<{ hata?: string; id?: string }> {
   const k = await girisli();
   const b = baslik.trim();
   if (!b) return { hata: "Konu başlığı boş olamaz." };
@@ -42,6 +42,7 @@ export async function isEkle(baslik: string, sorumluId: string, aciklama: string
       sorumluId: atanan,
       olusturanId: k.kullaniciId,
       dosyaId: dosyaId || null,
+      sinif: SINIFLAR.find((x) => x.anahtar === sinif)?.anahtar ?? null,
       vade: /^\d{4}-\d{2}-\d{2}$/.test(vade) ? new Date(vade) : null,
     },
   });
@@ -261,6 +262,14 @@ export async function turDegistir(isId: string, tur: string) {
     where: { id: isId },
     data: { tur, haftalikHedef: tur === "OPERASYONEL" ? (mevcut?.haftalikHedef ?? 1) : mevcut?.haftalikHedef, guncellemeTarihi: new Date() },
   });
+  revalidatePath(`/kokpit/isler/${isId}`);
+  revalidatePath("/kokpit/isler");
+}
+
+export async function sinifDegistir(isId: string, sinif: string) {
+  await girisli();
+  const s = SINIFLAR.find((x) => x.anahtar === sinif)?.anahtar ?? null;
+  await prisma.is.update({ where: { id: isId }, data: { sinif: s, guncellemeTarihi: new Date() } });
   revalidatePath(`/kokpit/isler/${isId}`);
   revalidatePath("/kokpit/isler");
 }

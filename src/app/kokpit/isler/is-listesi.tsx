@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, useTransition } from "react";
-import { durumDegistir, eksiBakiyeErtele, eksiBakiyeIstendi, isEkle, operasyonYapildi, smmKestim } from "./actions";
-import { DURUMLAR, durumBilgisi, zamanBaskisiBilgisi } from "./durum";
+import { durumDegistir, eksiBakiyeErtele, eksiBakiyeIstendi, isEkle, operasyonYapildi, sinifDegistir, smmKestim } from "./actions";
+import { DURUMLAR, SINIFLAR, TURLER, durumBilgisi, sinifBilgisi, turBilgisi, zamanBaskisiBilgisi } from "./durum";
 import { periyotBilgisi } from "./hafta";
 import { OdakDugmesi } from "./odak-dugmesi";
 
@@ -14,6 +14,7 @@ type Is = {
   baslik: string;
   durum: string;
   tur: string;
+  sinif: string;
   hedef: number;
   periyot: string;
   zamanBaskisi: string;
@@ -41,6 +42,13 @@ const GORUNUMLER = [
 type Gorunum = (typeof GORUNUMLER)[number]["k"];
 
 // Kullanicinin sectigi gorunum tarayicida saklanir (herkes kendi arzusuna gore).
+const GRUPLAMALAR = [
+  { k: "durum", ad: "Duruma göre" },
+  { k: "sinif", ad: "Sınıfa göre" },
+  { k: "tur", ad: "Tarza göre" },
+] as const;
+type Gruplama = (typeof GRUPLAMALAR)[number]["k"];
+
 const GORUNUM_ANAHTARI = "kokpit_gorev_gorunum";
 const GORUNUM_OLAYI = "kokpit-gorev-gorunum";
 function gorunumAbone(f: () => void) {
@@ -192,6 +200,9 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
   const [sorumlu, setSorumlu] = useState(benimId);
   const [hata, setHata] = useState("");
   const [tamamlananlar, setTamamlananlar] = useState(false);
+  const [gruplama, setGruplama] = useState<Gruplama>("durum");
+  const [tasnif, setTasnif] = useState(""); // "" = tumu; "sinif:ANA" / "sinif:YOK" / "tur:SUREC"
+  const [yeniSinif, setYeniSinif] = useState("");
   const [bekliyor, basla] = useTransition();
 
   // Soldaki kisi panelinde secili olan: "buro" (herkes) ya da bir kisinin id'si. Adres cubugunda tasinir.
@@ -202,7 +213,13 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
 
   const benim = (i: Is) => i.sorumluId === benimId || i.yardimBenim;
   // Secili kisinin gorevleri (kendisi ise yardim istenenler dahil) ya da tum buro.
-  const turdeki = isler.filter((i) => tumBuro || (bensem ? benim(i) : i.sorumluId === secili));
+  const kisininIsleri = isler.filter((i) => tumBuro || (bensem ? benim(i) : i.sorumluId === secili));
+  const tasnifUyar = (i: Is, t: string) => {
+    if (!t) return true;
+    const [ne, deger] = t.split(":");
+    return ne === "sinif" ? (deger === "YOK" ? !i.sinif : i.sinif === deger) : i.tur === deger;
+  };
+  const turdeki = kisininIsleri.filter((i) => tasnifUyar(i, tasnif));
   const acikSayisi = (id: string) => isler.filter((i) => i.sorumluId === id && i.durum !== "TAMAMLANDI" && i.tur !== "OPERASYONEL").length;
   const acikSonGun = (i: Is) => i.zamanBaskisi === "SON_GUN" && i.durum !== "TAMAMLANDI";
   // Son gunlu (acik) gorevler en ustte, tarihi en yakin olan once; digerlerinin sirasi korunur.
@@ -214,7 +231,7 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
   function ekle() {
     setHata("");
     basla(async () => {
-      const s = await isEkle(baslik, tumBuro ? sorumlu : secili, "", "");
+      const s = await isEkle(baslik, tumBuro ? sorumlu : secili, "", "", "", "", yeniSinif);
       if (s.hata) setHata(s.hata);
       else if (s.id) {
         setBaslik("");
@@ -247,6 +264,39 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
     );
   };
 
+  const TasnifRozetleri = ({ i }: { i: Is }) => {
+    const sn = sinifBilgisi(i.sinif);
+    const t = turBilgisi(i.tur);
+    return (
+      <>
+        {sn && (
+          <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: sn.renk + "26", color: sn.renk }}>
+            {sn.ad}
+          </span>
+        )}
+        <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: t.renk + "26", color: t.renk }}>
+          {t.kisa}
+        </span>
+      </>
+    );
+  };
+  const SinifSecici = ({ i }: { i: Is }) => (
+    <select
+      value={i.sinif}
+      aria-label="Sınıf"
+      disabled={bekliyor}
+      onChange={(e) => basla(async () => { await sinifDegistir(i.id, e.target.value); yonlendirici.refresh(); })}
+      className="rounded-full border border-white/15 bg-transparent px-2 py-0.5 text-xs text-white/70 [color-scheme:dark]"
+    >
+      <option value="">Sınıfsız</option>
+      {SINIFLAR.map((x) => (
+        <option key={x.anahtar} value={x.anahtar}>
+          {x.ad}
+        </option>
+      ))}
+    </select>
+  );
+
   function Satir({ i }: { i: Is }) {
     const op = i.tur === "OPERASYONEL";
     return (
@@ -256,6 +306,9 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
             <span className="min-w-0 flex-1 text-[15px] font-medium text-white">{i.baslik}</span>
             <BaskiRozeti i={i} />
             <DurumRozeti i={i} />
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <TasnifRozetleri i={i} />
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-white/50">
             {i.yardimBenim && i.sorumluId !== benimId && (
@@ -281,6 +334,7 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
         {(i.durum !== "TAMAMLANDI" || i.dosyaId) && (
           <div className="flex items-center gap-2 border-t border-white/10 px-4 py-1.5">
             {i.durum !== "TAMAMLANDI" && <OdakDugmesi isId={i.id} odakta={odakIdleri.includes(i.id)} />}
+            <SinifSecici i={i} />
             {i.dosyaId && (
               <Link href={`/kokpit/dava-dosyalari/${i.dosyaId}?sekme=gorevler`} className="rounded-full border border-[#8fd8ff]/40 px-2 py-0.5 text-xs font-semibold text-[#8fd8ff] hover:bg-white/10">
                 📁 Dosyaya git
@@ -299,6 +353,26 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
     );
   }
 
+  const sayi = (t: string) => kisininIsleri.filter((i) => tasnifUyar(i, t) && (i.tur === "OPERASYONEL" || tamamlananlar || i.durum !== "TAMAMLANDI")).length;
+  const tasnifSecenekleri = [
+    { k: "", ad: "Tümü", renk: "#ffffff" },
+    ...SINIFLAR.map((x) => ({ k: `sinif:${x.anahtar}`, ad: x.ad, renk: x.renk as string })),
+    { k: "sinif:YOK", ad: "Sınıfsız", renk: "#94a3b8" },
+    ...TURLER.map((x) => ({ k: `tur:${x.anahtar}`, ad: x.kisa, renk: x.renk as string })),
+  ];
+  const tasnifSatiri = (
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Tasnif">
+      <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-white/40">Tasnif</span>
+      {tasnifSecenekleri.map((t) => {
+        const aktif = tasnif === t.k;
+        return (
+          <button key={t.k || "tumu"} type="button" onClick={() => setTasnif(t.k)} className="rounded-full border px-3 py-1 text-[13px] font-medium" style={aktif ? { background: t.renk + "33", borderColor: t.renk, color: t.renk === "#ffffff" ? "#fff" : t.renk } : { borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.65)" }}>
+            {t.ad} <span className="text-white/45">{sayi(t.k)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
   const filtreSatirlari = (
     <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-white/60">
       <input type="checkbox" checked={tamamlananlar} onChange={(e) => setTamamlananlar(e.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
@@ -347,6 +421,14 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
         {/* Gorev yaz: secili kisiye atanir (tum buroda kime oldugu secilir). */}
         <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:flex-row">
           <input value={baslik} onChange={(e) => setBaslik(e.target.value)} onKeyDown={(e) => e.key === "Enter" && baslik.trim() && ekle()} placeholder={tumBuro ? "Görev yazın…" : bensem ? "Kendinize görev yazın…" : `${seciliAd} için görev yazın…`} className={`${alan} sm:min-w-0 sm:flex-1`} />
+          <select value={yeniSinif} onChange={(e) => setYeniSinif(e.target.value)} aria-label="Sınıf" className={`${alan} sm:w-36`}>
+            <option value="">Sınıfsız</option>
+            {SINIFLAR.map((x) => (
+              <option key={x.anahtar} value={x.anahtar}>
+                {x.ad}
+              </option>
+            ))}
+          </select>
           {tumBuro && (
             <select value={sorumlu} onChange={(e) => setSorumlu(e.target.value)} aria-label="Kime" className={`${alan} sm:w-56`}>
               {kisiler.map((c) => (
@@ -362,7 +444,18 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
         </div>
         {hata && <p className="text-sm text-red-300">{hata}</p>}
 
-      {gorunum === "liste" && filtreSatirlari}
+      {tasnifSatiri}
+      {gorunum === "pano" && (
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Gruplama">
+          <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-white/40">Kanban sütunları</span>
+          {GRUPLAMALAR.map((g) => (
+            <button key={g.k} type="button" onClick={() => setGruplama(g.k)} className={`rounded-full border px-3 py-1 text-[13px] font-medium ${gruplama === g.k ? "border-[var(--accent)] bg-[var(--accent)]/20 text-white" : "border-white/15 text-white/65 hover:bg-white/10"}`}>
+              {g.ad}
+            </button>
+          ))}
+        </div>
+      )}
+      {(gorunum === "liste" || gruplama !== "durum") && filtreSatirlari}
 
       {gorunum === "liste" && (
         <ul className="flex flex-col gap-2">
@@ -373,56 +466,77 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
         </ul>
       )}
 
-      {gorunum === "pano" && (
-        <div className="grid grid-cols-[repeat(4,minmax(220px,1fr))] gap-3 overflow-x-auto pb-2">
-          {DURUMLAR.map((d, di) => {
-            const kolon = turdeki.filter((i) => i.durum === d.anahtar);
-            const sonraki = DURUMLAR[di + 1];
-            return (
-              <div key={d.anahtar} className="rounded-xl bg-white/[0.04] p-2.5">
-                <h3 className="mb-2 flex items-center justify-between px-1 text-[13px] font-semibold" style={{ color: d.renk }}>
-                  {d.ad}
-                  <span className="text-white/45">{kolon.length}</span>
-                </h3>
-                <div className="flex flex-col gap-2">
-                  {kolon.map((i) => (
-                    <div key={i.id} className={`rounded-xl border bg-[var(--background-2)] p-2.5 ${seciliId === i.id ? "border-[var(--accent)]" : "border-white/10"}`}>
-                      <Link href={gorevHref(i.id)} scroll={false} className="block text-[14px] font-medium text-white hover:underline">
-                        {i.baslik}
-                      </Link>
-                      <div className="mt-2 flex items-center gap-1.5 text-xs text-white/55">
-                        <Avatar ad={i.sorumluAd} />
-                        <span className="truncate">{i.sorumluAd}</span>
-                        {i.maddeToplam > 0 && (
-                          <span className="ml-1">
-                            ☑ {i.maddeTamam}/{i.maddeToplam}
-                          </span>
+      {gorunum === "pano" && (() => {
+        const durumdaMi = gruplama === "durum";
+        const sutunlar: { k: string; ad: string; renk: string; uyar: (i: Is) => boolean }[] =
+          gruplama === "sinif"
+            ? [...SINIFLAR.map((x) => ({ k: x.anahtar as string, ad: x.ad as string, renk: x.renk as string, uyar: (i: Is) => i.sinif === x.anahtar })), { k: "YOK", ad: "Sınıfsız", renk: "#94a3b8", uyar: (i: Is) => !i.sinif }]
+            : gruplama === "tur"
+              ? TURLER.map((x) => ({ k: x.anahtar as string, ad: x.ad as string, renk: x.renk as string, uyar: (i: Is) => i.tur === x.anahtar }))
+              : DURUMLAR.map((d) => ({ k: d.anahtar as string, ad: d.ad as string, renk: d.renk as string, uyar: (i: Is) => i.durum === d.anahtar }));
+        const kartlar = durumdaMi ? turdeki : turdeki.filter((i) => tamamlananlar || i.durum !== "TAMAMLANDI");
+        return (
+          <div className="grid gap-3 overflow-x-auto pb-2" style={{ gridTemplateColumns: `repeat(${sutunlar.length},minmax(220px,1fr))` }}>
+            {sutunlar.map((d, di) => {
+              const kolon = kartlar.filter(d.uyar);
+              const sonraki = durumdaMi ? DURUMLAR[di + 1] : undefined;
+              return (
+                <div key={d.k} className="rounded-xl bg-white/[0.04] p-2.5">
+                  <h3 className="mb-2 flex items-center justify-between px-1 text-[13px] font-semibold" style={{ color: d.renk }}>
+                    {d.ad}
+                    <span className="text-white/45">{kolon.length}</span>
+                  </h3>
+                  <div className="flex flex-col gap-2">
+                    {kolon.map((i) => (
+                      <div key={i.id} className={`rounded-xl border bg-[var(--background-2)] p-2.5 ${seciliId === i.id ? "border-[var(--accent)]" : "border-white/10"}`}>
+                        <Link href={gorevHref(i.id)} scroll={false} className="block text-[14px] font-medium text-white hover:underline">
+                          {i.baslik}
+                        </Link>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                          {durumdaMi ? <TasnifRozetleri i={i} /> : <DurumRozeti i={i} />}
+                        </div>
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-white/55">
+                          <Avatar ad={i.sorumluAd} />
+                          <span className="truncate">{i.sorumluAd}</span>
+                          {i.maddeToplam > 0 && (
+                            <span className="ml-1">
+                              ☑ {i.maddeTamam}/{i.maddeToplam}
+                            </span>
+                          )}
+                          {i.vade && (
+                            <span className="ml-auto whitespace-nowrap" style={{ color: vadeRenk(i) }}>
+                              {vadeYaz(i.vade)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          {i.durum !== "TAMAMLANDI" && <OdakDugmesi isId={i.id} odakta={odakIdleri.includes(i.id)} />}
+                          {gruplama !== "sinif" && <SinifSecici i={i} />}
+                        </div>
+                        {gruplama === "sinif" && (
+                          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                            {[...SINIFLAR.map((x) => ({ k: x.anahtar as string, ad: x.ad as string })), { k: "", ad: "Sınıfsız" }].filter((x) => x.k !== i.sinif).map((x) => (
+                              <button key={x.k || "yok"} type="button" disabled={bekliyor} onClick={() => basla(async () => { await sinifDegistir(i.id, x.k); yonlendirici.refresh(); })} className="rounded-lg border border-white/12 px-2 py-1 text-xs text-white/65 hover:bg-white/10 disabled:opacity-40">
+                                → {x.ad}
+                              </button>
+                            ))}
+                          </div>
                         )}
-                        {i.vade && (
-                          <span className="ml-auto whitespace-nowrap" style={{ color: vadeRenk(i) }}>
-                            {vadeYaz(i.vade)}
-                          </span>
+                        {sonraki && (
+                          <button type="button" disabled={bekliyor} onClick={() => basla(async () => { await durumDegistir(i.id, sonraki.anahtar); yonlendirici.refresh(); })} className="mt-2 w-full rounded-lg border border-white/12 py-1 text-xs text-white/65 hover:bg-white/10 disabled:opacity-40">
+                            {sonraki.ad} →
+                          </button>
                         )}
                       </div>
-                      {i.durum !== "TAMAMLANDI" && (
-                        <div className="mt-2 flex items-center gap-2">
-                          <OdakDugmesi isId={i.id} odakta={odakIdleri.includes(i.id)} />
-                        </div>
-                      )}
-                      {sonraki && (
-                        <button type="button" disabled={bekliyor} onClick={() => basla(async () => { await durumDegistir(i.id, sonraki.anahtar); yonlendirici.refresh(); })} className="mt-2 w-full rounded-lg border border-white/12 py-1 text-xs text-white/65 hover:bg-white/10 disabled:opacity-40">
-                          {sonraki.ad} →
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {kolon.length === 0 && <p className="px-1 py-3 text-center text-xs text-white/35">Boş</p>}
+                    ))}
+                    {kolon.length === 0 && <p className="px-1 py-3 text-center text-xs text-white/35">Boş</p>}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        );
+      })()}
       </div>
     </div>
   );

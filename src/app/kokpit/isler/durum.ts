@@ -19,6 +19,16 @@ export const TURLER = [
   { anahtar: "DONEMSEL", ad: "Dönemsel görev", kisa: "Dönemsel", aciklama: "Bir olay olduğunda gündeme gelir (ör. müvekkil talep ettiğinde)", renk: "#ec4899" },
 ] as const;
 
+// Tasnif: kullanicinin kendi gorevlerini onem sirasina gore ayirmasi (Ana / Yan). Bos = siniflandirilmamis.
+export const SINIFLAR = [
+  { anahtar: "ANA", ad: "Ana görev", renk: "#f2b04c" },
+  { anahtar: "YAN", ad: "Yan görev", renk: "#9fb4ff" },
+] as const;
+
+export function sinifBilgisi(anahtar: string | null | undefined) {
+  return SINIFLAR.find((s) => s.anahtar === anahtar) ?? null;
+}
+
 export const ZAMAN_BASKILARI = [
   { anahtar: "SON_GUN", ad: "Son günlü", tarihEtiketi: "Son gün", renk: "#ef4444", aciklama: "Günü kaçarsa sorumluluk doğar" },
   { anahtar: "TESLIM", ad: "Teslimli", tarihEtiketi: "Teslim", renk: "#f59e0b", aciklama: "Teslim tarihi vardır" },

@@ -96,6 +96,7 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
           maddeTamam: i.maddeler.filter((m) => m.tamam).length,
           dosyaId: i.dosyaId ?? "",
           tur: i.tur,
+          sinif: i.sinif ?? "",
           hedef: i.haftalikHedef ?? 0,
           periyot: i.periyot,
           zamanBaskisi: i.zamanBaskisi ?? "",

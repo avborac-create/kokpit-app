@@ -1706,6 +1706,8 @@ model Is {
   // Tarz: PARCA, ARTCI (ana isten sonra mecburen yapilan), SUREC, OPERASYONEL (= Periyodik; anahtar korunur),
   // DONEMSEL (bir olay olunca gundeme gelir).
   tur              String       @default("PARCA")
+  // Sinif (tasnif): ANA / YAN / bos. Kullanici gorevlerini onem sirasina gore ayirir.
+  sinif            String?
   haftalikHedef    Int?
   // Periyodik gorevde donem: HAFTA / AY / YIL (haftalikHedef = donemdeki hedef kez).
   periyot          String       @default("HAFTA")

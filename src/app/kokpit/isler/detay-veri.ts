@@ -8,6 +8,7 @@ export type Detay = {
   aciklama: string | null;
   durum: string;
   tur: string;
+  sinif: string;
   vade: string;
   haftalikHedef: number;
   periyot: string;
@@ -51,6 +52,7 @@ export async function isDetayiYukle(id: string, benimId: string): Promise<{ is: 
       aciklama: is.aciklama,
       durum: is.durum,
       tur: is.tur,
+      sinif: is.sinif ?? "",
       vade: is.vade ? is.vade.toISOString().slice(0, 10) : "",
       haftalikHedef: is.haftalikHedef ?? 0,
       periyot: is.periyot,

@@ -4,8 +4,8 @@ import { upload } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { OdakDugmesi } from "../odak-dugmesi";
-import { type YeniEk, durumDegistir, isBilgisiniGuncelle, isSil, maddeDurumu, maddeEkle, maddeSil, maddeSirala, maddeTasi, sorumluDegistir, vadeGuncelle, yardimIste, yardimKaldir, yorumEkle, operasyonYapildi, operasyonKaydiSil, hedefGuncelle, turDegistir, zamanBaskisiDegistir, yargiTuruDegistir, periyotDegistir, tetikleyiciGuncelle } from "../actions";
-import { DURUMLAR, TURLER, ZAMAN_BASKILARI, turBilgisi, zamanBaskisiBilgisi } from "../durum";
+import { type YeniEk, durumDegistir, isBilgisiniGuncelle, isSil, maddeDurumu, maddeEkle, maddeSil, maddeSirala, maddeTasi, sorumluDegistir, vadeGuncelle, yardimIste, yardimKaldir, yorumEkle, operasyonYapildi, operasyonKaydiSil, hedefGuncelle, turDegistir, sinifDegistir, zamanBaskisiDegistir, yargiTuruDegistir, periyotDegistir, tetikleyiciGuncelle } from "../actions";
+import { DURUMLAR, SINIFLAR, TURLER, ZAMAN_BASKILARI, turBilgisi, zamanBaskisiBilgisi } from "../durum";
 import { PERIYOTLAR, periyotBilgisi } from "../hafta";
 import type { Detay } from "../detay-veri";
 
@@ -112,6 +112,18 @@ export function IsDetayi({ is, kisiler, yargiTurleri, benimId, kapatHref, odakta
             ))}
           </select>
           <p className="mt-1 text-xs text-white/40">{tur.aciklama}</p>
+        </div>
+
+        <span className={etiket}>Sınıf</span>
+        <div className="flex flex-wrap gap-1.5">
+          {[...SINIFLAR.map((s) => ({ anahtar: s.anahtar as string, ad: s.ad, renk: s.renk as string })), { anahtar: "", ad: "Sınıfsız", renk: "#94a3b8" }].map((s) => {
+            const secili = is.sinif === s.anahtar;
+            return (
+              <button key={s.anahtar || "yok"} type="button" disabled={bekliyor} onClick={() => basla(() => sinifDegistir(is.id, s.anahtar).then(yenile))} className="rounded-full border px-3 py-1 text-[13px] font-medium" style={secili ? { background: s.renk, borderColor: s.renk, color: "#10161c" } : { borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.65)" }}>
+                {s.ad}
+              </button>
+            );
+          })}
         </div>
 
         <span className={etiket}>Zaman baskısı</span>
