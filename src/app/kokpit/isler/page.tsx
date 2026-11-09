@@ -9,6 +9,7 @@ import { YanPanel } from "./yan-panel";
 import { OdakKutusu } from "./odak-kutusu";
 import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
 import { sistemYoneticisiMi } from "@/core/auth/yetki";
+import type { Oge, OgeDurumu, OgeTuru, Tekrar, TakvimKodu } from "../takvim/tipler";
 
 export default async function IslerSayfasi({ searchParams }: { searchParams: Promise<{ kimin?: string; kisi?: string; is?: string }> }) {
   const { kimin, kisi, is: seciliId } = await searchParams;
@@ -54,6 +55,37 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
   const eksiErtelenen = eksiIsleri.length - eksiUyarilari.length;
   // Soldaki panelde secili kisi ("buro" ya da kisi id'si); yoksa kullanicinin kendisi.
   const secili = kisi && (kisi === "buro" || kisiler.some((x) => x.id === kisi)) ? kisi : kimin === "buro" ? "buro" : (k?.kullaniciId ?? "buro");
+  // Kisiye ozel takvim: kisiye atanmis (ya da kisinin olusturup kimseye atamadigi) buro takvimi ogeleri.
+  const takvimKayitlari = await prisma.takvimOgesi.findMany({
+    where: { OR: [{ sorumluId: { not: null } }, { olusturanId: k?.kullaniciId ?? "-" }] },
+    orderBy: { tarih: "asc" },
+    take: 800,
+  });
+  const gunDizesi = (d: Date) => d.toISOString().slice(0, 10);
+  const takvimOgeleri: (Oge & { sahipId: string })[] = takvimKayitlari.map((t) => ({
+    id: t.id,
+    sahipId: t.sorumluId ?? t.olusturanId ?? "",
+    baslik: t.baslik,
+    tur: t.tur as OgeTuru,
+    takvim: (t.takvim as TakvimKodu) ?? "IS",
+    tarih: gunDizesi(t.tarih),
+    saat: t.saat,
+    bitisTarihi: t.bitisTarihi ? gunDizesi(t.bitisTarihi) : null,
+    bitisSaati: t.bitisSaati,
+    yer: t.yer,
+    meet: t.meetBaglantisi,
+    sorumluId: t.sorumluId,
+    etiketler: t.etiketler,
+    durum: t.durum as OgeDurumu,
+    tamam: t.tamamlandiMi,
+    icerik: "",
+    tekrar: (t.tekrar as Tekrar | null) ?? null,
+    tekrarBitis: t.tekrarBitis ? gunDizesi(t.tekrarBitis) : null,
+    sira: t.sira,
+    dosya: null,
+    dosyaEtiketi: null,
+    turetilmis: null,
+  }));
   const kapatHref = `/kokpit/isler?kisi=${secili}`;
 
   return (
@@ -79,6 +111,7 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
         kisiler={kisiler}
         yargiTurleri={yargiTurleri}
         bugun={bugun}
+        takvimOgeleri={takvimOgeleri}
         smmUyarilari={smmUyarilari}
         eksiUyarilari={eksiUyarilari}
         eksiErtelenen={eksiErtelenen}

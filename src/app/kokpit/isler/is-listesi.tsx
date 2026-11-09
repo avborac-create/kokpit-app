@@ -7,6 +7,8 @@ import { durumDegistir, eksiBakiyeErtele, eksiBakiyeIstendi, isEkle, operasyonYa
 import { DURUMLAR, SINIFLAR, TURLER, durumBilgisi, sinifBilgisi, turBilgisi, zamanBaskisiBilgisi } from "./durum";
 import { periyotBilgisi } from "./hafta";
 import { OdakDugmesi } from "./odak-dugmesi";
+import { TakvimGorunumu } from "./takvim-gorunumu";
+import type { Oge } from "../takvim/tipler";
 
 type Is = {
   id: string;
@@ -38,6 +40,7 @@ const alan = "alan-bmw [color-scheme:dark]";
 const GORUNUMLER = [
   { k: "liste", ad: "Liste" },
   { k: "pano", ad: "Kanban" },
+  { k: "takvim", ad: "Takvim" },
 ] as const;
 type Gorunum = (typeof GORUNUMLER)[number]["k"];
 
@@ -192,7 +195,7 @@ function EksiBakiyeUyarilari({ uyarilar, ertelenen, bugun }: { uyarilar: { id: s
   );
 }
 
-export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bugun, seciliId, smmUyarilari = [], eksiUyarilari = [], eksiErtelenen = 0 }: { odakIdleri?: string[]; smmUyarilari?: { id: string; baslik: string; dosyaId: string }[]; eksiUyarilari?: { id: string; baslik: string; dosyaId: string }[]; eksiErtelenen?: number; isler: Is[]; kisiler: { id: string; adSoyad: string }[]; yargiTurleri?: { id: string; ad: string }[]; benimId: string; secili: string; bugun: string; seciliId?: string }) {
+export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bugun, seciliId, takvimOgeleri = [], smmUyarilari = [], eksiUyarilari = [], eksiErtelenen = 0 }: { odakIdleri?: string[]; takvimOgeleri?: (Oge & { sahipId: string })[]; smmUyarilari?: { id: string; baslik: string; dosyaId: string }[]; eksiUyarilari?: { id: string; baslik: string; dosyaId: string }[]; eksiErtelenen?: number; isler: Is[]; kisiler: { id: string; adSoyad: string }[]; yargiTurleri?: { id: string; ad: string }[]; benimId: string; secili: string; bugun: string; seciliId?: string }) {
   const yonlendirici = useRouter();
   const kayitliGorunum = useSyncExternalStore(gorunumAbone, gorunumOku, () => null);
   const gorunum: Gorunum = GORUNUMLER.some((g) => g.k === kayitliGorunum) ? (kayitliGorunum as Gorunum) : "liste";
@@ -228,10 +231,10 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
     .filter((i) => i.tur === "OPERASYONEL" || tamamlananlar || i.durum !== "TAMAMLANDI")
     .sort(sonGunSirasi);
 
-  function ekle() {
+  function ekle(vade = "", metin = baslik) {
     setHata("");
     basla(async () => {
-      const s = await isEkle(baslik, tumBuro ? sorumlu : secili, "", "", "", "", yeniSinif);
+      const s = await isEkle(metin, tumBuro ? sorumlu : secili, "", "", "", vade, yeniSinif);
       if (s.hata) setHata(s.hata);
       else if (s.id) {
         setBaslik("");
@@ -438,7 +441,7 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
               ))}
             </select>
           )}
-          <button type="button" onClick={ekle} disabled={bekliyor || !baslik.trim()} className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+          <button type="button" onClick={() => ekle()} disabled={bekliyor || !baslik.trim()} className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
             {(tumBuro ? sorumlu !== benimId : !bensem) ? "Ata" : "Ekle"}
           </button>
         </div>
@@ -455,7 +458,24 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
           ))}
         </div>
       )}
-      {(gorunum === "liste" || gruplama !== "durum") && filtreSatirlari}
+      {(gorunum === "liste" || gorunum === "takvim" || gruplama !== "durum") && filtreSatirlari}
+
+      {gorunum === "takvim" && (
+        <TakvimGorunumu
+          gorevler={turdeki.filter((i) => i.tur !== "OPERASYONEL" && (tamamlananlar || i.durum !== "TAMAMLANDI" || !!i.vade)).map((i) => ({ id: i.id, baslik: i.baslik, durum: i.durum, vade: i.vade, sorumluAd: i.sorumluAd, sinif: i.sinif }))}
+          ogeler={takvimOgeleri.filter((o) => tumBuro || o.sahipId === secili)}
+          bugun={bugun}
+          gorevHref={gorevHref}
+          seciliId={seciliId}
+          ekle={(b, g) => ekle(g, b)}
+          bekliyor={bekliyor}
+        />
+      )}
+      {gorunum === "takvim" && (
+        <p className="text-xs text-white/45">
+          Takvimde duruşma, toplantı gibi kayıtlar kişiye atanmışsa burada da görünür; yeni takvim kaydı girmek için <Link href="/kokpit/takvim" className="text-[#8fd8ff] hover:underline">Büro Takvimi</Link> sayfasını kullanın.
+        </p>
+      )}
 
       {gorunum === "liste" && (
         <ul className="flex flex-col gap-2">
