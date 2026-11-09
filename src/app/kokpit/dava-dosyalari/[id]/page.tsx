@@ -54,6 +54,18 @@ function Bilgi({ baslik, children }: { baslik: string; children: React.ReactNode
 // Birden fazla kisi/kurum varsa alt alta, sira numarali; tek ise duz metin;
 // hic yoksa "—". Taraflar kartinda kullanilir.
 // Tek taraf ise duz ad, birden fazlaysa "1. A  2. B" numarali satirlar.
+// Sıra numarası: yanındaki tutar/ad ile karışmasın diye yuvarlak rozet.
+function SiraRozeti({ no }: { no: number }) {
+  return (
+    <span
+      aria-label={`${no}. sıra`}
+      className="mr-1.5 inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full border border-[var(--accent)]/40 bg-[var(--accent-soft)] px-1 align-middle text-[11px] font-bold leading-none text-[#8fb4e8]"
+    >
+      {no}
+    </span>
+  );
+}
+
 function NumaraliAdlar({ adlar }: { adlar: string[] }) {
   if (adlar.length === 0) return <>—</>;
   if (adlar.length === 1) return <>{adlar[0]}</>;
@@ -61,7 +73,7 @@ function NumaraliAdlar({ adlar }: { adlar: string[] }) {
     <>
       {adlar.map((ad, i) => (
         <span key={i} className="mr-3 inline-block">
-          <span className="text-white/45">{i + 1}.</span> {ad}
+          <SiraRozeti no={i + 1} />{ad}
         </span>
       ))}
     </>
@@ -74,7 +86,7 @@ function MuvekkilAdlari({ muvekkiller }: { muvekkiller: { id: string; ad: string
     <>
       {muvekkiller.map((m, i) => (
         <span key={m.id} className="mr-3 inline-block">
-          {muvekkiller.length > 1 && <span className="text-white/45">{i + 1}. </span>}
+          {muvekkiller.length > 1 && <SiraRozeti no={i + 1} />}
           <Link href={`/kokpit/musteriler/${m.id}`} className="hover:text-[#6db8ff] hover:underline">
             {m.ad}
           </Link>
@@ -88,9 +100,12 @@ function SiraliListe({ children }: { children: React.ReactNode[] }) {
   if (children.length === 0) return <>—</>;
   if (children.length === 1) return <>{children[0]}</>;
   return (
-    <ol className="list-decimal space-y-0.5 pl-5">
+    <ol className="m-0 list-none space-y-1 p-0">
       {children.map((c, i) => (
-        <li key={i}>{c}</li>
+        <li key={i} className="flex items-start gap-2">
+          <SiraRozeti no={i + 1} />
+          <span className="min-w-0 break-words">{c}</span>
+        </li>
       ))}
     </ol>
   );
@@ -359,9 +374,12 @@ export default async function DavaDosyasiDetaySayfasi({
       deger: dosya.talepSonucu ?? "",
       gosterim: dosya.talepSonucu ? (
         <>
-        <ol className="list-decimal space-y-0.5 pl-4">
+        <ol className="m-0 list-none space-y-1 p-0">
           {dosya.talepSonucu.split("\n").map((madde, i) => (
-            <li key={i}>{madde}</li>
+            <li key={i} className="flex items-start gap-2">
+              <SiraRozeti no={i + 1} />
+              <span className="min-w-0 break-words">{madde}</span>
+            </li>
           ))}
         </ol>
         {davaDegeri > 0 && (
