@@ -53,6 +53,7 @@ enum KullaniciRolu {
 // ileride modul ve dosya ici menu erisimini bu role gore kisitlamak icin.
 enum BuroRolu {
   AVUKAT
+  STAJYER_AVUKAT
   YONETICI
   PERSONEL
 

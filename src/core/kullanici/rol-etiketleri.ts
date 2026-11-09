@@ -21,11 +21,12 @@ export function uygulamaRoluDbDegeri(rol: UygulamaRolu): KullaniciRolu {
 
 export const BURO_ROLU_ETIKETLERI: Record<BuroRolu, string> = {
   AVUKAT: "Avukat",
+  STAJYER_AVUKAT: "Stajyer Avukat",
   YONETICI: "Yönetici",
   PERSONEL: "Personel",
 };
 
-export const BURO_ROLLERI: BuroRolu[] = ["AVUKAT", "YONETICI", "PERSONEL"];
+export const BURO_ROLLERI: BuroRolu[] = ["AVUKAT", "STAJYER_AVUKAT", "YONETICI", "PERSONEL"];
 
 export function buroRoluGecerliMi(deger: string): deger is BuroRolu {
   return (BURO_ROLLERI as string[]).includes(deger);
