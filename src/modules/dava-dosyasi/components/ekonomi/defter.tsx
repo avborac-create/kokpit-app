@@ -75,11 +75,14 @@ export function Defter({
   yontemler,
   kompakt = false,
   baslik,
+  virman,
 }: {
   // Ozet icinde alt veri gorunumu: kutusuz, kucuk punto, dar satir
   kompakt?: boolean;
   // Hangi hesabin / akisin hareketlerinin listelendigini gosteren baslik
   baslik?: string;
+  // Para Trafigi satirinin Duzenle penceresinden virman yapabilmek icin
+  virman?: { eylem: (formData: FormData) => void | Promise<void>; hedefler: { id: string; etiket: string }[]; kapsamDosyaId: string };
   yontemler?: { id: string; etiket: string }[];
   satirlar: DefterSatiri[];
   paraHesabiMi: boolean;
@@ -125,7 +128,7 @@ export function Defter({
   const islemler = (s: Satir) => {
     const duzenleBolumu =
       s.duzenle && (s.duzenle.tip === "hareket" || silmeYetkisiVar) ? (
-        <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} />
+        <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} virman={paraHesabiMi ? virman : undefined} satirDosyaId={s.dosyaId ?? undefined} />
       ) : (
         s.duzenleHref && (
           <Link href={s.duzenleHref} className="text-xs text-[#6db8ff] hover:underline">
@@ -345,7 +348,7 @@ export function Defter({
                 <td className="hidden px-4 py-3 md:table-cell">
                   <div className={`flex items-center justify-end gap-2 ${kompakt ? "[&_button]:!px-2 [&_button]:!py-0.5 [&_button]:!text-[11px]" : ""}`}>
                     {s.duzenle && (s.duzenle.tip === "hareket" || silmeYetkisiVar) ? (
-                      <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} />
+                      <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} virman={paraHesabiMi ? virman : undefined} satirDosyaId={s.dosyaId ?? undefined} />
                     ) : (
                       s.duzenleHref && (
                         <Link href={s.duzenleHref} className="text-xs text-[#6db8ff] hover:underline">

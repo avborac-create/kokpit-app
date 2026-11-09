@@ -882,6 +882,7 @@ async function HesapSekmesi({
         yontemler={yontemler}
         kompakt={Boolean(cariSayfaHref)}
         baslik={`${hesap.no} - ${hesap.ad} · Hareketler`}
+        virman={{ eylem: (karsiPara ? karsiVirmanYap : virmanYap).bind(null, kapsam.musteriId, kapsamDosyaId), hedefler, kapsamDosyaId }}
         bosMesaj={`${hesap.no} - ${hesap.ad} hesabında henüz hareket yok.`}
       />
 
