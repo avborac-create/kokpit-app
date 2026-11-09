@@ -429,13 +429,18 @@ export default async function DavaDosyasiDetaySayfasi({
                   <Link
                     key={alt.id}
                     href={`/kokpit/dava-dosyalari/${alt.id}`}
-                    className="glass rounded-xl px-3 py-2 text-sm text-white/85 hover:bg-white/[0.06] hover:text-[#6db8ff]"
+                    className="glass block rounded-xl px-3 py-2 text-white/85 hover:bg-white/[0.06] hover:text-[#6db8ff]"
                   >
-                    <span className="text-white/55">└ {kokpitNoGoster({ ...alt, anaDosya: dosya })}</span>
-                    {alt.dosyaNo ? ` · ${alt.dosyaNo}` : ""} — {alt.konu}
-                    <span className="ml-2 text-xs text-white/45">
-                      {alt.tur?.etiket ? `${alt.tur.etiket} · ` : ""}
-                      {alt.durum.etiket}
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                      <span className="rounded-md bg-[var(--accent-soft)] px-1.5 py-0.5 text-xs font-bold tracking-wide text-[#8fb4e8]">
+                        {kokpitNoGoster({ ...alt, anaDosya: dosya })}
+                      </span>
+                      <span className="text-sm font-semibold text-white">{alt.dosyaNo ?? "—"}</span>
+                      <span className="ml-auto rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] font-medium text-white/70">{alt.durum.etiket}</span>
+                    </span>
+                    {alt.birimAdi && <span className="mt-0.5 block text-sm text-white/75">{alt.birimAdi}</span>}
+                    <span className="block text-xs text-white/45">
+                      {[alt.tur?.etiket, alt.konu].filter(Boolean).join(" · ")}
                     </span>
                   </Link>
                 ))}
