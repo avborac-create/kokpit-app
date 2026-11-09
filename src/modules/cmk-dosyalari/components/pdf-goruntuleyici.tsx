@@ -11,11 +11,16 @@ type Mod = "genislik" | "sayfa";
 // "Genisligine sigdir" / "Sayfaya sigdir" / +/- yakinlastirma ile gosterilir.
 export function PdfGoruntuleyici({ yol, ad }: { yol: string; ad: string }) {
   const kap = useRef<HTMLDivElement>(null);
+  const ic = useRef<HTMLDivElement>(null);
+  const carpanRef = useRef(1);
   const [belge, setBelge] = useState<PDFDocumentProxy | null>(null);
   const [hata, setHata] = useState("");
   const [mod, setMod] = useState<Mod>("genislik");
   const [carpan, setCarpan] = useState(1);
   const [boyut, setBoyut] = useState({ g: 0, y: 0 });
+  useEffect(() => {
+    carpanRef.current = carpan;
+  }, [carpan]);
 
   useEffect(() => {
     let iptal = false;
@@ -54,6 +59,51 @@ export function PdfGoruntuleyici({ yol, ad }: { yol: string; ad: string }) {
     return () => g.disconnect();
   }, []);
 
+  // İki parmakla yakınlaştırma yalnız evrakı büyütür; sayfa/üst düğmeler büyümez.
+  // Hareket sırasında hafif CSS ölçeklemesi, parmaklar kalkınca gerçek (keskin) yeniden çizim.
+  useEffect(() => {
+    const el = kap.current;
+    if (!el) return;
+    let d0 = 0;
+    let k = 1;
+    const mesafe = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const basla = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        d0 = mesafe(e.touches);
+        k = 1;
+      }
+    };
+    const hareket = (e: TouchEvent) => {
+      if (e.touches.length !== 2 || d0 <= 0) return;
+      e.preventDefault();
+      const mevcut = carpanRef.current;
+      const hedef = Math.min(4, Math.max(0.3, (mevcut * mesafe(e.touches)) / d0));
+      k = hedef / mevcut;
+      if (ic.current) {
+        ic.current.style.transformOrigin = "0 0";
+        ic.current.style.transform = `scale(${k})`;
+      }
+    };
+    const bitir = (e: TouchEvent) => {
+      if (d0 > 0 && e.touches.length < 2) {
+        d0 = 0;
+        if (ic.current) ic.current.style.transform = "";
+        if (k !== 1) setCarpan(Math.round(carpanRef.current * k * 100) / 100);
+        k = 1;
+      }
+    };
+    el.addEventListener("touchstart", basla, { passive: true });
+    el.addEventListener("touchmove", hareket, { passive: false });
+    el.addEventListener("touchend", bitir);
+    el.addEventListener("touchcancel", bitir);
+    return () => {
+      el.removeEventListener("touchstart", basla);
+      el.removeEventListener("touchmove", hareket);
+      el.removeEventListener("touchend", bitir);
+      el.removeEventListener("touchcancel", bitir);
+    };
+  }, []);
+
   function modSec(m: Mod) {
     setMod(m);
     setCarpan(1);
@@ -81,13 +131,15 @@ export function PdfGoruntuleyici({ yol, ad }: { yol: string; ad: string }) {
         </Dugme>
         {belge && <span className="ml-auto text-xs text-white/45">{belge.numPages} sayfa</span>}
       </div>
-      <div ref={kap} className="max-h-[72vh] space-y-3 overflow-auto rounded-xl bg-[#e9ebf0] p-2">
-        {!belge && <p className="py-24 text-center text-sm text-[#555]">Sayfalar hazırlanıyor…</p>}
-        {belge &&
-          boyut.g > 0 &&
-          Array.from({ length: belge.numPages }, (_, i) => i + 1).map((no) => (
-            <PdfSayfasi key={`${yol}-${no}`} belge={belge} no={no} ad={ad} mod={mod} carpan={carpan} genislik={boyut.g} yukseklik={boyut.y} />
-          ))}
+      <div ref={kap} style={{ touchAction: "pan-x pan-y" }} className="max-h-[72vh] overflow-auto overscroll-contain rounded-xl bg-[#e9ebf0] p-2">
+        <div ref={ic} className="w-max min-w-full space-y-3">
+          {!belge && <p className="py-24 text-center text-sm text-[#555]">Sayfalar hazırlanıyor…</p>}
+          {belge &&
+            boyut.g > 0 &&
+            Array.from({ length: belge.numPages }, (_, i) => i + 1).map((no) => (
+              <PdfSayfasi key={`${yol}-${no}`} belge={belge} no={no} ad={ad} mod={mod} carpan={carpan} genislik={boyut.g} yukseklik={boyut.y} />
+            ))}
+        </div>
       </div>
     </div>
   );
