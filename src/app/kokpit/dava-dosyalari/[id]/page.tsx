@@ -125,13 +125,14 @@ export default async function DavaDosyasiDetaySayfasi({
     const gun = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
     tebligatKayitlari = t.map((x) => ({ id: x.id, yon: x.yon, baslik: x.baslik, muhatap: x.muhatap, yol: x.yol, barkod: x.barkod, gonderimTarihi: gun(x.gonderimTarihi), tebligTarihi: gun(x.tebligTarihi), durum: x.durum, sureGun: x.sureGun, sonTarih: gun(x.sonTarih), gorevId: x.gorevId, not: x.not }));
   }
-  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri, vekilAdaylari, calisilanAvukatlar, birimKatalogu] = await Promise.all([
+  const [dosya, kullanici, anaDosyaAdaylari, etiketler, dosyaTurleri, yargiKollari, durumKodlari, uyusmazlikTurleri, hukukDallari, muvekkilSifatlari, davaTurleri, vekilAdaylari, calisilanAvukatlar, birimKatalogu] = await Promise.all([
     davaDosyasiGetir(id),
     mevcutKullanici(),
     anaDosyaAdaylariniGetir(id),
     etiketleriGetir(),
     secenekleriGetir("dosya_turu"),
     secenekleriGetir("yargi_kolu"),
+    secenekleriGetir("dosya_durum_kodu"),
     secenekleriGetir("hukuki_iliski_turu"),
     secenekleriGetir("hukuk_dali"),
     secenekleriGetir("muvekkil_sifati"),
@@ -271,6 +272,14 @@ export default async function DavaDosyasiDetaySayfasi({
           },
         ]
       : []),
+    {
+      anahtar: "durumKoduId",
+      varsayilanEtiket: "Dosya Durum Kodu",
+      tip: "secim",
+      deger: dosya.durumKoduId ?? "",
+      gosterim: dosya.durumKodu?.etiket ?? "—",
+      secenekler: bosSecenekli(durumKodlari, "Seçiniz…"),
+    },
     {
       anahtar: "birimAdi",
       varsayilanEtiket: "Birim",

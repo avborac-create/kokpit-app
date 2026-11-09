@@ -183,6 +183,18 @@ const SECENEK_LISTELERI: {
     ],
   },
   {
+    anahtar: "dosya_durum_kodu",
+    ad: "Dosya Durum Kodu",
+    degerler: [
+      { kod: "derdest", etiket: "Derdest" },
+      { kod: "karara_cikmis", etiket: "Karara Çıkmış" },
+      { kod: "istinafta", etiket: "İstinafta" },
+      { kod: "yargitayda", etiket: "Yargıtay'da" },
+      { kod: "kesinlesme_serhi", etiket: "Kesinleşme Şerhi" },
+      { kod: "yargilamanin_yenilenmesi", etiket: "Yargılamanın Yenilenmesi" },
+    ],
+  },
+  {
     anahtar: "yargi_kolu",
     ad: "Yargı Kolu",
     degerler: [

@@ -27,6 +27,7 @@ const KULLANIM_YERI: Record<string, string> = {
   dosya_turu: "Dosya formu: dosya türü",
   gelistirme_talebi_durumu: "Geliştirme Kutusu: talep durumu",
   hukuk_dali: "Dosya formu: hukuk dalı",
+  dosya_durum_kodu: "Dosya kartı künyesi: dosya durum kodu (Derdest, İstinafta…)",
   hukuki_iliski_turu: "Dosya formu: uyuşmazlık türü",
   hukuki_mudahale_onceligi: "Avukat Şapkası ekranı: müdahale önceliği",
   kaynak: "Eski para trafiği formu: kayıt kaynağı",

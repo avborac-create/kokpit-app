@@ -150,6 +150,7 @@ model SecenekDegeri {
   davaDosyalariTuru             DavaDosyasi[]         @relation("DavaDosyasiTuru")
   davaDosyalariIcraAltTuru      DavaDosyasi[]         @relation("DavaDosyasiIcraAltTuru")
   davaDosyalariYargiKolu        DavaDosyasi[]         @relation("DavaDosyasiYargiKolu")
+  davaDosyalariDurumKodu        DavaDosyasi[]         @relation("DavaDosyasiDurumKodu")
   davaDosyalariHukukiIliskiTuru DavaDosyasi[]         @relation("DavaDosyasiHukukiIliskiTuru")
   davaDosyalariDavaTuru         DavaDosyasi[]         @relation("DavaDosyasiDavaTuru")
   davaDosyalariMuvekkilSifati   DavaDosyasi[]         @relation("DavaDosyasiMuvekkilSifati")
@@ -528,6 +529,11 @@ model DavaDosyasi {
   // tasir. Icra/ihtar gibi mahkeme disi dosyalarda anlamsizdir, bos kalir.
   yargiKoluId          String?
   yargiKolu            SecenekDegeri?   @relation("DavaDosyasiYargiKolu", fields: [yargiKoluId], references: [id])
+  // Kunyedeki "Dosya Durum Kodu" (Derdest, Istinafta, Kesinlesme Serhi...):
+  // duzenlenebilir secenek listesi ("dosya_durum_kodu"). Avukat Sapkasi'nin
+  // dosyaEvresi alanindan BAGIMSIZ - otomasyon tetiklemez, yalniz gosterim.
+  durumKoduId          String?
+  durumKodu            SecenekDegeri?   @relation("DavaDosyasiDurumKodu", fields: [durumKoduId], references: [id])
   // Alacagin/uyusmazligin dayandigi temel hukuki iliski: cek, senet, TTOK,
   // is hukuku uyusmazligi vb. Dosya Turu'nden (ihtar/icra/dava - hangi
   // ASAMADAYIZ) farkli bir boyut: bu "hangi hukuki ARACA dayaniyor" sorusuna
@@ -641,6 +647,7 @@ model DavaDosyasi {
   @@index([turId])
   @@index([icraAltTuruId])
   @@index([yargiKoluId])
+  @@index([durumKoduId])
   @@index([hukukiIliskiTuruId])
   @@index([muvekkilSifatiId])
   @@index([davaTuruId])

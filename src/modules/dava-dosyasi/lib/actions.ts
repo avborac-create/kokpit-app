@@ -654,7 +654,7 @@ export async function davaDosyalariTopluSorumlu(idler: string[], avukatId: strin
 // Dava degilse yargi kolu temizlenir, Dava Turu degisince Konu (baslik)
 // yeniden uretilir (bkz. davaDosyasiGuncelle ile ayni kural).
 const DETAY_DUZENLENEBILIR_ALANLAR = [
-  "turId", "yargiKoluId", "muvekkilSifatiId", "hukukiIliskiTuruId", "davaTuruId",
+  "turId", "yargiKoluId", "durumKoduId", "muvekkilSifatiId", "hukukiIliskiTuruId", "davaTuruId",
   "birimAdi", "davaKonusu", "buroNo", "dosyaNo", "talepSonucu", "durusmaTarihi",
 ];
 

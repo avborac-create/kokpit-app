@@ -90,6 +90,7 @@ export async function davaDosyasiGetir(id: string) {
       tur: true,
       icraAltTuru: true,
       yargiKolu: true,
+      durumKodu: true,
       hukukiIliskiTuru: true,
       davaTuru: true,
       muvekkilSifatiDegeri: true,
