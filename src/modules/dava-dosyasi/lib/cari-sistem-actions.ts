@@ -187,6 +187,9 @@ async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: Fo
   const not = metin(formData, "aciklama");
   const acik = (oto: string) => (not ? `${oto} — ${not}` : oto);
   // Dagitim sirasinda hedef hesabi ayni anda borclandirma (istege bagli): virmandan AYRI bir BORC kaydi yazilir.
+  // Kullanici borclandirma aciklamasini ayri yazdiysa o kullanilir (bos birakilirsa yalniz "BORÇLANDIRMA").
+  const borcAciklamaVar = formData.has("borcAciklama");
+  const borcAciklama = metin(formData, "borcAciklama");
   const borcHam = metin(formData, "borcTutari");
   const borcTutari = borcHam ? Math.round(Number(borcHam.replace(",", ".")) * 100) / 100 : 0;
   if (borcHam && (!Number.isFinite(borcTutari) || borcTutari <= 0)) throw new Error("Borçlandırma tutarı sıfırdan büyük bir sayı olmalıdır.");
@@ -201,7 +204,7 @@ async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: Fo
     const borcYaz = async () => {
       if (borcTutari > 0) {
         await tx.cariHareketi.create({
-          data: { musteriId, dosyaId, hesapId: hedef.id, yon: "BORC", tarih, tutar: borcTutari, aciklama: acik("BORÇLANDIRMA") },
+          data: { musteriId, dosyaId, hesapId: hedef.id, yon: "BORC", tarih, tutar: borcTutari, aciklama: borcAciklamaVar ? (borcAciklama ? `BORÇLANDIRMA — ${borcAciklama}` : "BORÇLANDIRMA") : acik("BORÇLANDIRMA") },
         });
       }
     };
