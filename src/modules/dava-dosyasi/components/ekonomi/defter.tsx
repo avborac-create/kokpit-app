@@ -151,7 +151,7 @@ export function Defter({
     if (!duzenleBolumu && !silBolumu && !tahsilBolumu) return null;
     // Düzenle / Sil her zaman görünür (gizli menü yok); dar ekranda alt satıra sarar.
     return (
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 [&_button]:rounded-md [&_button]:border [&_button]:border-white/20 [&_button]:px-2.5 [&_button]:py-1 [&_button]:text-xs [&_a]:rounded-md [&_a]:border [&_a]:border-white/20 [&_a]:px-2.5 [&_a]:py-1">
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 [&_button]:rounded-md [&_button]:border [&_button]:border-white/20 [&_button]:px-2.5 [&_button]:py-1 [&_button]:text-xs max-md:[&_button]:min-h-9 max-md:[&_button]:px-3.5 [&_a]:rounded-md [&_a]:border [&_a]:border-white/20 [&_a]:px-2.5 [&_a]:py-1 max-md:[&_a]:min-h-9 max-md:[&_a]:px-3.5">
         {tahsilBolumu}
         {duzenleBolumu}
         {silBolumu}
@@ -192,7 +192,7 @@ export function Defter({
     else aylar.push({ baslik: b, satirlar: [s] });
   }
   const akis = (
-    <div className={kompakt ? "" : "glass rounded-2xl p-3"}>
+    <div className={kompakt ? "" : "glass rounded-2xl p-2 sm:p-3"}>
       {aylar.map((a) => (
         <div key={a.baslik} className="mb-2">
           <p className="mx-1 mb-1 mt-2 text-[11px] font-semibold uppercase tracking-wider text-white/45">{a.baslik}</p>
@@ -294,7 +294,7 @@ export function Defter({
               <th className={`dar py-3 text-right font-medium text-white/50 ${kompakt ? "w-5 px-1 text-[11px]" : "w-10 px-2"}`}>{kompakt ? "#" : "Sıra"}</th>
               <th className="hidden px-4 py-3 font-medium md:table-cell">Tarih</th>
               {dosyaSutunu && <th className="px-4 py-3 font-medium">Dosya</th>}
-              <th className="px-4 py-3 font-medium">Açıklama</th>
+              <th className="px-2 py-3 font-medium md:px-4">Açıklama</th>
               <th className="hidden px-4 py-3 text-right font-medium text-[#ff7a70]/85 md:table-cell">Borç</th>
               <th className="hidden px-4 py-3 text-right font-medium text-[#32d74b]/85 md:table-cell">Alacak</th>
               <th className="px-2 py-3 text-right font-medium md:hidden">Tutar</th>
@@ -330,7 +330,7 @@ export function Defter({
                     )}
                   </td>
                 )}
-                <td className={`px-4 py-3 text-white/85 ${kompakt ? "md:min-w-[12rem]" : ""}`}>
+                <td className={`px-2 py-3 text-white/85 md:px-4 ${kompakt ? "md:min-w-[12rem]" : ""}`}>
                   <span className="whitespace-pre-line">{s.aciklama}</span>
                   {s.borcludan && (
                     <span className="ml-2 whitespace-nowrap rounded-full bg-[#ffb340]/15 px-2 py-0.5 text-[11px] text-[#ffb340]">

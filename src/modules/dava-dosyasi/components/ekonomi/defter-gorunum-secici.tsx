@@ -21,13 +21,20 @@ function abone(f: () => void) {
     window.removeEventListener("storage", f);
   };
 }
+// Varsayilan gorunum: genis ekranda Tablo, telefonda Akis (kart); kullanici secim yaptiysa o hatirlanir.
+function varsayilan(): Gorunum {
+  try {
+    return window.matchMedia("(max-width: 767px)").matches ? "akis" : "tablo";
+  } catch {
+    return "tablo";
+  }
+}
 function oku(): Gorunum {
   try {
     const k = localStorage.getItem(ANAHTAR);
-    // Varsayilan gorunum: Tablo (kullanici baska bir gorunum sectiyse o hatirlanir)
-    return k === "gosterge" || k === "akis" ? k : "tablo";
+    return k === "gosterge" || k === "akis" || k === "tablo" ? k : varsayilan();
   } catch {
-    return "tablo";
+    return varsayilan();
   }
 }
 

@@ -294,7 +294,7 @@ export async function EkonomiPaneli({
   const seritOdenen = seritHesaplari.reduce((t, h) => t + h.alacak, 0);
 
   return (
-    <div className="max-w-5xl rounded-2xl border border-white/10 bg-white/[0.02] p-4 md:p-5">
+    <div className="max-w-5xl rounded-2xl border border-white/10 bg-white/[0.02] p-3 md:p-5">
       {vekaletUyarilari.map((h) => (
         <div key={h.hesapId} className="mb-3 rounded-xl border-l-4 border-[#f2b04c] bg-[#f2b04c]/15 px-4 py-3 text-sm text-[#f3d9a8]">
           <b>⚠ {h.no} - {h.ad}: borç kaydı eksik.</b>{" "}
@@ -344,10 +344,10 @@ export async function EkonomiPaneli({
             >
               ‹ Müvekkil Ekonomisi (tüm dosyalar)
             </Link>
-            <h2 className="text-lg font-semibold tracking-tight text-white">
+            <h2 className="text-base font-semibold tracking-tight text-white md:text-lg">
               Dosya Ekonomisi{buDosya ? ` — ${buDosya.etiket}` : ""}
             </h2>
-            <p className="text-xs text-white/45">
+            <p className="text-xs text-white/45 max-md:hidden">
               {buDosya?.ayrinti ? `${buDosya.ayrinti}. ` : ""}Burada yalnızca bu dosyanın kayıtları görünür; girdiğiniz her kayıt müvekkilin toplamına da otomatik yansır.
             </p>
           </>
@@ -369,7 +369,7 @@ export async function EkonomiPaneli({
         )}
       </div>
 
-      <nav aria-label="Ekonomi bölümleri" className="mb-4 flex gap-5 overflow-x-auto border-b border-white/[0.1]">
+      <nav aria-label="Ekonomi bölümleri" className="mb-4 flex gap-4 overflow-x-auto border-b border-white/[0.1] [scrollbar-width:none] md:gap-5 [&::-webkit-scrollbar]:hidden">
         {altMenu.map((m) => (
           <Link
             key={m.anahtar}
