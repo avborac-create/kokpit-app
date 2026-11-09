@@ -57,7 +57,8 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
   const kapatHref = `/kokpit/isler?kisi=${secili}`;
 
   return (
-    <div className={`max-w-7xl pt-3 ${detay ? "xl:pr-[var(--yan-panel-w,500px)]" : ""}`}>
+    <div className={detay ? "xl:pr-[var(--yan-panel-w,500px)]" : ""}>
+    <div className="max-w-7xl pt-3">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-white">Görevler</h1>
         {k && sistemYoneticisiMi(k.rol) && (
@@ -140,6 +141,7 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
           </YanPanel>
         </>
       )}
+    </div>
     </div>
   );
 }
