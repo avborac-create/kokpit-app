@@ -78,6 +78,11 @@ async function formVerisiniHazirla(formData: FormData): Promise<CMKAlanlari> {
     if (!telefon) telefon = musteri.telefon;
   }
 
+  // CMK dosyası olabilmesi için CMK'dan (baro) atandığı açıkça onaylanmalıdır; atanmamış dosyalar Dava Dosyaları'na girilir.
+  if (formData.get("cmkGorevlendirmeVarMi") !== "on") {
+    throw new Error("CMK dosyası olabilmesi için dosyanın CMK'dan atandığını onaylamalısınız. CMK'dan atanmadıysa dosyayı Dava Dosyaları'ndan açın.");
+  }
+
   return {
     musteriId,
     adSoyad: adSoyad!,

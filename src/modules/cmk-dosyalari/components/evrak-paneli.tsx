@@ -19,7 +19,7 @@ export type EvrakKaydi = {
 };
 
 const CMK_KLASORLERI = ["İddianame", "Duruşma Zabıtları", "İfadeler", "Tutanaklar", "Şikayet", "Dilekçeler", "Mahkeme Evrakları", "Kurum Cevapları", "Tebligatlar", "Hazırlanan Dilekçeler"];
-const DAVA_KLASORLERI = ["Dilekçeler", "Cevap ve Savunma", "Delil ve Bilirkişi", "Tutanaklar", "Ara Kararlar", "Karar", "Vekâletname", "Hazırlanan Dilekçeler"];
+const DAVA_KLASORLERI = ["Dilekçeler", "Cevap ve Savunma", "Delil ve Bilirkişi", "Tutanaklar", "Ara Kararlar", "Karar", "Vekâletname", "Mahkeme Evrakları", "Kurum Cevapları", "Tebligatlar", "Hazırlanan Dilekçeler"];
 const HEDEF_KLASORLERI = { cmk: CMK_KLASORLERI, dava: DAVA_KLASORLERI };
 
 // "Ek 1: ...", "Ek-2", "Ek evrak" gibi adlar ana evraka ek olan belgelerdir.

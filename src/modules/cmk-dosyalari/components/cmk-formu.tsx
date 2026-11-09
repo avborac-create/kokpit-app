@@ -74,10 +74,11 @@ export function CMKFormu({
           <input
             type="checkbox"
             name="cmkGorevlendirmeVarMi"
-            defaultChecked={dosya?.cmkGorevlendirmeVarMi ?? true}
+            required
+            defaultChecked={dosya?.cmkGorevlendirmeVarMi ?? false}
             className="h-4 w-4 rounded [accent-color:var(--accent)]"
           />
-          CMK görevlendirmesi var
+          Bu dosya CMK&apos;dan (baro) atanmıştır — onaylıyorum (zorunlu)
         </label>
       </div>
 

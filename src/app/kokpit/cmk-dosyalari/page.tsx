@@ -17,6 +17,7 @@ const tarihSaatFormatlayici = new Intl.DateTimeFormat("tr-TR", {
   year: "numeric",
   hour: "2-digit",
   minute: "2-digit",
+  timeZone: "Europe/Istanbul",
 });
 
 // Ana ekran: arama + filtreler + liste, bilerek tek sayfa (bkz.
