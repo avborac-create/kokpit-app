@@ -26,6 +26,30 @@ function ekMi(ad: string) {
   return /(^|[\s—-])ek\s*-?\s*\d+\s*[:.)]/i.test(ad) || /\bek evrak\b/i.test(ad);
 }
 
+// "Banka cevabı — Ek 2: İmza Sirküleri" -> ana evrak adı "Banka cevabı", ek no 2, etiket "İmza Sirküleri".
+function ekAyir(ad: string) {
+  const m = ad.match(/^(.*?)\s*[—-]\s*Ek\s*(\d+)\s*:\s*(.*)$/i);
+  return m ? { ana: m[1].trim(), no: Number(m[2]), etiket: m[3].trim() } : null;
+}
+
+// Ekleri, ana evrakın hemen altına (ek no sırasıyla) toplar; ana evrakı bulunamayan ek sonda kalır.
+function agacSirala(liste: EvrakKaydi[]): EvrakKaydi[] {
+  const ekler = liste.filter((e) => ekAyir(e.ad));
+  const yerlesen = new Set<string>();
+  const sonuc: EvrakKaydi[] = [];
+  for (const e of liste) {
+    if (ekAyir(e.ad)) continue;
+    sonuc.push(e);
+    const kendi = ekler.filter((k) => ekAyir(k.ad)!.ana === e.ad).sort((a, b) => ekAyir(a.ad)!.no - ekAyir(b.ad)!.no);
+    for (const k of kendi) {
+      sonuc.push(k);
+      yerlesen.add(k.id);
+    }
+  }
+  for (const k of ekler) if (!yerlesen.has(k.id)) sonuc.push(k);
+  return sonuc;
+}
+
 function tarihYaz(t: string | null) {
   if (!t) return "Tarihsiz";
   const [y, a, g] = t.split("-");
@@ -128,7 +152,7 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
   const gruplar = useMemo(() => {
     const harita = new Map<string, EvrakKaydi[]>();
     for (const e of filtreli) harita.set(e.klasor, [...(harita.get(e.klasor) ?? []), e]);
-    const listeler = [...harita.entries()].map(([klasor, liste]) => [klasor, [...liste].sort((x, y) => evrakSirala(x, y, siralama, artan, KLASOR_SIRASI))] as const);
+    const listeler = [...harita.entries()].map(([klasor, liste]) => [klasor, agacSirala([...liste].sort((x, y) => evrakSirala(x, y, siralama, artan, KLASOR_SIRASI)))] as const);
     // "Tur" sirasinda klasorler sabit tur sirasiyla; "Tarih" sirasinda en erken/gec tarihli evrakin klasoru once gelir.
     return listeler.sort(([ka, la], [kb, lb]) =>
       siralama === "tur"
@@ -137,7 +161,7 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
     );
   }, [filtreli, siralama, artan, KLASOR_SIRASI]);
 
-  const duzListe = useMemo(() => [...filtreli].sort((x, y) => evrakSirala(x, y, siralama, artan, KLASOR_SIRASI)), [filtreli, siralama, artan, KLASOR_SIRASI]);
+  const duzListe = useMemo(() => agacSirala([...filtreli].sort((x, y) => evrakSirala(x, y, siralama, artan, KLASOR_SIRASI))), [filtreli, siralama, artan, KLASOR_SIRASI]);
   const secili = evraklar.find((e) => e.id === seciliId) ?? null;
   const klasorler = [...new Set(evraklar.map((e) => e.klasor).concat(KLASOR_SIRASI))];
 
@@ -192,18 +216,25 @@ function EvrakAlani({ dosyaId, evraklar, ozel, hedef }: { dosyaId: string; evrak
   }
 
   function satir(e: EvrakKaydi, klasorGoster: boolean) {
+    const ek = ekAyir(e.ad);
+    // Ana evrakı listede olan ek: girintili, kısa adla ("↳ Ek 2: İmza Sirküleri").
+    const sahipli = ek ? filtreli.some((x) => x.ad === ek.ana && x.klasor === e.klasor) : false;
+    const ekAdedi = ek ? 0 : filtreli.filter((x) => ekAyir(x.ad)?.ana === e.ad && x.klasor === e.klasor).length;
     return (
       <button
         key={e.id}
         type="button"
         data-evrak-id={e.id}
         onClick={() => sec(e.id)}
-        className={`flex w-full items-start justify-between gap-2 rounded-lg px-2 py-2.5 text-left text-sm lg:py-1.5 ${
-          e.id === seciliId ? "bg-[var(--accent-soft)] text-[#6db8ff]" : "text-white/75 hover:bg-white/[0.06]"
+        className={`flex w-full items-start justify-between gap-2 rounded-lg px-2 py-2.5 text-left text-sm lg:py-1.5 ${sahipli ? "ml-5 w-[calc(100%-1.25rem)] text-[13px]" : ""} ${
+          e.id === seciliId ? "bg-[var(--accent-soft)] text-[#6db8ff]" : sahipli ? "text-white/60 hover:bg-white/[0.06]" : "text-white/75 hover:bg-white/[0.06]"
         }`}
       >
         <span className="min-w-0">
-          <span className="block truncate">{e.ad}</span>
+          <span className="block truncate">
+            {sahipli && ek ? `↳ Ek ${ek.no}: ${ek.etiket}` : e.ad}
+            {ekAdedi > 0 && <span className="ml-2 rounded-full bg-white/[0.1] px-1.5 py-0.5 text-[10px] text-white/60">{ekAdedi} ek</span>}
+          </span>
           {klasorGoster && <span className="text-[11px] text-white/45">{e.klasor}</span>}
         </span>
         <span className="shrink-0 text-[11px] text-white/45">{tarihYaz(e.evrakTarihi)}</span>
