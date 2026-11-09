@@ -7,6 +7,9 @@ import { kayitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { DilekceHazirla } from "@/modules/avukat/components/dilekce-hazirla";
 import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
 
+// UDF dilekçe hazırlama paneli şimdilik kapalı (true yapılınca yeniden açılır).
+const UDF_PANELI_ACIK = false;
+
 const tarihSaat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" });
 
 type Satir = { anahtar: string; hedef: "cmk" | "dava"; id: string; baslik: string; alt: string; tarih: Date; mahkeme: string; dosyaNo: string; muvekkil: string };
@@ -114,12 +117,12 @@ export default async function DurusmaDosyalariSayfasi({ searchParams }: { search
                 </p>
                 <p className="truncate text-xs text-white/55">{secili.alt}</p>
               </div>
-              <details className="mb-3">
+              {UDF_PANELI_ACIK && (<details className="mb-3">
                 <summary className="glass cursor-pointer rounded-2xl px-4 py-3 text-sm font-medium text-white hover:bg-white/[0.06]">✍️ Dilekçe hazırla (UDF) — WhatsApp ile UYAP&apos;a gönderilmek üzere</summary>
                 <div className="mt-3">
                   <DilekceHazirla key={secili.anahtar} hedef={secili.hedef} dosyaId={secili.id} mahkeme={secili.mahkeme} dosyaNo={secili.dosyaNo} muvekkil={secili.muvekkil} vekil={kullanici?.adSoyad ?? ""} />
                 </div>
-              </details>
+              </details>)}
               <EvrakPaneli key={secili.anahtar} dosyaId={secili.id} evraklar={kayitlar} hedef={secili.hedef} />
             </div>
           )}
