@@ -847,6 +847,21 @@ async function HesapSekmesi({
   const musteriDuzeyi = !kapsam.dosyaId;
   const kapsamDosyaId = kapsam.dosyaId ?? "";
   const hedefler = aktifHesaplar.filter((h) => !h.paraHesabiMi).map((h) => ({ id: h.id, etiket: `${h.no} - ${h.ad}` }));
+  // Virman formunda "Tahsilat seç": para hesabına girmiş gerçek ödemeler (virman/türetilmiş satırlar hariç).
+  const paraHesabiNesnesi = hesap.paraHesabiMi ? hesap : aktifHesaplar.find((h) => h.paraHesabiMi && h.grup === hesap.grup);
+  const paraDefteri = hesap.paraHesabiMi ? satirlar : paraHesabiNesnesi ? await hesapDefteri(kapsam, { ...paraHesabiNesnesi, no: paraHesabiNesnesi.no, ad: paraHesabiNesnesi.ad }) : [];
+  const tahsilatlar = paraDefteri
+    .filter((x) => x.alacak > 0 && !x.turetilmis && x.duzenle?.tip === "hareket")
+    .sort((a, b) => b.tarih.getTime() - a.tarih.getTime())
+    .map((x) => {
+      const ac = x.aciklama.length > 48 ? `${x.aciklama.slice(0, 47)}…` : x.aciklama;
+      return {
+        id: x.id,
+        tutar: x.alacak,
+        aciklama: x.aciklama,
+        etiket: `${x.tarih.toLocaleDateString("tr-TR")} · ${para.format(x.alacak)}${x.odemeYontemi ? ` · ${x.odemeYontemi}` : ""}${x.dosyaEtiketi && !kapsam.dosyaId ? ` · ${x.dosyaEtiketi}` : ""}${ac ? ` · ${ac}` : ""}`,
+      };
+    });
 
   const turListesi = hesap.masrafHesabiMi && silmeYetkisiVar ? await secenekListesiTumDegerlerle("masraf_turu") : null;
   const karsiTaraflar = hesap.masrafHesabiMi
@@ -934,6 +949,7 @@ async function HesapSekmesi({
             sabitDosyaId={kapsam.dosyaId}
             mevcutBakiye={paraBakiyesi}
             kaynaklar={kaynaklar}
+            tahsilatlar={tahsilatlar}
           />
           <PanelBasligi
             baslik="⇉ Toplu Tasnif"
@@ -1036,6 +1052,7 @@ async function HesapSekmesi({
             sabitDosyaId={kapsam.dosyaId}
             mevcutBakiye={paraBakiyesi}
             kaynaklar={kaynaklar}
+            tahsilatlar={tahsilatlar}
           />
         </>
       )}

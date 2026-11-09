@@ -78,6 +78,7 @@ export function VirmanFormu({
   sabitDosyaId,
   mevcutBakiye,
   kaynaklar,
+  tahsilatlar,
 }: {
   action: (formData: FormData) => void;
   hedefler: { id: string; etiket: string }[];
@@ -87,6 +88,8 @@ export function VirmanFormu({
   mevcutBakiye: number;
   // Paranin nereden alinacagi: havuz / dosya para trafigi / baska bir hesaptaki fazla odeme.
   kaynaklar?: { deger: string; etiket: string }[];
+  // Para girislerinden (tahsilatlar) biri secilirse tutar ve aciklama otomatik dolar.
+  tahsilatlar?: { id: string; etiket: string; tutar: number; aciklama: string }[];
 }) {
   const tl = (n: number) => new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(n);
   const formRef = useRef<HTMLFormElement>(null);
@@ -94,6 +97,15 @@ export function VirmanFormu({
   const [uyari, setUyari] = useState(false);
   const [borcAciklamaAcik, setBorcAciklamaAcik] = useState(false);
   const [varsayilanAciklama, setVarsayilanAciklama] = useState("");
+  const [tahsilat, setTahsilat] = useState<{ id: string; tutar: number; aciklama: string } | null>(null);
+
+  function tahsilatSec(id: string) {
+    const t = tahsilatlar?.find((x) => x.id === id) ?? null;
+    setTahsilat(t);
+    // Tahsilat bu dosyanin para trafigindedir: kaynak secimi varsa "Bu dosya"ya alinir.
+    const kaynak = formRef.current?.elements.namedItem("kaynak");
+    if (t && kaynak instanceof HTMLSelectElement && [...kaynak.options].some((o) => o.value === "dosya")) kaynak.value = "dosya";
+  }
 
   // Hedef hesap ayni anda borclandiriliyorsa, borclandirma kaydinin aciklamasi virmanla ayni
   // olur; gondermeden once kullaniciya aciklamayi degistirmek isteyip istemedigi sorulur.
@@ -141,6 +153,23 @@ export function VirmanFormu({
           </Secim>
         </Alan>
       )}
+      {tahsilatlar && tahsilatlar.length > 0 && (
+        <div className="min-w-0 sm:col-span-2 md:col-span-4">
+          <Alan>
+            <Etiket htmlFor="vf-tahsilat">
+              Tahsilat seç <span className="text-xs text-white/40">(isteğe bağlı — tutar ve açıklama otomatik dolar)</span>
+            </Etiket>
+            <Secim id="vf-tahsilat" value={tahsilat?.id ?? ""} onChange={(e) => tahsilatSec(e.target.value)}>
+              <option value="">Seçmeden elle gireceğim</option>
+              {tahsilatlar.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.etiket}
+                </option>
+              ))}
+            </Secim>
+          </Alan>
+        </div>
+      )}
       <DosyaAlani id="vf-dosya" dosyalar={dosyalar} sabitDosyaId={sabitDosyaId} />
       <Alan>
         <Etiket htmlFor="vf-tarih">Tarih</Etiket>
@@ -151,7 +180,7 @@ export function VirmanFormu({
           Tutar{" "}
           {!kaynaklar && <span className="text-xs text-white/40">(aktarılabilir: {tl(mevcutBakiye)})</span>}
         </Etiket>
-        <ParaGirdisi id="vf-tutar" name="tutar" required />
+        <ParaGirdisi key={`t-${tahsilat?.id ?? ""}`} id="vf-tutar" name="tutar" required defaultValue={tahsilat?.tutar} />
       </Alan>
       <Alan>
         <Etiket htmlFor="vf-borc">
@@ -162,7 +191,7 @@ export function VirmanFormu({
       <div className="min-w-0 sm:col-span-2 md:col-span-3">
         <Alan>
           <Etiket htmlFor="vf-aciklama">Açıklama (isteğe bağlı)</Etiket>
-          <Girdi id="vf-aciklama" name="aciklama" placeholder="ör. 36.000 TL masraf iadesi, vekalet ücreti kesintisi" autoComplete="off" />
+          <Girdi key={`a-${tahsilat?.id ?? ""}`} id="vf-aciklama" name="aciklama" defaultValue={tahsilat?.aciklama ?? ""} placeholder="ör. 36.000 TL masraf iadesi, vekalet ücreti kesintisi" autoComplete="off" />
         </Alan>
       </div>
       {borcAciklamaAcik && (
