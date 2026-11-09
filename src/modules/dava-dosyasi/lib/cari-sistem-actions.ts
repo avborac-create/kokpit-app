@@ -440,6 +440,55 @@ async function topluSil_(ogeler: TopluOge[], sifre?: string): Promise<{ hata?: s
 
 export type OncekiTarih = { id: string; tarih: string };
 
+// Secili para (ALACAK) kayitlarinin her birini TAM tutariyla hedef hesaba virmanlar
+// (Para Trafigi'nde BORC, hedefte ALACAK; ayni virmanId). Aciklama: odemenin kendi aciklamasi.
+async function topluVirman_(ogeler: TopluOge[], hedefHesapId: string): Promise<{ hata?: string; sayi?: number }> {
+  try {
+    const { hareketIdleri } = topluAyir(ogeler);
+    if (hareketIdleri.length === 0) throw new Error("Virman yapılacak ödeme kaydı seçilmedi (yalnızca ödeme satırları aktarılabilir).");
+    if (!hedefHesapId) throw new Error("Hedef hesap seçilmelidir.");
+    const dosyalar = new Set<string>();
+    let sayi = 0;
+    await prisma.$transaction(async (tx) => {
+      const hedef = await tx.cariHesap.findUnique({ where: { id: hedefHesapId } });
+      if (!hedef || hedef.paraHesabiMi) throw new Error("Geçerli bir hedef hesap seçin.");
+      const satirlar = await tx.cariHareketi.findMany({ where: { id: { in: hareketIdleri } }, include: { hesap: true }, orderBy: { tarih: "asc" } });
+      const gorulen = new Set<string>();
+      for (const h of satirlar) {
+        if (!h.hesap.paraHesabiMi || h.yon !== "ALACAK" || h.virmanId) continue;
+        if (!h.dosyaId) throw new Error("Dosyası olmayan ödeme kaydı virmanlanamaz; kaydı dosyaya bağlayın.");
+        if (hedef.tutulanHesapMi) throw new Error("Bu işlem için adliyede tutulan hesaplar seçilemez.");
+        const tutar = Number(h.tutar);
+        const virmanId = randomUUID();
+        const not = h.aciklama?.trim();
+        const acik = (oto: string) => (not ? `${oto} — ${not}` : oto);
+        await tx.cariHareketi.create({
+          data: { musteriId: h.musteriId, dosyaId: h.dosyaId, hesapId: h.hesapId, yon: "BORC", tarih: h.tarih, tutar, virmanId, aciklama: acik(`${hedef.no}-${hedef.ad.toLocaleUpperCase("tr-TR")} VİRMAN`) },
+        });
+        await tx.cariHareketi.create({
+          data: { musteriId: h.musteriId, dosyaId: h.dosyaId, hesapId: hedef.id, yon: "ALACAK", tarih: h.tarih, tutar, virmanId, aciklama: acik(`${h.hesap.no}-${h.hesap.ad.toLocaleUpperCase("tr-TR")} VİRMAN`) },
+        });
+        sayi++;
+        dosyalar.add(h.dosyaId);
+        const anahtar = `${h.musteriId}|${h.dosyaId}`;
+        if (!gorulen.has(anahtar)) {
+          gorulen.add(anahtar);
+        }
+      }
+      if (sayi === 0) throw new Error("Seçilen kayıtlar arasında aktarılabilir bir ödeme (alacak) satırı yok.");
+      for (const a of gorulen) {
+        const [musteriId, dosyaId] = a.split("|");
+        await eksiyeDusmeKontrolu(tx, musteriId, dosyaId);
+      }
+    });
+    await smmKontrol([...dosyalar]);
+    yenile();
+    return { sayi };
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "İşlem başarısız oldu." };
+  }
+}
+
 // Doner: degisen kayitlarin ESKI tarihleri (geri alma icin).
 async function topluTarihDegistir_(ogeler: TopluOge[], tarihMetni: string): Promise<{ hata?: string; onceki?: OncekiTarih[] }> {
   try {
@@ -760,6 +809,9 @@ export async function topluSil(...a: Parameters<typeof topluSil_>): ReturnType<t
 }
 export async function topluTarihDegistir(...a: Parameters<typeof topluTarihDegistir_>): ReturnType<typeof topluTarihDegistir_> {
   return cariGunlukle("Defter kayıtlarının tarihi değiştirildi", async () => (await prisma.cariHareketi.findMany({ where: { OR: [{ id: { in: a[0].filter((o) => o.tip === "hareket").map((o) => o.id) } }, { virmanId: { in: a[0].filter((o) => o.tip === "virman").map((o) => o.id) } }] }, select: { musteriId: true } })).map((x) => x.musteriId), () => topluTarihDegistir_(...a));
+}
+export async function topluVirman(...a: Parameters<typeof topluVirman_>): ReturnType<typeof topluVirman_> {
+  return cariGunlukle("Seçili ödemeler virmanlandı", async () => (await prisma.cariHareketi.findMany({ where: { id: { in: a[0].filter((o) => o.tip === "hareket").map((o) => o.id) } }, select: { musteriId: true } })).map((x) => x.musteriId), () => topluVirman_(...a));
 }
 export async function topluTasnif(...a: Parameters<typeof topluTasnif_>): ReturnType<typeof topluTasnif_> {
   return cariGunlukle("Toplu tasnif yapıldı", [a[0]], () => topluTasnif_(...a));

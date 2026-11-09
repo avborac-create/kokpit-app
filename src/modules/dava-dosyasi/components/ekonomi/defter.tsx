@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import Link from "next/link";
 import { OnayliButon } from "@/core/ui/onayli-buton";
 import { DefterGorunumSecici } from "@/modules/dava-dosyasi/components/ekonomi/defter-gorunum-secici";
@@ -107,7 +106,6 @@ export function Defter({
   const renk = (b: number) =>
     tersBakiye ? (b > 0 ? "text-[#6db8ff]" : "text-white/60") : b > 0 ? "text-[#ff7a70]" : b < 0 ? "text-[#32d74b]" : "text-white/60";
 
-  const Sarmal = silmeYetkisiVar ? TopluSecim : Fragment;
   type Satir = (typeof hesaplanan)[number];
   const ay = new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" });
   const gunAy = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", year: "numeric" });
@@ -395,13 +393,23 @@ export function Defter({
       {baslik && (
         <h3 className={`mb-2 font-semibold text-white ${kompakt ? "text-xs" : "text-sm"}`}>{baslik}</h3>
       )}
-      <Sarmal>
+      {silmeYetkisiVar ? (
+        <TopluSecim virmanHedefleri={paraHesabiMi ? virman?.hedefler : undefined}>
         {kompakt ? (
           eski.tablo
         ) : (
           <DefterGorunumSecici akis={eski.akis} gosterge={eski.gosterge} tablo={eski.tablo} tersAkis={ters.akis} tersGosterge={ters.gosterge} tersTablo={ters.tablo} />
         )}
-      </Sarmal>
+        </TopluSecim>
+      ) : (
+        <>
+        {kompakt ? (
+          eski.tablo
+        ) : (
+          <DefterGorunumSecici akis={eski.akis} gosterge={eski.gosterge} tablo={eski.tablo} tersAkis={ters.akis} tersGosterge={ters.gosterge} tersTablo={ters.tablo} />
+        )}
+        </>
+      )}
       <p className="mt-2 text-xs text-white/35">
         {tutulanHesapMi
           ? "Bakiye = Alacak − Borç (bu hesapta/adliyede şu an duran tutar; iade edilince Borç olarak düşer)."

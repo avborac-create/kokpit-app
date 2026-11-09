@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Dugme } from "@/core/ui/button";
-import { Girdi } from "@/core/ui/form";
+import { Girdi, Secim } from "@/core/ui/form";
 import { OnayliButon } from "@/core/ui/onayli-buton";
-import { topluSil, topluTarihDegistir, tarihleriGeriYukle, type OncekiTarih, type TopluOge } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
+import { topluSil, topluTarihDegistir, topluVirman, tarihleriGeriYukle, type OncekiTarih, type TopluOge } from "@/modules/dava-dosyasi/lib/cari-sistem-actions";
 
 // Toplu tarih degisikliklerinin geri alma yigini (Ctrl+Z); sayfa yenilenince sifirlanir.
 const geriYigini: OncekiTarih[][] = [];
@@ -43,12 +43,13 @@ function genelDinleyiciKur() {
 
 // Defter tablosunu sarar; satirlardaki onay kutulari (data-toplu="tip:id")
 // secilince ustte toplu islem cubugu belirir (tumunu sec, tarih degistir, sil).
-export function TopluSecim({ children }: { children: ReactNode }) {
+export function TopluSecim({ children, virmanHedefleri }: { children: ReactNode; virmanHedefleri?: { id: string; etiket: string }[] }) {
   const router = useRouter();
   const kap = useRef<HTMLDivElement>(null);
   const [sayi, setSayi] = useState(0);
   const [tarih, setTarih] = useState("");
   const [hata, setHata] = useState<string | null>(null);
+  const [virmanHedef, setVirmanHedef] = useState("");
   const [beklemede, baslat] = useTransition();
   const [geriSayisi, setGeriSayisi] = useState(geriYigini.length);
 
@@ -103,6 +104,18 @@ export function TopluSecim({ children }: { children: ReactNode }) {
     });
   }
 
+  function virmanUygula() {
+    setHata(null);
+    const hedefId = virmanHedef || virmanHedefleri?.find((h) => /akdi vekalet/i.test(h.etiket))?.id || "";
+    baslat(async () => {
+      const sonuc = await topluVirman(secilenler(), hedefId);
+      if (sonuc.hata) return setHata(sonuc.hata);
+      kutular().forEach((k) => (k.checked = false));
+      setSayi(0);
+      router.refresh();
+    });
+  }
+
   return (
     <div ref={kap}>
       <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-white/60">
@@ -116,6 +129,28 @@ export function TopluSecim({ children }: { children: ReactNode }) {
             <Dugme type="button" varyant="ikincil" boyut="kompakt" disabled={beklemede || !tarih} onClick={tarihUygula}>
               Tarihi değiştir
             </Dugme>
+            {virmanHedefleri && virmanHedefleri.length > 0 && (
+              <>
+                <Secim
+                  aria-label="Virman hedef hesabı"
+                  value={virmanHedef || virmanHedefleri.find((h) => /akdi vekalet/i.test(h.etiket))?.id || ""}
+                  onChange={(e) => setVirmanHedef(e.target.value)}
+                  className="!w-auto !py-1 text-xs"
+                >
+                  <option value="" disabled>
+                    Hedef hesap…
+                  </option>
+                  {virmanHedefleri.map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {h.etiket}
+                    </option>
+                  ))}
+                </Secim>
+                <Dugme type="button" varyant="ikincil" boyut="kompakt" disabled={beklemede} onClick={virmanUygula}>
+                  ⇄ Seçilenleri hesaba aktar
+                </Dugme>
+              </>
+            )}
             <OnayliButon
               sifreIste
               boyut="kompakt"
