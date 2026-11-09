@@ -25,7 +25,11 @@ export async function adliBirimEkle(
   siraMetni: string,
 ): Promise<{ ad: string } | { hata: string }> {
   if (!(await mevcutKullanici())) return { hata: "Oturum bulunamadı." };
-  if (!(ADLIYELER as readonly string[]).includes(adliye)) return { hata: "Adliyeyi listeden seçin." };
+  // Adliye serbest yazilabilir; listedekiyle (buyuk/kucuk harf farki olmadan) eslesirse listedeki yazim kullanilir.
+  adliye = adliye.trim().replace(/\s+/g, " ");
+  if (adliye.length < 2 || adliye.length > 60) return { hata: "Adliye adını yazın (en az 2, en çok 60 karakter)." };
+  const kanonik = ADLIYELER.find((a) => a.toLocaleLowerCase("tr-TR") === adliye.toLocaleLowerCase("tr-TR"));
+  adliye = kanonik ?? adliye;
   const turBilgisi = BIRIM_TURLERI.find((t) => t.ad === tur);
   if (!turBilgisi) return { hata: "Birim türünü listeden seçin." };
   let sira: number | null = null;

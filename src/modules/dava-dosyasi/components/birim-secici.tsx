@@ -24,7 +24,14 @@ function birimAyristir(ad: string): { adliye: string; no: string | null; tip: st
   const adliye = [...ADLIYELER]
     .filter((a) => ad.startsWith(a + " "))
     .sort((a, b) => b.length - a.length)[0];
-  if (!adliye) return null;
+  if (!adliye) {
+    // Elle yazilmis adliye: birim turunden geriye dogru ayristir.
+    const tur = [...BIRIM_TURLERI].sort((a, b) => b.ad.length - a.ad.length).find((t) => ad.endsWith(" " + t.ad));
+    if (!tur) return null;
+    const bas = ad.slice(0, ad.length - tur.ad.length - 1);
+    const m2 = bas.match(/^(.+?)\s+(\d{1,3})\.$/);
+    return m2 ? { adliye: m2[1], no: m2[2], tip: tur.ad } : { adliye: bas, no: null, tip: tur.ad };
+  }
   const kalan = ad.slice(adliye.length + 1);
   const m = kalan.match(/^(\d{1,3})\.\s+(.+)$/);
   return { adliye, no: m ? m[1] : null, tip: m ? m[2] : kalan };
@@ -206,14 +213,19 @@ export function BirimSecici({ birimler, varsayilan }: { birimler: string[]; vars
         </button>
       ) : (
         <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-          <Secim value={adliye} onChange={(e) => setAdliye(e.target.value)} aria-label="Adliye">
-            <option value="">Adliye seçin…</option>
+          <Girdi
+            list="adliye-onerileri"
+            autoComplete="off"
+            placeholder="Adliye seçin ya da yazın (ör. Bakırköy)"
+            aria-label="Adliye"
+            value={adliye}
+            onChange={(e) => setAdliye(e.target.value)}
+          />
+          <datalist id="adliye-onerileri">
             {ADLIYELER.map((a) => (
-              <option key={a} value={a}>
-                {a}
-              </option>
+              <option key={a} value={a} />
             ))}
-          </Secim>
+          </datalist>
           <Secim value={tur} onChange={(e) => setTur(e.target.value)} aria-label="Birim türü">
             <option value="">Birim türü seçin…</option>
             {BIRIM_TURLERI.map((t) => (
