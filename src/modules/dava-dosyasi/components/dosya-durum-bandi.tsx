@@ -66,22 +66,22 @@ export function DosyaDurumBandi({
 
   return (
     <div
-      className={`glass mb-3 rounded-2xl border border-[var(--accent)]/30 bg-gradient-to-r from-[var(--accent-soft)] to-transparent px-4 py-3 ${bekliyor ? "opacity-80" : ""}`}
+      className={`glass mb-3 rounded-2xl border border-[var(--accent)]/30 bg-gradient-to-r from-[var(--accent-soft)] to-transparent px-3 py-2.5 sm:px-4 sm:py-3 ${bekliyor ? "opacity-80" : ""}`}
     >
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <div className="min-w-[9rem]">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:gap-y-3">
+        <div className="order-1 min-w-0 flex-1 sm:min-w-[9rem] sm:flex-none">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8fb4e8]">Dosya durumu</p>
-          <p className={`text-xl font-bold leading-tight ${seciliSecenek ? "text-white" : "text-white/40"}`}>
+          <p className={`text-lg font-bold leading-tight sm:text-xl ${seciliSecenek ? "text-white" : "text-white/40"}`}>
             {seciliSecenek?.etiket ?? "Seçilmedi"}
           </p>
         </div>
 
-        <ol className="m-0 flex min-w-0 basis-full list-none gap-0 overflow-x-auto px-1 pb-1 pt-1.5 sm:basis-0 sm:flex-1" aria-label="Dosya durum kodu">
+        <ol className="order-3 m-0 flex min-w-0 basis-full list-none snap-x snap-mandatory gap-0 overflow-x-auto px-1 pb-1 pt-1.5 [scrollbar-width:none] sm:order-2 sm:basis-0 sm:flex-1 [&::-webkit-scrollbar]:hidden" aria-label="Dosya durum kodu">
           {yol.map((s, i) => {
             const aktif = s.id === secili;
             const gecildi = seciliSira > i;
             return (
-              <li key={s.id} ref={aktif ? aktifRef : undefined} className="relative min-w-[6.5rem] flex-1">
+              <li key={s.id} ref={aktif ? aktifRef : undefined} className="relative min-w-[6rem] flex-1 snap-center">
                 <span
                   aria-hidden
                   className={`absolute top-[14px] h-[3px] ${i === 0 ? "left-1/2" : "left-0"} ${i === yol.length - 1 ? "right-1/2" : "right-0"} ${gecildi ? "bg-[var(--accent)]" : "bg-white/15"}`}
@@ -103,7 +103,7 @@ export function DosyaDurumBandi({
                           : "border-white/25 bg-[#2f343c] group-hover:border-[#8fb4e8] group-focus-visible:border-[#8fb4e8]"
                     }`}
                   />
-                  <span className={`text-xs leading-tight ${aktif ? "font-bold text-white" : "font-medium text-white/60 group-hover:text-white"}`}>
+                  <span className={`text-[11px] leading-tight sm:text-xs ${aktif ? "font-bold text-white" : "font-medium text-white/60 group-hover:text-white"}`}>
                     {s.etiket}
                   </span>
                 </button>
@@ -119,7 +119,7 @@ export function DosyaDurumBandi({
             disabled={bekliyor}
             aria-pressed={yanYol.id === secili}
             title="Kesinleşmiş dosyada açılan yan yol"
-            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+            className={`order-2 shrink-0 rounded-full border px-3 py-1 text-xs sm:order-3 font-semibold transition ${
               yanYol.id === secili
                 ? "border-[var(--accent)] bg-[var(--accent)] text-[#0b1d36]"
                 : "border-dashed border-white/30 text-white/60 hover:border-[#8fb4e8] hover:text-white"
