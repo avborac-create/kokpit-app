@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 
 // Ozet tablosunda hesap satiri: tiklaninca altinda o hesabin defteri acilir
 // (kayitlar, duzenle / sil). Defter sunucuda uretilip children olarak gelir.
@@ -8,11 +9,14 @@ export function AcilirHesapSatiri({
   baslik,
   hucreler,
   acilabilir,
+  href,
   children,
 }: {
   baslik: string;
   hucreler: ReactNode;
   acilabilir: boolean;
+  // Hesabin kendi ekranina giden baglanti
+  href?: string;
   children: ReactNode;
 }) {
   const [acik, setAcik] = useState(false);
@@ -30,6 +34,15 @@ export function AcilirHesapSatiri({
             </button>
           ) : (
             <span className="ml-4 inline-block md:ml-5">{baslik}</span>
+          )}
+          {href && (
+            <Link
+              href={href}
+              onClick={(e) => e.stopPropagation()}
+              className="ml-2 whitespace-nowrap text-[11px] text-[var(--link)] hover:underline"
+            >
+              hesaba git →
+            </Link>
           )}
         </td>
         {hucreler}

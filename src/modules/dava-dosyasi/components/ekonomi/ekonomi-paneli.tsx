@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { Dugme } from "@/core/ui/button";
 import { OnayliButon } from "@/core/ui/onayli-buton";
@@ -653,14 +654,24 @@ async function OzetSekmesi({
             </tr>
           </thead>
           <tbody>
-            {ozetHesaplari.map((h) => {
+            {ozet.hesaplar.map((h, i) => {
               const hesapNesnesi = hesapNesneleri.find((x) => x.id === h.hesapId);
               const hareketVar = Boolean(h.borc || h.alacak);
+              const grupAdi = h.no < 200 ? "MÜVEKKİL-100" : h.no < 300 ? "KARŞI TARAF-200" : "ADLİYE-300";
+              const oncekiGrup = i === 0 ? "" : ozet.hesaplar[i - 1].no < 200 ? "MÜVEKKİL-100" : ozet.hesaplar[i - 1].no < 300 ? "KARŞI TARAF-200" : "ADLİYE-300";
               return (
+                <Fragment key={h.hesapId}>
+                {grupAdi !== oncekiGrup && (
+                  <tr className="border-t border-white/10 bg-white/[0.03]">
+                    <td colSpan={4} className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] opacity-80 md:px-4">
+                      {grupAdi}
+                    </td>
+                  </tr>
+                )}
                 <AcilirHesapSatiri
-                  key={h.hesapId}
                   baslik={`${h.no} - ${h.ad}`}
-                  acilabilir={Boolean(hesapNesnesi) && (hareketVar || hesapNesnesi!.paraHesabiMi)}
+                  href={hrefYaz({ alt: String(h.no) })}
+                  acilabilir={Boolean(hesapNesnesi) && (hareketVar || (h.no < 200 && hesapNesnesi!.paraHesabiMi))}
                   hucreler={
                     <>
                       <td className="px-2 py-2 md:px-4 md:py-3 whitespace-nowrap text-right text-white/85">{h.borc ? para.format(h.borc) : "—"}</td>
@@ -685,11 +696,15 @@ async function OzetSekmesi({
                     />
                   )}
                 </AcilirHesapSatiri>
+                </Fragment>
               );
             })}
           </tbody>
         </table>
       </div>
+      <p className="mt-2 text-xs text-white/40">
+        Her satır o hesabın neticesidir (Borç / Alacak / Bakiye). Para Trafiği ve Adliye hesaplarında bakiye = Alacak − Borç (duran para); diğerlerinde Borç − Alacak.
+      </p>
 
       {kirilim.length > 0 && (
         <div className="mt-6">
