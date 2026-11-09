@@ -96,6 +96,17 @@ function SiraliListe({ children }: { children: React.ReactNode[] }) {
   );
 }
 
+// Kutucukta uzun unvanlar sığsın diye yaygın şirket eklerini kısaltır; ad hep yazılır.
+function kisaUnvan(ad: string): string {
+  return ad
+    .replace(/\s+ANONİM\s+ŞİRKETİ/gi, " A.Ş.")
+    .replace(/\s+LİMİTED\s+ŞİRKETİ/gi, " LTD. ŞTİ.")
+    .replace(/\s+SANAYİ\s+VE\s+TİCARET/gi, " SAN. VE TİC.")
+    .replace(/\s+TİCARET\s+ANONİM/gi, " TİC. A.Ş.")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 export default async function DavaDosyasiDetaySayfasi({
   params,
   searchParams,
@@ -630,12 +641,12 @@ export default async function DavaDosyasiDetaySayfasi({
             {[
               { etiket: "Dava değeri", deger: davaDegeri > 0 ? davaDegeriYaz(davaDegeri) : "—", renk: "border-t-[var(--accent)]" },
               { etiket: "Müvekkil", deger: dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—", renk: "border-t-[#e6b450]" },
-              { etiket: "Karşı taraf", deger: dosya.karsiTaraflar.length > 0 ? `${dosya.karsiTaraflar.length} kişi` : "—", renk: "border-t-[#32d74b]" },
+              { etiket: "Karşı taraf", deger: dosya.karsiTaraflar.map((kt) => kisaUnvan(kt.karsiTaraf.ad)).join(" · ") || "—", renk: "border-t-[#32d74b]" },
               { etiket: "Sorumlu avukat", deger: dosya.sorumluAvukat?.adSoyad ?? "Atanmadı", renk: "border-t-white/40" },
             ].map((k, i) => (
               <div key={k.etiket} className={`min-w-0 border-t-2 px-4 py-2.5 ${k.renk} ${i > 0 ? "md:border-l md:border-l-white/[0.08]" : ""}`}>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8fb4e8]">{k.etiket}</p>
-                <p className="truncate text-base font-semibold text-white" title={k.deger}>{k.deger}</p>
+                <p className="line-clamp-3 break-words text-base font-semibold leading-snug text-white" title={k.deger}>{k.deger}</p>
               </div>
             ))}
           </div>
