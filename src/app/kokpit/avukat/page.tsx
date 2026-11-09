@@ -16,6 +16,7 @@ const GRUPLAR = [
     baslik: "Duruşma Artçıları",
     renk: "#e5373d",
     ogeler: [
+      { ad: "Duruşma Dosyaları", aciklama: "Duruşması yaklaşan dosyaların evrakları: ana evrak, ekler, tebligatlar ve cevap yazıları önizlemeli.", yol: "/kokpit/avukat/durusma-dosyalari" },
       { ad: "Duruşma Artçıları", aciklama: "Yaklaşan ve yeni geçen duruşmalar; duruşma sonrası yapılacak işler için iş emri ver.", yol: "/kokpit/avukat/durusma-artcilari" },
     ],
   },
