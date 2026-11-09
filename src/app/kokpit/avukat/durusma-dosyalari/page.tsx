@@ -97,7 +97,19 @@ export default async function DurusmaDosyalariSayfasi({ searchParams }: { search
               );
             })}
           </div>
-          {secili && <EvrakPaneli key={secili.anahtar} dosyaId={secili.id} evraklar={kayitlar} hedef={secili.hedef} />}
+          {secili && (
+            <div>
+              {/* Aşağı kaydırınca hangi dosyanın evrakları içinde olunduğu hep görünsün. */}
+              <div className="sticky top-0 z-30 -mx-3 mb-3 border-b border-white/[0.08] bg-[color-mix(in_srgb,var(--background-2)_95%,transparent)] px-3 py-2 backdrop-blur-md md:-mx-6 md:px-6">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#e5373d]">Açık dosya</p>
+                <p className="text-sm font-medium text-white">
+                  {secili.baslik} <span className="text-white/50">· {tarihSaat.format(secili.tarih)}</span>
+                </p>
+                <p className="truncate text-xs text-white/55">{secili.alt}</p>
+              </div>
+              <EvrakPaneli key={secili.anahtar} dosyaId={secili.id} evraklar={kayitlar} hedef={secili.hedef} />
+            </div>
+          )}
         </>
       )}
     </div>
