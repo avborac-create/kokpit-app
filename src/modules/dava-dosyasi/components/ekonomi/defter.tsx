@@ -125,10 +125,20 @@ export function Defter({
         ? { m: "↓", c: "bg-[#32d74b]/20" }
         : { m: "↑", c: "bg-[#ff7a70]/20" };
 
+  // Odeme satirindan hemen sonra kismi virman yapilmissa (ornek: 5.000 odeme, 1.290 virman) kalan tutar onerilir.
+  const kalanBySira = new Map<number, number>();
+  hesaplanan.forEach((s, i) => {
+    if (!paraHesabiMi || s.alacak <= 0 || virmanMi(s) || s.turetilmis || s.duzenle?.tip !== "hareket") return;
+    let virmanToplam = 0;
+    for (let j = i + 1; j < hesaplanan.length && virmanMi(hesaplanan[j]); j++) virmanToplam += hesaplanan[j].borc;
+    const kalan = Math.round((s.alacak - virmanToplam) * 100) / 100;
+    if (virmanToplam > 0.001 && kalan > 0.001) kalanBySira.set(s.sira, kalan);
+  });
+
   const islemler = (s: Satir) => {
     const duzenleBolumu =
       s.duzenle && (s.duzenle.tip === "hareket" || silmeYetkisiVar) ? (
-        <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} virman={paraHesabiMi ? virman : undefined} satirDosyaId={s.dosyaId ?? undefined} />
+        <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} virman={paraHesabiMi ? virman : undefined} satirDosyaId={s.dosyaId ?? undefined} virmanKalan={kalanBySira.get(s.sira)} />
       ) : (
         s.duzenleHref && (
           <Link href={s.duzenleHref} className="text-xs text-[#6db8ff] hover:underline">
@@ -348,7 +358,7 @@ export function Defter({
                 <td className="hidden px-4 py-3 md:table-cell">
                   <div className={`flex items-center justify-end gap-2 ${kompakt ? "[&_button]:!px-2 [&_button]:!py-0.5 [&_button]:!text-[11px]" : ""}`}>
                     {s.duzenle && (s.duzenle.tip === "hareket" || silmeYetkisiVar) ? (
-                      <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} virman={paraHesabiMi ? virman : undefined} satirDosyaId={s.dosyaId ?? undefined} />
+                      <YerindeDuzenle duzenle={s.duzenle} yontemler={paraHesabiMi ? yontemler : undefined} virman={paraHesabiMi ? virman : undefined} satirDosyaId={s.dosyaId ?? undefined} virmanKalan={kalanBySira.get(s.sira)} />
                     ) : (
                       s.duzenleHref && (
                         <Link href={s.duzenleHref} className="text-xs text-[#6db8ff] hover:underline">

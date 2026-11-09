@@ -15,17 +15,21 @@ export function YerindeDuzenle({
   yontemler,
   virman,
   satirDosyaId,
+  virmanKalan,
 }: {
   duzenle: SatirDuzenleme;
   yontemler?: { id: string; etiket: string }[];
   virman?: { eylem: (formData: FormData) => void | Promise<void>; hedefler: { id: string; etiket: string }[]; kapsamDosyaId: string };
   satirDosyaId?: string;
+  // Bu odemeden kismi virman yapildiysa kalan tutar (hizli virman onerisi)
+  virmanKalan?: number;
 }) {
   const router = useRouter();
   const [acik, setAcik] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const [beklemede, baslat] = useTransition();
   const [virmanModu, setVirmanModu] = useState(false);
+  const [hizliKalan, setHizliKalan] = useState(false);
   const virmanMi = duzenle.tip === "virman";
   const [hedefBilgisi, setHedefBilgisi] = useState<{ hedefId: string | null; hedefler: { id: string; etiket: string }[] } | null>(null);
 
@@ -61,11 +65,13 @@ export function YerindeDuzenle({
         return;
       }
       setVirmanModu(false);
+      setHizliKalan(false);
       setAcik(false);
       router.refresh();
     });
   }
 
+  const avansHedefi = virman?.hedefler.find((h) => /avans/i.test(h.etiket))?.id ?? "";
   const virmanYapilabilir = Boolean(virman && !virmanMi && yontemler);
 
   return (
@@ -73,16 +79,31 @@ export function YerindeDuzenle({
       <button type="button" onClick={ac} className="text-xs text-[#6db8ff] hover:underline">
         Düzenle
       </button>
+      {virman && !virmanMi && virmanKalan && virmanKalan > 0.001 && (
+        <button
+          type="button"
+          onClick={() => {
+            setHata(null);
+            setHizliKalan(true);
+            setVirmanModu(true);
+            setAcik(true);
+          }}
+          title="Bu ödemeden virman yapılmış; kalan tutarı bir hesaba aktar"
+          className="whitespace-nowrap rounded-md bg-[#6db8ff]/15 px-1.5 py-0.5 text-[11px] text-[#6db8ff] hover:bg-[#6db8ff]/25"
+        >
+          ⇄ Kalan {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(virmanKalan)}
+        </button>
+      )}
       {acik &&
         createPortal(
-          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4" onClick={() => setAcik(false)}>
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4" onClick={() => { setAcik(false); setVirmanModu(false); setHizliKalan(false); }}>
             {virmanModu && virman ? (
               <form action={virmanYap} className="popover w-full max-w-md rounded-2xl p-5" onClick={(e) => e.stopPropagation()}>
                 <h3 className="mb-1 text-base font-semibold text-white">⇄ Bu Ödemeden Virman Yap</h3>
                 <p className="mb-4 text-xs text-white/45">Para Trafiği&apos;ndeki parayı seçtiğiniz hesaba aktarır. Aktarılabilir tutar kadarını girebilirsiniz.</p>
                 <Alan>
                   <Etiket htmlFor="yd-v-hedef">Hedef Hesap</Etiket>
-                  <Secim id="yd-v-hedef" name="hedefHesapId" required defaultValue="">
+                  <Secim id="yd-v-hedef" name="hedefHesapId" required defaultValue={hizliKalan ? avansHedefi : ""}>
                     <option value="" disabled>
                       Seçiniz…
                     </option>
@@ -99,7 +120,7 @@ export function YerindeDuzenle({
                 </Alan>
                 <Alan>
                   <Etiket htmlFor="yd-v-tutar">Tutar</Etiket>
-                  <ParaGirdisi id="yd-v-tutar" name="tutar" required defaultValue={duzenle.tutar} />
+                  <ParaGirdisi id="yd-v-tutar" name="tutar" required defaultValue={hizliKalan && virmanKalan ? virmanKalan : duzenle.tutar} />
                 </Alan>
                 <Alan>
                   <Etiket htmlFor="yd-v-aciklama">Açıklama (isteğe bağlı)</Etiket>
@@ -107,8 +128,8 @@ export function YerindeDuzenle({
                 </Alan>
                 {hata && <p className="mb-3 text-sm text-[#ff7a70]">{hata}</p>}
                 <div className="flex justify-end gap-2">
-                  <Dugme type="button" varyant="ikincil" onClick={() => setVirmanModu(false)}>
-                    Geri
+                  <Dugme type="button" varyant="ikincil" onClick={() => { setVirmanModu(false); if (hizliKalan) { setHizliKalan(false); setAcik(false); } }}>
+                    {hizliKalan ? "Vazgeç" : "Geri"}
                   </Dugme>
                   <Dugme type="submit" disabled={beklemede}>
                     {beklemede ? "Aktarılıyor…" : "Virman Yap"}
