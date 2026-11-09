@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Dugme } from "@/core/ui/button";
 import { Girdi } from "@/core/ui/form";
+import { evrakiPaylas } from "@/modules/cmk-dosyalari/lib/paylas";
 import { PdfGoruntuleyici } from "@/modules/cmk-dosyalari/components/pdf-goruntuleyici";
 import { evrakGuncelle, evrakSil, evrakYukle, type EvrakHedefi } from "@/modules/cmk-dosyalari/lib/evrak-actions";
 
@@ -17,8 +18,8 @@ export type EvrakKaydi = {
   ozel: boolean; // true: yalniz giris yapan avukatin gorebildigi evrak
 };
 
-const CMK_KLASORLERI = ["İddianame", "Duruşma Zabıtları", "İfadeler", "Tutanaklar", "Şikayet", "Dilekçeler", "Mahkeme Evrakları", "Kurum Cevapları", "Tebligatlar"];
-const DAVA_KLASORLERI = ["Dilekçeler", "Cevap ve Savunma", "Delil ve Bilirkişi", "Tutanaklar", "Ara Kararlar", "Karar", "Vekâletname"];
+const CMK_KLASORLERI = ["İddianame", "Duruşma Zabıtları", "İfadeler", "Tutanaklar", "Şikayet", "Dilekçeler", "Mahkeme Evrakları", "Kurum Cevapları", "Tebligatlar", "Hazırlanan Dilekçeler"];
+const DAVA_KLASORLERI = ["Dilekçeler", "Cevap ve Savunma", "Delil ve Bilirkişi", "Tutanaklar", "Ara Kararlar", "Karar", "Vekâletname", "Hazırlanan Dilekçeler"];
 const HEDEF_KLASORLERI = { cmk: CMK_KLASORLERI, dava: DAVA_KLASORLERI };
 
 // "Ek 1: ...", "Ek-2", "Ek evrak" gibi adlar ana evraka ek olan belgelerdir.
@@ -437,6 +438,24 @@ function Onizleme({
               İndir
             </Dugme>
           </a>
+          <Dugme
+            type="button"
+            varyant="ikincil"
+            boyut="kompakt"
+            disabled={bekliyor}
+            onClick={() =>
+              basla(async () => {
+                const uzanti = evrak.mimeTipi === "application/pdf" ? ".pdf" : evrak.mimeTipi.includes("udf") ? ".udf" : "";
+                try {
+                  await evrakiPaylas(evrak.id, `${evrak.ad.replace(/[\/:*?"<>|]/g, "")}${uzanti}`, `${evrak.ad} — ekteki evrak`);
+                } catch {
+                  window.alert("Evrak paylaşılamadı; İndir düğmesini kullanın.");
+                }
+              })
+            }
+          >
+            WhatsApp
+          </Dugme>
           <Dugme type="button" varyant="ikincil" boyut="kompakt" onClick={() => setDuzenle((d) => !d)}>
             Adı / klasörü düzenle
           </Dugme>

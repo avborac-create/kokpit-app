@@ -4,11 +4,12 @@ import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { modulErisimiVarMi } from "@/core/auth/modul-izni";
 import { kayitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
+import { DilekceHazirla } from "@/modules/avukat/components/dilekce-hazirla";
 import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
 
 const tarihSaat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" });
 
-type Satir = { anahtar: string; hedef: "cmk" | "dava"; id: string; baslik: string; alt: string; tarih: Date };
+type Satir = { anahtar: string; hedef: "cmk" | "dava"; id: string; baslik: string; alt: string; tarih: Date; mahkeme: string; dosyaNo: string; muvekkil: string };
 
 // Duruşma Dosyaları: duruşma tarihi yaklaşan (ya da son 7 günde geçen) dosyalar;
 // seçilen dosyanın evrakları solda klasör ağacı, sağda önizleme olarak açılır.
@@ -38,6 +39,9 @@ export default async function DurusmaDosyalariSayfasi({ searchParams }: { search
       baslik: `${kayitNoGoster(x.kayitNo)} · ${x.dosyaNo ?? "Esas no yok"}`,
       alt: [x.birimAdi, x.konu].filter(Boolean).join(" — "),
       tarih: x.durusmaTarihi!,
+      mahkeme: x.birimAdi ?? "",
+      dosyaNo: x.dosyaNo ?? "",
+      muvekkil: "",
     })),
     ...cmkler.map((x) => ({
       anahtar: `cmk:${x.id}`,
@@ -46,6 +50,9 @@ export default async function DurusmaDosyalariSayfasi({ searchParams }: { search
       baslik: `CMK · ${x.dosyaNo}`,
       alt: [x.birim, x.suc].filter(Boolean).join(" — "),
       tarih: x.durusmaTarihi!,
+      mahkeme: x.birim,
+      dosyaNo: x.dosyaNo,
+      muvekkil: x.adSoyad,
     })),
   ].sort((a, b) => a.tarih.getTime() - b.tarih.getTime());
 
@@ -107,6 +114,12 @@ export default async function DurusmaDosyalariSayfasi({ searchParams }: { search
                 </p>
                 <p className="truncate text-xs text-white/55">{secili.alt}</p>
               </div>
+              <details className="mb-3">
+                <summary className="glass cursor-pointer rounded-2xl px-4 py-3 text-sm font-medium text-white hover:bg-white/[0.06]">✍️ Dilekçe hazırla (UDF) — WhatsApp ile UYAP&apos;a gönderilmek üzere</summary>
+                <div className="mt-3">
+                  <DilekceHazirla key={secili.anahtar} hedef={secili.hedef} dosyaId={secili.id} mahkeme={secili.mahkeme} dosyaNo={secili.dosyaNo} muvekkil={secili.muvekkil} vekil={kullanici?.adSoyad ?? ""} />
+                </div>
+              </details>
               <EvrakPaneli key={secili.anahtar} dosyaId={secili.id} evraklar={kayitlar} hedef={secili.hedef} />
             </div>
           )}
