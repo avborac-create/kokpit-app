@@ -578,18 +578,35 @@ export default async function DavaDosyasiDetaySayfasi({
                 return parcalar.join(" · ") || "Bakiye ayrıntısı";
               })()}
             >
-              {bakiyeEtiketleri.map((e) => (
-                <span
-                  key={e.hesapId}
-                  title={e.karsiParaMi ? "Karşı taraftan gelen ve henüz bir hesaba aktarılmamış para." : e.karsiTarafMi ? (e.artiMi ? "Karşı tarafın bu hesapta fazla ödediği tutar." : "Karşı taraftan (borçludan) tahsil edilmesi gereken tutar.") : e.artiMi ? "Müvekkil adına dosyada duran para: dosya için kullanılabilir, başka hesaba virman yapılabilir ya da müvekkile iade edilir." : "Müvekkilden istenmesi gereken tutar."}
-                  className={`max-w-full whitespace-normal rounded-2xl px-2.5 py-0.5 text-xs font-medium ${
-                    e.artiMi ? "bg-[#32d74b]/15 text-[#32d74b]" : "bg-[#ff7a70]/15 text-[#ff7a70]"
-                  }`}
-                >
-                  {e.ad} {e.artiMi ? "artı" : "eksi"} bakiye vermektedir: {paraFormatlayici.format(Math.abs(e.tutar))}
-                  {e.karsiParaMi ? " · karşı taraftan gelen, dağıtılmamış para" : e.karsiTarafMi ? (e.artiMi ? " · karşı tarafa iade" : " · karşı taraftan istenecek") : e.artiMi ? " · müvekkile iade / virman" : " · müvekkilden istenecek"}
-                </span>
-              ))}
+              {([true, false] as const).map((arti) => {
+                const grup = bakiyeEtiketleri.filter((e) => e.artiMi === arti);
+                if (grup.length === 0) return null;
+                return (
+                  <div
+                    key={String(arti)}
+                    className={`w-full rounded-xl border px-3 py-1.5 md:w-auto md:min-w-[15rem] ${arti ? "border-[#32d74b]/25 bg-[#32d74b]/10" : "border-[#ff7a70]/25 bg-[#ff7a70]/10"}`}
+                  >
+                    <p className={`text-[11px] font-bold uppercase tracking-wider ${arti ? "text-[#32d74b]" : "text-[#ff7a70]"}`}>
+                      {arti ? "Artı bakiye veren hesaplar" : "Eksi bakiye veren hesaplar"}
+                    </p>
+                    <ul className="m-0 list-none space-y-0.5 p-0">
+                      {grup.map((e) => (
+                        <li
+                          key={e.hesapId}
+                          title={e.karsiParaMi ? "Karşı taraftan gelen ve henüz bir hesaba aktarılmamış para." : e.karsiTarafMi ? (e.artiMi ? "Karşı tarafın bu hesapta fazla ödediği tutar." : "Karşı taraftan (borçludan) tahsil edilmesi gereken tutar.") : e.artiMi ? "Müvekkil adına dosyada duran para: dosya için kullanılabilir, başka hesaba virman yapılabilir ya da müvekkile iade edilir." : "Müvekkilden istenmesi gereken tutar."}
+                          className={`flex items-baseline justify-between gap-4 text-sm ${arti ? "text-[#32d74b]" : "text-[#ff7a70]"}`}
+                        >
+                          <span className="min-w-0 truncate">
+                            {e.ad}
+                            {(e.karsiParaMi || e.karsiTarafMi) && <span className="ml-1 text-[11px] opacity-70">(karşı taraf)</span>}
+                          </span>
+                          <b className="shrink-0 tabular-nums">{paraFormatlayici.format(Math.abs(e.tutar))}</b>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
               {istenenOzet && bakiyeEtiketleri.some((e) => !e.artiMi && !e.karsiTarafMi) && (
                 <span className="rounded-full bg-[#ffd60a]/15 px-2.5 py-0.5 text-xs font-medium text-[#ffd60a]">
                   Müvekkilden istendi: {istenenOzet.sonucTarihi ? tarihFormatlayici.format(istenenOzet.sonucTarihi) : ""} · {YOL_ADLARI[istenenOzet.yol ?? ""] ?? "yol belirtilmedi"} · {paraFormatlayici.format(istenenOzet.toplam)}
