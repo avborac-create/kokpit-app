@@ -69,11 +69,12 @@ function gorunumYaz(k: Gorunum) {
 
 const RENKLER = ["#8fd8ff", "#f2b04c", "#45d483", "#d89cf2", "#ff9a8f", "#9fb4ff"];
 function Avatar({ ad }: { ad: string }) {
-  const bas = ad.trim().charAt(0).toLocaleUpperCase("tr-TR") || "?";
+  const parcalar = ad.trim().split(/\s+/).filter(Boolean);
+  const bas = (parcalar.length > 1 ? parcalar[0].charAt(0) + parcalar[parcalar.length - 1].charAt(0) : parcalar[0]?.charAt(0) || "?").toLocaleUpperCase("tr-TR");
   let h = 0;
   for (const c of ad) h = (h * 31 + c.charCodeAt(0)) % RENKLER.length;
   return (
-    <span className="inline-grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold text-[#10161c]" style={{ background: RENKLER[h] }}>
+    <span className="inline-grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold tracking-tight text-[#10161c]" style={{ background: RENKLER[h] }}>
       {bas}
     </span>
   );
@@ -321,7 +322,7 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
           return (
             <Link key={c.id} href={`/kokpit/isler?kisi=${c.id}`} className={kisiOgesi(secili === c.id)}>
               <Avatar ad={c.adSoyad} />
-              <span className="min-w-0 flex-1 truncate">{c.id === benimId ? `${c.adSoyad} (ben)` : c.adSoyad}</span>
+              <span className="min-w-0 flex-1 truncate">{c.adSoyad}</span>
               {n > 0 && <span className="rounded-full bg-white/15 px-2 text-xs font-semibold text-white/85">{n}</span>}
             </Link>
           );
