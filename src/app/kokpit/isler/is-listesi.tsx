@@ -312,8 +312,6 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
     <div className="flex flex-col gap-4 md:flex-row md:items-start">
       {/* Telegram gibi sol panel: kisiler. Birine tiklayinca sagda onun gorevleri acilir, ona yazilan gorev ona atanir. */}
       <div className="flex flex-col gap-3 md:sticky md:top-3 md:w-60 md:shrink-0">
-      <EksiBakiyeUyarilari uyarilar={eksiUyarilari} ertelenen={eksiErtelenen} bugun={bugun} />
-      <SmmUyarilari uyarilar={smmUyarilari} />
       <nav aria-label="Kişiler" className="flex gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.04] p-2 md:flex-col md:overflow-visible">
         <Link href="/kokpit/isler?kisi=buro" className={kisiOgesi(tumBuro)}>
           <span className="min-w-0 flex-1 truncate">Tüm büro</span>
@@ -329,6 +327,8 @@ export function IsListesi({ odakIdleri = [], isler, kisiler, benimId, secili, bu
           );
         })}
       </nav>
+      <EksiBakiyeUyarilari uyarilar={eksiUyarilari} ertelenen={eksiErtelenen} bugun={bugun} />
+      <SmmUyarilari uyarilar={smmUyarilari} />
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-4">

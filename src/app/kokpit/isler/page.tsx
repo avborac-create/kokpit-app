@@ -72,19 +72,6 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
         bugun={bugun}
         kartlar={odaklar.map((o) => ({ id: o.is.id, baslik: o.is.baslik, durum: o.is.durum, tur: o.is.tur, vade: o.is.vade ? o.is.vade.toISOString().slice(0, 10) : "", maddeToplam: o.is.maddeler.length, maddeTamam: o.is.maddeler.filter((m) => m.tamam).length, sorumluAd: o.is.sorumluId ? (ad.get(o.is.sorumluId) ?? "—") : "Atanmadı" }))}
       />
-      {delegasyonlar.length > 0 && (
-        <section aria-label="Delegasyon" className="mb-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
-          <p className="font-semibold text-white/85">Delegasyon <span className="ml-1 rounded-full bg-white/10 px-2 text-xs font-normal">{delegasyonlar.length}</span></p>
-          <p className="mt-0.5 text-xs text-white/50">
-            {ad.get(delegasyonlar[0].sorumluId ?? "") ?? "Finans yetkilisi"} adına devredildi; serbest meslek makbuzu kesilmesi bekleniyor. Bu bir göreviniz değildir.
-          </p>
-          <ul className="mt-1.5 flex flex-col gap-0.5 text-xs text-white/60">
-            {delegasyonlar.map((i) => (
-              <li key={i.id}>• {i.baslik.replace(/^SMM kesilecek:s*/, "")}</li>
-            ))}
-          </ul>
-        </section>
-      )}
       <IsListesi
         odakIdleri={[...odakIdleri]}
         benimId={k?.kullaniciId ?? ""}
@@ -120,6 +107,19 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
           tarih: i.guncellemeTarihi.toLocaleDateString("tr-TR", { day: "numeric", month: "long", timeZone: "Europe/Istanbul" }),
         }))}
       />
+      {delegasyonlar.length > 0 && (
+        <section aria-label="Delegasyon" className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
+          <p className="font-semibold text-white/85">Delegasyon <span className="ml-1 rounded-full bg-white/10 px-2 text-xs font-normal">{delegasyonlar.length}</span></p>
+          <p className="mt-0.5 text-xs text-white/50">
+            {ad.get(delegasyonlar[0].sorumluId ?? "") ?? "Finans yetkilisi"} adına devredildi; serbest meslek makbuzu kesilmesi bekleniyor. Bu bir göreviniz değildir.
+          </p>
+          <ul className="mt-1.5 flex flex-col gap-0.5 text-xs text-white/60">
+            {delegasyonlar.map((i) => (
+              <li key={i.id}>• {i.baslik.replace(/^SMM kesilecek:s*/, "")}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       {detay && (
         <>
           <Link href={kapatHref} aria-label="Paneli kapat" className="fixed inset-0 z-40 bg-black/50 xl:hidden" />
