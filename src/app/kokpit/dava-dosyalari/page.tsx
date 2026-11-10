@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { davaDosyalariniListele, vekilAdaylariniGetir } from "@/modules/dava-dosyasi/lib/queries";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { Dugme } from "@/core/ui/button";
-import { Girdi, Secim } from "@/core/ui/form";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { tabloSutunDuzeniniGetir } from "@/core/tablo-duzeni/queries";
@@ -19,6 +18,7 @@ import type { TabloSutunSatiri } from "@/core/tablo-duzeni/tablo-sutun-listesi";
 import { musteriGetir } from "@/modules/musteri/lib/queries";
 import { DosyalarTablosu } from "./dosyalar-tablosu";
 import { FiltreKaydedici } from "./filtre-kaydedici";
+import { DosyaFiltre } from "./dosya-filtre";
 import { DOSYA_FILTRE_COOKIE } from "./filtre-sabitleri";
 
 export default async function DavaDosyalariSayfasi({
@@ -37,7 +37,6 @@ export default async function DavaDosyalariSayfasi({
     const kayitli = (await cookies()).get(DOSYA_FILTRE_COOKIE)?.value;
     if (kayitli) redirect(`/kokpit/dava-dosyalari?${decodeURIComponent(kayitli)}`);
   }
-  const filtreAktif = Boolean(params.arama || params.durum || params.musteri);
   const [avukatlar, dosyalar, durumlar, kullanici, sutunDuzeni, filtreMusteri, etiketDegisiklikleri] = await Promise.all([
     vekilAdaylariniGetir(),
     davaDosyalariniListele({ arama: params.arama, durumKod: params.durum, musteriId: params.musteri }),
@@ -119,34 +118,12 @@ export default async function DavaDosyalariSayfasi({
         </div>
       )}
 
-      <form className="mb-6 flex flex-wrap gap-3" method="get">
-        {params.musteri && <input type="hidden" name="musteri" value={params.musteri} />}
-        <Girdi
-          type="search"
-          name="arama"
-          placeholder="Müvekkil, karşı taraf, büro no, dosya no, birim, konu…"
-          defaultValue={params.arama}
-          className="max-w-md"
-        />
-        <Secim name="durum" defaultValue={params.durum ?? ""} className="max-w-[10rem]">
-          <option value="">Tüm durumlar</option>
-          {durumlar.map((durum) => (
-            <option key={durum.id} value={durum.kod}>
-              {durum.etiket}
-            </option>
-          ))}
-        </Secim>
-        <Dugme type="submit" varyant="ikincil">
-          Filtrele
-        </Dugme>
-        {filtreAktif && (
-          <Link href="/kokpit/dava-dosyalari?temizle=1">
-            <Dugme type="button" varyant="ikincil">
-              Filtreyi temizle ✕
-            </Dugme>
-          </Link>
-        )}
-      </form>
+      <DosyaFiltre
+        arama={params.arama ?? ""}
+        durum={params.durum ?? ""}
+        musteri={params.musteri}
+        durumlar={durumlar.map((d) => ({ id: d.id, kod: d.kod, etiket: d.etiket }))}
+      />
 
       <DosyalarTablosu
         dosyalar={dosyalar}

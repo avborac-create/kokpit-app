@@ -39,14 +39,14 @@ export function MusteriFiltre({ arama, durum, avukat, durumlar, avukatlar }: Pro
   }, [metin, durumSecimi, avukatSecimi, pathname, router]);
 
   return (
-    <form className="mb-6 flex flex-wrap gap-3" onSubmit={(e) => e.preventDefault()}>
+    <form className="mb-6 flex flex-wrap items-center gap-3" onSubmit={(e) => e.preventDefault()}>
       <Girdi
         type="search"
         name="arama"
         placeholder="Ad, soyad, unvan ara…"
         value={metin}
         onChange={(e) => setMetin(e.target.value)}
-        className="max-w-xs"
+        className={`max-w-xs ${metin.trim() ? "!border-[var(--accent)] ring-2 ring-[var(--accent)]/40" : ""}`}
         autoComplete="off"
       />
       <Secim
@@ -75,6 +75,22 @@ export function MusteriFiltre({ arama, durum, avukat, durumlar, avukatlar }: Pro
           </option>
         ))}
       </Secim>
+      {(metin.trim() || durumSecimi || avukatSecimi) && (
+        <div className="flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-semibold text-white">
+          <span>⚠ Liste filtreli</span>
+          <button
+            type="button"
+            onClick={() => {
+              setMetin("");
+              setDurumSecimi("");
+              setAvukatSecimi("");
+            }}
+            className="rounded-full bg-white/15 px-2 py-0.5 hover:bg-white/30"
+          >
+            Filtreyi temizle ✕
+          </button>
+        </div>
+      )}
     </form>
   );
 }
