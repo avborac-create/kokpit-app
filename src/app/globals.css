@@ -600,6 +600,8 @@ html[data-tema="acik"] .konu-etiket { color: #9a5b00; }
 
 /* Genel sekmesi: sade kartlar, solda renk çıkıntısı (renk --kart-renk ile gelir), gölge/gradyan yok. */
 .genel-sade .glass { border-radius: 10px; box-shadow: none; background-image: none !important; border-left: 3px solid var(--kart-renk, var(--accent)); }
+/* Paneller eşit genişlikte ve her satırda eşit yükseklikte (masaüstü iki sütun, mobil tek sütun). */
+.gri-esit > * > .glass, .gri-esit > .contents > * > .glass { height: 100%; margin-bottom: 0; }
 .genel-sade .glass h3 { letter-spacing: 0.1em; }
 
 /* Müvekkil (mavi) ve karşı taraf (gül/kırmızı) satırları birbirinden ayrışır. */
