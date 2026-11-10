@@ -12,7 +12,7 @@ const UDF_PANELI_ACIK = false;
 
 const tarihSaat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" });
 
-type Satir = { anahtar: string; hedef: "cmk" | "dava"; id: string; baslik: string; alt: string; tarih: Date; mahkeme: string; dosyaNo: string; muvekkil: string };
+type Satir = { anahtar: string; hedef: "cmk" | "dava"; id: string; baslik: string; alt: string; tarih: Date; mahkeme: string; dosyaNo: string; muvekkil: string; taraflar: string };
 
 // Duruşma Dosyaları: duruşma tarihi yaklaşan (ya da son 7 günde geçen) dosyalar;
 // seçilen dosyanın evrakları solda klasör ağacı, sağda önizleme olarak açılır.
@@ -26,7 +26,11 @@ export default async function DurusmaDosyalariSayfasi({ searchParams }: { search
   const [davalar, cmkler] = await Promise.all([
     prisma.davaDosyasi.findMany({
       where: { durusmaTarihi: { gte: baslangic } },
-      select: { id: true, kayitNo: true, dosyaNo: true, birimAdi: true, konu: true, durusmaTarihi: true },
+      select: {
+        id: true, kayitNo: true, dosyaNo: true, birimAdi: true, konu: true, durusmaTarihi: true,
+        muvekkiller: { select: { musteri: { select: { adSoyadUnvan: true } } } },
+        karsiTaraflar: { select: { karsiTaraf: { select: { ad: true } } } },
+      },
     }),
     prisma.cMKDosyasi.findMany({
       where: { durusmaTarihi: { gte: baslangic } },
@@ -45,6 +49,7 @@ export default async function DurusmaDosyalariSayfasi({ searchParams }: { search
       mahkeme: x.birimAdi ?? "",
       dosyaNo: x.dosyaNo ?? "",
       muvekkil: "",
+      taraflar: `Müvekkil ${x.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"} · Karşı Taraf ${x.karsiTaraflar.map((k) => k.karsiTaraf.ad).join(", ") || "—"}`,
     })),
     ...cmkler.map((x) => ({
       anahtar: `cmk:${x.id}`,
@@ -56,6 +61,7 @@ export default async function DurusmaDosyalariSayfasi({ searchParams }: { search
       mahkeme: x.birim,
       dosyaNo: x.dosyaNo,
       muvekkil: x.adSoyad,
+      taraflar: `Sanık/Müvekkil ${x.adSoyad}`,
     })),
   ].sort((a, b) => a.tarih.getTime() - b.tarih.getTime());
 
@@ -116,6 +122,7 @@ export default async function DurusmaDosyalariSayfasi({ searchParams }: { search
                   {secili.baslik} <span className="text-white/50">· {tarihSaat.format(secili.tarih)}</span>
                 </p>
                 <p className="truncate text-xs text-white/55">{secili.alt}</p>
+                <p className="truncate text-xs text-white/75">{secili.taraflar}</p>
               </div>
               {UDF_PANELI_ACIK && (<details className="mb-3">
                 <summary className="glass cursor-pointer rounded-2xl px-4 py-3 text-sm font-medium text-white hover:bg-white/[0.06]">✍️ Dilekçe hazırla (UDF) — WhatsApp ile UYAP&apos;a gönderilmek üzere</summary>
