@@ -41,7 +41,8 @@ export async function durusmaMasrafiEkle(dosyaId: string, durusmaTarihiMs: numbe
     data: {
       davaDosyasiId: dosyaId,
       durusmaTarihi: durusmaTarihiMs ? new Date(durusmaTarihiMs) : null,
-      personelId: k.kullaniciId,
+      // Duruşmaya giren avukat adına da girilebilir (föy o kişiye yazılır).
+      personelId: metin(formData, "personelId") || k.kullaniciId,
       tarih: gunOlarak(metin(formData, "tarih")) ?? new Date(),
       kalem: kalem.slice(0, 120),
       tutar,

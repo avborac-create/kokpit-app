@@ -33,17 +33,22 @@ function bilgiMetni(d: { durusmaTarihi: Date; birimAdi: string | null; dosyaNo: 
   return [baslik, dosya, sonuc, a.notlar ? `Not: ${a.notlar}` : null].filter(Boolean).join("\n");
 }
 
-export default async function DurusmaArtcilariSayfasi() {
+export default async function DurusmaArtcilariSayfasi({ searchParams }: { searchParams: Promise<{ avukat?: string }> }) {
   if (!(await modulErisimiVarMi("avukat"))) redirect("/kokpit");
   const kullanici = await mevcutKullanici();
+  const { avukat: avukatSuzgeci } = await searchParams;
   const simdi = new Date();
   const baslangic = new Date(simdi);
   baslangic.setDate(baslangic.getDate() - 30);
   const [dosyalar, kullanicilar, acikIsler] = await Promise.all([
     prisma.davaDosyasi.findMany({
-      where: { durusmaTarihi: { gte: baslangic } },
+      where: {
+        durusmaTarihi: { gte: baslangic },
+        ...(avukatSuzgeci === "ben" && kullanici ? { sorumluAvukatId: kullanici.kullaniciId } : avukatSuzgeci ? { sorumluAvukatId: avukatSuzgeci } : {}),
+      },
       orderBy: { durusmaTarihi: "asc" },
       select: {
+        sorumluAvukatId: true,
         id: true, kayitNo: true, dosyaNo: true, birimAdi: true, konu: true, durusmaTarihi: true,
         yargiKolu: { select: { etiket: true } },
       },
@@ -62,6 +67,13 @@ export default async function DurusmaArtcilariSayfasi() {
       <Link href="/kokpit/avukat" className="text-sm text-white/50 hover:text-white">← Avukat</Link>
       <h1 className="mb-1 mt-2 text-2xl font-semibold tracking-tight text-white">Duruşma Artçıları</h1>
       <p className="mb-4 text-sm text-white/55">Duruşmadan çıkınca sırayla: masraf → sonuç → gerekçeli karar takibi → müvekkile bilgi. Hepsi bu kartta.</p>
+      <div className="mb-3 flex flex-wrap gap-2 text-sm">
+        <Link href="/kokpit/avukat/durusma-artcilari" className={`rounded-full px-3 py-1 ${!avukatSuzgeci ? "bg-white/20 text-white" : "bg-white/[0.06] text-white/60 hover:text-white"}`}>Hepsi</Link>
+        <Link href="?avukat=ben" className={`rounded-full px-3 py-1 ${avukatSuzgeci === "ben" ? "bg-white/20 text-white" : "bg-white/[0.06] text-white/60 hover:text-white"}`}>Benim dosyalarım</Link>
+        {kullanicilar.map((k) => (
+          <Link key={k.id} href={`?avukat=${k.id}`} className={`rounded-full px-3 py-1 ${avukatSuzgeci === k.id ? "bg-white/20 text-white" : "bg-white/[0.06] text-white/60 hover:text-white"}`}>{k.adSoyad.split(" ")[0]}</Link>
+        ))}
+      </div>
       <div className="flex flex-col gap-3">
         {dosyalar.map((d) => {
           const durusma = d.durusmaTarihi!;
@@ -123,6 +135,12 @@ export default async function DurusmaArtcilariSayfasi() {
                       <option value="MUVEKKIL">Müvekkil</option>
                     </Secim>
                   </Alan>
+                  <Alan>
+                    <Etiket>Duruşmaya giren</Etiket>
+                    <Secim name="personelId" defaultValue={d.sorumluAvukatId ?? kullanici?.kullaniciId ?? ""}>
+                      {kullanicilar.map((k) => <option key={k.id} value={k.id}>{k.adSoyad}</option>)}
+                    </Secim>
+                  </Alan>
                   <label className="mb-4 flex items-center gap-2 text-sm text-white/70 sm:col-span-4"><input type="checkbox" name="belgeVar" /> Belge/makbuz var</label>
                   <div className="sm:col-span-4"><GonderButonu>Masrafı ekle</GonderButonu></div>
                 </form>
@@ -168,7 +186,7 @@ export default async function DurusmaArtcilariSayfasi() {
                     </Alan>
                     <Alan>
                       <Etiket>Takip sorumlusu</Etiket>
-                      <Secim name="sorumluId" defaultValue={kullanici?.kullaniciId ?? ""}>
+                      <Secim name="sorumluId" defaultValue={d.sorumluAvukatId ?? kullanici?.kullaniciId ?? ""}>
                         {kullanicilar.map((k) => <option key={k.id} value={k.id}>{k.adSoyad}</option>)}
                       </Secim>
                     </Alan>
