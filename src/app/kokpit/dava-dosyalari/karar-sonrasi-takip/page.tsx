@@ -3,8 +3,8 @@ import { kokpitNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { kararSonrasiTakipListele } from "@/modules/dava-dosyasi/lib/queries";
 import { avukatlariListele } from "@/modules/musteri/lib/queries";
 import { DOSYA_EVRESI_ETIKETLERI } from "@/modules/dava-dosyasi/lib/sabitler";
+import { CanliFiltreFormu } from "@/core/ui/canli-filtre-formu";
 import { Girdi, Secim } from "@/core/ui/form";
-import { Dugme } from "@/core/ui/button";
 
 const tarihFormatlayici = new Intl.DateTimeFormat("tr-TR");
 
@@ -37,7 +37,7 @@ export default async function KararSonrasiTakipSayfasi({
         </p>
       </div>
 
-      <form className="mb-6 flex flex-wrap gap-3" method="get">
+      <CanliFiltreFormu>
         <Girdi
           type="search"
           name="arama"
@@ -63,10 +63,7 @@ export default async function KararSonrasiTakipSayfasi({
           />
           Kesinleşmişler dahil
         </label>
-        <Dugme type="submit" varyant="ikincil">
-          Filtrele
-        </Dugme>
-      </form>
+      </CanliFiltreFormu>
 
       <div className="glass overflow-x-auto rounded-2xl">
         <table className="w-full text-left text-sm">

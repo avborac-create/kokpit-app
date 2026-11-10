@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { musterileriListele } from "@/modules/musteri/lib/queries";
+import { CanliFiltreFormu } from "@/core/ui/canli-filtre-formu";
 import { Girdi } from "@/core/ui/form";
-import { Dugme } from "@/core/ui/button";
 
 export default async function MusteriIliskileriSayfasi({
   searchParams,
@@ -21,7 +21,7 @@ export default async function MusteriIliskileriSayfasi({
         <p className="mt-1 text-sm text-white/55">Bir müvekkil seçin.</p>
       </div>
 
-      <form className="mb-6 flex flex-wrap gap-3" method="get">
+      <CanliFiltreFormu>
         <Girdi
           type="search"
           name="arama"
@@ -29,10 +29,7 @@ export default async function MusteriIliskileriSayfasi({
           defaultValue={params.arama}
           className="max-w-xs"
         />
-        <Dugme type="submit" varyant="ikincil">
-          Filtrele
-        </Dugme>
-      </form>
+      </CanliFiltreFormu>
 
       <div className="glass overflow-x-auto rounded-2xl">
         <table className="w-full text-left text-sm">

@@ -7,6 +7,7 @@ import {
 import { DOSYA_DURUMU_ETIKETLERI, CMK_DOSYA_DURUMLARI } from "@/modules/cmk-dosyalari/lib/sabitler";
 import { CMKOzetSeridi } from "@/modules/cmk-dosyalari/components/cmk-ozet-seridi";
 import { Dugme } from "@/core/ui/button";
+import { CanliFiltreFormu } from "@/core/ui/canli-filtre-formu";
 import { Girdi, Secim } from "@/core/ui/form";
 import type { CMKDosyaDurumu } from "@prisma/client";
 
@@ -65,7 +66,7 @@ export default async function CMKDosyalariSayfasi({
 
       <CMKOzetSeridi yaklasanDurusma={ozet.yaklasanDurusma} gecikmisKontrol={ozet.gecikmisKontrol} />
 
-      <form className="mb-6 flex flex-wrap gap-3" method="get">
+      <CanliFiltreFormu>
         <Girdi
           type="search"
           name="arama"
@@ -100,17 +101,7 @@ export default async function CMKDosyalariSayfasi({
             title="Sonraki kontrol — bu tarihe kadar"
           />
         </div>
-        <Dugme type="submit" varyant="ikincil">
-          Filtrele
-        </Dugme>
-        {(params.arama || params.durum || params.birim || params.durusmaTarihi || params.sonrakiKontrolTarihi) && (
-          <Link href="/kokpit/cmk-dosyalari">
-            <Dugme type="button" varyant="ikincil">
-              Temizle
-            </Dugme>
-          </Link>
-        )}
-      </form>
+      </CanliFiltreFormu>
 
       <div className="space-y-3 md:hidden">
         {dosyalar.map((dosya) => (
