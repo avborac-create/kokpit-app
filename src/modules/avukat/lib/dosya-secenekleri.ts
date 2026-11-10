@@ -19,8 +19,8 @@ export async function dosyaSecenekleriGetir(yalnizIcra = false): Promise<DosyaSe
   });
   return dosyalar.map((d) => ({
     id: d.id,
-    etiket: `${kayitNoGoster(d.kayitNo)} · ${d.dosyaNo ?? "Esas no yok"} · ${d.konu}`,
-    ayrinti: [d.birimAdi, d.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ")].filter(Boolean).join(" — "),
+    etiket: [kayitNoGoster(d.kayitNo), d.birimAdi, d.dosyaNo ?? "Esas no yok", d.konu].filter(Boolean).join(" · "),
+    ayrinti: d.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", "),
   }));
 }
 

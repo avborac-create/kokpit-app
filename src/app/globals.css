@@ -598,6 +598,16 @@ html .tsatir-konu .tikon { background: linear-gradient(135deg, #f2b04c, #c9821c)
 .konu-etiket { color: #f2b04c; }
 html[data-tema="acik"] .konu-etiket { color: #9a5b00; }
 
+/* Müvekkil (mavi) ve karşı taraf (gül/kırmızı) satırları birbirinden ayrışır. */
+html .tsatir.tsatir-muv { background: color-mix(in srgb, #4da3ff 13%, transparent); border-color: color-mix(in srgb, #4da3ff 40%, transparent); }
+html .tsatir-muv .tikon { background: linear-gradient(135deg, #4da3ff, #1f6fd1); color: #fff; box-shadow: none; }
+.muv-etiket { color: #7dbbff; }
+html[data-tema="acik"] .muv-etiket { color: #1757a8; }
+html .tsatir.tsatir-karsi { background: color-mix(in srgb, #ff6b81 13%, transparent); border-color: color-mix(in srgb, #ff6b81 40%, transparent); }
+html .tsatir-karsi .tikon { background: linear-gradient(135deg, #ff6b81, #c9304a); color: #fff; box-shadow: none; }
+.karsi-etiket { color: #ff8fa0; }
+html[data-tema="acik"] .karsi-etiket { color: #b01f3a; }
+
 /* DUZ YUZEY (Notion fume): cam efekti yok; zemin ve kartlar duz, ince cizgili, kucuk koseli. */
 html[data-cam="kapali"] body { background-image: none; }
 html .glass, html .glass-strong { border-radius: 8px; }

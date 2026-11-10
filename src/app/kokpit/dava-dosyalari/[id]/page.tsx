@@ -111,17 +111,6 @@ function SiraliListe({ children }: { children: React.ReactNode[] }) {
   );
 }
 
-// Kutucukta uzun unvanlar sığsın diye yaygın şirket eklerini kısaltır; ad hep yazılır.
-function kisaUnvan(ad: string): string {
-  return ad
-    .replace(/\s+ANONİM\s+ŞİRKETİ/gi, " A.Ş.")
-    .replace(/\s+LİMİTED\s+ŞİRKETİ/gi, " LTD. ŞTİ.")
-    .replace(/\s+SANAYİ\s+VE\s+TİCARET/gi, " SAN. VE TİC.")
-    .replace(/\s+TİCARET\s+ANONİM/gi, " TİC. A.Ş.")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
-
 export default async function DavaDosyasiDetaySayfasi({
   params,
   searchParams,
@@ -435,10 +424,10 @@ export default async function DavaDosyasiDetaySayfasi({
                       <span className="rounded-md bg-[var(--accent-soft)] px-1.5 py-0.5 text-xs font-bold tracking-wide text-[#8fb4e8]">
                         {kokpitNoGoster({ ...alt, anaDosya: dosya })}
                       </span>
-                      <span className="text-sm font-semibold text-white">{alt.dosyaNo ?? "—"}</span>
+                      {alt.birimAdi && <span className="text-sm font-semibold text-white">{alt.birimAdi}</span>}
+                      <span className={alt.birimAdi ? "rounded-md bg-[var(--accent-soft)] px-1.5 py-0.5 text-sm font-semibold text-[#8fb4e8]" : "text-sm font-semibold text-white"}>{alt.dosyaNo ?? "—"}</span>
                       <span className="ml-auto rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] font-medium text-white/70">{alt.durum.etiket}</span>
                     </span>
-                    {alt.birimAdi && <span className="mt-0.5 block text-sm text-white/75">{alt.birimAdi}</span>}
                     <span className="block text-xs text-white/45">
                       {[alt.tur?.etiket, alt.konu].filter(Boolean).join(" · ")}
                     </span>
@@ -524,10 +513,10 @@ export default async function DavaDosyasiDetaySayfasi({
             </div>
             {/* Davacı solda, davalı sağda: müvekkil davalıysa karşı taraf kutusu öne (sola), müvekkil kutusu arkaya (sağa) geçer. */}
             <div className="mt-1.5 grid grid-cols-1 items-stretch gap-1.5 text-sm md:mt-1 md:flex md:flex-wrap md:gap-1.5 [&_.tikon]:!h-6 [&_.tikon]:!w-6 [&_.tikon]:!text-xs [&_.tsatir]:!px-2.5 [&_.tsatir]:!py-1 md:[&_.tikon]:!hidden md:[&_.tsatir]:!px-2 md:[&_.tsatir]:!py-0.5 md:[&_.tsatir_.etiket-ust]:!mr-1.5 md:[&_.tsatir_.etiket-ust]:!inline">
-              <div className={`tsatir ${muvekkilDavali ? "order-2" : "order-1"}`}>
+              <div className={`tsatir tsatir-muv ${muvekkilDavali ? "order-2" : "order-1"}`}>
                 <span className="tikon" aria-hidden>👤</span>
                 <div className="min-w-0 flex-1">
-                  <span className="etiket-ust block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">
+                  <span className="muv-etiket etiket-ust block text-[11px] font-semibold uppercase tracking-wider sm:text-xs">
                     Müvekkil{dosya.muvekkilSifatiDegeri && !(dosya.muvekkilSifati === "BORCLU" && dosya.tur?.kod !== "icra_dosyasi") ? ` · ${dosya.muvekkilSifatiDegeri.etiket}` : ""}
                   </span>
                   <span className="break-words text-sm font-medium text-white sm:text-base">
@@ -535,10 +524,10 @@ export default async function DavaDosyasiDetaySayfasi({
                   </span>
                 </div>
               </div>
-              <div className={`tsatir ${muvekkilDavali ? "order-1" : "order-2"}`}>
+              <div className={`tsatir tsatir-karsi ${muvekkilDavali ? "order-1" : "order-2"}`}>
                 <span className="tikon tikon-karsi" aria-hidden>⚖</span>
                 <div className="min-w-0 flex-1">
-                  <span className="etiket-ust block text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] sm:text-xs">Karşı Taraf</span>
+                  <span className="karsi-etiket etiket-ust block text-[11px] font-semibold uppercase tracking-wider sm:text-xs">Karşı Taraf</span>
                   <span className="break-words text-sm font-medium text-white sm:text-base">
                     <NumaraliAdlar adlar={dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad)} />
                   </span>
@@ -677,16 +666,22 @@ export default async function DavaDosyasiDetaySayfasi({
             secenekler={durumKodlari.map((d) => ({ id: d.id, etiket: d.etiket, kod: d.kod }))}
             seciliId={dosya.durumKoduId}
           />
-          <div className="glass mb-3 grid grid-cols-2 overflow-hidden rounded-2xl md:grid-cols-4">
+          {/* Müvekkil/karşı taraf başlıkta zaten var; burada tekrarlanmaz. Yalnız özet göstergeler. */}
+          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {[
-              { etiket: "Dava değeri", deger: davaDegeri > 0 ? davaDegeriYaz(davaDegeri) : "—", renk: "border-t-[var(--accent)]" },
-              { etiket: "Müvekkil", deger: dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—", renk: "border-t-[#e6b450]" },
-              { etiket: "Karşı taraf", deger: dosya.karsiTaraflar.map((kt) => kisaUnvan(kt.karsiTaraf.ad)).join(" · ") || "—", renk: "border-t-[#32d74b]" },
-              { etiket: "Sorumlu avukat", deger: dosya.sorumluAvukat?.adSoyad ?? "Atanmadı", renk: "border-t-white/40" },
-            ].map((k, i) => (
-              <div key={k.etiket} className={`min-w-0 border-t-2 px-4 py-2.5 ${k.renk} ${i > 0 ? "md:border-l md:border-l-white/[0.08]" : ""}`}>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8fb4e8]">{k.etiket}</p>
-                <p className="line-clamp-3 break-words text-base font-semibold leading-snug text-white" title={k.deger}>{k.deger}</p>
+              { etiket: "Dava değeri", deger: davaDegeri > 0 ? davaDegeriYaz(davaDegeri) : "—", alt: davaDegeri > 0 ? "talep toplamı" : "talep kalemi girilmedi", renk: "#4da3ff" },
+              { etiket: "Sorumlu avukat", deger: dosya.sorumluAvukat?.adSoyad ?? "Atanmadı", alt: dosya.sorumluAvukat ? "dosyayı yürüten" : "atama bekliyor", renk: "#b48cff" },
+              { etiket: "Alt dosyalar", deger: String(dosya.altDosyalar.length), alt: dosya.altDosyalar.length > 0 ? "bağlı takip/dosya" : "alt dosya yok", renk: "#f2b04c" },
+            ].map((k) => (
+              <div
+                key={k.etiket}
+                className="glass relative min-w-0 overflow-hidden rounded-2xl px-4 py-3"
+                style={{ backgroundImage: `linear-gradient(135deg, color-mix(in srgb, ${k.renk} 16%, transparent), transparent 65%)` }}
+              >
+                <span className="absolute inset-y-0 left-0 w-1" style={{ background: k.renk }} aria-hidden />
+                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: k.renk }}>{k.etiket}</p>
+                <p className="mt-0.5 line-clamp-2 break-words text-xl font-semibold leading-snug tracking-tight text-white" title={k.deger}>{k.deger}</p>
+                <p className="text-xs text-white/50">{k.alt}</p>
               </div>
             ))}
           </div>
