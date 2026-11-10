@@ -660,12 +660,14 @@ export default async function DavaDosyasiDetaySayfasi({
           )}
         </div>
       ) : aktifSekme === "genel" ? (
-        <>
+        <div className="genel-sade">
+          <div style={{ "--kart-renk": "#4da3ff" } as React.CSSProperties}>
           <DosyaDurumBandi
             dosyaId={id}
             secenekler={durumKodlari.map((d) => ({ id: d.id, etiket: d.etiket, kod: d.kod }))}
             seciliId={dosya.durumKoduId}
           />
+          </div>
           {/* Müvekkil/karşı taraf başlıkta zaten var; burada tekrarlanmaz. Yalnız özet göstergeler. */}
           <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {[
@@ -673,20 +675,15 @@ export default async function DavaDosyasiDetaySayfasi({
               { etiket: "Sorumlu avukat", deger: dosya.sorumluAvukat?.adSoyad ?? "Atanmadı", alt: dosya.sorumluAvukat ? "dosyayı yürüten" : "atama bekliyor", renk: "#b48cff" },
               { etiket: "Alt dosyalar", deger: String(dosya.altDosyalar.length), alt: dosya.altDosyalar.length > 0 ? "bağlı takip/dosya" : "alt dosya yok", renk: "#f2b04c" },
             ].map((k) => (
-              <div
-                key={k.etiket}
-                className="glass relative min-w-0 overflow-hidden rounded-2xl px-4 py-3"
-                style={{ backgroundImage: `linear-gradient(135deg, color-mix(in srgb, ${k.renk} 16%, transparent), transparent 65%)` }}
-              >
-                <span className="absolute inset-y-0 left-0 w-1" style={{ background: k.renk }} aria-hidden />
-                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: k.renk }}>{k.etiket}</p>
-                <p className="mt-0.5 line-clamp-2 break-words text-xl font-semibold leading-snug tracking-tight text-white" title={k.deger}>{k.deger}</p>
-                <p className="text-xs text-white/50">{k.alt}</p>
+              <div key={k.etiket} className="glass min-w-0 px-4 py-2.5" style={{ "--kart-renk": k.renk } as React.CSSProperties} title={k.alt}>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-white/55">{k.etiket}</p>
+                <p className="line-clamp-2 break-words text-lg font-semibold leading-snug text-white" title={k.deger}>{k.deger}</p>
               </div>
             ))}
           </div>
           <div className="grid items-start gap-x-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <div className="min-w-0">
+            <div style={{ "--kart-renk": "#4da3ff" } as React.CSSProperties}>
             <DuzenlenebilirKart
               duz
               etiketOnEki="dosya-detay.kunye"
@@ -696,7 +693,9 @@ export default async function DavaDosyasiDetaySayfasi({
               etiketDuzenleyebilir={etiketDuzenleyebilir}
               onKaydet={dosyaAlanlariniGuncelle.bind(null, id)}
             />
+            </div>
 
+            <div style={{ "--kart-renk": "#f2b04c" } as React.CSSProperties}>
             <DuzenlenebilirKart
               duz
               etiketOnEki="dosya-detay.icerik"
@@ -706,11 +705,12 @@ export default async function DavaDosyasiDetaySayfasi({
               etiketDuzenleyebilir={etiketDuzenleyebilir}
               onKaydet={dosyaAlanlariniGuncelle.bind(null, id)}
             />
+            </div>
           </div>
 
           <div className="min-w-0">
           {talepMaddeleri.length > 0 && (
-            <div className="mb-3">
+            <div className="mb-3" style={{ "--kart-renk": "#32d74b" } as React.CSSProperties}>
               <FormKarti baslik="Dava Değeri · Talep Kalemleri">
                 <TalepKalemleriPaneli dosyaId={id} maddeler={talepMaddeleri} baslangic={talepEkstralari} />
               </FormKarti>
@@ -737,7 +737,7 @@ export default async function DavaDosyasiDetaySayfasi({
             </div>
           )}
 
-          <div className="mb-3">
+          <div className="mb-3" style={{ "--kart-renk": "#b48cff" } as React.CSSProperties}>
             <FormKarti baslik="Vekil Bilgileri">
               <VekilPaneli
                 dosyaId={id}
@@ -754,7 +754,7 @@ export default async function DavaDosyasiDetaySayfasi({
             </FormKarti>
           </div>
 
-          <div className="mb-3">
+          <div className="mb-3" style={{ "--kart-renk": "#2ec4b6" } as React.CSSProperties}>
             <DuzenlenebilirKart
               etiketOnEki="dosya-detay.dosya-agaci"
               varsayilanBaslik="Dosya Ağacı"
@@ -801,7 +801,7 @@ export default async function DavaDosyasiDetaySayfasi({
               </div>
             </div>
           )}
-        </>
+        </div>
       ) : (
         musteriId ? (
           <EkonomiPaneli

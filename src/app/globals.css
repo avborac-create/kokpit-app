@@ -598,6 +598,10 @@ html .tsatir-konu .tikon { background: linear-gradient(135deg, #f2b04c, #c9821c)
 .konu-etiket { color: #f2b04c; }
 html[data-tema="acik"] .konu-etiket { color: #9a5b00; }
 
+/* Genel sekmesi: sade kartlar, solda renk çıkıntısı (renk --kart-renk ile gelir), gölge/gradyan yok. */
+.genel-sade .glass { border-radius: 10px; box-shadow: none; background-image: none !important; border-left: 3px solid var(--kart-renk, var(--accent)); }
+.genel-sade .glass h3 { letter-spacing: 0.1em; }
+
 /* Müvekkil (mavi) ve karşı taraf (gül/kırmızı) satırları birbirinden ayrışır. */
 html .tsatir.tsatir-muv { background: color-mix(in srgb, #4da3ff 13%, transparent); border-color: color-mix(in srgb, #4da3ff 40%, transparent); }
 html .tsatir-muv .tikon { background: linear-gradient(135deg, #4da3ff, #1f6fd1); color: #fff; box-shadow: none; }
