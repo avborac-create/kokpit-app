@@ -580,6 +580,8 @@ model DavaDosyasi {
   // alacakli oldugu, ayri takip edilen icra dosyalari).
   ekonomiDisi          Boolean          @default(false)
   ekonomiNotlari       DosyaEkonomiNotu[]
+  durusmaArtcilari     DurusmaArtcisi[]
+  durusmaMasraflari    DurusmaMasrafi[]
   anaDosyaId           String?
   anaDosya             DavaDosyasi?     @relation("DosyaAgaci", fields: [anaDosyaId], references: [id])
   altDosyalar          DavaDosyasi[]    @relation("DosyaAgaci")
@@ -2027,4 +2029,49 @@ model DosyaTebligati {
 
   @@index([dosyaId])
   @@map("dosya_tebligatlari")
+}
+
+// Durusma Artcisi: durusmadan cikinca tek panelden girilen sonuc kaydi (ileri tarihe
+// birakildi / karara cikti), gerekceli karar takibi ayari ve muvekkile bilgi damgasi.
+// Bir dosyanin ayni durusma tarihi icin tek kaydi olur.
+model DurusmaArtcisi {
+  id                   String      @id @default(cuid())
+  davaDosyasiId        String
+  davaDosyasi          DavaDosyasi @relation(fields: [davaDosyasiId], references: [id], onDelete: Cascade)
+  durusmaTarihi        DateTime
+  sonuc                String // ILERI_TARIH | KARARA_CIKTI
+  yeniDurusmaTarihi    DateTime?
+  akibet               String?
+  notlar               String?
+  // Gerekceli karar takibi: yargi kolu CEZA/HUKUK, yasal sure sonu, siki takip periyodu (gun).
+  yargiKolu            String?
+  yasalSureSonu        DateTime?   @db.Date
+  takipPeriyotGun      Int?
+  muvekkileBilgiTarihi DateTime?
+  olusturanId          String?
+  olusturmaTarihi      DateTime    @default(now())
+
+  @@unique([davaDosyasiId, durusmaTarihi])
+  @@map("durusma_artcilari")
+}
+
+// Duruşma Masraf Föyü satiri: personelin durusma icin yaptigi masraf (yol, vestiyer...).
+// "odeyen" = AVUKAT (kendi cebi/avansi; ana foye gecer) | BURO | MUVEKKIL.
+model DurusmaMasrafi {
+  id            String      @id @default(cuid())
+  davaDosyasiId String
+  davaDosyasi   DavaDosyasi @relation(fields: [davaDosyasiId], references: [id], onDelete: Cascade)
+  durusmaTarihi DateTime?
+  personelId    String?
+  tarih         DateTime    @db.Date
+  kalem         String
+  tutar         Decimal     @db.Decimal(14, 2)
+  odeyen        String      @default("AVUKAT")
+  belgeVar      Boolean     @default(false)
+  aciklama      String?
+  olusturmaTarihi DateTime  @default(now())
+
+  @@index([davaDosyasiId])
+  @@index([personelId, tarih])
+  @@map("durusma_masraflari")
 }
