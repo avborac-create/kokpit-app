@@ -13,6 +13,7 @@ export function PdfGoruntuleyici({ yol, ad }: { yol: string; ad: string }) {
   const kap = useRef<HTMLDivElement>(null);
   const ic = useRef<HTMLDivElement>(null);
   const carpanRef = useRef(1);
+  const bekleyen = useRef<{ x: number; y: number; bitis: number } | null>(null);
   const [belge, setBelge] = useState<PDFDocumentProxy | null>(null);
   const [hata, setHata] = useState("");
   const [mod, setMod] = useState<Mod>("genislik");
@@ -60,17 +61,38 @@ export function PdfGoruntuleyici({ yol, ad }: { yol: string; ad: string }) {
   }, []);
 
   // İki parmakla yakınlaştırma yalnız evrakı büyütür; sayfa/üst düğmeler büyümez.
-  // Hareket sırasında hafif CSS ölçeklemesi, parmaklar kalkınca gerçek (keskin) yeniden çizim.
+  // Yakınlaştırma parmakların bastığı noktaya doğru yapılır: hareket sırasında hafif CSS ölçeklemesi
+  // (parmakların ortası sabit kalır), parmaklar kalkınca gerçek (keskin) yeniden çizim ve kaydırma düzeltmesi.
   useEffect(() => {
     const el = kap.current;
     if (!el) return;
     let d0 = 0;
     let k = 1;
+    let ox = 0;
+    let oy = 0;
+    let bx = 0;
+    let by = 0;
+    let sx = 0;
+    let sy = 0;
+    let ex = 0;
+    let ey = 0;
     const mesafe = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const orta = (t: TouchList) => ({ x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 });
     const basla = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
+      bekleyen.current = null;
+      if (e.touches.length === 2 && ic.current) {
         d0 = mesafe(e.touches);
         k = 1;
+        const m = orta(e.touches);
+        const r = ic.current.getBoundingClientRect();
+        bx = m.x;
+        by = m.y;
+        ex = m.x;
+        ey = m.y;
+        ox = m.x - r.left;
+        oy = m.y - r.top;
+        sx = el.scrollLeft;
+        sy = el.scrollTop;
       }
     };
     const hareket = (e: TouchEvent) => {
@@ -79,16 +101,26 @@ export function PdfGoruntuleyici({ yol, ad }: { yol: string; ad: string }) {
       const mevcut = carpanRef.current;
       const hedef = Math.min(4, Math.max(0.3, (mevcut * mesafe(e.touches)) / d0));
       k = hedef / mevcut;
+      const m = orta(e.touches);
+      ex = m.x;
+      ey = m.y;
       if (ic.current) {
-        ic.current.style.transformOrigin = "0 0";
-        ic.current.style.transform = `scale(${k})`;
+        ic.current.style.transformOrigin = `${ox}px ${oy}px`;
+        ic.current.style.transform = `translate(${ex - bx}px, ${ey - by}px) scale(${k})`;
       }
     };
     const bitir = (e: TouchEvent) => {
       if (d0 > 0 && e.touches.length < 2) {
         d0 = 0;
-        if (ic.current) ic.current.style.transform = "";
-        if (k !== 1) setCarpan(Math.round(carpanRef.current * k * 100) / 100);
+        if (ic.current) {
+          ic.current.style.transform = "";
+          ic.current.style.transformOrigin = "";
+        }
+        if (k !== 1) {
+          // Parmakların altındaki evrak noktası, parmakların bıraktığı yerde kalsın.
+          bekleyen.current = { x: sx + bx + ox * (k - 1) - ex, y: sy + by + oy * (k - 1) - ey, bitis: Date.now() + 900 };
+          setCarpan(Math.round(carpanRef.current * k * 100) / 100);
+        }
         k = 1;
       }
     };
@@ -102,6 +134,26 @@ export function PdfGoruntuleyici({ yol, ad }: { yol: string; ad: string }) {
       el.removeEventListener("touchend", bitir);
       el.removeEventListener("touchcancel", bitir);
     };
+  }, []);
+
+  // Yeniden çizim sırasında sayfa boyutları değiştikçe, bekleyen kaydırma konumunu uygula.
+  useEffect(() => {
+    const el = kap.current;
+    const icEl = ic.current;
+    if (!el || !icEl) return;
+    const uygula = () => {
+      const b = bekleyen.current;
+      if (!b) return;
+      if (Date.now() > b.bitis) {
+        bekleyen.current = null;
+        return;
+      }
+      el.scrollLeft = b.x;
+      el.scrollTop = b.y;
+    };
+    const g = new ResizeObserver(uygula);
+    g.observe(icEl);
+    return () => g.disconnect();
   }, []);
 
   function modSec(m: Mod) {
