@@ -340,27 +340,27 @@ export function TakvimUygulamasi({
           setPencere({ oge: o.oge, tarih: o.oge.tarih });
         }}
         title={[o.oge.baslik, o.oge.yer, sorumlu && `Sorumlu: ${sorumlu}`].filter(Boolean).join(" · ")}
-        className={`flex cursor-grab items-center gap-1.5 rounded-md border-l-[4px] px-2 font-medium text-white hover:brightness-125 active:cursor-grabbing ${
+        className={`flex cursor-grab items-start gap-1.5 rounded-md border-l-[4px] px-2 font-medium text-white hover:brightness-125 active:cursor-grabbing ${
           kompakt ? "py-1 text-[13px] leading-tight" : "py-1.5 text-sm"
         } ${ustunde === o.key ? "ring-1 ring-[var(--accent)]" : ""} ${o.oge.tamam ? "opacity-65" : ""}`}
         style={{ borderLeftColor: renk, background: `color-mix(in srgb, ${renk} 26%, transparent)` }}
       >
-        {(!o.oge.turetilmis || o.oge.turetilmis === "is") && !kompakt && (
+        {(!o.oge.turetilmis || o.oge.turetilmis === "is") && (
           <input
             type="checkbox"
             checked={o.oge.tamam}
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => tamamla(o.oge, e.target.checked)}
-            className="h-3 w-3 shrink-0 accent-[var(--accent)]"
+            className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-[var(--accent)]"
             aria-label="Tamamlandı"
           />
         )}
-        <span className={`min-w-0 flex-1 truncate ${o.oge.tamam ? "line-through" : ""}`}>
+        <span className={`min-w-0 flex-1 whitespace-normal break-words ${o.oge.tamam ? "line-through" : ""}`}>
           {o.oge.saat && !kompakt && <span className="mr-1.5 font-semibold text-white/85">{o.oge.saat}</span>}
           {o.oge.saat && kompakt && <span className="mr-1 font-semibold text-white/85">{o.oge.saat}</span>}
           {o.oge.baslik}
         </span>
-        {!kompakt && sorumlu && <span className="shrink-0 text-xs text-white/70">{sorumlu}</span>}
+        {!kompakt && sorumlu && <span className="shrink-0 pt-0.5 text-xs text-white/70">{sorumlu}</span>}
         {o.oge.tekrar && <span className="shrink-0 text-[10px] text-white/40" title="Tekrarlanan">↻</span>}
         {!o.ilkGun && <span className="shrink-0 text-[10px] text-white/40">↦</span>}
       </div>
