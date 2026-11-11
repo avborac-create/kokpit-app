@@ -10,6 +10,7 @@ import { IcerikSiniflandirma } from "./icerik-siniflandirma";
 import { KarsiTarafEkleyici, type KarsiTarafCipi } from "./karsi-taraf-ekleyici";
 import { DosyaSinifiAlanlari } from "./dosya-sinifi-alanlari";
 import { TalepSonucuListesi } from "./talep-sonucu-listesi";
+import { degerEtiketleri } from "@/modules/dava-dosyasi/lib/dava-degeri";
 import { DavaDosyasiSekmeleri } from "./dava-dosyasi-sekmeleri";
 import { DosyaKimligiAlanlari } from "./dosya-kimligi-alanlari";
 
@@ -173,6 +174,7 @@ export function DavaDosyasiFormIcerik({
   const anahtar = durum ? JSON.stringify(durum) : taslak ? "taslak" : "ilk";
   const taslaktanDegerler = (ad: string) => (taslak ?? []).filter(([k]) => k === ad).map(([, v]) => v);
   const seciliIdlerGuncel = durum?.gonderilenMusteriIdleri ?? (taslak ? taslaktanDegerler("musteriIds") : seciliIdler);
+  const icraSecili = dosyaTurleri.find((t) => t.id === (g?.turId ?? dosya?.turId))?.kod === "icra_dosyasi";
   const talepMaddeleriGuncel = durum?.gonderilenTalepMaddeleri ?? (taslak ? taslaktanDegerler("talepMaddeleri") : dosya?.talepSonucu?.split("\n") ?? []);
 
   // Hukuk dali + dava turu + dava konusu tek blok olarak, ilk gorunen alanin
@@ -243,7 +245,7 @@ export function DavaDosyasiFormIcerik({
         />
       </Alan>
     ),
-    talepSonucu: () => <TalepSonucuListesi baslangicMaddeler={talepMaddeleriGuncel} etiket="Dava Değeri (Netice ve Talep — mahkemeden ne istiyoruz?)" />,
+    talepSonucu: () => <TalepSonucuListesi icraMi={icraSecili} baslangicMaddeler={talepMaddeleriGuncel} etiket={degerEtiketleri(icraSecili).form} />,
   };
 
   // Yeni dosya acilisinda tek kart ve en az alan: muvekkil, karsi taraf,

@@ -8,10 +8,16 @@ import {
   KALEM_TURLERI,
   artisToplami,
   bosEkstra,
+  PARA_BIRIMLERI,
+  davaDegeriToplamlari,
   davaDegeriYaz,
   guncelTalep,
   ilkTalep,
+  paraBirimi,
+  toplamlariYaz,
+  type ParaKodu,
   type TalepEkstrasi,
+  degerEtiketleri,
 } from "@/modules/dava-dosyasi/lib/dava-degeri";
 
 const alan = "rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 text-sm text-white outline-none focus:border-[var(--accent)]";
@@ -23,7 +29,9 @@ export function TalepKalemleriPaneli({
   dosyaId,
   maddeler,
   baslangic,
+  icraMi = false,
 }: {
+  icraMi?: boolean;
   dosyaId: string;
   maddeler: string[];
   baslangic: TalepEkstrasi[];
@@ -44,9 +52,17 @@ export function TalepKalemleriPaneli({
     setMesaj("");
   };
 
-  const toplam = maddeler.reduce((t, m, i) => t + guncelTalep(m, ekstralar[i]), 0);
-  const toplamArtis = ekstralar.reduce((t, e) => t + artisToplami(e), 0);
-  const sakli = ekstralar.reduce((t, e, i) => (e.kismi && e.tamAlacak ? t + Math.max(0, e.tamAlacak - guncelTalep(maddeler[i], e)) : t), 0);
+  const toplamMetni = toplamlariYaz(davaDegeriToplamlari(maddeler, ekstralar));
+  const paraTopla = (f: (e: TalepEkstrasi, i: number) => number) => {
+    const t: Partial<Record<ParaKodu, number>> = {};
+    ekstralar.forEach((e, i) => {
+      const v = f(e, i);
+      if (v > 0) t[paraBirimi(maddeler[i], e)] = (t[paraBirimi(maddeler[i], e)] ?? 0) + v;
+    });
+    return toplamlariYaz(t);
+  };
+  const toplamArtisMetni = paraTopla((e) => artisToplami(e));
+  const sakliMetni = paraTopla((e, i) => (e.kismi && e.tamAlacak ? Math.max(0, e.tamAlacak - guncelTalep(maddeler[i], e)) : 0));
 
   function artisEkle(i: number) {
     const tutar = sayiAl(artis.tutar);
@@ -82,13 +98,21 @@ export function TalepKalemleriPaneli({
       {maddeler.map((metin, i) => {
         const e = ekstralar[i];
         const ilk = ilkTalep(metin, e);
+        const para = paraBirimi(metin, e);
+        const simge = PARA_BIRIMLERI.find((p) => p.kod === para)?.simge ?? "₺";
         const ayrintiVar = !!e.tur || e.kismi || e.artislar.length > 0;
         const ayrintiAcik = acikAyrinti.has(i);
         return (
           <div key={i} className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
               <label className="flex items-center gap-1 text-sm text-white/50">
-                ₺
+                <select value={para} onChange={(ev) => guncelle(i, { para: ev.target.value as ParaKodu })} className={`${alan} w-[4.25rem] px-1`} aria-label="Para birimi" title="Para birimi">
+                  {PARA_BIRIMLERI.map((p) => (
+                    <option key={p.kod} value={p.kod}>
+                      {p.simge} {p.ad}
+                    </option>
+                  ))}
+                </select>
                 <input
                   inputMode="decimal"
                   value={e.tutar ?? (ilk > 0 ? String(ilk) : "")}
@@ -142,7 +166,7 @@ export function TalepKalemleriPaneli({
 
                 {e.kismi && (
                   <div className="flex flex-wrap items-center gap-2 text-sm text-white/60">
-                    <span>Alacağın tamamı: ₺</span>
+                    <span>Alacağın tamamı: {simge}</span>
                     <input
                       inputMode="decimal"
                       value={e.tamAlacak ?? ""}
@@ -152,7 +176,7 @@ export function TalepKalemleriPaneli({
                     />
                     {e.tamAlacak ? (
                       <span>
-                        → saklı kalan <b className="text-white">{davaDegeriYaz(Math.max(0, e.tamAlacak - guncelTalep(metin, e)))}</b>
+                        → saklı kalan <b className="text-white">{davaDegeriYaz(Math.max(0, e.tamAlacak - guncelTalep(metin, e)), para)}</b>
                       </span>
                     ) : null}
                   </div>
@@ -161,7 +185,7 @@ export function TalepKalemleriPaneli({
                 {e.artislar.map((x, k) => (
                   <div key={k} className="flex items-center gap-2 text-xs text-white/60">
                     <span>
-                      ↳ {tarihYaz(x.tarih)} · {x.tur} · <b className="text-white/85">+{davaDegeriYaz(x.tutar)}</b>
+                      ↳ {tarihYaz(x.tarih)} · {x.tur} · <b className="text-white/85">+{davaDegeriYaz(x.tutar, para)}</b>
                     </span>
                     <button
                       type="button"
@@ -217,10 +241,10 @@ export function TalepKalemleriPaneli({
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3 text-sm">
         <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-white/60">
           <span>
-            Toplam dava değeri: <b className="text-base text-white">{davaDegeriYaz(toplam)}</b>
+            {degerEtiketleri(icraMi).toplam}: <b className="text-base text-white">{toplamMetni || "—"}</b>
           </span>
-          {toplamArtis > 0 && <span>artış toplamı +{davaDegeriYaz(toplamArtis)}</span>}
-          {sakli > 0 && <span>saklı kalan {davaDegeriYaz(sakli)}</span>}
+          {toplamArtisMetni && <span>artış toplamı +{toplamArtisMetni}</span>}
+          {sakliMetni && <span>saklı kalan {sakliMetni}</span>}
         </div>
         <div className="flex items-center gap-3">
           {mesaj && <span className="text-xs text-white/55">{mesaj}</span>}

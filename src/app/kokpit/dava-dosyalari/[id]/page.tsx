@@ -14,7 +14,7 @@ import { BakiyeUyariOzeti } from "@/modules/dava-dosyasi/components/bakiye-uyari
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
-import { davaDegeriKalemlerden, davaDegeriYaz, ekstralariAyikla } from "@/modules/dava-dosyasi/lib/dava-degeri";
+import { davaDegeriToplamlari, toplamlariYaz, degerEtiketleri, ekstralariAyikla } from "@/modules/dava-dosyasi/lib/dava-degeri";
 import { TalepKalemleriPaneli } from "@/modules/dava-dosyasi/components/talep-kalemleri-paneli";
 import { VekilPaneli } from "@/modules/dava-dosyasi/components/vekil-paneli";
 import { prisma } from "@/core/db/prisma";
@@ -320,7 +320,9 @@ export default async function DavaDosyasiDetaySayfasi({
   const hukukDali = hukukDallari.find((d) => d.id === (konuSecenegi?.ustId ?? turSecenegi?.ustId));
   const talepMaddeleri = (dosya.talepSonucu ?? "").split("\n").filter(Boolean);
   const talepEkstralari = ekstralariAyikla(dosya.talepKalemleri);
-  const davaDegeri = davaDegeriKalemlerden(talepMaddeleri, talepEkstralari);
+  const davaDegeri = toplamlariYaz(davaDegeriToplamlari(talepMaddeleri, talepEkstralari));
+  const icraMi = dosya.tur?.kod === "icra_dosyasi";
+  const dEtiket = degerEtiketleri(icraMi);
   const icerikAlanlari: KartAlani[] = [
     {
       anahtar: "hukukDali",
@@ -358,7 +360,7 @@ export default async function DavaDosyasiDetaySayfasi({
     },
     {
       anahtar: "talepSonucu",
-      varsayilanEtiket: "Dava Değeri (Netice ve Talep)",
+      varsayilanEtiket: dEtiket.baslik,
       tip: "cokSatir",
       deger: dosya.talepSonucu ?? "",
       gosterim: dosya.talepSonucu ? (
@@ -371,10 +373,10 @@ export default async function DavaDosyasiDetaySayfasi({
             </li>
           ))}
         </ol>
-        {davaDegeri > 0 && (
+        {davaDegeri && (
           <p className="mt-1.5 text-sm">
-            <span className="text-white/50">Toplam dava değeri: </span>
-            <span className="font-semibold text-white">{davaDegeriYaz(davaDegeri)}</span>
+            <span className="text-white/50">{dEtiket.toplam}: </span>
+            <span className="font-semibold text-white">{davaDegeri}</span>
           </p>
         )}
         </>
@@ -673,7 +675,7 @@ export default async function DavaDosyasiDetaySayfasi({
           {/* Müvekkil/karşı taraf başlıkta zaten var; burada tekrarlanmaz. Yalnız özet göstergeler. */}
           <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {[
-              { etiket: "Dava değeri", deger: davaDegeri > 0 ? davaDegeriYaz(davaDegeri) : "—", alt: davaDegeri > 0 ? "talep toplamı" : "talep kalemi girilmedi", renk: "#4da3ff" },
+              { etiket: dEtiket.kpi, deger: davaDegeri || "—", alt: davaDegeri ? dEtiket.kpiAlt : dEtiket.kpiBos, renk: "#4da3ff" },
               { etiket: "Sorumlu avukat", deger: dosya.sorumluAvukat?.adSoyad ?? "Atanmadı", alt: dosya.sorumluAvukat ? "dosyayı yürüten" : "atama bekliyor", renk: "#b48cff" },
               { etiket: "Alt dosyalar", deger: String(dosya.altDosyalar.length), alt: dosya.altDosyalar.length > 0 ? "bağlı takip/dosya" : "alt dosya yok", renk: "#f2b04c" },
             ].map((k) => (
@@ -713,8 +715,8 @@ export default async function DavaDosyasiDetaySayfasi({
           <div className="contents">
           {talepMaddeleri.length > 0 && (
             <div className="min-w-0 lg:order-5" style={{ "--kart-renk": "#32d74b" } as React.CSSProperties}>
-              <FormKarti baslik="Dava Değeri · Talep Kalemleri">
-                <TalepKalemleriPaneli dosyaId={id} maddeler={talepMaddeleri} baslangic={talepEkstralari} />
+              <FormKarti baslik={dEtiket.kalemKarti}>
+                <TalepKalemleriPaneli icraMi={icraMi} dosyaId={id} maddeler={talepMaddeleri} baslangic={talepEkstralari} />
               </FormKarti>
             </div>
           )}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Etiket, Girdi } from "@/core/ui/form";
 import { Dugme } from "@/core/ui/button";
-import { davaDegeriHesapla, davaDegeriYaz } from "@/modules/dava-dosyasi/lib/dava-degeri";
+import { davaDegeriToplamlari, toplamlariYaz, degerEtiketleri, bosEkstra } from "@/modules/dava-dosyasi/lib/dava-degeri";
 
 // Talep Sonucu tek bir serbest metin degil, davada istenen her kalemin
 // (ör. "170.000 TL kıdem tazminatı", "... hususunun tespiti") AYRI bir
@@ -35,7 +35,9 @@ export function talebiMaddelereBol(metin: string): string[] {
 export function TalepSonucuListesi({
   baslangicMaddeler = [],
   etiket = "Talep Sonucu",
+  icraMi = false,
 }: {
+  icraMi?: boolean;
   baslangicMaddeler?: string[];
   etiket?: string;
 }) {
@@ -43,7 +45,7 @@ export function TalepSonucuListesi({
     baslangicMaddeler.length > 0 ? baslangicMaddeler : [""],
   );
 
-  const toplam = davaDegeriHesapla(maddeler);
+  const toplam = toplamlariYaz(davaDegeriToplamlari(maddeler, maddeler.map(() => bosEkstra())));
 
   function guncelle(index: number, deger: string) {
     setMaddeler((liste) => liste.map((m, i) => (i === index ? deger : m)));
@@ -81,7 +83,7 @@ export function TalepSonucuListesi({
               value={madde}
               onChange={(e) => guncelle(index, e.target.value)}
               onPaste={(e) => yapistirildi(index, e)}
-              placeholder={index === 0 ? "Netice ve talebi buraya yapıştırın; maddelere kendiliğinden ayrılır" : "Talep maddesi"}
+              placeholder={index === 0 ? degerEtiketleri(icraMi).yapistir : "Talep maddesi"}
               className="flex-1"
             />
             <button
@@ -99,10 +101,10 @@ export function TalepSonucuListesi({
         <Dugme type="button" varyant="ikincil" onClick={ekle}>
           + Madde Ekle
         </Dugme>
-        {toplam > 0 && (
+        {toplam && (
           <span className="text-sm text-white/70">
-            <span className="text-white/45">Dava değeri (toplam): </span>
-            <span className="font-semibold text-white">{davaDegeriYaz(toplam)}</span>
+            <span className="text-white/45">{degerEtiketleri(icraMi).toplam}: </span>
+            <span className="font-semibold text-white">{toplam}</span>
           </span>
         )}
       </div>
