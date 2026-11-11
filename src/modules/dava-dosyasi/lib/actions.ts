@@ -782,6 +782,75 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
   revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
 }
 
+// "Yeni Esas" secimi: dosyanin mevcut turunu (esas no, son durum, gidis) gecmise
+// yazar, dosyayi yeni tura gecirir (istege bagli yeni esas no ile) ve durumu
+// secilen Yeni Esas koduna ceker. Surec cizgisi bu andan itibaren yeni tur
+// olarak ilerler.
+export type DurumTuruKaydi = {
+  tur: number;
+  dosyaNo: string | null;
+  durum: string | null;
+  gidis: number | null;
+  neden: string;
+  yeniDosyaNo: string | null;
+  tarih: string;
+};
+
+export async function yeniEsasTuruBaslat(dosyaId: string, girdi: { durumKoduId: string; yeniDosyaNo: string }) {
+  const kullanici = await mevcutKullanici();
+  if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
+
+  const hedef = await prisma.secenekDegeri.findUnique({
+    where: { id: girdi.durumKoduId },
+    select: { kod: true, etiket: true },
+  });
+  if (!hedef || !hedef.kod.startsWith("yeni_esas")) throw new Error("Geçersiz durum.");
+
+  const dosya = await prisma.davaDosyasi.findUnique({
+    where: { id: dosyaId },
+    select: {
+      dosyaNo: true,
+      birimAdi: true,
+      durumDiger: true,
+      durumGidisSayisi: true,
+      durumTurGecmisi: true,
+      durumKodu: { select: { etiket: true } },
+    },
+  });
+  if (!dosya) throw new Error("Dosya bulunamadı.");
+
+  const yeniNo = girdi.yeniDosyaNo.trim();
+  if (yeniNo) {
+    const hata = dosyaKimligiHatasi(null, yeniNo, { birimAdi: dosya.birimAdi, dosyaNo: dosya.dosyaNo });
+    if (hata) throw new Error(hata);
+  }
+
+  const gecmis = Array.isArray(dosya.durumTurGecmisi) ? (dosya.durumTurGecmisi as DurumTuruKaydi[]) : [];
+  const kayit: DurumTuruKaydi = {
+    tur: gecmis.length + 1,
+    dosyaNo: dosya.dosyaNo,
+    durum: dosya.durumKodu?.etiket ?? null,
+    gidis: dosya.durumGidisSayisi,
+    neden: hedef.etiket,
+    yeniDosyaNo: yeniNo || null,
+    tarih: new Date().toISOString(),
+  };
+
+  await prisma.davaDosyasi.update({
+    where: { id: dosyaId },
+    data: {
+      durumKoduId: girdi.durumKoduId,
+      durumGidisSayisi: null,
+      durumDiger: null,
+      durumTurGecmisi: [...gecmis, kayit],
+      ...(yeniNo ? { dosyaNo: yeniNo } : {}),
+      surum: { increment: 1 },
+    },
+  });
+  revalidatePath("/kokpit/dava-dosyalari");
+  revalidatePath(`/kokpit/dava-dosyalari/${dosyaId}`);
+}
+
 // Dosya agaci: bir dosyayi baska bir dosyanin ALT dosyasi yapar (ya da
 // anaDosyaId=null ile ayirir). Tek seviye kurali: ana dosya olacak dosya
 // kendisi alt dosya olamaz, alt dosyasi olan bir dosya baskasinin altina

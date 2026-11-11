@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { dosyaAlanlariniGuncelle } from "@/modules/dava-dosyasi/lib/actions";
+import { dosyaAlanlariniGuncelle, yeniEsasTuruBaslat, type DurumTuruKaydi } from "@/modules/dava-dosyasi/lib/actions";
 
 type DurumSecenegi = { id: string; etiket: string; kod: string };
 
@@ -18,6 +18,9 @@ const DIGER_KODU = "diger";
 const GIDIS_KODLARI = ["istinafta", "yargitayda"];
 
 const gidisli = (kod?: string) => !!kod && GIDIS_KODLARI.includes(kod);
+// "Yeni Esas" secenekleri yeni bir TUR baslatir (onceki tur gecmise yazilir).
+const yeniEsasMi = (kod?: string) => !!kod && kod.startsWith("yeni_esas");
+const tarihBicimi = new Intl.DateTimeFormat("tr-TR");
 
 export function DosyaDurumBandi({
   dosyaId,
@@ -25,12 +28,14 @@ export function DosyaDurumBandi({
   seciliId,
   gidisSayisi,
   digerAdi,
+  turGecmisi,
 }: {
   dosyaId: string;
   secenekler: DurumSecenegi[];
   seciliId: string | null;
   gidisSayisi: number | null;
   digerAdi: string | null;
+  turGecmisi: DurumTuruKaydi[];
 }) {
   const router = useRouter();
   const [bekliyor, startTransition] = useTransition();
@@ -41,6 +46,8 @@ export function DosyaDurumBandi({
   const [onayBekleyen, setOnayBekleyen] = useState<string | null>(null); // onay bekleyen durum id'si ("" = secimi kaldir)
   const [girdiGidis, setGirdiGidis] = useState(1);
   const [girdiDiger, setGirdiDiger] = useState("");
+  const [girdiYeniNo, setGirdiYeniNo] = useState("");
+  const [gecmisAcik, setGecmisAcik] = useState(false);
   const aktifRef = useRef<HTMLLIElement | null>(null);
 
   // Dar ekranda cizgi yatay kayar; secili adim gorunur alana gelsin.
@@ -70,6 +77,7 @@ export function DosyaDurumBandi({
     setOnayBekleyen(id === secili ? "" : id); // seciliye tekrar tiklamak temizler
     setGirdiGidis(gidis > 1 ? gidis : 1);
     setGirdiDiger(diger);
+    setGirdiYeniNo("");
   }
 
   function sec(yeni: string) {
@@ -88,8 +96,14 @@ export function DosyaDurumBandi({
     setSecili(yeni || null);
     setGidis(yeniGidis);
     setDiger(yeniDiger);
+    const yeniTur = yeniEsasMi(hedef?.kod) && !yeniEsasMi(seciliSecenek?.kod) && !!yeni;
     startTransition(async () => {
       try {
+        if (yeniTur) {
+          await yeniEsasTuruBaslat(dosyaId, { durumKoduId: yeni, yeniDosyaNo: girdiYeniNo });
+          router.refresh();
+          return;
+        }
         await dosyaAlanlariniGuncelle(dosyaId, {
           durumKoduId: yeni,
           durumGidisSayisi: yeniGidis > 1 ? String(yeniGidis) : "",
@@ -140,6 +154,16 @@ export function DosyaDurumBandi({
           <p className={`text-lg font-bold leading-tight sm:text-xl ${seciliSecenek ? "text-white" : "text-white/40"}`}>
             {seciliSecenek ? gorunenAd(seciliSecenek) : "Seçilmedi"}
           </p>
+          {turGecmisi.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setGecmisAcik((a) => !a)}
+              aria-expanded={gecmisAcik}
+              className="mt-0.5 rounded-full border border-[var(--accent)]/50 px-2 py-0.5 text-[11px] font-semibold text-[#8fb4e8] hover:border-[var(--accent)]"
+            >
+              {turGecmisi.length + 1}. Tur · geçmiş {gecmisAcik ? "▴" : "▾"}
+            </button>
+          )}
           {gidisli(seciliSecenek?.kod) && (
             <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/60">
               Gidiş sayısı
@@ -242,6 +266,18 @@ export function DosyaDurumBandi({
               className="min-w-[14rem] rounded-lg border border-white/30 bg-black/20 px-3 py-1.5 text-xs text-white outline-none focus:border-[var(--accent)]"
             />
           )}
+          {yeniEsasMi(onayHedefi?.kod) && !yeniEsasMi(seciliSecenek?.kod) && (
+            <label className="flex items-center gap-2 text-xs">
+              Yeni esas no
+              <input
+                type="text"
+                value={girdiYeniNo}
+                onChange={(e) => setGirdiYeniNo(e.target.value)}
+                placeholder="ör. 2026/201 Esas (boş bırakılabilir)"
+                className="min-w-[14rem] rounded-lg border border-white/30 bg-black/20 px-3 py-1.5 text-xs text-white outline-none focus:border-[var(--accent)]"
+              />
+            </label>
+          )}
           {gidisli(onayHedefi?.kod) && (
             <label className="flex items-center gap-2 text-xs">
               Kaçıncı gidiş?
@@ -262,6 +298,20 @@ export function DosyaDurumBandi({
             Vazgeç
           </button>
         </div>
+      )}
+      {gecmisAcik && turGecmisi.length > 0 && (
+        <ul className="mt-3 space-y-1.5 rounded-xl border border-white/15 bg-black/15 px-3 py-2 text-xs text-white/80">
+          {turGecmisi.map((t) => (
+            <li key={t.tur}>
+              <b className="text-white">{t.tur}. Tur</b>
+              {t.dosyaNo ? ` · ${t.dosyaNo}` : ""}
+              {t.durum ? ` · son durum: ${t.durum}${t.gidis && t.gidis > 1 ? ` (${t.gidis}. gidiş)` : ""}` : ""}
+              {` → ${t.neden}`}
+              {t.yeniDosyaNo ? ` (yeni esas: ${t.yeniDosyaNo})` : ""}
+              {` · ${tarihBicimi.format(new Date(t.tarih))}`}
+            </li>
+          ))}
+        </ul>
       )}
       {hata && <p className="mt-2 text-xs text-[#ff7a70]">{hata}</p>}
     </div>

@@ -27,6 +27,7 @@ import { DosyaBaglayici } from "@/modules/dava-dosyasi/components/dosya-baglayic
 import { kokpitNoGoster, kayitNoGoster, buroNoGoster } from "@/modules/dava-dosyasi/lib/kokpit-no";
 import { Dugme } from "@/core/ui/button";
 import { DuzenlenebilirKart, type KartAlani } from "@/core/ui/duzenlenebilir-kart";
+import type { DurumTuruKaydi } from "@/modules/dava-dosyasi/lib/actions";
 import { DosyaDurumBandi } from "@/modules/dava-dosyasi/components/dosya-durum-bandi";
 import { adliBirimleriListele } from "@/modules/dava-dosyasi/lib/adli-birim";
 import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
@@ -682,6 +683,7 @@ export default async function DavaDosyasiDetaySayfasi({
             seciliId={dosya.durumKoduId}
             gidisSayisi={dosya.durumGidisSayisi}
             digerAdi={dosya.durumDiger}
+            turGecmisi={Array.isArray(dosya.durumTurGecmisi) ? (dosya.durumTurGecmisi as unknown as DurumTuruKaydi[]) : []}
           />
           </div>
           {/* Müvekkil/karşı taraf başlıkta zaten var; burada tekrarlanmaz. Yalnız özet göstergeler. */}
