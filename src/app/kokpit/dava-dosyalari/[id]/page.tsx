@@ -627,7 +627,7 @@ export default async function DavaDosyasiDetaySayfasi({
         eylemler={
           <>
             <Link href={`/kokpit/dava-dosyalari/${id}/duzenle`}>
-              <Dugme varyant="ikincil" className="!px-3 !py-1 !text-xs">Düzenle</Dugme>
+              <Dugme varyant="birincil" className="gap-1.5 !px-4 !py-1.5 !text-sm font-semibold shadow-md"><span aria-hidden>✎</span> Düzenle</Dugme>
             </Link>
             {silmeYetkisiVar && (
               <DavaDosyasiSilmeButonu dosyaId={id} sonrasindaYonlendir="/kokpit/dava-dosyalari" boyut="kompakt" />
