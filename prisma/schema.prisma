@@ -106,6 +106,19 @@ model Kullanici {
   @@map("kullanicilar")
 }
 
+// Ekran gorunum tercihleri (or. cari hesaplar alaninin yerlesimi). sahip = "buro"
+// (buro varsayilani, yonetici belirler) ya da kullanici id (kisisel tercih);
+// deger = JSON. Kisisel kayit yoksa buro varsayilani, o da yoksa koddaki varsayilan gecerlidir.
+model EkranTercihi {
+  sahip            String
+  anahtar          String
+  deger            String
+  guncellemeTarihi DateTime @updatedAt
+
+  @@id([sahip, anahtar])
+  @@map("ekran_tercihleri")
+}
+
 // Genisletilebilir liste/etiket altyapisi.
 // "durum", "tip", "kaynak" gibi kategori alanlari icin kullanilir; boylece
 // yeni bir deger eklemek (orn. "kismi tahsilat") semayi bozmadan, sadece

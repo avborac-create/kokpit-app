@@ -50,6 +50,10 @@ import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { OdemeFormu } from "@/modules/dava-dosyasi/components/ekonomi/odeme-formu";
 import { TopluTasnifFormu } from "@/modules/dava-dosyasi/components/ekonomi/toplu-tasnif-formu";
 import { DosyaSecimi } from "@/modules/dava-dosyasi/components/ekonomi/dosya-secimi";
+import { CariHesapGezgini, type GezginGrup, type GezginHesap } from "@/modules/dava-dosyasi/components/ekonomi/cari-hesap-gezgini";
+import { BURO_SAHIBI, CARI_GORUNUM_ANAHTARI, cariGorunumCozumle } from "@/modules/dava-dosyasi/lib/cari-gorunum";
+import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
+import { sistemYoneticisiMi } from "@/core/auth/yetki";
 import { AnlasmaSekmesi } from "@/modules/dava-dosyasi/components/ekonomi/anlasma-sekmesi";
 
 const para = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
@@ -59,7 +63,6 @@ const paraYaz = para;
 // Normal hesapta bakiye = Borc - Alacak (+ : kalan borc, - : fazla odeme); Para Trafigi ve adliyede tutulan hesaplarda bakiye = Alacak - Borc (+ : orada duran para).
 const rozetRengiBul = (h: { paraHesabiMi: boolean; tutulanHesapMi: boolean }, bakiye: number): "kirmizi" | "yesil" =>
   h.paraHesabiMi || h.tutulanHesapMi ? (bakiye > 0 ? "yesil" : "kirmizi") : bakiye > 0 ? "kirmizi" : "yesil";
-const ROZET_SINIFI = { kirmizi: "bg-[#ff453a]/25 text-[#ff8a80] ring-1 ring-[#ff453a]/50", yesil: "bg-[#32d74b]/25 text-[#5ee878] ring-1 ring-[#32d74b]/50" } as const;
 const bakiyeRenk = (b: number) => (b > 0 ? "text-[#ff7a70]" : b < 0 ? "text-[#32d74b]" : "text-white/60");
 const Bakiye = ({ b }: { b: number }) => <span className={bakiyeRenk(b)}>{para.format(b)}</span>;
 
@@ -248,31 +251,45 @@ export async function EkonomiPaneli({
   const buDosya = kapsam.dosyaId ? dosyalar.find((d) => d.id === kapsam.dosyaId) : undefined;
   const dosyaSecenekleri: DosyaSecenegi[] = dosyalar.map((d) => ({ id: d.id, etiket: d.etiket, ayrinti: d.ayrinti }));
 
-  type Sekme = { anahtar: string; etiket: string; rozet?: string; rozetRengi?: "kirmizi" | "yesil" };
-  const hesapSekmesi = (h: (typeof aktifHesaplar)[number]): Sekme => {
+  // Cari hesaplar gezgini (istemci bileseni) icin duz veri + gorunum tercihi (kisisel > buro varsayilani > kod varsayilani).
+  const gezginHesabi = (h: (typeof aktifHesaplar)[number]): GezginHesap => {
     const o = ozetOf(h.id);
-    return { anahtar: String(h.no), etiket: h.paraHesabiMi ? `${h.no} - ${h.ad} (${h.grup === "BORCLU" ? "Karşı Taraf" : "Müvekkil"})` : `${h.no} - ${h.ad}`, rozet: o && o.bakiye !== 0 ? para.format(Math.abs(o.bakiye)) : undefined, rozetRengi: o && o.bakiye !== 0 ? rozetRengiBul(h, o.bakiye) : undefined };
+    const b = o?.bakiye ?? 0;
+    return {
+      anahtar: String(h.no),
+      no: h.no,
+      ad: h.ad,
+      href: hrefYaz({ alt: String(h.no) }),
+      borc: o?.borc ?? 0,
+      alacak: o?.alacak ?? 0,
+      bakiye: Math.abs(b),
+      renk: b !== 0 ? rozetRengiBul(h, b) : undefined,
+      bos: !o || (o.borc === 0 && o.alacak === 0),
+    };
   };
-  // Katlar: genel / muvekkil (100'ler) / borclu (200'ler) / adliye (300'ler)
-  const genelKat: Sekme[] = [
-    { anahtar: "anlasma", etiket: "Anlaşma" },
-    ...(musteriDuzeyi
-      ? [{ anahtar: "dosyalar", etiket: "Dosyaları Seç", rozet: disindakiSayisi > 0 ? `${disindakiSayisi} dışında` : undefined }]
-      : []),
-    ...(silmeYetkisiVar ? [{ anahtar: "yonet", etiket: "Hesapları Yönet" }] : []),
+  const gezginGrubu = (kod: GezginGrup["kod"], no: number, ad: string, grup: string, ek: GezginHesap[] = []): GezginGrup => ({
+    kod,
+    no,
+    ad,
+    ozetAnahtar: `ozet${no}`,
+    ozetAd: `${ad} Özeti`,
+    ozetHref: hrefYaz({ alt: `ozet${no}` }),
+    hesaplar: [...ek, ...aktifHesaplar.filter((h) => h.grup === grup).map(gezginHesabi)],
+  });
+  const gezginGruplari: GezginGrup[] = [
+    gezginGrubu("m", 100, "Müvekkil", "MUVEKKIL"),
+    gezginGrubu("k", 200, "Karşı Taraf", "BORCLU"),
+    gezginGrubu("a", 300, "Adliye", "ADLIYE", [
+      { anahtar: "adliye", no: 301, ad: "Para Trafiği", href: hrefYaz({ alt: "adliye" }), borc: 0, alacak: 0, bakiye: 0, bos: false },
+    ]),
   ];
-  const katlar: { baslik: string; sekmeler: Sekme[] }[] = [
-    { baslik: "", sekmeler: genelKat },
-    { baslik: "MÜVEKKİL-100", sekmeler: [{ anahtar: "ozet100", etiket: "100 - Müvekkil Özeti" }, ...aktifHesaplar.filter((h) => h.grup === "MUVEKKIL").map(hesapSekmesi)] },
-    {
-      baslik: "KARŞI TARAF-200",
-      sekmeler: [{ anahtar: "ozet200", etiket: "200 - Karşı Taraf Özeti" }, ...aktifHesaplar.filter((h) => h.grup === "BORCLU").map(hesapSekmesi)],
-    },
-    {
-      baslik: "ADLİYE-300",
-      sekmeler: [{ anahtar: "ozet300", etiket: "300 - Adliye Özeti" }, { anahtar: "adliye", etiket: "301 - Para Trafiği (Adliye)" }, ...aktifHesaplar.filter((h) => h.grup === "ADLIYE").map(hesapSekmesi)],
-    },
-  ];
+  const oturum = await mevcutKullanici();
+  // Tercih okunamazsa (or. tablo henuz olusmadiysa) ekran varsayilan gorunumle acilir; ekonomi ekrani bu yuzden kirilmaz.
+  const gorunumKayitlari = await prisma.ekranTercihi
+    .findMany({ where: { anahtar: CARI_GORUNUM_ANAHTARI, sahip: { in: [BURO_SAHIBI, ...(oturum ? [oturum.kullaniciId] : [])] } } })
+    .catch(() => []);
+  const buroGorunumu = gorunumKayitlari.find((k) => k.sahip === BURO_SAHIBI)?.deger;
+  const kisiselGorunum = gorunumKayitlari.find((k) => k.sahip === oturum?.kullaniciId)?.deger;
 
   // Alt menü (Genel durum / Cari hesaplar / Anlaşma / Müvekkile hesap özeti ...): hangi bölümde olduğumuz `aktif`ten türer.
   const navAktif = aktif === "ozet100" ? "genel" : aktif === "anlasma" ? "anlasma" : aktif === "not" ? "not" : aktif === "dosyalar" ? "dosyalar" : aktif === "yonet" ? "yonet" : "cari";
@@ -399,64 +416,14 @@ export async function EkonomiPaneli({
       {navAktif === "genel" && <DurumSeridi ozet={ozet} hrefYaz={hrefYaz} />}
 
       {navAktif === "cari" && (
-      <div className="mb-5 border-b border-white/[0.08] pb-4">
-        {katlar.filter((k) => k.baslik).map((kat, i) =>
-          !kat.baslik ? (
-            <div key={i} className="mb-3 inline-flex flex-wrap gap-0.5 rounded-xl border border-white/10 bg-white/[0.04] p-0.5">
-              {kat.sekmeler.map((sk) => (
-                <Link
-                  key={sk.anahtar}
-                  href={hrefYaz({ alt: sk.anahtar })}
-                  className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                    sk.anahtar === aktif
-                      ? "bg-[var(--accent)] text-white shadow-sm"
-                      : "text-white/65 hover:bg-white/[0.08] hover:text-white"
-                  }`}
-                >
-                  {sk.etiket}
-                  {sk.rozet && <span className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${sk.rozetRengi ? ROZET_SINIFI[sk.rozetRengi] : "bg-white/15"}`}>{sk.rozet}</span>}
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div key={i} className="grid grid-cols-1 gap-x-4 gap-y-1.5 border-t border-white/[0.06] py-2.5 first-of-type:border-t-0 md:grid-cols-[11rem_1fr]">
-              <div className="flex flex-col items-start gap-1.5">
-                <span className="pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--link)] opacity-80">{kat.baslik}</span>
-                {/* Özet sekmesi (100/200/300 Özeti) grup başlığının altında, sol sütunda durur */}
-                {kat.sekmeler.slice(0, 1).map((sk) => (
-                  <Link
-                    key={sk.anahtar}
-                    href={hrefYaz({ alt: sk.anahtar })}
-                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[13px] transition-colors ${
-                      sk.anahtar === aktif
-                        ? "border-[var(--accent)] bg-[var(--accent-soft)] font-medium text-white"
-                        : "border-white/10 text-white/65 hover:border-white/25 hover:bg-white/[0.06] hover:text-white"
-                    }`}
-                  >
-                    {sk.etiket}
-                  </Link>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {kat.sekmeler.slice(1).map((sk) => (
-                  <Link
-                    key={sk.anahtar}
-                    href={hrefYaz({ alt: sk.anahtar })}
-                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[13px] transition-colors ${
-                      sk.anahtar === aktif
-                        ? "border-[var(--accent)] bg-[var(--accent-soft)] font-medium text-white"
-                        : "border-white/10 text-white/65 hover:border-white/25 hover:bg-white/[0.06] hover:text-white"
-                    }`}
-                  >
-                    {sk.etiket}
-                    {sk.rozet && <span className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${sk.rozetRengi ? ROZET_SINIFI[sk.rozetRengi] : "bg-white/10 text-white/70"}`}>{sk.rozet}</span>}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ),
-        )}
-      </div>
+        <CariHesapGezgini
+          gruplar={gezginGruplari}
+          aktif={aktif}
+          tercih={cariGorunumCozumle(kisiselGorunum ?? buroGorunumu)}
+          kisiselMi={Boolean(kisiselGorunum)}
+          buroTercihi={cariGorunumCozumle(buroGorunumu)}
+          yoneticiMi={Boolean(oturum && sistemYoneticisiMi(oturum.rol))}
+        />
       )}
 
       {aktif === "ozet100" && <OzetSekmesi ozet={ozet} kapsam={kapsam} dosyalar={dosyaSecenekleri} hesapNesneleri={aktifHesaplar} silmeYetkisiVar={silmeYetkisiVar} havuzBakiyesi={havuzBakiyesi} hrefYaz={hrefYaz} />}
