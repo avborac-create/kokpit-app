@@ -217,6 +217,15 @@ function talepSonucuAl(formData: FormData): string | null {
   return maddeler.length > 0 ? maddeler.join("\n") : null;
 }
 
+// Formdaki her maddenin para birimi/tutar bilgisi (talepKalemleriJson), maddelerle ayni sirada.
+function talepKalemleriAl(formData: FormData, maddeSayisi: number): Prisma.InputJsonValue {
+  let ham: unknown = [];
+  try {
+    ham = JSON.parse(String(formData.get("talepKalemleriJson") ?? "[]"));
+  } catch {}
+  return ekstralariAyikla(ham).slice(0, maddeSayisi) as unknown as Prisma.InputJsonValue;
+}
+
 // gonderilenMusteriIdleri ve gonderilenTalepMaddeleri AYRI tutulur:
 // MuvekkilSecici (defaultChecked'e dayanan uncontrolled checkbox listesi)
 // ve TalepSonucuListesi (coklu "talepMaddeleri" alani) React 19'un
@@ -316,6 +325,7 @@ export async function davaDosyasiOlustur(
       hukukiIliskiTuruId,
       davaTuruId,
       talepSonucu,
+      ...(talepSonucu && formData.has("talepKalemleriJson") && { talepKalemleri: talepKalemleriAl(formData, talepSonucu.split("\n").length) }),
       durusmaTarihi: durusmaTarihiHam ? new Date(durusmaTarihiHam) : null,
       uyusmazlikGrubuId,
       durumId,
@@ -433,7 +443,7 @@ export async function davaDosyasiGuncelle(
         }),
         ...(g("hukukiIliskiTuruId") && { hukukiIliskiTuruId }),
         ...(g("davaTuruId") && { davaTuruId }),
-        ...(g("talepSonucu") && { talepSonucu }),
+        ...(g("talepSonucu") && { talepSonucu, talepKalemleri: talepSonucu && formData.has("talepKalemleriJson") ? talepKalemleriAl(formData, talepSonucu.split("\n").length) : [] }),
         ...(g("durusmaTarihi") && { durusmaTarihi: durusmaTarihiHam ? new Date(durusmaTarihiHam) : null }),
         surum: { increment: 1 },
       },

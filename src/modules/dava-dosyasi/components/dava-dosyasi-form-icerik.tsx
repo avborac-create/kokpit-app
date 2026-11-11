@@ -29,6 +29,7 @@ type DosyaDegerleri = {
   muvekkilSifatiDiger?: string | null;
   muvekkilSifatiId?: string | null;
   talepSonucu: string | null;
+  talepKalemleri?: unknown;
   durusmaTarihi: Date | null;
   surum?: number;
 };
@@ -177,6 +178,16 @@ export function DavaDosyasiFormIcerik({
   const icraSecili = dosyaTurleri.find((t) => t.id === (g?.turId ?? dosya?.turId))?.kod === "icra_dosyasi";
   const talepMaddeleriGuncel = durum?.gonderilenTalepMaddeleri ?? (taslak ? taslaktanDegerler("talepMaddeleri") : dosya?.talepSonucu?.split("\n") ?? []);
 
+  const talepKalemleriGuncel = (() => {
+    const ham = g?.talepKalemleriJson;
+    if (ham) {
+      try {
+        return JSON.parse(ham) as unknown;
+      } catch {}
+    }
+    return dosya?.talepKalemleri;
+  })();
+
   // Hukuk dali + dava turu + dava konusu tek blok olarak, ilk gorunen alanin
   // yerinde cizilir (ortak dal secimini paylastiklari icin).
   const siniflandirma = () => (
@@ -245,7 +256,7 @@ export function DavaDosyasiFormIcerik({
         />
       </Alan>
     ),
-    talepSonucu: () => <TalepSonucuListesi icraMi={icraSecili} baslangicMaddeler={talepMaddeleriGuncel} etiket={degerEtiketleri(icraSecili).form} />,
+    talepSonucu: () => <TalepSonucuListesi icraMi={icraSecili} baslangicMaddeler={talepMaddeleriGuncel} baslangicKalemler={talepKalemleriGuncel} etiket={degerEtiketleri(icraSecili).form} />,
   };
 
   // Yeni dosya acilisinda tek kart ve en az alan: muvekkil, karsi taraf,
