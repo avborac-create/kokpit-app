@@ -82,10 +82,19 @@ export function DosyaDurumBandi({
             const gecildi = seciliSira > i;
             return (
               <li key={s.id} ref={aktif ? aktifRef : undefined} className="relative min-w-[6rem] flex-1 snap-center">
-                <span
-                  aria-hidden
-                  className={`absolute top-[14px] h-[3px] ${i === 0 ? "left-1/2" : "left-0"} ${i === yol.length - 1 ? "right-1/2" : "right-0"} ${gecildi ? "bg-[var(--accent)]" : "bg-white/15"}`}
-                />
+                {/* Cizgi noktanin tam ortasindan gecer (nokta merkezi 8.5px, cizgi 3px). Sol yarim secili adima kadar, sag yarim secili adimdan once dolu. */}
+                {i > 0 && (
+                  <span
+                    aria-hidden
+                    className={`absolute left-0 top-[7px] h-[3px] w-1/2 ${seciliSira >= i ? "bg-[var(--accent)]" : "bg-white/15"}`}
+                  />
+                )}
+                {i < yol.length - 1 && (
+                  <span
+                    aria-hidden
+                    className={`absolute right-0 top-[7px] h-[3px] w-1/2 ${gecildi ? "bg-[var(--accent)]" : "bg-white/15"}`}
+                  />
+                )}
                 <button
                   type="button"
                   onClick={() => iste(s.id)}
