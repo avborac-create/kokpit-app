@@ -398,22 +398,26 @@ export function TakvimUygulamasi({
     );
   }
 
+  // Tum gun hucresi birakma alanidir (bos gunlere de birakilabilsin diye).
+  function gunHedefi(g: string) {
+    return {
+      onDragOver: (e: React.DragEvent) => {
+        e.preventDefault();
+        setUstunde(`gun-${g}`);
+      },
+      onDrop: (e: React.DragEvent) => {
+        e.preventDefault();
+        birak(g, null);
+      },
+    };
+  }
+  const gunVurgu = (g: string) => (ustunde === `gun-${g}` ? "outline outline-2 -outline-offset-2 outline-[var(--accent)] bg-[var(--accent)]/10" : "");
+
   function gunKutusu(g: string, kompakt?: boolean, maks?: number) {
     const liste = gunlere.get(g) ?? [];
     const gorunen = maks ? liste.slice(0, maks) : liste;
     return (
-      <div
-        key={`gk-${g}`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setUstunde(`gun-${g}`);
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          birak(g, null);
-        }}
-        className={`flex min-h-0 flex-col gap-1 ${ustunde === `gun-${g}` ? "rounded-lg bg-[var(--accent)]/10" : ""}`}
-      >
+      <div key={`gk-${g}`} className="flex min-h-0 flex-col gap-1">
         {gorunen.map((o) => rozet(o, kompakt))}
         {maks && liste.length > maks && <span className="px-1 text-xs font-medium text-white/70">+{liste.length - maks} daha</span>}
       </div>
@@ -433,12 +437,13 @@ export function TakvimUygulamasi({
         return (
           <div
             key={g}
+            {...gunHedefi(g)}
             onClick={(e) => {
               if ((e.target as HTMLElement).closest("button,a,[draggable='true']")) return;
               setImlec(g);
               setGorunum("HAFTA");
             }}
-            className={`cursor-pointer min-h-28 bg-[var(--yuzey,#1c2432)] p-1.5 ${buAy ? "" : "bg-black/20"}`}
+            className={`cursor-pointer min-h-28 bg-[var(--yuzey,#1c2432)] p-1.5 ${buAy ? "" : "bg-black/20"} ${gunVurgu(g)}`}
           >
             <div className="mb-0.5 flex items-center justify-between">
               <span className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-sm ${g === bugun ? "bg-[var(--accent)] font-semibold text-white" : buAy ? "font-medium text-white" : "text-white/45"}`}>
@@ -458,7 +463,7 @@ export function TakvimUygulamasi({
   const haftaGorunumu = (
     <div className="grid grid-cols-1 gap-2 md:grid-cols-7">
       {Array.from({ length: 7 }, (_, i) => gunEkle(bas, i)).map((g, i) => (
-        <div key={g} onDoubleClick={() => setPencere({ oge: null, tarih: g })} className="flex min-h-60 flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-2">
+        <div key={g} {...gunHedefi(g)} onDoubleClick={() => setPencere({ oge: null, tarih: g })} className={`flex min-h-60 flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-2 ${gunVurgu(g)}`}>
           <div className="mb-2 flex items-center justify-between">
             <span className={`text-sm ${g === bugun ? "font-semibold text-[var(--link)]" : "font-medium text-white/85"}`}>
               {GUN_ADLARI[i]} {Number(g.slice(8))}
@@ -487,7 +492,7 @@ export function TakvimUygulamasi({
               <div className={g === bugun ? "font-semibold text-[var(--link)]" : "font-medium text-white"}>{Number(g.slice(8))} {AY_ADLARI[Number(g.slice(5, 7)) - 1].slice(0, 3)}</div>
               <div className="text-xs text-white/65">{GUN_ADLARI_UZUN[gunNo]}</div>
             </div>
-            <div className="min-h-8 rounded-xl border border-white/10 bg-white/[0.03] p-2">
+            <div {...gunHedefi(g)} className={`min-h-8 rounded-xl border border-white/10 bg-white/[0.03] p-2 ${gunVurgu(g)}`}>
               {(gunlere.get(g)?.length ?? 0) === 0 ? <span className="text-xs text-white/55">Kayıt yok</span> : gunKutusu(g)}
             </div>
           </div>
