@@ -65,6 +65,19 @@ export function TakvimUygulamasi({
   const [filtre, setFiltre] = useState<Filtre>({ gizliTakvimler: [], sorumlu: "", etiket: "", arama: "", tamamGizle: false });
   const [pencere, setPencere] = useState<{ oge: Oge | null; tarih: string } | null>(null);
   const [hata, setHata] = useState("");
+  const [onayGoster, setOnayGoster] = useState(true);
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (localStorage.getItem("takvim-onay-kutulari") === "0") setOnayGoster(false);
+    } catch {}
+  }, []);
+  function onayGosterDegistir(v: boolean) {
+    setOnayGoster(v);
+    try {
+      localStorage.setItem("takvim-onay-kutulari", v ? "1" : "0");
+    } catch {}
+  }
   const [tabloSirasi, setTabloSirasi] = useState<{ alan: string; yon: 1 | -1 } | null>(null);
   const suruklenen = useRef<Ornek | null>(null);
   const [ustunde, setUstunde] = useState<string | null>(null);
@@ -193,6 +206,24 @@ export function TakvimUygulamasi({
   }
 
   function tamamla(o: Oge, tamam: boolean) {
+    // Dosya kaydindan turetilmis durusma: tamamlaninca gercek bir takvim kaydina donusur (ayni dosya + gun icin turetilmis satir gizlenir).
+    if (o.turetilmis === "dava" || o.turetilmis === "cmk") {
+      const onceki = ogeler;
+      const gecici = `t-${o.id}-${ogeler.length}`;
+      const { id: _id, turetilmis: _t, dosyaEtiketi, sira: _s, ...kalan } = o;
+      void _id; void _t; void _s;
+      const girdi: OgeGirdisi = { ...kalan, id: null, tamam, durum: tamam ? "TAMAM" : "BEKLIYOR" };
+      const yeni: Oge = { ...girdi, id: gecici, sira: Math.max(0, ...ogeler.map((x) => x.sira)) + 1, dosyaEtiketi, turetilmis: null };
+      setHata("");
+      setOgeler((l) => [...l.filter((x) => x.id !== o.id), yeni]);
+      ogeKaydet(girdi)
+        .then((s) => setOgeler((l) => l.map((x) => (x.id === gecici ? { ...x, id: s.id, sira: s.sira } : x))))
+        .catch((e) => {
+          setOgeler(onceki);
+          setHata(e instanceof Error ? e.message : "Kaydedilemedi.");
+        });
+      return;
+    }
     iyimser(
       (l) => l.map((x) => (x.id === o.id ? { ...x, tamam, durum: tamam ? "TAMAM" : "BEKLIYOR" } : x)),
       () => (o.id.startsWith("i:") ? durumDegistir(o.id.slice(2), tamam ? "TAMAMLANDI" : "BASLATILMADI") : ogeTamamla(o.id, tamam)),
@@ -345,7 +376,7 @@ export function TakvimUygulamasi({
         } ${ustunde === o.key ? "ring-1 ring-[var(--accent)]" : ""} ${o.oge.tamam ? "opacity-65" : ""}`}
         style={{ borderLeftColor: renk, background: `color-mix(in srgb, ${renk} 26%, transparent)` }}
       >
-        {(!o.oge.turetilmis || o.oge.turetilmis === "is") && (
+        {onayGoster && o.oge.turetilmis !== "dogum" && (
           <input
             type="checkbox"
             checked={o.oge.tamam}
@@ -681,6 +712,10 @@ export function TakvimUygulamasi({
             <label className="flex items-center gap-2 text-white/75">
               <input type="checkbox" checked={filtre.tamamGizle} onChange={(e) => setFiltre({ ...filtre, tamamGizle: e.target.checked })} className="h-3.5 w-3.5" />
               Tamamlananları gizle
+            </label>
+            <label className="flex items-center gap-2 text-white/75">
+              <input type="checkbox" checked={onayGoster} onChange={(e) => onayGosterDegistir(e.target.checked)} className="h-3.5 w-3.5" />
+              Onay kutularını göster
             </label>
           </div>
           <p className="text-xs leading-relaxed text-white/60">
