@@ -550,7 +550,8 @@ export default async function DavaDosyasiDetaySayfasi({
           </div>
 
           <div className="flex max-w-full flex-col items-end gap-2 max-md:contents">
-            <div className="flex gap-2 max-md:absolute max-md:right-0 max-md:top-0">
+            {/* Masaüstünde Düzenle/Sil sekme çubuğunun sağında (aşağıda); bu kopya yalnız telefonda. */}
+            <div className="flex gap-2 max-md:absolute max-md:right-0 max-md:top-0 md:hidden">
               <Link href={`/kokpit/dava-dosyalari/${id}/duzenle`}>
                 <Dugme varyant="ikincil" className="!px-3 !py-1 !text-xs md:!px-4 md:!py-2 md:!text-sm">Düzenle</Dugme>
               </Link>
@@ -621,7 +622,18 @@ export default async function DavaDosyasiDetaySayfasi({
 
       <DosyaBirlikteUyarisi dosyaId={id} />
 
-      <DavaDosyasiSekmeleri dosyaId={id} aktif={aktifSekme} ek={masrafPaneli ? <MasrafPaneliDugmesi /> : undefined} kimlik={`${kokpitNoGoster(dosya)}${dosya.birimAdi ? ` · ${dosya.birimAdi}` : ""}${dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}`}
+      <DavaDosyasiSekmeleri dosyaId={id} aktif={aktifSekme} ek={masrafPaneli ? <MasrafPaneliDugmesi /> : undefined}
+        eylemler={
+          <>
+            <Link href={`/kokpit/dava-dosyalari/${id}/duzenle`}>
+              <Dugme varyant="ikincil" className="!px-3 !py-1 !text-xs">Düzenle</Dugme>
+            </Link>
+            {silmeYetkisiVar && (
+              <DavaDosyasiSilmeButonu dosyaId={id} sonrasindaYonlendir="/kokpit/dava-dosyalari" boyut="kompakt" />
+            )}
+          </>
+        }
+        kimlik={`${kokpitNoGoster(dosya)}${dosya.birimAdi ? ` · ${dosya.birimAdi}` : ""}${dosya.dosyaNo ? ` · ${dosya.dosyaNo}` : ""}`}
         taraflar={`Müvekkil ${dosya.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ") || "—"} · Karşı Taraf ${dosya.karsiTaraflar.map((kt) => kt.karsiTaraf.ad).join(", ") || "—"} · Konu ${dosya.hukukiIliskiTuru?.etiket ?? (dosya.davaKonusu || dosya.konu)}`}
       />
 

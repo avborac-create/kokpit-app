@@ -13,7 +13,7 @@ export type DosyaSekmesi = "genel" | "evrak" | "gorevler" | "tebligat" | "ekonom
 // dosyaId verilmezse (ör. Yeni Dosya olusturma ekrani - dosya henuz yok,
 // baska bir sekmeye gidilecek bir yer yok) TUM sekmeler tiklanamaz olur.
 // Sekme cubugu sayfa kaydirilinca da ustte sabit kalir (md ve uzeri); solunda hangi dosyada olundugu kisaca yazar.
-export function DavaDosyasiSekmeleri({ dosyaId, aktif, kimlik, taraflar, ek }: { ek?: React.ReactNode; dosyaId?: string; aktif: DosyaSekmesi; kimlik?: string; taraflar?: string }) {
+export function DavaDosyasiSekmeleri({ dosyaId, aktif, kimlik, taraflar, ek, eylemler }: { ek?: React.ReactNode; eylemler?: React.ReactNode;dosyaId?: string; aktif: DosyaSekmesi; kimlik?: string; taraflar?: string }) {
   const sekmeler: { anahtar: DosyaSekmesi; etiket: string }[] = [
     { anahtar: "genel", etiket: "Genel" },
     { anahtar: "evrak", etiket: "Evraklar" },
@@ -75,16 +75,19 @@ export function DavaDosyasiSekmeleri({ dosyaId, aktif, kimlik, taraflar, ek }: {
       })}
     </div>
       {ek}
-      {kimlik && (
-        <span
-          className={`ml-auto hidden min-w-0 text-right leading-tight transition-opacity duration-150 lg:block ${
-            sabitlendi ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
-        >
-          <span className="block truncate text-sm font-semibold text-white/80">{kimlik}</span>
-          {taraflar && <span className="block truncate text-[11px] font-normal text-white/55">{taraflar}</span>}
-        </span>
-      )}
+      <div className="ml-auto flex min-w-0 items-center gap-3">
+        {kimlik && (
+          <span
+            className={`hidden min-w-0 text-right leading-tight transition-opacity duration-150 lg:block ${
+              sabitlendi ? "opacity-100" : "pointer-events-none opacity-0"
+            }`}
+          >
+            <span className="block truncate text-sm font-semibold text-white/80">{kimlik}</span>
+            {taraflar && <span className="block truncate text-[11px] font-normal text-white/55">{taraflar}</span>}
+          </span>
+        )}
+        {eylemler && <div className="hidden shrink-0 items-center gap-2 md:flex">{eylemler}</div>}
+      </div>
     </div>
     </>
   );
