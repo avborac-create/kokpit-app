@@ -574,27 +574,21 @@ export function DosyalarTablosu({
   const satirlar = agacSatirlari(dosyalar, daraltilmis);
   // Toplu secim: yalnizca listede gorunen satirlar gecerlidir (silinen/filtrelenen kayitlar otomatik duser).
   const [secim, setSecim] = useState<Set<string>>(new Set());
-  const [secimModu, setSecimModu] = useState(false);
   const router = useRouter();
   const ilkEk = 0;
-  // Secim modunda tablonun basina giren onay kutusu sutunu (sabit, solda).
-  const secimSutunu = secimModu ? 44 : 0;
+  // Onay kutusu sutunu: her zaman tablonun ilk (sabit, solda) sutunudur; ayri bir "secim modu" yoktur.
+  const secimSutunu = 40;
   // Dosyayi acma: parmakla tek dokunus, fare ile cift tiklama. Metin secilmisse (uzun basma /
   // surukleme) satir acilmaz; onay kutusu, baglanti, dugme gibi ogelere basmak da acmaz.
   function satirdanAc(e: React.MouseEvent, id: string, dokunmatik: boolean) {
     if ((e.target as HTMLElement).closest("a,button,input,label,select,details")) return;
     if (window.getSelection()?.toString()) return;
-    if (secimModu) {
-      if (!dokunmatik) return;
+    // Dokunmatik: secim varken dokunus isaretler, yokken dosyayi acar (Gmail/Drive davranisi).
+    if (dokunmatik && secim.size > 0) {
       secimiDegistir(id);
       return;
     }
-    if (dokunmatik) return;
     router.push(`/kokpit/dava-dosyalari/${id}`);
-  }
-  function secimModunuDegistir() {
-    setSecim(new Set());
-    setSecimModu((m) => !m);
   }
   const gorunenIdler = satirlar.map((s) => s.dosya.id);
   const seciliIdler = gorunenIdler.filter((id) => secim.has(id));
@@ -608,7 +602,7 @@ export function DosyalarTablosu({
     });
   }
   // Masaustu: klavye ile gezinme. Aktif satir vurgulanir; ok tuslari tasir, Enter acar,
-  // bosluk (secim modunda) isaretler.
+  // bosluk isaretler.
   const [aktifId, setAktifId] = useState<string | null>(null);
   const siraliIdler = satirlar.map((s) => s.dosya.id).join(",");
   useEffect(() => {
@@ -628,7 +622,7 @@ export function DosyalarTablosu({
         e.preventDefault();
         router.push(`/kokpit/dava-dosyalari/${idler[i]}`);
         return;
-      } else if (e.key === " " && i >= 0 && secimModu) {
+      } else if (e.key === " " && i >= 0) {
         e.preventDefault();
         secimiDegistir(idler[i]);
         return;
@@ -830,33 +824,26 @@ export function DosyalarTablosu({
             </button>
           </>
         )}
-        <button
-          type="button"
-          onClick={secimModunuDegistir}
-          className={`rounded-full px-3 py-1 ${secimModu ? "bg-[var(--accent)] text-white" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
-        >
-          {secimModu ? "Seçimi kapat" : "Seç"}
-        </button>
       </div>
       <div className={`glass overflow-x-auto rounded-2xl`}>
         <table
           data-sutun-ayari="kapali"
           className="table-fixed text-left text-sm [@media(pointer:coarse)]:[--ac-sutun:52px]"
-          style={{ width: `calc(${toplamGenislik}px + var(--ac-sutun, 0px))` }}
+          style={{ width: `calc(${toplamGenislik}px + var(--ac-sutun, 0px) + ${secimSutunu}px)` }}
         >
           <colgroup>
-            {secimModu && <col style={{ width: secimSutunu }} />}
+            <col style={{ width: secimSutunu }} />
             {gorunurSutunlar.map((anahtar) => (
               <col
                 key={anahtar}
                 style={{ width: genislikler[anahtar] ?? VARSAYILAN_GENISLIK }}
               />
             ))}
-            {!secimModu && <col className="hidden [@media(pointer:coarse)]:table-column" style={{ width: 52 }} />}
+            <col className="hidden [@media(pointer:coarse)]:table-column" style={{ width: 52 }} />
           </colgroup>
           <thead className="text-white/50">
             <tr>
-              {secimModu && (
+              {(
                 <th className="sticky left-0 z-10 bg-[var(--yuzey,#1c2432)] p-0">
                   <div className="flex h-9 items-center justify-center">
                     <input
@@ -928,9 +915,7 @@ export function DosyalarTablosu({
                   setHedefSutun(null);
                 }}
               />
-              {!secimModu && (
-                <th className="sticky right-0 hidden w-[52px] bg-[var(--yuzey,#1c2432)] p-0 [@media(pointer:coarse)]:table-cell" />
-              )}
+              <th className="sticky right-0 hidden w-[52px] bg-[var(--yuzey,#1c2432)] p-0 [@media(pointer:coarse)]:table-cell" />
             </tr>
           </thead>
           <tbody>
@@ -948,9 +933,9 @@ export function DosyalarTablosu({
                 }}
                 className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] [@media(pointer:fine)]:cursor-pointer ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""} ${aktifId === dosya.id ? "bg-[color-mix(in_srgb,var(--accent)_16%,transparent)] shadow-[inset_3px_0_0_var(--accent)]" : ""}`}
               >
-                {secimModu && (
+                {(
                   <td className={`sticky left-0 z-10 p-0 ${secim.has(dosya.id) ? "bg-[color-mix(in_srgb,var(--yuzey,#1c2432),var(--accent)_22%)]" : "bg-[var(--yuzey,#1c2432)]"}`}>
-                    <div className="flex h-12 items-center justify-center">
+                    <div className="flex h-8 items-center justify-center">
                       <input
                         type="checkbox"
                         checked={secim.has(dosya.id)}
@@ -1005,7 +990,7 @@ export function DosyalarTablosu({
                     )}
                   </td>
                 ))}
-                {!secimModu && (
+                {(
                   <td className="sticky right-0 hidden bg-[var(--yuzey,#1c2432)] p-0 [@media(pointer:coarse)]:table-cell">
                     <div className="flex items-center justify-center px-2">
                       <button
@@ -1024,7 +1009,7 @@ export function DosyalarTablosu({
             {dosyalar.length === 0 && (
               <tr>
                 <td
-                  colSpan={gorunurSutunlar.length + (secimModu ? 1 : 0)}
+                  colSpan={gorunurSutunlar.length + 1}
                   className="px-4 py-8 text-center text-white/40"
                 >
                   Kayıt bulunamadı.
