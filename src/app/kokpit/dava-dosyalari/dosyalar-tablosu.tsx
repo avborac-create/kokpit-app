@@ -576,15 +576,20 @@ export function DosyalarTablosu({
   const [secim, setSecim] = useState<Set<string>>(new Set());
   const router = useRouter();
   const ilkEk = 0;
-  // Onay kutusu sutunu: her zaman tablonun ilk (sabit, solda) sutunudur; ayri bir "secim modu" yoktur.
-  const secimSutunu = 40;
+  // Secim modu: kapaliyken onay kutulari gizlidir; acikken tablonun ilk (sabit, solda) sutunu olur.
+  const [secimModu, setSecimModu] = useState(false);
+  const secimSutunu = secimModu ? 40 : 0;
+  function secimModunuDegistir() {
+    if (secimModu) setSecim(new Set());
+    setSecimModu(!secimModu);
+  }
   // Dosyayi acma: parmakla tek dokunus, fare ile cift tiklama. Metin secilmisse (uzun basma /
   // surukleme) satir acilmaz; onay kutusu, baglanti, dugme gibi ogelere basmak da acmaz.
   function satirdanAc(e: React.MouseEvent, id: string, dokunmatik: boolean) {
     if ((e.target as HTMLElement).closest("a,button,input,label,select,details")) return;
     if (window.getSelection()?.toString()) return;
     // Dokunmatik: secim varken dokunus isaretler, yokken dosyayi acar (Gmail/Drive davranisi).
-    if (dokunmatik && secim.size > 0) {
+    if (dokunmatik && secimModu) {
       secimiDegistir(id);
       return;
     }
@@ -622,7 +627,7 @@ export function DosyalarTablosu({
         e.preventDefault();
         router.push(`/kokpit/dava-dosyalari/${idler[i]}`);
         return;
-      } else if (e.key === " " && i >= 0) {
+      } else if (e.key === " " && i >= 0 && secimModu) {
         e.preventDefault();
         secimiDegistir(idler[i]);
         return;
@@ -744,6 +749,14 @@ export function DosyalarTablosu({
             </button>
           </>
         )}
+        <button
+          type="button"
+          onClick={secimModunuDegistir}
+          aria-pressed={secimModu}
+          className={`rounded-full px-3 py-1 hover:bg-white/10 ${secimModu ? "bg-white/15 font-semibold text-white" : "text-white/60 hover:text-white"}`}
+        >
+          {secimModu ? "Seçimi bitir" : "Seç"}
+        </button>
         <details className="relative">
           <summary className="cursor-pointer list-none rounded-full px-3 py-1 text-white/60 hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
             Sütunlar{gizliSutunlar.length > 0 ? ` (${gizliSutunlar.length} gizli)` : ""}
@@ -832,7 +845,7 @@ export function DosyalarTablosu({
           style={{ width: `calc(${toplamGenislik}px + var(--ac-sutun, 0px) + ${secimSutunu}px)` }}
         >
           <colgroup>
-            <col style={{ width: secimSutunu }} />
+            {secimModu && <col style={{ width: secimSutunu }} />}
             {gorunurSutunlar.map((anahtar) => (
               <col
                 key={anahtar}
@@ -843,7 +856,7 @@ export function DosyalarTablosu({
           </colgroup>
           <thead className="text-white/50">
             <tr>
-              {(
+              {secimModu && (
                 <th className="sticky left-0 z-10 bg-[var(--yuzey,#1c2432)] p-0">
                   <div className="flex h-9 items-center justify-center">
                     <input
@@ -933,7 +946,7 @@ export function DosyalarTablosu({
                 }}
                 className={`group/satir border-t border-white/[0.06] hover:bg-white/[0.04] [@media(pointer:fine)]:cursor-pointer ${secim.has(dosya.id) ? "bg-[var(--accent-soft)]" : ""} ${aktifId === dosya.id ? "bg-[color-mix(in_srgb,var(--accent)_16%,transparent)] shadow-[inset_3px_0_0_var(--accent)]" : ""}`}
               >
-                {(
+                {secimModu && (
                   <td className={`sticky left-0 z-10 p-0 ${secim.has(dosya.id) ? "bg-[color-mix(in_srgb,var(--yuzey,#1c2432),var(--accent)_22%)]" : "bg-[var(--yuzey,#1c2432)]"}`}>
                     <div className="flex h-8 items-center justify-center">
                       <input
