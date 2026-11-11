@@ -564,7 +564,7 @@ export default async function DavaDosyasiDetaySayfasi({
                 const artilar = bakiyeEtiketleri.filter((e) => e.artiMi);
                 const parcalar: string[] = [];
                 if (eksikler.length > 0) {
-                  parcalar.push(`${eksikler.length} eksik bakiye · ${paraFormatlayici.format(eksikler.reduce((t, e) => t + Math.abs(e.tutar), 0))}`);
+                  parcalar.push(`${eksikler.length} eksi bakiye · ${paraFormatlayici.format(eksikler.reduce((t, e) => t + Math.abs(e.tutar), 0))}`);
                 }
                 if (artilar.length > 0) parcalar.push(`${artilar.length} artı bakiye`);
                 if (istenenOzet && eksikler.some((e) => !e.karsiTarafMi)) parcalar.push("istendi");
@@ -666,6 +666,8 @@ export default async function DavaDosyasiDetaySayfasi({
             dosyaId={id}
             secenekler={durumKodlari.map((d) => ({ id: d.id, etiket: d.etiket, kod: d.kod }))}
             seciliId={dosya.durumKoduId}
+            gidisSayisi={dosya.durumGidisSayisi}
+            digerAdi={dosya.durumDiger}
           />
           </div>
           {/* Müvekkil/karşı taraf başlıkta zaten var; burada tekrarlanmaz. Yalnız özet göstergeler. */}

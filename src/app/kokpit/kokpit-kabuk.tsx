@@ -92,7 +92,7 @@ export function KokpitKabuk({
         {kenarCubugu}
       </aside>
       <div className={`min-h-0 min-w-0 flex-1 flex-col md:flex ${modulSeciliMi ? "flex" : "max-md:contents"}`}>
-        <header className={`glass-strong z-30 flex h-12 shrink-0 items-center justify-between max-md:!rounded-none max-md:!border-x-0 max-md:!border-t-0 px-3 md:m-3 md:h-auto md:rounded-[10px] md:px-6 md:py-3 ${modulSeciliMi ? "relative" : "relative max-md:sticky max-md:top-0 max-md:order-1 max-md:shrink-0"}`}>
+        <header className={`glass-strong z-[45] flex h-12 shrink-0 items-center justify-between max-md:!rounded-none max-md:!border-x-0 max-md:!border-t-0 px-3 md:m-3 md:h-auto md:rounded-[10px] md:px-6 md:py-3 ${modulSeciliMi ? "relative" : "relative max-md:sticky max-md:top-0 max-md:order-1 max-md:shrink-0"}`}>
           <div className="flex items-center gap-3">
             <GeriButonu />
             <Link

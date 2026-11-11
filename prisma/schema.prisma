@@ -534,6 +534,10 @@ model DavaDosyasi {
   // dosyaEvresi alanindan BAGIMSIZ - otomasyon tetiklemez, yalniz gosterim.
   durumKoduId          String?
   durumKodu            SecenekDegeri?   @relation("DavaDosyasiDurumKodu", fields: [durumKoduId], references: [id])
+  // Istinaf/Yargitay'a kacinci gidis (1 ise gosterilmez) ve "Diger Durum" icin
+  // kullanicinin yazdigi ad.
+  durumGidisSayisi     Int?
+  durumDiger           String?
   // Alacagin/uyusmazligin dayandigi temel hukuki iliski: cek, senet, TTOK,
   // is hukuku uyusmazligi vb. Dosya Turu'nden (ihtar/icra/dava - hangi
   // ASAMADAYIZ) farkli bir boyut: bu "hangi hukuki ARACA dayaniyor" sorusuna

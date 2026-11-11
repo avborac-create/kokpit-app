@@ -186,12 +186,16 @@ const SECENEK_LISTELERI: {
     anahtar: "dosya_durum_kodu",
     ad: "Dosya Durum Kodu",
     degerler: [
+      { kod: "hazirlaniyor", etiket: "Hazırlanıyor" },
       { kod: "derdest", etiket: "Derdest" },
       { kod: "karara_cikmis", etiket: "Karara Çıkmış" },
-      { kod: "istinafta", etiket: "İstinafta" },
+      { kod: "istinafta", etiket: "İstinaf'ta" },
       { kod: "yargitayda", etiket: "Yargıtay'da" },
+      { kod: "yeni_esas_yargitay_bozmasi", etiket: "Yeni Esas (Yargıtay Bozması)" },
+      { kod: "yeni_esas_istinaf_kaldirmasi", etiket: "Yeni Esas (İstinaf Kaldırması)" },
       { kod: "kesinlesme_serhi", etiket: "Kesinleşme Şerhi" },
       { kod: "yargilamanin_yenilenmesi", etiket: "Yargılamanın Yenilenmesi" },
+      { kod: "diger", etiket: "Diğer Durum" },
     ],
   },
   {

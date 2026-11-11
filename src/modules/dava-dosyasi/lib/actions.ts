@@ -654,7 +654,7 @@ export async function davaDosyalariTopluSorumlu(idler: string[], avukatId: strin
 // Dava degilse yargi kolu temizlenir, Dava Turu degisince Konu (baslik)
 // yeniden uretilir (bkz. davaDosyasiGuncelle ile ayni kural).
 const DETAY_DUZENLENEBILIR_ALANLAR = [
-  "turId", "yargiKoluId", "durumKoduId", "muvekkilSifatiId", "hukukiIliskiTuruId", "davaTuruId",
+  "turId", "yargiKoluId", "durumKoduId", "durumGidisSayisi", "durumDiger", "muvekkilSifatiId", "hukukiIliskiTuruId", "davaTuruId",
   "birimAdi", "davaKonusu", "buroNo", "dosyaNo", "talepSonucu", "durusmaTarihi",
 ];
 
@@ -724,6 +724,14 @@ export async function dosyaAlanlariniGuncelle(dosyaId: string, degerler: Record<
       }
       case "yargiKoluId":
         data[alan] = deger || null;
+        break;
+      case "durumGidisSayisi": {
+        const n = Number.parseInt(deger, 10);
+        data.durumGidisSayisi = Number.isFinite(n) && n >= 1 ? Math.min(n, 20) : null;
+        break;
+      }
+      case "durumDiger":
+        data.durumDiger = deger ? deger.slice(0, 80) : null;
         break;
       case "durusmaTarihi":
         data.durusmaTarihi = deger ? new Date(deger) : null;
