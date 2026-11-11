@@ -23,7 +23,7 @@ function dogrula(v: OgeGirdisi) {
   return {
     baslik: baslik.slice(0, 300),
     tur: TURLER.find((t) => t.kod === v.tur)?.kod ?? "GOREV",
-    takvim: TAKVIMLER.find((t) => t.kod === v.takvim && t.kod !== "DOGUM")?.kod ?? "IS",
+    takvim: TAKVIMLER.find((t) => t.kod === v.takvim && t.kod !== "DOGUM" && t.kod !== "SONGUN")?.kod ?? "IS",
     tarih: gun(v.tarih),
     saat: saatMi(v.saat),
     bitisTarihi: v.bitisTarihi ? gun(v.bitisTarihi) : null,

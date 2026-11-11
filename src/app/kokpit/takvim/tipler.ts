@@ -1,6 +1,6 @@
 // Buro takvimi: istemci ve sunucunun ortak tipleri ve saf (yan etkisiz) yardimcilari.
 
-export type TakvimKodu = "IS" | "KISISEL" | "DURUSMA" | "ICRA" | "DOGUM";
+export type TakvimKodu = "IS" | "KISISEL" | "DURUSMA" | "ICRA" | "DOGUM" | "SONGUN";
 export type OgeTuru = "DURUSMA" | "GOREV" | "TOPLANTI" | "NOT";
 export type OgeDurumu = "BEKLIYOR" | "DEVAM" | "TAMAM";
 export type Tekrar = "GUNLUK" | "HAFTALIK" | "AYLIK";
@@ -26,7 +26,8 @@ export type Oge = {
   sira: number;
   dosya: string | null; // "d:<davaId>" | "c:<cmkId>"
   dosyaEtiketi: string | null;
-  turetilmis: null | "dava" | "cmk" | "dogum";
+  // "is": Gorevler modulundeki son gunlu / teslimli is (id: "i:<isId>"); takvimden duzenlenebilir.
+  turetilmis: null | "dava" | "cmk" | "dogum" | "is";
 };
 
 export type OgeGirdisi = Omit<Oge, "id" | "turetilmis" | "dosyaEtiketi" | "sira"> & { id: string | null };
@@ -37,7 +38,12 @@ export const TAKVIMLER: { kod: TakvimKodu; ad: string; renk: string }[] = [
   { kod: "DURUSMA", ad: "Duruşma", renk: "#ff6b6b" },
   { kod: "ICRA", ad: "İcra", renk: "#f5a742" },
   { kod: "DOGUM", ad: "Doğum günü", renk: "#f78fb3" },
+  { kod: "SONGUN", ad: "Son günlü işler", renk: "#ef4444" },
 ];
+// Takvimde elle girilen ogeler icin secilebilir takvimler (dogum gunleri ve son gunlu isler sistemden gelir).
+export const SECILEBILIR_TAKVIMLER = TAKVIMLER.filter((t) => t.kod !== "DOGUM" && t.kod !== "SONGUN");
+// Takvimdeki durum <-> Gorevler modulu durumu.
+export const IS_DURUMU: Record<OgeDurumu, string> = { BEKLIYOR: "BASLATILMADI", DEVAM: "BASLATILDI", TAMAM: "TAMAMLANDI" };
 export const takvimRengi = (k: string) => TAKVIMLER.find((t) => t.kod === k)?.renk ?? "#4d97ff";
 
 export const TURLER: { kod: OgeTuru; ad: string }[] = [

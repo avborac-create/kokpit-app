@@ -97,6 +97,43 @@ export default async function BuroTakvimiSayfasi() {
     if (o) ogeler.push(o);
   }
 
+  // Gorevler modulundeki son gunlu / teslimli isler (dilekce sureleri vb.): takvimden duzenlenir ve atanir.
+  const isler = await prisma.is.findMany({
+    where: { vade: { gte: bir_yil_once }, zamanBaskisi: { not: null } },
+    select: { id: true, baslik: true, aciklama: true, durum: true, vade: true, sorumluId: true, dosyaId: true, zamanBaskisi: true },
+  });
+  const isDosyalari = await prisma.davaDosyasi.findMany({
+    where: { id: { in: isler.flatMap((i) => (i.dosyaId ? [i.dosyaId] : [])) } },
+    select: { id: true, birimAdi: true, dosyaNo: true },
+  });
+  for (const i of isler) {
+    if (!i.vade) continue;
+    const d = isDosyalari.find((x) => x.id === i.dosyaId);
+    ogeler.push({
+      id: `i:${i.id}`,
+      baslik: i.baslik,
+      tur: "GOREV",
+      takvim: "SONGUN",
+      tarih: gunDizesi(i.vade),
+      saat: null,
+      bitisTarihi: null,
+      bitisSaati: null,
+      yer: null,
+      meet: null,
+      sorumluId: i.sorumluId,
+      etiketler: [i.zamanBaskisi === "SON_GUN" ? "son gün" : "teslim"],
+      durum: i.durum === "TAMAMLANDI" ? "TAMAM" : i.durum === "BASLATILDI" ? "DEVAM" : "BEKLIYOR",
+      tamam: i.durum === "TAMAMLANDI",
+      icerik: i.aciklama ?? "",
+      tekrar: null,
+      tekrarBitis: null,
+      sira: 0,
+      dosya: d ? `d:${d.id}` : null,
+      dosyaEtiketi: d ? [d.birimAdi, d.dosyaNo].filter(Boolean).join(" · ") : null,
+      turetilmis: "is",
+    });
+  }
+
   const dogumlar = ekip.flatMap((k) => (k.dogumTarihi ? [{ id: k.id, ad: k.adSoyad, ay: k.dogumTarihi.getUTCMonth() + 1, gun: k.dogumTarihi.getUTCDate() }] : []));
 
   return (

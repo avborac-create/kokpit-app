@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { takvimDosyaSecenekleri } from "../takvim-actions";
 import {
   DURUMLAR,
-  TAKVIMLER,
+  SECILEBILIR_TAKVIMLER,
   TEKRARLAR,
   TURLER,
   googleTakvimBaglantisi,
@@ -72,7 +72,9 @@ export function OgePenceresi({
   onSil: (id: string) => void;
   onKapat: () => void;
 }) {
-  const salt = !!oge?.turetilmis;
+  // "is": Gorevler modulundeki son gunlu is; baslik, son gun, sorumlu, durum ve aciklama burada duzenlenir.
+  const isMi = oge?.turetilmis === "is";
+  const salt = !!oge?.turetilmis && !isMi;
   const [v, setV] = useState<OgeGirdisi>(() =>
     oge
       ? { ...oge, id: oge.id }
@@ -166,7 +168,7 @@ export function OgePenceresi({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-4">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-white/50">{salt ? "Takvim kaydı" : oge ? `${turAdi} · düzenle` : `Yeni ${turAdi.toLocaleLowerCase("tr")}`}</p>
+              <p className="text-xs font-medium text-white/50">{salt ? "Takvim kaydı" : isMi ? "Son günlü görev · düzenle" : oge ? `${turAdi} · düzenle` : `Yeni ${turAdi.toLocaleLowerCase("tr")}`}</p>
               <input
                 ref={baslikKutusu}
                 value={v.baslik}
@@ -197,16 +199,18 @@ export function OgePenceresi({
             </div>
           ) : (
             <div className="flex flex-col gap-5">
-              <div className="flex flex-wrap gap-2">
-                {TURLER.map((t) => (
-                  <button key={t.kod} type="button" onClick={() => set("tur", t.kod)} className={cip(v.tur === t.kod)}>
-                    {t.ad}
-                  </button>
-                ))}
-              </div>
+              {!isMi && (
+                <div className="flex flex-wrap gap-2">
+                  {TURLER.map((t) => (
+                    <button key={t.kod} type="button" onClick={() => set("tur", t.kod)} className={cip(v.tur === t.kod)}>
+                      {t.ad}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               <section className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3.5">
-                <p className={bolumBasligi}>Ne zaman?</p>
+                <p className={bolumBasligi}>{isMi ? "Son gün" : "Ne zaman?"}</p>
                 <div className="flex flex-wrap gap-2">
                   {hizliTarihler.map(([ad, g]) => (
                     <button key={ad} type="button" onClick={() => set("tarih", g)} className={cip(v.tarih === g, true)}>
@@ -219,12 +223,14 @@ export function OgePenceresi({
                     <span className={etiket}>Tarih</span>
                     <input type="date" value={v.tarih} onChange={(e) => set("tarih", e.target.value)} className={`${alan} w-full min-w-0`} />
                   </label>
-                  <label className="w-[8.5rem] shrink-0">
-                    <span className={etiket}>Saat</span>
-                    <input type="time" value={v.saat ?? ""} onChange={(e) => set("saat", e.target.value || null)} className={`${alan} w-full min-w-0`} />
-                  </label>
+                  {!isMi && (
+                    <label className="w-[8.5rem] shrink-0">
+                      <span className={etiket}>Saat</span>
+                      <input type="time" value={v.saat ?? ""} onChange={(e) => set("saat", e.target.value || null)} className={`${alan} w-full min-w-0`} />
+                    </label>
+                  )}
                 </div>
-                {bitisAcik ? (
+                {isMi ? null : bitisAcik ? (
                   <div className="flex gap-2">
                     <label className="min-w-0 flex-1">
                       <span className={etiket}>Bitiş tarihi</span>
@@ -240,6 +246,7 @@ export function OgePenceresi({
                     + Bitiş ekle (çok günlü ya da saat aralığı)
                   </button>
                 )}
+                {!isMi && (
                 <div>
                   <span className={etiket}>Tekrar</span>
                   <div className="flex flex-wrap gap-2">
@@ -259,6 +266,7 @@ export function OgePenceresi({
                     </label>
                   )}
                 </div>
+                )}
               </section>
 
               <section className="flex flex-col gap-3">
@@ -272,16 +280,18 @@ export function OgePenceresi({
                   ))}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <label>
-                    <span className={etiket}>Takvim</span>
-                    <select value={v.takvim} onChange={(e) => set("takvim", e.target.value as OgeGirdisi["takvim"])} className={`${alan} w-full min-w-0`}>
-                      {TAKVIMLER.filter((t) => t.kod !== "DOGUM").map((t) => (
-                        <option key={t.kod} value={t.kod}>
-                          {t.ad}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  {!isMi && (
+                    <label>
+                      <span className={etiket}>Takvim</span>
+                      <select value={v.takvim} onChange={(e) => set("takvim", e.target.value as OgeGirdisi["takvim"])} className={`${alan} w-full min-w-0`}>
+                        {SECILEBILIR_TAKVIMLER.map((t) => (
+                          <option key={t.kod} value={t.kod}>
+                            {t.ad}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                   <label>
                     <span className={etiket}>Sorumlu</span>
                     <select value={v.sorumluId ?? ""} onChange={(e) => set("sorumluId", e.target.value || null)} className={`${alan} w-full min-w-0`}>
@@ -311,6 +321,20 @@ export function OgePenceresi({
                 </label>
               )}
 
+              {isMi && oge && (
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  <Link href={`/kokpit/isler/${oge.id.slice(2)}`} className="rounded-lg bg-white/10 px-3 py-1.5 font-medium text-white hover:bg-white/15">
+                    Görev sayfasını aç
+                  </Link>
+                  {dosyaBaglantisi && (
+                    <Link href={dosyaBaglantisi} className="text-[var(--link)] hover:underline">
+                      Bağlı dosya: {oge.dosyaEtiketi}
+                    </Link>
+                  )}
+                </div>
+              )}
+
+              {!isMi && (
               <section className="flex flex-col gap-3">
                 {ekAcik ? (
                   <>
@@ -334,10 +358,11 @@ export function OgePenceresi({
                   </button>
                 )}
               </section>
+              )}
 
               <section>
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className={bolumBasligi}>Notlar ve alt görevler</p>
+                  <p className={bolumBasligi}>{isMi ? "Açıklama" : "Notlar ve alt görevler"}</p>
                   <div className="flex items-center gap-1 text-xs text-white/60">
                     {[
                       ["# ", "Başlık"],
@@ -387,7 +412,7 @@ export function OgePenceresi({
           {hata && <p className="mb-2 text-sm text-red-300">{hata}</p>}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-1 text-xs">
-              {oge && !salt && (
+              {oge && !salt && !isMi && (
                 <button type="button" onClick={() => onSil(oge.id)} className="rounded-lg px-3 py-2 text-[#ff8a80] hover:bg-white/10">
                   Sil
                 </button>

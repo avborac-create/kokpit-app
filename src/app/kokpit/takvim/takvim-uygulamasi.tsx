@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { dosyaDurusmasiniOtele } from "../takvim-actions";
+import { durumDegistir, isBilgisiniGuncelle, sorumluDegistir, vadeGuncelle } from "../isler/actions";
 import { ogeDurumuYaz, ogeKaydet, ogeKaydir, ogeSil, ogeTamamla, sirayiKaydet } from "./actions";
 import { OgePenceresi } from "./oge-penceresi";
 import {
@@ -17,6 +18,7 @@ import {
   gunFarki,
   gunSirala,
   haftaBasi,
+  IS_DURUMU,
   icsUret,
   kisaTarih,
   ornekleriUret,
@@ -149,7 +151,26 @@ export function TakvimUygulamasi({
     });
   }
 
+  // Gorevler modulundeki son gunlu is: baslik/aciklama, son gun, sorumlu ve durum degisiklikleri o modulun islemleriyle yazilir.
+  function isKaydet(g: OgeGirdisi) {
+    const eski = ogeler.find((o) => o.id === g.id);
+    if (!eski || !g.id) return;
+    const isId = g.id.slice(2);
+    const baslik = g.baslik.trim();
+    iyimser(
+      (l) => l.map((o) => (o.id === g.id ? { ...o, baslik, tarih: g.tarih, sorumluId: g.sorumluId, durum: g.durum, tamam: g.durum === "TAMAM", icerik: g.icerik } : o)),
+      async () => {
+        if (baslik !== eski.baslik || g.icerik.trim() !== eski.icerik.trim()) await isBilgisiniGuncelle(isId, baslik, g.icerik);
+        if (g.tarih !== eski.tarih) await vadeGuncelle(isId, g.tarih);
+        if (g.sorumluId !== eski.sorumluId) await sorumluDegistir(isId, g.sorumluId ?? "");
+        if (g.durum !== eski.durum) await durumDegistir(isId, IS_DURUMU[g.durum]);
+      },
+    );
+    setPencere(null);
+  }
+
   function kaydet(g: OgeGirdisi) {
+    if (g.id?.startsWith("i:")) return isKaydet(g);
     const onceki = ogeler;
     setHata("");
     setPencere(null);
@@ -174,7 +195,7 @@ export function TakvimUygulamasi({
   function tamamla(o: Oge, tamam: boolean) {
     iyimser(
       (l) => l.map((x) => (x.id === o.id ? { ...x, tamam, durum: tamam ? "TAMAM" : "BEKLIYOR" } : x)),
-      () => ogeTamamla(o.id, tamam),
+      () => (o.id.startsWith("i:") ? durumDegistir(o.id.slice(2), tamam ? "TAMAMLANDI" : "BASLATILMADI") : ogeTamamla(o.id, tamam)),
     );
   }
 
@@ -205,9 +226,10 @@ export function TakvimUygulamasi({
       if (fark === 0) return;
       const yeni = gunEkle(o.oge.tarih, fark);
       const ham = o.oge.id.slice(2);
+      const turetilmis = o.oge.turetilmis;
       iyimser(
         (l) => l.map((x) => (x.id === o.oge.id ? { ...x, tarih: yeni } : x)),
-        () => dosyaDurusmasiniOtele(o.oge.turetilmis as "dava" | "cmk", ham, yeni),
+        () => (turetilmis === "is" ? vadeGuncelle(ham, yeni) : dosyaDurusmasiniOtele(turetilmis as "dava" | "cmk", ham, yeni)),
       );
       return;
     }
@@ -239,7 +261,7 @@ export function TakvimUygulamasi({
     suruklenen.current = null;
     setUstunde(null);
     if (!o || o.oge.turetilmis) return;
-    const idler = [...new Set(yerlestir(liste.map((x) => x.id), o.oge.id, oncekiId))];
+    const idler = [...new Set(yerlestir(liste.filter((x) => !x.turetilmis).map((x) => x.id), o.oge.id, oncekiId))];
     let sonuc = ogeler;
     if (durum && o.oge.durum !== durum) sonuc = sonuc.map((x) => (x.id === o.oge.id ? { ...x, durum, tamam: durum === "TAMAM" } : x));
     if (idler.length > 1) sonuc = siraUygula(sonuc, idler);
@@ -323,7 +345,7 @@ export function TakvimUygulamasi({
         } ${ustunde === o.key ? "ring-1 ring-[var(--accent)]" : ""} ${o.oge.tamam ? "opacity-65" : ""}`}
         style={{ borderLeftColor: renk, background: `color-mix(in srgb, ${renk} 26%, transparent)` }}
       >
-        {!o.oge.turetilmis && !kompakt && (
+        {(!o.oge.turetilmis || o.oge.turetilmis === "is") && !kompakt && (
           <input
             type="checkbox"
             checked={o.oge.tamam}
@@ -445,7 +467,7 @@ export function TakvimUygulamasi({
 
   // Tablo: tum elle girilen ogeler; baslikla siralanabilir, sirasiz hâlde elle (surukle-birak) sirali.
   const tabloOgeleri = useMemo(() => {
-    const l = filtreliOgeler.filter((o) => !o.turetilmis);
+    const l = filtreliOgeler.filter((o) => !o.turetilmis || o.turetilmis === "is");
     if (!tabloSirasi) return [...l].sort((a, b) => a.sira - b.sira);
     const { alan, yon } = tabloSirasi;
     const deger = (o: Oge) =>
@@ -478,7 +500,7 @@ export function TakvimUygulamasi({
           {tabloOgeleri.map((o) => (
             <tr
               key={o.id}
-              draggable={!tabloSirasi}
+              draggable={!tabloSirasi && !o.turetilmis}
               onDragStart={() => (suruklenen.current = { key: o.id, oge: o, gun: o.tarih, ilkGun: true })}
               onDragOver={(e) => {
                 e.preventDefault();
