@@ -5,6 +5,13 @@ import { useState } from "react";
 export type HaberKalemi = { baslik: string; baglanti: string; ek?: string };
 export type HaberKaynagi = { kod: string; ad: string; alt: string; kalemler: HaberKalemi[] };
 
+// Onemli degisiklik kartlari: soldaki renk cubugu onem sirasini gosterir (kirmizi > sari > mavi).
+const ONEM_RENKLERI = [
+  { cubuk: "#E24B4A", yazi: "#ff8a80", etiket: "Önemli" },
+  { cubuk: "#EF9F27", yazi: "#f5be6b", etiket: "Mevzuat" },
+  { cubuk: "#378ADD", yazi: "#6db8ff", etiket: "Duyuru" },
+];
+
 // Hukuk gundemi: birden fazla kaynak sekme olarak; liste kisa, kendi icinde kayar.
 export function HaberSekmeleri({ kaynaklar, onemli = [] }: { kaynaklar: HaberKaynagi[]; onemli?: HaberKalemi[] }) {
   const [secili, setSecili] = useState(kaynaklar[0]?.kod ?? "");
@@ -49,21 +56,29 @@ export function HaberSekmeleri({ kaynaklar, onemli = [] }: { kaynaklar: HaberKay
             <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#ff5f56]" />
             Önemli değişiklik
           </p>
-          <ul>
-            {onemli.map((h) => (
-              <li key={h.baglanti}>
-                <a
-                  href={h.baglanti}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={h.baslik}
-                  className="flex items-baseline gap-2 py-0.5 text-[13px] text-white/90 hover:text-[#6db8ff]"
-                >
-                  <span className="min-w-0 flex-1 truncate">{h.baslik}</span>
-                  {h.ek && <span className="shrink-0 text-[11px] text-white/35">{h.ek}</span>}
-                </a>
-              </li>
-            ))}
+          <ul className="flex flex-col gap-1.5">
+            {onemli.map((h, i) => {
+              const renk = ONEM_RENKLERI[Math.min(i, ONEM_RENKLERI.length - 1)];
+              return (
+                <li key={h.baglanti} className="border-l-[3px] bg-white/[0.04]" style={{ borderLeftColor: renk.cubuk }}>
+                  <a
+                    href={h.baglanti}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={h.baslik}
+                    className="block px-3 py-1.5 hover:bg-white/[0.06]"
+                  >
+                    <span className="mb-0.5 block text-[11px]" style={{ color: renk.yazi }}>
+                      {i === 0 ? "Yeni" : renk.etiket}
+                      {h.ek ? ` · ${h.ek}` : ""}
+                    </span>
+                    <span className={`line-clamp-2 block text-[13px] leading-snug text-white/90 ${i === 0 ? "font-medium" : ""}`}>
+                      {h.baslik}
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
