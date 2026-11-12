@@ -418,8 +418,17 @@ export function TakvimUygulamasi({
     const gorunen = maks ? liste.slice(0, maks) : liste;
     return (
       <div key={`gk-${g}`} className="flex min-h-0 flex-col gap-1">
-        {gorunen.map((o) => rozet(o, kompakt))}
-        {maks && liste.length > maks && <span className="px-1 text-xs font-medium text-white/70">+{liste.length - maks} daha</span>}
+        {kompakt && (
+          // Telefonda hücre çok dar: kart yerine renkli noktalar (dokununca gün açılır).
+          <div className="flex flex-wrap gap-1 px-0.5 sm:hidden" aria-label={`${liste.length} kayıt`}>
+            {liste.slice(0, 6).map((o) => (
+              <span key={o.key} className={`h-2 w-2 rounded-full ${o.oge.tamam ? "opacity-40" : ""}`} style={{ background: takvimRengi(o.oge.takvim) }} />
+            ))}
+            {liste.length > 6 && <span className="text-[10px] leading-2 text-white/70">+{liste.length - 6}</span>}
+          </div>
+        )}
+        <div className={kompakt ? "hidden min-h-0 flex-col gap-1 sm:flex" : "contents"}>{gorunen.map((o) => rozet(o, kompakt))}</div>
+        {maks && liste.length > maks && <span className="hidden px-1 text-xs font-medium text-white/70 sm:inline">+{liste.length - maks} daha</span>}
       </div>
     );
   }
