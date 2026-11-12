@@ -268,6 +268,47 @@ function siraAbone(d: () => void) {
   return () => siraDinleyicileri.delete(d);
 }
 
+// Kisiye ozel "metin tasabilsin" sutunlari: acikken hucre "..." ile kesilmez, metin alt satira gecerek tamamen gorunur.
+const TASMA_ANAHTARI = "kokpit-dava-dosyalari-tasan-sutunlar";
+const tasmaDinleyicileri = new Set<() => void>();
+let tasmaOnbellek: { ham: string | null; sonuc: string[] } = { ham: undefined as unknown as string, sonuc: [] };
+
+function tasanlariOku(): string[] {
+  let ham: string | null;
+  try {
+    ham = localStorage.getItem(TASMA_ANAHTARI);
+  } catch {
+    ham = null;
+  }
+  if (ham === tasmaOnbellek.ham) return tasmaOnbellek.sonuc;
+  let sonuc = BOS_LISTE;
+  if (ham) {
+    try {
+      const l = JSON.parse(ham);
+      if (Array.isArray(l)) sonuc = l.filter((x): x is string => typeof x === "string");
+    } catch {
+      sonuc = BOS_LISTE;
+    }
+  }
+  tasmaOnbellek = { ham, sonuc };
+  return sonuc;
+}
+
+function tasanlariYaz(liste: string[]) {
+  try {
+    if (liste.length === 0) localStorage.removeItem(TASMA_ANAHTARI);
+    else localStorage.setItem(TASMA_ANAHTARI, JSON.stringify(liste));
+  } catch {
+    // localStorage erisilemez - sessizce yok say
+  }
+  tasmaDinleyicileri.forEach((d) => d());
+}
+
+function tasanlariAbone(d: () => void) {
+  tasmaDinleyicileri.add(d);
+  return () => tasmaDinleyicileri.delete(d);
+}
+
 function gizlileriAbone(d: () => void) {
   gizliDinleyiciler.add(d);
   return () => gizliDinleyiciler.delete(d);
@@ -282,10 +323,13 @@ function genislikleriAbone(dinleyici: () => void) {
 // satirda kalip "..." ile kesilmesi icin - tam metin `title` ile imlec
 // uzerine gelince gorulebilir. Genislik <col>/table-fixed ile disaridan
 // belirlendigi icin burada sabit bir maxWidth gerekmiyor.
-function Hucre({ children }: { children: ReactNode }) {
+function Hucre({ children, tasar }: { children: ReactNode; tasar?: boolean }) {
   const metin = typeof children === "string" ? children : undefined;
   return (
-    <div className="truncate" title={metin}>
+    <div
+      className={tasar ? "whitespace-normal break-words [&_.truncate]:!overflow-visible [&_.truncate]:!whitespace-normal [&_.truncate]:!text-clip" : "truncate"}
+      title={metin}
+    >
       {children}
     </div>
   );
@@ -515,6 +559,10 @@ export function DosyalarTablosu({
     filtreleriYaz(yeni);
   }
   const gizliSutunlar = useSyncExternalStore(gizlileriAbone, gizlileriOku, () => BOS_LISTE);
+  const tasanSutunlar = useSyncExternalStore(tasanlariAbone, tasanlariOku, () => BOS_LISTE);
+  function tasmaDegistir(anahtar: string) {
+    tasanlariYaz(tasanSutunlar.includes(anahtar) ? tasanSutunlar.filter((a) => a !== anahtar) : [...tasanSutunlar, anahtar]);
+  }
   // Kisiye ozel sira (varsa) yonetici sirasinin ustune biner; listede olmayan sutunlar sona eklenir.
   const kisiSirasi = useSyncExternalStore(siraAbone, siraOku, () => BOS_LISTE);
   const siraliSutunlar = [...kisiSirasi.filter((a) => tumSutunlar.includes(a)), ...tumSutunlar.filter((a) => !kisiSirasi.includes(a))];
@@ -762,7 +810,7 @@ export function DosyalarTablosu({
             Sütunlar{gizliSutunlar.length > 0 ? ` (${gizliSutunlar.length} gizli)` : ""}
           </summary>
           <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl max-md:fixed max-md:inset-x-3 max-md:w-auto max-md:max-h-[60vh] max-md:overflow-y-auto border border-white/20 bg-[var(--yuzey,#1c2432)] p-2 shadow-2xl">
-            <p className="px-2 pb-1 text-[11px] text-white/40">Sırayı değiştirmek için okları kullanın ya da tablo başlığını sürükleyip bırakın.</p>
+            <p className="px-2 pb-1 text-[11px] text-white/40">Sırayı değiştirmek için okları kullanın ya da tablo başlığını sürükleyip bırakın. ↩ düğmesi, o sütunda uzun metnin kesilmeyip alt satıra geçmesini sağlar.</p>
             {siraliSutunlar.map((anahtar, i) => (
               <div key={anahtar} className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-white hover:bg-white/10">
                 <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-1">
@@ -777,6 +825,16 @@ export function DosyalarTablosu({
                 </label>
                 {(
                   <>
+                    <button
+                      type="button"
+                      aria-pressed={tasanSutunlar.includes(anahtar)}
+                      aria-label={`${sutunEtiketleri[anahtar] ?? anahtar} metni taşsın`}
+                      title={tasanSutunlar.includes(anahtar) ? "Metin taşıyor (alt satıra geçer) - kesmek için tıklayın" : "Metin kesiliyor (...) - tamamı görünsün diye tıklayın"}
+                      onClick={() => tasmaDegistir(anahtar)}
+                      className={`rounded px-1.5 py-1 text-xs ${tasanSutunlar.includes(anahtar) ? "bg-white/20 font-semibold text-white" : "text-white/50 hover:text-white"}`}
+                    >
+                      ↩
+                    </button>
                     <button
                       type="button"
                       aria-label="Sola taşı"
@@ -808,6 +866,11 @@ export function DosyalarTablosu({
             {kisiSirasi.length > 0 && (
               <button type="button" onClick={() => siraYaz([])} className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm text-[var(--link)] hover:bg-white/10">
                 Sıralamayı varsayılana döndür
+              </button>
+            )}
+            {tasanSutunlar.length > 0 && (
+              <button type="button" onClick={() => tasanlariYaz([])} className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm text-[var(--link)] hover:bg-white/10">
+                Tüm sütunlarda metni kes
               </button>
             )}
             {gizliSutunlar.length > 0 && (
@@ -990,7 +1053,7 @@ export function DosyalarTablosu({
                           <span className="w-3.5 shrink-0" />
                         )}
                         <div className="min-w-0 flex-1">
-                          <Hucre>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
+                          <Hucre tasar={tasanSutunlar.includes(anahtar)}>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
                         </div>
                         {altSayisi > 0 && (
                           <span className="shrink-0 text-[11px] text-white/40">
@@ -999,7 +1062,7 @@ export function DosyalarTablosu({
                         )}
                       </div>
                     ) : (
-                      <Hucre>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
+                      <Hucre tasar={tasanSutunlar.includes(anahtar)}>{SUTUN_HUCRELERI[anahtar]?.(dosya)}</Hucre>
                     )}
                   </td>
                 ))}
