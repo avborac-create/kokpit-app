@@ -38,12 +38,12 @@ export function MasrafPaneliDugmesi() {
       type="button"
       onClick={() => degistir(!acik)}
       aria-pressed={acik}
-      title={acik ? "Masraf girişi panelini kapat" : "Masraf girişi panelini aç"}
+      title={acik ? "Para çıkışı panelini kapat" : "Para çıkışı panelini aç"}
       className={`hidden shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-medium md:inline-flex ${
         acik ? "border-[var(--link)] bg-white/10 text-white" : "border-white/15 text-[var(--link)] hover:bg-white/10"
       }`}
     >
-      <span aria-hidden>＋</span> Masraf Girişi
+      <span aria-hidden>＋</span> Para Çıkışı Oluştur
     </button>
   );
 }
@@ -65,7 +65,7 @@ export function MasrafPaneliKabugu({ panel, children }: { panel: React.ReactNode
           />
           <aside className="glass-strong max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-50 max-md:max-h-[85svh] max-md:overflow-y-auto max-md:rounded-b-none max-md:rounded-t-2xl max-md:pb-[env(safe-area-inset-bottom,0px)] md:sticky md:top-3 md:z-20 md:mt-3 md:max-h-[calc(100svh-8rem)] md:w-80 md:shrink-0 md:overflow-y-auto rounded-2xl p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h2 className="text-base font-semibold text-white">Masraf Girişi</h2>
+              <h2 className="text-base font-semibold text-white">Para Çıkışı Oluştur</h2>
               <button
                 type="button"
                 onClick={() => degistir(false)}
@@ -85,10 +85,10 @@ export function MasrafPaneliKabugu({ panel, children }: { panel: React.ReactNode
         <button
           type="button"
           onClick={() => degistir(true)}
-          title="Masraf girişi panelini aç"
+          title="Para çıkışı panelini aç"
           className="glass-strong fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-3 z-30 inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-medium text-[var(--link)] hover:bg-white/10 md:hidden"
         >
-          ＋ Masraf Girişi
+          ＋ Para Çıkışı Oluştur
         </button>
       )}
       <div className="min-w-0 flex-1">{children}</div>

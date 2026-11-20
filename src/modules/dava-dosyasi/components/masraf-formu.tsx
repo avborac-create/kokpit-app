@@ -59,7 +59,7 @@ export async function MasrafFormu({
         <Girdi id={`${idOnEki}tarih`} name="tarih" type="date" required defaultValue={duzenlemeVerisi?.tarih ?? bugun} />
       </Alan>
       <Alan>
-        <Etiket htmlFor={`${idOnEki}cariKodId`}>Cari Kod</Etiket>
+        <Etiket htmlFor={`${idOnEki}cariKodId`}>Para Çıkışı Türü (Cari Kod)</Etiket>
         <Secim id={`${idOnEki}cariKodId`} name="cariKodId" required defaultValue={duzenlemeVerisi?.cariKodId ?? cariKodlar.find((k) => k.kod === varsayilanCariKod)?.id ?? ""}>
           <option value="" disabled>
             Seçiniz…
@@ -91,7 +91,7 @@ export async function MasrafFormu({
         </Alan>
       </div>
       <div className="col-span-1 sm:col-span-2 md:col-span-4">
-        <GonderButonu>{duzenlemeVerisi ? "Masrafı Güncelle" : "Masraf Ekle"}</GonderButonu>
+        <GonderButonu>{duzenlemeVerisi ? "Para Çıkışını Güncelle" : "Para Çıkışı Ekle"}</GonderButonu>
       </div>
     </form>
   );
