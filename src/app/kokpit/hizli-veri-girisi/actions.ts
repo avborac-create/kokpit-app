@@ -25,7 +25,8 @@ export async function gelenOdemeKaydet(formData: FormData): Promise<{ hata?: str
     const tarihHam = String(formData.get("tarih") ?? "");
     if (!tarihHam) throw new Error("Tarih zorunludur.");
     const belgeUrl = String(formData.get("belgeUrl") ?? "");
-    if (!belgeUrl.startsWith("https://")) throw new Error("Önce dekontu yükleyin.");
+    const dekontSonra = formData.get("dekontSonra") === "1";
+    if (!belgeUrl.startsWith("https://") && !dekontSonra) throw new Error("Önce dekontu yükleyin ya da “Dekontu sonra yükleyeceğim” kutusunu işaretleyin.");
     const dosyaId = String(formData.get("dosyaId") ?? "") || null;
     let musteriId: string | null = null;
     if (dosyaId) {
@@ -39,7 +40,7 @@ export async function gelenOdemeKaydet(formData: FormData): Promise<{ hata?: str
         tutar,
         odeyenAdi: odeyen,
         aciklama: String(formData.get("aciklama") ?? "").trim().slice(0, 1000) || null,
-        belgeUrl,
+        belgeUrl: belgeUrl.startsWith("https://") ? belgeUrl : null,
         belgeAd: String(formData.get("belgeAd") ?? "").slice(0, 200) || null,
         belgeTur: String(formData.get("belgeTur") ?? "").slice(0, 100) || null,
         dosyaId,
@@ -48,6 +49,24 @@ export async function gelenOdemeKaydet(formData: FormData): Promise<{ hata?: str
       },
       select: { id: true },
     });
+    if (!belgeUrl.startsWith("https://")) {
+      // Dekont sonra yuklenecek: kaydi girene bugun teslimli gorev ac; dekont eklenince otomatik kapanir.
+      const bugun = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
+      await prisma.is.create({
+        data: {
+          baslik: `Dekont yükle: ${tutar.toLocaleString("tr-TR")} TL${odeyen ? ` — ${odeyen}` : ""}`.slice(0, 200),
+          aciklama: "Gelen ödeme dekontsuz kaydedildi. Hızlı Veri Girişi › Para Trafiği Kaydet sayfasında ilgili kaydın altındaki “Dekontu yükle” düğmesiyle dekontu ekleyin; görev kendiliğinden kapanır.",
+          sorumluId: k.kullaniciId,
+          olusturanId: k.kullaniciId,
+          kaynak: `odeme-dekont:${kayit.id}`,
+          tur: "PARCA",
+          sinif: "ANA",
+          zamanBaskisi: "TESLIM",
+          vade: new Date(bugun),
+        },
+      });
+      revalidatePath("/kokpit/isler");
+    }
     const yetkililer = await prisma.kullanici.findMany({ where: { aktifMi: true, finansYetkilisiMi: true, id: { not: k.kullaniciId } }, select: { id: true } });
     if (yetkililer.length > 0) {
       await pushGonder(
@@ -64,6 +83,28 @@ export async function gelenOdemeKaydet(formData: FormData): Promise<{ hata?: str
     return {};
   } catch (e) {
     return { hata: e instanceof Error ? e.message : "Kaydedilemedi." };
+  }
+}
+
+// Dekontsuz girilmis kayda sonradan dekont ekler; ilgili "Dekont yukle" gorevini kapatir.
+export async function gelenOdemeDekontEkle(id: string, belgeUrl: string, belgeAd: string, belgeTur: string): Promise<{ hata?: string }> {
+  try {
+    const k = await mevcutKullanici();
+    if (!k) throw new Error("Oturum bulunamadı.");
+    if (!belgeUrl.startsWith("https://")) throw new Error("Geçersiz dosya.");
+    const o = await prisma.gelenOdemeKaydi.findUnique({ where: { id } });
+    if (!o) throw new Error("Kayıt bulunamadı.");
+    if (o.olusturanId !== k.kullaniciId && !(await ekonomiDuzenleyebilirMi())) throw new Error("Bu kayda dekont ekleme yetkiniz yok.");
+    await prisma.gelenOdemeKaydi.update({ where: { id }, data: { belgeUrl, belgeAd: belgeAd.slice(0, 200), belgeTur: belgeTur.slice(0, 100) } });
+    await prisma.is.updateMany({
+      where: { kaynak: `odeme-dekont:${id}`, durum: { not: "TAMAMLANDI" } },
+      data: { durum: "TAMAMLANDI", tamamlanmaTarihi: new Date(), guncellemeTarihi: new Date() },
+    });
+    revalidatePath("/kokpit/isler");
+    yenile(o.dosyaId);
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "Eklenemedi." };
   }
 }
 

@@ -7,7 +7,7 @@ import { Alan, Etiket, Girdi, MetinAlani } from "@/core/ui/form";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { Dugme } from "@/core/ui/button";
 import { DosyaSecici, type DosyaSeciciSecenegi } from "@/core/ui/dosya-secici";
-import { gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
+import { gelenOdemeDekontEkle, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
 
 export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }) {
   const router = useRouter();
@@ -16,6 +16,7 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
   const [anahtar, setAnahtar] = useState(0);
   const [belge, setBelge] = useState<{ url: string; ad: string; tur: string } | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
+  const [dekontSonra, setDekontSonra] = useState(false);
   const bugun = new Date().toISOString().slice(0, 10);
 
   async function yukle(d: File) {
@@ -68,18 +69,21 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
       key={anahtar}
       action={(fd) => {
         setHata("");
-        if (!belge) {
-          setHata("Önce dekontu yükleyin.");
+        if (!belge && !dekontSonra) {
+          setHata("Önce dekontu yükleyin ya da “Dekontu sonra yükleyeceğim” kutusunu işaretleyin.");
           return;
         }
-        fd.set("belgeUrl", belge.url);
-        fd.set("belgeAd", belge.ad);
-        fd.set("belgeTur", belge.tur);
+        if (belge) {
+          fd.set("belgeUrl", belge.url);
+          fd.set("belgeAd", belge.ad);
+          fd.set("belgeTur", belge.tur);
+        } else fd.set("dekontSonra", "1");
         basla(async () => {
           const s = await gelenOdemeKaydet(fd);
           if (s.hata) setHata(s.hata);
           else {
             setBelge(null);
+            setDekontSonra(false);
             setAnahtar((a) => a + 1);
             router.refresh();
           }
@@ -103,6 +107,14 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
             />
             {yukleniyor && <p className="mt-1 text-xs text-white/50">Yükleniyor…</p>}
             {belge && <p className="mt-1 text-xs text-[#5fd97a]">✓ {belge.ad} yüklendi</p>}
+            {!belge && (
+              <label className="mt-2 flex items-start gap-2 text-sm text-white/70">
+                <input type="checkbox" checked={dekontSonra} onChange={(e) => setDekontSonra(e.target.checked)} className="mt-0.5" />
+                <span>
+                  Dekontu sonra yükleyeceğim <span className="text-white/45">(bana “Dekont yükle” görevi açılır)</span>
+                </span>
+              </label>
+            )}
           </Alan>
         </div>
         <Alan>
@@ -216,5 +228,35 @@ export function KayitSilDugmesi({ id }: { id: string }) {
     >
       Sil
     </button>
+  );
+}
+
+// Dekontsuz girilmiş kayda sonradan dekont ekler.
+export function DekontEkleDugmesi({ id }: { id: string }) {
+  const router = useRouter();
+  const [hata, setHata] = useState("");
+  const [yukleniyor, setYukleniyor] = useState(false);
+  async function yukle(d: File) {
+    setYukleniyor(true);
+    setHata("");
+    try {
+      const s = await upload(`isler/dekont/${crypto.randomUUID()}-${d.name}`, d, { access: "private", handleUploadUrl: "/api/isler/blob-upload" });
+      const r = await gelenOdemeDekontEkle(id, s.url, d.name, d.type);
+      if (r.hata) setHata(r.hata);
+      else router.refresh();
+    } catch (e) {
+      setHata("Yüklenemedi: " + (e instanceof Error ? e.message : "bilinmeyen hata"));
+    } finally {
+      setYukleniyor(false);
+    }
+  }
+  return (
+    <div className="mt-1">
+      <label className="inline-block cursor-pointer rounded-md border border-[#f2b04c]/50 bg-[#f2b04c]/15 px-3 py-1 text-xs font-medium text-[#f2b04c] hover:bg-[#f2b04c]/25">
+        {yukleniyor ? "Yükleniyor…" : "📎 Dekontu yükle"}
+        <input type="file" accept="image/*,application/pdf" className="hidden" disabled={yukleniyor} onChange={(e) => e.target.files?.[0] && void yukle(e.target.files[0])} />
+      </label>
+      {hata && <p className="mt-1 text-xs text-[#ff9b92]">{hata}</p>}
+    </div>
   );
 }

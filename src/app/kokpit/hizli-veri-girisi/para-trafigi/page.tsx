@@ -5,7 +5,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
 import { dosyaSecenekleriGetir } from "@/modules/avukat/lib/dosya-secenekleri";
 import { dosyaEtiketiYaz } from "@/modules/dava-dosyasi/lib/cari-sistem";
-import { KayitSilDugmesi, TeyitEylemleri, YeniOdemeFormu } from "./formlar";
+import { DekontEkleDugmesi, KayitSilDugmesi, TeyitEylemleri, YeniOdemeFormu } from "./formlar";
 
 const para = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 const gun = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", year: "numeric" });
@@ -100,6 +100,8 @@ export default async function ParaTrafigiKaydetSayfasi({ searchParams }: { searc
                     )}
                     {x.aciklama ? ` · ${x.aciklama}` : ""}
                   </p>
+                  {!x.belgeUrl && x.durum !== "TEYIT_EDILDI" && <p className="mt-1 text-xs text-[#f2b04c]">Dekont bekleniyor</p>}
+                  {!x.belgeUrl && (x.olusturanId === k.kullaniciId || yetkili) && x.durum !== "TEYIT_EDILDI" && <DekontEkleDugmesi id={x.id} />}
                   {x.belgeUrl && (
                     <a href={`/api/hizli-giris/dekont?id=${x.id}`} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-[#8fd8ff] hover:underline">
                       📎 Dekontu aç
