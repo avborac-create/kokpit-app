@@ -207,7 +207,8 @@ export default async function ParaTrafigiKaydetSayfasi({
                       {kisi.get(x.olusturanId ?? "") ?? "—"}
                     </p>
                     <p className="mt-0.5 font-medium text-white">
-                      {x.odeyenAdi || "Ödeyen belirtilmedi"}
+                      <span className="font-normal text-white/50">Gönderen kişi: </span>
+                      {x.odeyenAdi || "belirtilmedi"}
                     </p>
                     {x.dosyaId ? (
                       (() => {
@@ -342,7 +343,7 @@ export default async function ParaTrafigiKaydetSayfasi({
                         });
                       if ((t.eskiOdeyenAdi ?? "") !== (t.yeniOdeyenAdi ?? ""))
                         satirlar.push({
-                          ad: "Ödeyen",
+                          ad: "Gönderen kişi",
                           eski: t.eskiOdeyenAdi || "—",
                           yeni: t.yeniOdeyenAdi || "—",
                         });

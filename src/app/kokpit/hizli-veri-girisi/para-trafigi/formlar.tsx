@@ -130,7 +130,7 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
         </Alan>
         <div className="sm:col-span-2">
           <Alan>
-            <Etiket htmlFor="go-odeyen">Ödeyen (dekonttaki gönderen adı)</Etiket>
+            <Etiket htmlFor="go-odeyen">Gönderen kişi (dekonttaki gönderen adı)</Etiket>
             <Girdi id="go-odeyen" name="odeyenAdi" placeholder="örn. şirket ya da kişi adı" />
           </Alan>
         </div>
@@ -295,7 +295,7 @@ export function KayitDuzenleDugmesi({
         </Alan>
         <div className="sm:col-span-2">
           <Alan>
-            <Etiket htmlFor={`dz-odeyen-${id}`}>Ödeyen</Etiket>
+            <Etiket htmlFor={`dz-odeyen-${id}`}>Gönderen kişi</Etiket>
             <Girdi id={`dz-odeyen-${id}`} name="odeyenAdi" defaultValue={odeyenAdi} />
           </Alan>
         </div>
@@ -365,7 +365,7 @@ export function DuzeltmeTalebiDugmesi({ id, tutar, tarih, odeyenAdi, aciklama }:
         </Alan>
         <div className="sm:col-span-2">
           <Alan>
-            <Etiket htmlFor={`dt-odeyen-${id}`}>Ödeyen</Etiket>
+            <Etiket htmlFor={`dt-odeyen-${id}`}>Gönderen kişi</Etiket>
             <Girdi id={`dt-odeyen-${id}`} name="odeyenAdi" defaultValue={odeyenAdi} />
           </Alan>
         </div>
