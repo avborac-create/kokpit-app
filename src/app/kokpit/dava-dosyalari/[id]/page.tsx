@@ -688,22 +688,10 @@ export default async function DavaDosyasiDetaySayfasi({
             turGecmisi={Array.isArray(dosya.durumTurGecmisi) ? (dosya.durumTurGecmisi as unknown as DurumTuruKaydi[]) : []}
           />
           </div>
-          {/* Müvekkil/karşı taraf başlıkta zaten var; burada tekrarlanmaz. Yalnız özet göstergeler. */}
-          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {[
-              { etiket: dEtiket.kpi, deger: davaDegeri || "—", alt: davaDegeri ? dEtiket.kpiAlt : dEtiket.kpiBos, renk: "#4da3ff" },
-              { etiket: "Sorumlu avukat", deger: dosya.sorumluAvukat?.adSoyad ?? "Atanmadı", alt: dosya.sorumluAvukat ? "dosyayı yürüten" : "atama bekliyor", renk: "#b48cff" },
-              { etiket: "Alt dosyalar", deger: String(dosya.altDosyalar.length), alt: dosya.altDosyalar.length > 0 ? "bağlı takip/dosya" : "alt dosya yok", renk: "#f2b04c" },
-            ].map((k) => (
-              <div key={k.etiket} className="glass min-w-0 px-4 py-2.5" style={{ "--kart-renk": k.renk } as React.CSSProperties} title={k.alt}>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-white/55">{k.etiket}</p>
-                <p className="line-clamp-2 break-words text-lg font-semibold leading-snug text-white" title={k.deger}>{k.deger}</p>
-              </div>
-            ))}
-          </div>
-          <div className="gri-esit grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {/* Tek Bakış düzeni: 3'lü özet kutuları yok (sorumlu avukat Vekil satırında, alt dosya sayısı Dosya Ağacı satırında, dava değeri İçerik'te). Tek sütun; Vekil ve Dosya Ağacı açılır satır. */}
+          <div className="mt-3 flex max-w-4xl flex-col gap-3">
           <div className="contents">
-            <div className="min-w-0 lg:order-1" style={{ "--kart-renk": "#4da3ff" } as React.CSSProperties}>
+            <div className="order-1 min-w-0" style={{ "--kart-renk": "#4da3ff" } as React.CSSProperties}>
             <DuzenlenebilirKart
               duz
               etiketOnEki="dosya-detay.kunye"
@@ -715,7 +703,7 @@ export default async function DavaDosyasiDetaySayfasi({
             />
             </div>
 
-            <div className="min-w-0 lg:order-3" style={{ "--kart-renk": "#f2b04c" } as React.CSSProperties}>
+            <div className="order-2 min-w-0" style={{ "--kart-renk": "#f2b04c" } as React.CSSProperties}>
             <DuzenlenebilirKart
               duz
               etiketOnEki="dosya-detay.icerik"
@@ -730,7 +718,7 @@ export default async function DavaDosyasiDetaySayfasi({
 
           <div className="contents">
           {talepMaddeleri.length > 0 && (
-            <div className="min-w-0 lg:order-5" style={{ "--kart-renk": "#32d74b" } as React.CSSProperties}>
+            <div className="order-3 min-w-0" style={{ "--kart-renk": "#32d74b" } as React.CSSProperties}>
               <FormKarti baslik={dEtiket.kalemKarti}>
                 <TalepKalemleriPaneli icraMi={icraMi} dosyaId={id} maddeler={talepMaddeleri} baslangic={talepEkstralari} />
               </FormKarti>
@@ -738,7 +726,7 @@ export default async function DavaDosyasiDetaySayfasi({
           )}
 
           {dosya.tur?.kod === "ihtar_dosyasi" && (
-            <div className="min-w-0 lg:order-6">
+            <div className="order-4 min-w-0">
               <FormKarti baslik="İhtar Gönderim Bilgileri">
                 <IhtarGonderimPaneli
                   dosyaId={id}
@@ -757,7 +745,13 @@ export default async function DavaDosyasiDetaySayfasi({
             </div>
           )}
 
-          <div className="min-w-0 lg:order-2" style={{ "--kart-renk": "#b48cff" } as React.CSSProperties}>
+          <details className="group order-5 min-w-0" style={{ "--kart-renk": "#b48cff" } as React.CSSProperties}>
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-t border-white/10 px-1 py-3 text-sm font-semibold text-white/85 hover:text-white">
+              <span>Vekil Bilgileri</span>
+              <span className="min-w-0 truncate text-xs font-normal text-white/50">
+                Sorumlu: {dosya.sorumluAvukat?.adSoyad ?? "Atanmadı"} <span aria-hidden className="ml-1 inline-block transition-transform group-open:rotate-90">›</span>
+              </span>
+            </summary>
             <FormKarti baslik="Vekil Bilgileri">
               <VekilPaneli
                 dosyaId={id}
@@ -772,9 +766,15 @@ export default async function DavaDosyasiDetaySayfasi({
                 disVekilIdleri={dosya.uyapVekilleri.flatMap((v) => (v.calisilanAvukatId ? [v.calisilanAvukatId] : []))}
               />
             </FormKarti>
-          </div>
+          </details>
 
-          <div className="min-w-0 lg:order-4" style={{ "--kart-renk": "#2ec4b6" } as React.CSSProperties}>
+          <details open={dosya.altDosyalar.length > 0 || Boolean(dosya.anaDosya) || Boolean(dosya.bagliOlduguDosya)} className="group order-6 min-w-0" style={{ "--kart-renk": "#2ec4b6" } as React.CSSProperties}>
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-t border-white/10 px-1 py-3 text-sm font-semibold text-white/85 hover:text-white">
+              <span>Dosya Ağacı</span>
+              <span className="text-xs font-normal text-white/50">
+                {dosya.altDosyalar.length > 0 ? `${dosya.altDosyalar.length} alt dosya` : "bağlı dosya yok"} <span aria-hidden className="ml-1 inline-block transition-transform group-open:rotate-90">›</span>
+              </span>
+            </summary>
             <DuzenlenebilirKart
               etiketOnEki="dosya-detay.dosya-agaci"
               varsayilanBaslik="Dosya Ağacı"
@@ -798,7 +798,7 @@ export default async function DavaDosyasiDetaySayfasi({
                 adaylar={anaDosyaAdaylari}
               />
             </DuzenlenebilirKart>
-          </div>
+          </details>
           </div>
           </div>
 
