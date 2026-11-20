@@ -35,12 +35,15 @@ export async function gelenOdemeKaydet(formData: FormData): Promise<{ hata?: str
       if (muvekkiller.length === 1) musteriId = muvekkiller[0].musteriId;
     }
     const odeyen = String(formData.get("odeyenAdi") ?? "").trim().slice(0, 200) || null;
+    const sebep = String(formData.get("aciklama") ?? "").trim().slice(0, 1000);
+    const sebepSonra = formData.get("sebepSonra") === "1";
+    if (!sebep && !sebepSonra) throw new Error("Paranın geliş sebebini yazın ya da “Sebebi sonra yazacağım” kutusunu işaretleyin.");
     const kayit = await prisma.gelenOdemeKaydi.create({
       data: {
         tarih: new Date(tarihHam),
         tutar,
         odeyenAdi: odeyen,
-        aciklama: String(formData.get("aciklama") ?? "").trim().slice(0, 1000) || null,
+        aciklama: sebep || null,
         belgeUrl: belgeUrl.startsWith("https://") ? belgeUrl : null,
         belgeAd: String(formData.get("belgeAd") ?? "").slice(0, 200) || null,
         belgeTur: String(formData.get("belgeTur") ?? "").slice(0, 100) || null,
@@ -60,6 +63,23 @@ export async function gelenOdemeKaydet(formData: FormData): Promise<{ hata?: str
           sorumluId: k.kullaniciId,
           olusturanId: k.kullaniciId,
           kaynak: `odeme-dekont:${kayit.id}`,
+          tur: "PARCA",
+          sinif: "ANA",
+          zamanBaskisi: "TESLIM",
+          vade: new Date(bugun),
+        },
+      });
+      revalidatePath("/kokpit/isler");
+    }
+    if (!sebep) {
+      const bugun = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
+      await prisma.is.create({
+        data: {
+          baslik: `Ödeme sebebini yaz: ${tutar.toLocaleString("tr-TR")} TL${odeyen ? ` — ${odeyen}` : ""}`.slice(0, 200),
+          aciklama: "Gelen ödeme, geliş sebebi yazılmadan kaydedildi. Hızlı Veri Girişi › Para Trafiği Kaydet sayfasında ilgili kaydın “Düzelt” düğmesiyle paranın geliş sebebini yazın; görev kendiliğinden kapanır. Sebep yazılmadan kayıt teyit edilemez.",
+          sorumluId: k.kullaniciId,
+          olusturanId: k.kullaniciId,
+          kaynak: `odeme-sebep:${kayit.id}`,
           tur: "PARCA",
           sinif: "ANA",
           zamanBaskisi: "TESLIM",
@@ -118,6 +138,7 @@ export async function gelenOdemeTeyitEt(id: string, musteriIdSecimi = ""): Promi
     if (!o) throw new Error("Kayıt bulunamadı.");
     if (o.durum === "TEYIT_EDILDI") throw new Error("Bu ödeme zaten teyit edilmiş.");
     if (o.olusturanId === k.kullaniciId) throw new Error("Kaydı giren kişi kendi kaydını teyit edemez.");
+    if (!o.aciklama?.trim()) throw new Error("Paranın geliş sebebi yazılmamış; önce “Düzelt” ile sebebi yazın.");
 
     await prisma.$transaction(async (tx) => {
       let cariHareketId: string | null = null;
@@ -215,18 +236,25 @@ export async function gelenOdemeDuzenle(id: string, formData: FormData): Promise
       const muvekkiller = await prisma.dosyaMuvekkili.findMany({ where: { dosyaId }, select: { musteriId: true } });
       if (muvekkiller.length === 1) musteriId = muvekkiller[0].musteriId;
     }
+    const sebep = String(formData.get("aciklama") ?? "").trim().slice(0, 1000);
+    if (!sebep) throw new Error("Paranın geliş sebebini yazın.");
     await prisma.gelenOdemeKaydi.update({
       where: { id },
       data: {
         tarih: new Date(tarihHam),
         tutar,
         odeyenAdi: String(formData.get("odeyenAdi") ?? "").trim().slice(0, 200) || null,
-        aciklama: String(formData.get("aciklama") ?? "").trim().slice(0, 1000) || null,
+        aciklama: sebep,
         dosyaId,
         musteriId,
         ...(o.durum === "TEYIT_EDILEMEDI" ? { durum: "TEYIT_BEKLIYOR", teyitEdenId: null, teyitZamani: null, teyitNotu: null } : {}),
       },
     });
+    await prisma.is.updateMany({
+      where: { kaynak: `odeme-sebep:${id}`, durum: { not: "TAMAMLANDI" } },
+      data: { durum: "TAMAMLANDI", tamamlanmaTarihi: new Date(), guncellemeTarihi: new Date() },
+    });
+    revalidatePath("/kokpit/isler");
     yenile(o.dosyaId);
     yenile(dosyaId);
     return {};
@@ -356,4 +384,49 @@ export async function gelenOdemeSil(id: string): Promise<{ hata?: string }> {
   } catch (e) {
     return { hata: e instanceof Error ? e.message : "Silinemedi." };
   }
+}
+
+// Toplu islem: secili kayitlara tek tek uygulanir; her kayit kendi yetki/kural kontrolunden gecer.
+export async function gelenOdemeTopluIslem(
+  idler: string[],
+  islem: "TEYIT" | "TEYIT_EDILEMEDI" | "SIL" | "DOSYA_ATA",
+  parametre = "",
+): Promise<{ basarili: number; hatalar: string[] }> {
+  const liste = [...new Set(idler)].slice(0, 100);
+  let basarili = 0;
+  const hatalar: string[] = [];
+  const k = await mevcutKullanici();
+  if (!k) return { basarili: 0, hatalar: ["Oturum bulunamadı."] };
+  const yetkili = await ekonomiDuzenleyebilirMi();
+  const kayitlar = await prisma.gelenOdemeKaydi.findMany({ where: { id: { in: liste } } });
+  const kayitMap = new Map(kayitlar.map((x) => [x.id, x]));
+  const etiket = (x: { tutar: unknown; odeyenAdi: string | null }) => `${Number(x.tutar).toLocaleString("tr-TR")} TL${x.odeyenAdi ? ` — ${x.odeyenAdi}` : ""}`;
+  for (const id of liste) {
+    const o = kayitMap.get(id);
+    if (!o) continue;
+    let s: { hata?: string } = {};
+    try {
+      if (islem === "TEYIT") s = await gelenOdemeTeyitEt(id);
+      else if (islem === "TEYIT_EDILEMEDI") s = await gelenOdemeTeyitEdilemedi(id, parametre);
+      else if (islem === "SIL") s = await gelenOdemeSil(id);
+      else {
+        if (o.durum === "TEYIT_EDILDI") throw new Error("Teyitli kayda dosya atanamaz.");
+        if (o.olusturanId !== k.kullaniciId && !yetkili) throw new Error("Yetkiniz yok.");
+        let musteriId: string | null = null;
+        if (parametre) {
+          const m = await prisma.dosyaMuvekkili.findMany({ where: { dosyaId: parametre }, select: { musteriId: true } });
+          if (m.length === 1) musteriId = m[0].musteriId;
+        }
+        await prisma.gelenOdemeKaydi.update({ where: { id }, data: { dosyaId: parametre || null, musteriId } });
+        yenile(o.dosyaId);
+        yenile(parametre || null);
+      }
+    } catch (e) {
+      s = { hata: e instanceof Error ? e.message : "Hata" };
+    }
+    if (s.hata) hatalar.push(`${etiket(o)}: ${s.hata}`);
+    else basarili++;
+  }
+  revalidatePath("/kokpit", "layout");
+  return { basarili, hatalar };
 }

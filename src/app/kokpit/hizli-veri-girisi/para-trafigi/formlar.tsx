@@ -17,6 +17,7 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
   const [belge, setBelge] = useState<{ url: string; ad: string; tur: string } | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [dekontSonra, setDekontSonra] = useState(false);
+  const [sebepSonra, setSebepSonra] = useState(false);
   const bugun = new Date().toISOString().slice(0, 10);
 
   async function yukle(d: File) {
@@ -78,12 +79,14 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
           fd.set("belgeAd", belge.ad);
           fd.set("belgeTur", belge.tur);
         } else fd.set("dekontSonra", "1");
+        if (sebepSonra) fd.set("sebepSonra", "1");
         basla(async () => {
           const s = await gelenOdemeKaydet(fd);
           if (s.hata) setHata(s.hata);
           else {
             setBelge(null);
             setDekontSonra(false);
+            setSebepSonra(false);
             setAnahtar((a) => a + 1);
             router.refresh();
           }
@@ -139,8 +142,14 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
         </div>
         <div className="sm:col-span-2">
           <Alan>
-            <Etiket htmlFor="go-not">Not</Etiket>
-            <MetinAlani id="go-not" name="aciklama" rows={2} placeholder="örn. istinaf başvuru masrafı" />
+            <Etiket htmlFor="go-not">Paranın geliş sebebi (zorunlu)</Etiket>
+            <MetinAlani id="go-not" name="aciklama" rows={2} required={!sebepSonra} placeholder="örn. istinaf başvuru masrafı, vekalet ücreti, harç avansı" />
+            <label className="mt-2 flex items-start gap-2 text-sm text-white/70">
+              <input type="checkbox" checked={sebepSonra} onChange={(e) => setSebepSonra(e.target.checked)} className="mt-0.5" />
+              <span>
+                Sebebi şimdi yazamıyorum <span className="text-white/45">(bana “Ödeme sebebini yaz” görevi açılır; sebep yazılmadan kayıt teyit edilemez)</span>
+              </span>
+            </label>
           </Alan>
         </div>
       </div>
@@ -298,8 +307,8 @@ export function KayitDuzenleDugmesi({
         </div>
         <div className="sm:col-span-2">
           <Alan>
-            <Etiket htmlFor={`dz-not-${id}`}>Not</Etiket>
-            <MetinAlani id={`dz-not-${id}`} name="aciklama" rows={2} defaultValue={aciklama} />
+            <Etiket htmlFor={`dz-not-${id}`}>Paranın geliş sebebi (zorunlu)</Etiket>
+            <MetinAlani id={`dz-not-${id}`} name="aciklama" rows={2} required defaultValue={aciklama} />
           </Alan>
         </div>
       </div>
