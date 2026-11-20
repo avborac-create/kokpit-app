@@ -27,7 +27,7 @@ export default async function HizliVeriGirisiSayfasi() {
         {
           anahtar: "para-trafigi",
           ad: "Para Trafiği Kaydet",
-          aciklama: "Dosyası belli olan gelen ödemeyi dekontuyla girin; muhasebe teyit edene kadar “teyit bekliyor” olarak görünür.",
+          aciklama: "Dosyası belli gelen ödeme, dekontlu",
           yol: "/kokpit/hizli-veri-girisi/para-trafigi",
           rozet: teyitBekleyen > 0 ? `${teyitBekleyen} teyit bekliyor` : undefined,
         },
@@ -35,21 +35,21 @@ export default async function HizliVeriGirisiSayfasi() {
           ? [
               {
                 anahtar: "para-havuzu",
-                ad: "Para Havuzu — sahibi belli olmayan para",
-                aciklama: "Hangi dosyaya ait olduğu belli olmayan parayı havuza girin; sonra müvekkile ya da dosyaya aktarın.",
+                ad: "Para Havuzu",
+                aciklama: "Sahibi belli olmayan para",
                 yol: "/kokpit/finans/para-havuzu",
                 rozet: havuzRozeti,
               },
               {
                 anahtar: "kasa",
                 ad: "Kasa hareketi (nakit)",
-                aciklama: "Personele avans, büro gideri, bankaya yatırma gibi nakit giriş/çıkışlar.",
+                aciklama: "Avans, büro gideri, bankaya yatırma",
                 yol: "/kokpit/finans/kasa",
               },
               {
                 anahtar: "istenen-para",
                 ad: "Müvekkilden para iste",
-                aciklama: "Müvekkilden istenen ödemeyi kaydedin; geldi mi, hangi hesaba geldi takibi.",
+                aciklama: "İstenen ödemenin takibi",
                 yol: "/kokpit/finans/istenen-paralar",
               },
             ]
@@ -60,46 +60,46 @@ export default async function HizliVeriGirisiSayfasi() {
       ad: "Dosya",
       renk: "#f59e0b",
       girisler: [
-        { anahtar: "yargi-dosyasi", ad: "Yeni Yargı dosyası", aciklama: "İcra, dava, ihtar ve diğer yargı dosyası açın.", yol: "/kokpit/dava-dosyalari/yeni" },
-        { anahtar: "cmk-dosyasi", ad: "Yeni CMK dosyası", aciklama: "Zorunlu müdafilik / CMK görevlendirmesi girin.", yol: "/kokpit/cmk-dosyalari/yeni" },
+        { anahtar: "yargi-dosyasi", ad: "Yeni Yargı dosyası", aciklama: "İcra, dava, ihtar ve diğerleri", yol: "/kokpit/dava-dosyalari/yeni" },
+        { anahtar: "cmk-dosyasi", ad: "Yeni CMK dosyası", aciklama: "Zorunlu müdafilik görevlendirmesi", yol: "/kokpit/cmk-dosyalari/yeni" },
         ...(avukatVar
-          ? [{ anahtar: "haciz", ad: "Haciz raporu", aciklama: "Saha haciz raporunu ya da masrafını girin.", yol: "/kokpit/haciz-artcilari/yeni" }]
+          ? [{ anahtar: "haciz", ad: "Haciz raporu", aciklama: "Saha raporu veya masrafı", yol: "/kokpit/haciz-artcilari/yeni" }]
           : []),
       ],
     },
     {
       ad: "Müvekkil",
       renk: "#8b5cf6",
-      girisler: [{ anahtar: "muvekkil", ad: "Yeni müvekkil", aciklama: "Müvekkil kartı açın.", yol: "/kokpit/musteriler/yeni" }],
+      girisler: [{ anahtar: "muvekkil", ad: "Yeni müvekkil", aciklama: "Yeni müvekkil kartı", yol: "/kokpit/musteriler/yeni" }],
     },
     {
       ad: "Görev ve takvim",
       renk: "#14b8c4",
       girisler: [
-        { anahtar: "gorev", ad: "Görev / iş oluştur", aciklama: "Bir kişiye görev atayın, dosyaya bağlayın.", yol: "/kokpit/isler" },
-        { anahtar: "takvim", ad: "Takvim kaydı", aciklama: "Duruşma, toplantı, not ya da doğum günü ekleyin.", yol: "/kokpit/takvim" },
+        { anahtar: "gorev", ad: "Görev / iş oluştur", aciklama: "Kişiye ata, dosyaya bağla", yol: "/kokpit/isler" },
+        { anahtar: "takvim", ad: "Takvim kaydı", aciklama: "Duruşma, toplantı, not, doğum günü", yol: "/kokpit/takvim" },
       ],
     },
   ];
 
   return (
-    <div className="mx-auto max-w-4xl pt-3">
+    <div className="mx-auto max-w-2xl pt-3">
       <h1 className="mb-1 text-2xl font-semibold tracking-tight text-white">Hızlı Veri Girişi</h1>
-      <p className="mb-6 text-sm text-white/55">
-        Her tür veri girişi tek kapıdan: girmek istediğiniz kaydı seçin, ilgili modüle işlenir. Yetkiniz olmayan modüllerin girişleri görünmez.
-      </p>
-      <div className="flex flex-col gap-6">
+      <p className="mb-8 text-sm text-white/55">Girmek istediğiniz kaydı seçin.</p>
+      <div className="flex flex-col gap-7">
         {gruplar.map((grup) => (
           <section key={grup.ad}>
-            <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">{grup.ad}</h2>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <h2 className="mb-2 px-4 text-xs font-medium text-white/50">{grup.ad}</h2>
+            <div className="glass divide-y divide-white/10 overflow-hidden rounded-2xl">
               {grup.girisler.map((g) => (
-                <Link key={g.anahtar} href={g.yol} className="glass block rounded-2xl border-l-4 p-4 transition-colors hover:bg-white/[0.06]" style={{ borderLeftColor: grup.renk }}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-white">{g.ad}</p>
-                    {g.rozet && <span className="rounded-full bg-[#f2b04c]/25 px-2 py-0.5 text-xs font-medium text-[#f2b04c]">{g.rozet}</span>}
+                <Link key={g.anahtar} href={g.yol} className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.06]">
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: grup.renk }} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[15px] font-medium text-white">{g.ad}</p>
+                    <p className="truncate text-xs text-white/50">{g.aciklama}</p>
                   </div>
-                  <p className="mt-1 text-sm text-white/55">{g.aciklama}</p>
+                  {g.rozet && <span className="shrink-0 rounded-full bg-[#f2b04c]/25 px-2 py-0.5 text-xs font-medium text-[#f2b04c]">{g.rozet}</span>}
+                  <span className="shrink-0 text-lg leading-none text-white/30 transition-colors group-hover:text-white/60">›</span>
                 </Link>
               ))}
             </div>
