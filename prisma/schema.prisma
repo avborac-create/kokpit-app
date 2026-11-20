@@ -2154,3 +2154,34 @@ model TelefonErisimTalebi {
   @@index([durum])
   @@map("telefon_erisim_talepleri")
 }
+
+// ============================================================
+// Hizli Veri Girisi > Para Trafigi Kaydet: dekontu olan gelen odeme, MUHASEBE TEYIDI bekler.
+// Teyit edilene kadar bakiyeye katilmaz (cari hareket olusmaz). Teyitle: dosya belliyse dosyanin
+// Para Trafigi hesabina ALACAK yazilir, belli degilse Para Havuzu'na girilir. Duz id'ler (FK yok).
+// durum: TEYIT_BEKLIYOR | TEYIT_EDILDI | TEYIT_EDILEMEDI
+// ============================================================
+model GelenOdemeKaydi {
+  id              String    @id @default(cuid())
+  tarih           DateTime
+  tutar           Decimal   @db.Decimal(14, 2)
+  odeyenAdi       String?
+  aciklama        String?
+  belgeUrl        String?
+  belgeAd         String?
+  belgeTur        String?
+  dosyaId         String?
+  musteriId       String?
+  durum           String    @default("TEYIT_BEKLIYOR")
+  olusturanId     String?
+  teyitEdenId     String?
+  teyitZamani     DateTime?
+  teyitNotu       String?
+  cariHareketId   String?
+  havuzGirisiId   String?
+  olusturmaTarihi DateTime  @default(now())
+
+  @@index([durum])
+  @@index([dosyaId])
+  @@map("gelen_odeme_kayitlari")
+}

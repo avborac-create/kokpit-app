@@ -35,6 +35,7 @@ export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
   { anahtar: "ana-sayfa", ad: "Ana Sayfa", yol: "/kokpit", aktif: true },
   { anahtar: "buro-takvimi", ad: "Büro Takvimi", yol: "/kokpit/takvim", aktif: true },
   { anahtar: "isler", ad: "Görevler", yol: "/kokpit/isler", aktif: true },
+  { anahtar: "hizli-veri-girisi", ad: "Hızlı Veri Girişi", yol: "/kokpit/hizli-veri-girisi", aktif: true },
   { anahtar: "bekleyen-gorevler", ad: "Bekleyen Görevler", yol: "/kokpit/bekleyen-gorevler", aktif: false },
   { anahtar: "musteriler", ad: "Müvekkiller", yol: "/kokpit/musteriler", aktif: true },
   { anahtar: "dava-dosyalari", ad: "Yargı Dosyaları", yol: "/kokpit/dava-dosyalari", aktif: true },

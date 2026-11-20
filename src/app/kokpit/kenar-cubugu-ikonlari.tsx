@@ -141,6 +141,17 @@ export function FinansIkonu(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+// Hizli Veri Girisi: belge + yildirim (hizli giris).
+export function HizliGirisIkonu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Taban {...props}>
+      <path d="M5 2.5h6.5L15 6v11.5H5z" />
+      <path d="M11.5 2.5V6H15" />
+      <path d="M10.5 8.5L8 12h3l-1.5 3.5" />
+    </Taban>
+  );
+}
+
 // Avukat: adalet terazisi.
 export function AvukatIkonu(props: SVGProps<SVGSVGElement>) {
   return (

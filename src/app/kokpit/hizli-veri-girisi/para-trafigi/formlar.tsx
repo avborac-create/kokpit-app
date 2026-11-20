@@ -1,0 +1,189 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
+import { Alan, Etiket, Girdi, MetinAlani } from "@/core/ui/form";
+import { ParaGirdisi } from "@/core/ui/para-girdisi";
+import { Dugme } from "@/core/ui/button";
+import { DosyaSecici, type DosyaSeciciSecenegi } from "@/core/ui/dosya-secici";
+import { gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
+
+export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }) {
+  const router = useRouter();
+  const [hata, setHata] = useState("");
+  const [bekliyor, basla] = useTransition();
+  const [anahtar, setAnahtar] = useState(0);
+  const [belge, setBelge] = useState<{ url: string; ad: string; tur: string } | null>(null);
+  const [yukleniyor, setYukleniyor] = useState(false);
+  const bugun = new Date().toISOString().slice(0, 10);
+
+  async function dosyaSec(liste: FileList | null) {
+    const d = liste?.[0];
+    if (!d) return;
+    setYukleniyor(true);
+    setHata("");
+    try {
+      const s = await upload(`isler/dekont/${crypto.randomUUID()}-${d.name}`, d, { access: "private", handleUploadUrl: "/api/isler/blob-upload" });
+      setBelge({ url: s.url, ad: d.name, tur: d.type });
+    } catch (e) {
+      setHata("Yüklenemedi: " + (e instanceof Error ? e.message : "bilinmeyen hata"));
+    } finally {
+      setYukleniyor(false);
+    }
+  }
+
+  return (
+    <form
+      key={anahtar}
+      action={(fd) => {
+        setHata("");
+        if (!belge) {
+          setHata("Önce dekontu yükleyin.");
+          return;
+        }
+        fd.set("belgeUrl", belge.url);
+        fd.set("belgeAd", belge.ad);
+        fd.set("belgeTur", belge.tur);
+        basla(async () => {
+          const s = await gelenOdemeKaydet(fd);
+          if (s.hata) setHata(s.hata);
+          else {
+            setBelge(null);
+            setAnahtar((a) => a + 1);
+            router.refresh();
+          }
+        });
+      }}
+      className="glass mb-5 rounded-2xl p-4"
+    >
+      <h2 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/60">Yeni gelen ödeme</h2>
+      <p className="mb-3 text-xs text-white/45">Dosyayı açmanıza gerek yok. Dekontu yükleyin, bildiklerinizi yazın; kayıt muhasebe teyidine düşer.</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <Alan>
+            <Etiket htmlFor="go-dekont">Dekont (fotoğraf veya PDF)</Etiket>
+            <input
+              id="go-dekont"
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={(e) => dosyaSec(e.target.files)}
+              className="block w-full text-sm text-white/70 file:mr-3 file:rounded-md file:border file:border-white/20 file:bg-white/10 file:px-3 file:py-1.5 file:text-white"
+            />
+            {yukleniyor && <p className="mt-1 text-xs text-white/50">Yükleniyor…</p>}
+            {belge && <p className="mt-1 text-xs text-[#5fd97a]">✓ {belge.ad} yüklendi</p>}
+          </Alan>
+        </div>
+        <Alan>
+          <Etiket htmlFor="go-tutar">Tutar (TL)</Etiket>
+          <ParaGirdisi id="go-tutar" name="tutar" required />
+        </Alan>
+        <Alan>
+          <Etiket htmlFor="go-tarih">Tarih</Etiket>
+          <Girdi id="go-tarih" name="tarih" type="date" required defaultValue={bugun} />
+        </Alan>
+        <div className="sm:col-span-2">
+          <Alan>
+            <Etiket htmlFor="go-odeyen">Ödeyen (dekonttaki gönderen adı)</Etiket>
+            <Girdi id="go-odeyen" name="odeyenAdi" placeholder="örn. şirket ya da kişi adı" />
+          </Alan>
+        </div>
+        <div className="sm:col-span-2">
+          <Alan>
+            <Etiket htmlFor="go-dosya">Dosya (biliyorsanız)</Etiket>
+            <DosyaSecici id="go-dosya" name="dosyaId" dosyalar={dosyalar} bosSecenek="Bilmiyorum, sonra belirlenecek" placeholder="KN no, esas no ya da müvekkil adı yazın…" />
+          </Alan>
+        </div>
+        <div className="sm:col-span-2">
+          <Alan>
+            <Etiket htmlFor="go-not">Not</Etiket>
+            <MetinAlani id="go-not" name="aciklama" rows={2} placeholder="örn. istinaf başvuru masrafı" />
+          </Alan>
+        </div>
+      </div>
+      <p className="mt-3 text-xs text-white/50">
+        Kayıt “Muhasebe teyidi bekliyor” durumunda açılır; dosya seçtiyseniz dosyada uyarı olarak görünür. Bakiyeye teyitten sonra katılır. Dosya seçilmezse teyitten sonra para Para Havuzu’na düşer.
+      </p>
+      {hata && <p className="mt-2 text-sm text-[#ff7a70]">{hata}</p>}
+      <div className="mt-3">
+        <Dugme type="submit" disabled={bekliyor || yukleniyor}>
+          {bekliyor ? "Kaydediliyor…" : "Kaydet ve teyide gönder"}
+        </Dugme>
+      </div>
+    </form>
+  );
+}
+
+export function TeyitEylemleri({ id, yetkili, kendiKaydi, musteriSecimi }: { id: string; yetkili: boolean; kendiKaydi: boolean; musteriSecimi: { id: string; ad: string }[] }) {
+  const router = useRouter();
+  const [hata, setHata] = useState("");
+  const [bekliyor, basla] = useTransition();
+  const [musteri, setMusteri] = useState("");
+  const [neden, setNeden] = useState("");
+  const [redAcik, setRedAcik] = useState(false);
+
+  function calistir(is: () => Promise<{ hata?: string }>) {
+    setHata("");
+    basla(async () => {
+      const s = await is();
+      if (s.hata) setHata(s.hata);
+      else router.refresh();
+    });
+  }
+
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      {yetkili && !kendiKaydi && (
+        <div className="flex flex-wrap items-center gap-2">
+          {musteriSecimi.length > 1 && (
+            <select value={musteri} onChange={(e) => setMusteri(e.target.value)} className="rounded-md border border-white/20 bg-black/20 px-2 py-1 text-xs text-white">
+              <option value="">Müvekkil seçin…</option>
+              {musteriSecimi.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.ad}
+                </option>
+              ))}
+            </select>
+          )}
+          <button type="button" disabled={bekliyor} onClick={() => calistir(() => gelenOdemeTeyitEt(id, musteri))} className="rounded-md bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-[#0b1d36] disabled:opacity-50">
+            Hesapta göründü, teyit et
+          </button>
+          <button type="button" disabled={bekliyor} onClick={() => setRedAcik((a) => !a)} className="rounded-md border border-white/20 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10">
+            Hesapta yok / tutarsız
+          </button>
+        </div>
+      )}
+      {yetkili && kendiKaydi && <p className="text-xs text-white/45">Bu kaydı siz girdiniz; teyidi başka bir yetkili verir.</p>}
+      {redAcik && (
+        <div className="flex flex-wrap items-center gap-2">
+          <input value={neden} onChange={(e) => setNeden(e.target.value)} placeholder="Neden (ör. tutar farklı, hesapta görünmüyor)" className="min-w-[16rem] flex-1 rounded-md border border-white/20 bg-black/20 px-3 py-1.5 text-xs text-white outline-none focus:border-[var(--accent)]" />
+          <button type="button" disabled={bekliyor} onClick={() => calistir(() => gelenOdemeTeyitEdilemedi(id, neden))} className="rounded-md border border-[#ff7a70]/60 px-3 py-1.5 text-xs font-semibold text-[#ff9b92] hover:bg-[#ff7a70]/10">
+            Teyit edilemedi olarak işaretle
+          </button>
+        </div>
+      )}
+      {hata && <p className="text-xs text-[#ff7a70]">{hata}</p>}
+    </div>
+  );
+}
+
+export function KayitSilDugmesi({ id }: { id: string }) {
+  const router = useRouter();
+  const [bekliyor, basla] = useTransition();
+  return (
+    <button
+      type="button"
+      disabled={bekliyor}
+      onClick={() => {
+        if (!confirm("Bu kayıt silinsin mi?")) return;
+        basla(async () => {
+          await gelenOdemeSil(id);
+          router.refresh();
+        });
+      }}
+      className="text-xs text-white/40 hover:text-[#ff7a70]"
+    >
+      Sil
+    </button>
+  );
+}

@@ -33,6 +33,7 @@ import { adliBirimleriListele } from "@/modules/dava-dosyasi/lib/adli-birim";
 import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
 import { FormKarti } from "@/core/ui/form-karti";
 import { DosyaBirlikteUyarisi } from "@/core/birlikte/dosya-birlikte-uyarisi";
+import { TeyitBekleyenOdemeUyarisi } from "@/core/birlikte/teyit-bekleyen-odeme-uyarisi";
 import { TebligatPaneli, type TebligatKaydi } from "@/modules/tebligat/components/tebligat-paneli";
 import { MasrafFormu } from "@/modules/dava-dosyasi/components/masraf-formu";
 import { MasrafPaneliKabugu, MasrafPaneliDugmesi } from "@/modules/dava-dosyasi/components/masraf-paneli-kabugu";
@@ -622,6 +623,7 @@ export default async function DavaDosyasiDetaySayfasi({
       </KunyeSeridi>
 
       <DosyaBirlikteUyarisi dosyaId={id} />
+      <TeyitBekleyenOdemeUyarisi dosyaId={id} />
 
       <DavaDosyasiSekmeleri dosyaId={id} aktif={aktifSekme} ek={masrafPaneli ? <MasrafPaneliDugmesi /> : undefined}
         eylemler={

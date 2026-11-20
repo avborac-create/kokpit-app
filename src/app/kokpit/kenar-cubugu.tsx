@@ -12,6 +12,7 @@ import {
   MuvekkillerIkonu,
   HukukDosyalariIkonu,
   FinansIkonu,
+  HizliGirisIkonu,
   AvukatIkonu,
   CezaDosyalariIkonu,
   OnerilerIkonu,
@@ -106,6 +107,9 @@ export function KenarCubugu({
           )}
           {gorunurMu("isler") && (
             <MenuBagi modul={modulHaritasi.get("isler")!} ikon={GorevlerIkonu} renk="#14b8c4" seciliMi={yol.startsWith("/kokpit/isler")} sonMu={sonMu(modulHaritasi.get("isler")!.yol)} rozetSayisi={isSayisi} />
+          )}
+          {gorunurMu("hizli-veri-girisi") && (
+            <MenuBagi modul={modulHaritasi.get("hizli-veri-girisi")!} ikon={HizliGirisIkonu} renk="#10b981" seciliMi={yol.startsWith("/kokpit/hizli-veri-girisi")} sonMu={sonMu(modulHaritasi.get("hizli-veri-girisi")!.yol)} />
           )}
         </Grup>
 
