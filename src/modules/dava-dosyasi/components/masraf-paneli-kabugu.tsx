@@ -54,7 +54,7 @@ export function MasrafPaneliKabugu({ panel, children }: { panel: React.ReactNode
   const acik = useSyncExternalStore(abone, oku, () => false);
 
   return (
-    <div className="md:flex md:items-start md:gap-3">
+    <div className="md:flex md:flex-row-reverse md:items-start md:gap-3">
       {acik ? (
         <>
           <button
