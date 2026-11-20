@@ -14,6 +14,8 @@ import { silebilirMi } from "@/core/auth/yetki";
 import { Dugme } from "@/core/ui/button";
 import { DuzenlenebilirKart, type KartAlani } from "@/core/ui/duzenlenebilir-kart";
 import { etiketleriGetir } from "@/core/arayuz-etiketi/queries";
+import { telefonErisimDurumu, telefonuMaskele } from "@/modules/musteri/lib/telefon-erisimi";
+import { TelefonErisimDugmesi } from "@/modules/musteri/components/telefon-erisim-dugmesi";
 
 export default async function MusteriDetaySayfasi({
   params,
@@ -21,12 +23,13 @@ export default async function MusteriDetaySayfasi({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [musteri, kullanici, dosyalar, avukatlar, etiketler] = await Promise.all([
+  const [musteri, kullanici, dosyalar, avukatlar, etiketler, erisim] = await Promise.all([
     musteriGetir(id),
     mevcutKullanici(),
     musterininDosyalari(id),
     avukatlariListele(),
     etiketleriGetir(),
+    telefonErisimDurumu(id),
   ]);
   if (!musteri) notFound();
 
@@ -53,7 +56,8 @@ export default async function MusteriDetaySayfasi({
   ];
 
   // Telefonlar artik rehberde tutulur; eski tek satirlik alan yalniz doluysa gosterilir.
-  const gorunenAlanlar = bilgiAlanlari.filter((a) => a.anahtar !== "telefon" || musteri.telefon);
+  // Numara maskeliyken eski "Genel Telefon" alani hic gelmesin (ne gorunsun ne kart uzerinden degissin).
+  const gorunenAlanlar = bilgiAlanlari.filter((a) => a.anahtar !== "telefon" || (musteri.telefon && erisim.gorebilir));
 
   return (
     <div className="pt-3">
@@ -91,13 +95,25 @@ export default async function MusteriDetaySayfasi({
 
       {musteri.telefonlar.length > 0 && (
         <div className="mb-8 max-w-2xl">
-          <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Telefonlar</h2>
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <h2 className="text-lg font-semibold tracking-tight text-white">Telefonlar</h2>
+            {!erisim.gorebilir && <TelefonErisimDugmesi musteriId={id} bekliyor={erisim.bekleyenTalepVar} />}
+            {erisim.gorebilir && erisim.bitisZamani && (
+              <span className="text-xs text-white/45">
+                Erişiminiz {new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(erisim.bitisZamani)} tarihine kadar açık
+              </span>
+            )}
+          </div>
           <div className="glass divide-y divide-white/[0.06] rounded-2xl">
             {musteri.telefonlar.map((t) => (
               <div key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
-                <a href={`tel:${t.telefon.replace(/\s+/g, "")}`} className="font-medium text-white hover:text-[#6db8ff] hover:underline">
-                  {t.telefon}
-                </a>
+                {erisim.gorebilir ? (
+                  <a href={`tel:${t.telefon.replace(/\s+/g, "")}`} className="font-medium text-white hover:text-[#6db8ff] hover:underline">
+                    {t.telefon}
+                  </a>
+                ) : (
+                  <span className="font-medium text-white/70" title="Numarayı görmek için yönetici onayı gerekir">{telefonuMaskele(t.telefon)}</span>
+                )}
                 {t.telefonTipi && (
                   <span className="rounded-full bg-white/[0.07] px-2 py-0.5 text-xs text-white/70">
                     {t.telefonTipi === "CEP" ? "Cep" : "Sabit"}
@@ -120,6 +136,7 @@ export default async function MusteriDetaySayfasi({
           kisiler={musteri.irtibatKisileri}
           musteriId={id}
           silmeYetkisiVar={silmeYetkisiVar}
+          telefonGorunur={erisim.gorebilir}
         />
       </div>
 

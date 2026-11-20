@@ -4,6 +4,7 @@ import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { Dugme } from "@/core/ui/button";
 import { MusteriFiltre } from "./musteri-filtre";
 import { MusteriSatiri } from "./musteri-satiri";
+import { telefonGorulebilirMusteriler, telefonuMaskele } from "@/modules/musteri/lib/telefon-erisimi";
 
 export default async function MusterilerSayfasi({
   searchParams,
@@ -11,7 +12,7 @@ export default async function MusterilerSayfasi({
   searchParams: Promise<{ arama?: string; durum?: string; avukat?: string }>;
 }) {
   const params = await searchParams;
-  const [musteriler, durumlar, avukatlar] = await Promise.all([
+  const [musteriler, durumlar, avukatlar, gorulebilirTel] = await Promise.all([
     musterileriListele({
       arama: params.arama,
       durumKod: params.durum,
@@ -19,6 +20,7 @@ export default async function MusterilerSayfasi({
     }),
     secenekleriGetir("musteri_durumu"),
     avukatlariListele(),
+    telefonGorulebilirMusteriler(),
   ]);
 
   return (
@@ -68,7 +70,7 @@ export default async function MusterilerSayfasi({
                   </span>
                 </td>
                 <td className="px-4 py-3 text-white/60">{musteri.sorumluAvukat?.adSoyad ?? "—"}</td>
-                <td className="px-4 py-3 text-white/60">{musteri.telefon ?? "—"}</td>
+                <td className="px-4 py-3 text-white/60">{gorulebilirTel === null || gorulebilirTel.has(musteri.id) ? (musteri.telefon ?? "—") : telefonuMaskele(musteri.telefon)}</td>
                 <td className="px-4 py-3">
                   <Link href={`/kokpit/dava-dosyalari?musteri=${musteri.id}`}>
                     <Dugme type="button" className="px-5 font-semibold">

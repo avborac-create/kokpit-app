@@ -225,6 +225,7 @@ model Musteri {
   cariHareketleri    CariHareketi[]
   anlasmalar         MuvekkilAnlasma[]
   telefonlar         MusteriTelefonu[]
+  telefonErisimTalepleri TelefonErisimTalebi[]
 
   @@index([durumId])
   @@index([sorumluAvukatId])
@@ -2134,4 +2135,22 @@ model ParaHavuzuDagitimi {
 
   @@index([girisId])
   @@map("para_havuzu_dagitimlari")
+}
+
+// Muvekkil telefon numaralarina erisim talebi: yonetici disindaki kullanicilar numarayi
+// maskeli gorur; 'Erisim iste' ile talep acar, yonetici onaylayinca bitisZamani'na kadar gorur.
+model TelefonErisimTalebi {
+  id          String    @id @default(cuid())
+  musteriId   String
+  musteri     Musteri   @relation(fields: [musteriId], references: [id], onDelete: Cascade)
+  talepEdenId String
+  durum       String    @default("BEKLIYOR") // BEKLIYOR | ONAYLANDI | REDDEDILDI
+  talepZamani DateTime  @default(now())
+  kararVerenId String?
+  kararZamani DateTime?
+  bitisZamani DateTime? // onaylandiysa erisimin sona erdigi an
+
+  @@index([musteriId, talepEdenId])
+  @@index([durum])
+  @@map("telefon_erisim_talepleri")
 }

@@ -6,6 +6,8 @@ export const BILDIRIM_TURLERI: { kod: string; ad: string; aciklama: string }[] =
   { kod: "para-istendi", ad: "Müvekkilden para istendi", aciklama: "Bir müvekkilden para istendiğinde (finans yetkilileri için)." },
   { kod: "para-geldi", ad: "İstenen para geldi", aciklama: "Müvekkilden istenen paranın geldiği işaretlendiğinde." },
   { kod: "para-gecikti", ad: "İstenen para gecikti", aciklama: "İstenen para uzun süredir gelmediğinde günlük hatırlatma." },
+  { kod: "telefon-erisim-talebi", ad: "Telefon erişim talebi", aciklama: "Bir personel müvekkil telefonunu görmek için onay istediğinde (yöneticiler için)." },
+  { kod: "telefon-erisim-karari", ad: "Telefon erişim kararı", aciklama: "İstediğiniz telefon erişimi onaylandığında ya da reddedildiğinde." },
 ];
 
 // Finans yetkilisi: Ayarlar > Kullanıcılar'dan işaretlenen aktif kişiler.

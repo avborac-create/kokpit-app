@@ -1,14 +1,17 @@
 import type { IrtibatKisisi } from "@prisma/client";
+import { telefonuMaskele } from "@/modules/musteri/lib/telefon-erisimi";
 import { IrtibatKisisiSilmeButonu } from "@/modules/musteri/components/irtibat-kisisi-silme-butonu";
 
 export function IrtibatKisileriListesi({
   kisiler,
   musteriId,
   silmeYetkisiVar,
+  telefonGorunur = true,
 }: {
   kisiler: IrtibatKisisi[];
   musteriId: string;
   silmeYetkisiVar: boolean;
+  telefonGorunur?: boolean;
 }) {
   if (kisiler.length === 0) {
     return <p className="text-sm text-white/40">Henüz irtibat kişisi eklenmedi.</p>;
@@ -38,7 +41,7 @@ export function IrtibatKisileriListesi({
           <div className="mt-3 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
             <div>
               <p className="text-white/45">Telefon</p>
-              <p className="text-white">{kisi.telefon ?? "—"}</p>
+              <p className="text-white">{telefonGorunur ? (kisi.telefon ?? "—") : telefonuMaskele(kisi.telefon)}</p>
             </div>
             <div>
               <p className="text-white/45">E-posta</p>

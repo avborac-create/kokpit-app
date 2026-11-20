@@ -8,6 +8,7 @@ import { secenekleriGetir } from "@/core/secenek/secenek-service";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { telefonuDuzenle } from "@/modules/musteri/lib/telefon";
+import { telefonErisimDurumu } from "@/modules/musteri/lib/telefon-erisimi";
 import { KISA_UNVAN_UYARISI, unvanKisaMi } from "@/core/unvan/unvan-kontrol";
 import { unvanGoreviOlustur, unvanGoreviniKapat, eksikBilgiGoreviOlustur, eksikBilgiGoreviniKapat, adresListeGoreviOlustur } from "@/core/unvan/unvan-gorevi";
 import { eksikBilgiUyarisi, telefonBosMu } from "@/core/unvan/eksik-bilgi-kontrol";
@@ -135,6 +136,15 @@ export async function musteriGuncelle(id: string, formData: FormData) {
   }
 
   const kisaUnvan = await kisaUnvanDurumu(adSoyadUnvan, tipId, formData);
+  // Telefon numaralari yonetici onayina tabidir: erisimi olmayan kullanicinin formu numaralari tasimaz
+  // ve gelse bile sunucu yok sayar (mevcut numaralar degismez/silinmez).
+  const telefonYetkili = (await telefonErisimDurumu(id)).gorebilir;
+  if (!telefonYetkili) {
+    formData.delete("tel_no");
+    formData.delete("tel_tip");
+    formData.delete("tel_aidiyet");
+    formData.delete("tel_sifat");
+  }
   const eksikler = eksikBilgiler(formData);
   await prisma.musteri.update({
     where: { id },
@@ -142,7 +152,7 @@ export async function musteriGuncelle(id: string, formData: FormData) {
       adSoyadUnvan,
       tipId,
       durumId,
-      telefon: metinYaAlNull(formData, "telefon"),
+      ...(telefonYetkili ? { telefon: metinYaAlNull(formData, "telefon") } : {}),
       eposta: metinYaAlNull(formData, "eposta"),
       adres: metinYaAlNull(formData, "adres"),
       il: metinYaAlNull(formData, "il"),
@@ -182,6 +192,9 @@ export async function musteriAlanlariniGuncelle(id: string, degerler: Record<str
   if (!kullanici) throw new Error("Bu işlem için yetkiniz yok.");
 
   const data: Record<string, string | null> = {};
+  if ("telefon" in degerler && !(await telefonErisimDurumu(id)).gorebilir) {
+    throw new Error("Telefon numarası için yönetici onayı gerekir.");
+  }
   for (const [alan, ham] of Object.entries(degerler)) {
     if (!MUSTERI_DUZENLENEBILIR_ALANLAR.includes(alan)) throw new Error("Bu alan buradan değiştirilemez.");
     data[alan] = ham.trim() === "" ? null : ham.trim();

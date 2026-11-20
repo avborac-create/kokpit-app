@@ -9,6 +9,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { silebilirMi } from "@/core/auth/yetki";
 import { secenekListesiTumDegerlerle } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { TelefonSatirlari } from "@/modules/musteri/components/telefon-satirlari";
+import { telefonErisimDurumu } from "@/modules/musteri/lib/telefon-erisimi";
 import { KisaUnvanOnayi } from "@/core/unvan/kisa-unvan-onayi";
 import { MersisAra } from "@/core/unvan/mersis-ara";
 import { EksikBilgiOnayi } from "@/core/unvan/eksik-bilgi-onayi";
@@ -25,6 +26,8 @@ type Props = {
 export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props) {
   const telefonlar = musteri?.telefonlar;
   const kullanici = await mevcutKullanici();
+  // Mevcut musterinin numaralari yonetici onayina tabidir; erisim yoksa alan kilitli gosterilir.
+  const telefonKilitli = musteri ? !(await telefonErisimDurumu(musteri.id)).gorebilir : false;
   const [sifatDegerleri, sifatListesi] = await Promise.all([
     secenekleriGetir("telefon_sifati"),
     kullanici && silebilirMi(kullanici.rol) ? secenekListesiTumDegerlerle("telefon_sifati") : Promise.resolve(null),
@@ -84,7 +87,11 @@ export async function MusteriFormu({ action, musteri, gonderButonuMetni }: Props
       </Alan>
     ),
     telefon: (gizli) =>
-      gizli ? (
+      telefonKilitli ? (
+        <div className="mb-4 rounded-xl bg-white/[0.05] p-3 text-sm text-white/60">
+          🔒 Telefon numaraları yönetici onayına tabidir. Görmek ve değiştirmek için müvekkil sayfasından &quot;Erişim iste&quot; deyin.
+        </div>
+      ) : gizli ? (
         <input type="hidden" name="telefon" value={musteri?.telefon ?? ""} />
       ) : (
         <>
