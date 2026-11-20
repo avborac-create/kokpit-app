@@ -194,6 +194,46 @@ export async function gelenOdemeTeyitEdilemedi(id: string, neden: string): Promi
   }
 }
 
+// Hatali girilen kaydi duzeltme: teyit edilmemis kayit; kaydi giren kisi ya da yetkili.
+// "Teyit edilemedi" kayit duzeltilince yeniden teyide duser.
+export async function gelenOdemeDuzenle(id: string, formData: FormData): Promise<{ hata?: string }> {
+  try {
+    const k = await mevcutKullanici();
+    if (!k) throw new Error("Oturum bulunamadı.");
+    const o = await prisma.gelenOdemeKaydi.findUnique({ where: { id } });
+    if (!o) throw new Error("Kayıt bulunamadı.");
+    if (o.durum === "TEYIT_EDILDI") throw new Error("Teyit edilmiş kayıt buradan düzeltilemez.");
+    if (o.olusturanId !== k.kullaniciId && !(await ekonomiDuzenleyebilirMi())) throw new Error("Bu kaydı düzeltme yetkiniz yok.");
+    const tutar = yuvarla(Number(String(formData.get("tutar") ?? "").replace(",", ".")));
+    if (!Number.isFinite(tutar) || tutar <= 0) throw new Error("Tutar sıfırdan büyük olmalıdır.");
+    const tarihHam = String(formData.get("tarih") ?? "");
+    if (!tarihHam) throw new Error("Tarih zorunludur.");
+    const dosyaId = String(formData.get("dosyaId") ?? "") || null;
+    let musteriId: string | null = null;
+    if (dosyaId) {
+      const muvekkiller = await prisma.dosyaMuvekkili.findMany({ where: { dosyaId }, select: { musteriId: true } });
+      if (muvekkiller.length === 1) musteriId = muvekkiller[0].musteriId;
+    }
+    await prisma.gelenOdemeKaydi.update({
+      where: { id },
+      data: {
+        tarih: new Date(tarihHam),
+        tutar,
+        odeyenAdi: String(formData.get("odeyenAdi") ?? "").trim().slice(0, 200) || null,
+        aciklama: String(formData.get("aciklama") ?? "").trim().slice(0, 1000) || null,
+        dosyaId,
+        musteriId,
+        ...(o.durum === "TEYIT_EDILEMEDI" ? { durum: "TEYIT_BEKLIYOR", teyitEdenId: null, teyitZamani: null, teyitNotu: null } : {}),
+      },
+    });
+    yenile(o.dosyaId);
+    yenile(dosyaId);
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "Düzeltilemedi." };
+  }
+}
+
 // Teyit edilmemis kaydi silme: kaydi giren kisi ya da yetkili.
 export async function gelenOdemeSil(id: string): Promise<{ hata?: string }> {
   try {

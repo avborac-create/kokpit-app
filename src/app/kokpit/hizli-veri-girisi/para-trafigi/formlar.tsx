@@ -7,7 +7,7 @@ import { Alan, Etiket, Girdi, MetinAlani } from "@/core/ui/form";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { Dugme } from "@/core/ui/button";
 import { DosyaSecici, type DosyaSeciciSecenegi } from "@/core/ui/dosya-secici";
-import { gelenOdemeDekontEkle, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
+import { gelenOdemeDekontEkle, gelenOdemeDuzenle, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
 
 export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }) {
   const router = useRouter();
@@ -228,6 +228,91 @@ export function KayitSilDugmesi({ id }: { id: string }) {
     >
       Sil
     </button>
+  );
+}
+
+// Hatalı girilen kaydı (tutar, tarih, ödeyen, dosya, not) yerinde düzeltir.
+export function KayitDuzenleDugmesi({
+  id,
+  tutar,
+  tarih,
+  odeyenAdi,
+  aciklama,
+  dosyaId,
+  dosyalar,
+}: {
+  id: string;
+  tutar: number;
+  tarih: string;
+  odeyenAdi: string;
+  aciklama: string;
+  dosyaId: string;
+  dosyalar: DosyaSeciciSecenegi[];
+}) {
+  const router = useRouter();
+  const [acik, setAcik] = useState(false);
+  const [hata, setHata] = useState("");
+  const [bekliyor, basla] = useTransition();
+  if (!acik)
+    return (
+      <button type="button" onClick={() => setAcik(true)} className="text-xs text-[#8fd8ff] hover:underline">
+        Düzelt
+      </button>
+    );
+  return (
+    <form
+      action={(fd) => {
+        setHata("");
+        basla(async () => {
+          const s = await gelenOdemeDuzenle(id, fd);
+          if (s.hata) setHata(s.hata);
+          else {
+            setAcik(false);
+            router.refresh();
+          }
+        });
+      }}
+      className="mt-3 w-full rounded-xl border border-white/15 bg-black/10 p-3"
+    >
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/60">Kaydı düzelt</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Alan>
+          <Etiket htmlFor={`dz-tutar-${id}`}>Tutar (TL)</Etiket>
+          <ParaGirdisi id={`dz-tutar-${id}`} name="tutar" required defaultValue={tutar} />
+        </Alan>
+        <Alan>
+          <Etiket htmlFor={`dz-tarih-${id}`}>Tarih</Etiket>
+          <Girdi id={`dz-tarih-${id}`} name="tarih" type="date" required defaultValue={tarih} />
+        </Alan>
+        <div className="sm:col-span-2">
+          <Alan>
+            <Etiket htmlFor={`dz-odeyen-${id}`}>Ödeyen</Etiket>
+            <Girdi id={`dz-odeyen-${id}`} name="odeyenAdi" defaultValue={odeyenAdi} />
+          </Alan>
+        </div>
+        <div className="sm:col-span-2">
+          <Alan>
+            <Etiket htmlFor={`dz-dosya-${id}`}>Dosya</Etiket>
+            <DosyaSecici id={`dz-dosya-${id}`} name="dosyaId" dosyalar={dosyalar} bosSecenek="Bilmiyorum, sonra belirlenecek" defaultValue={dosyaId} />
+          </Alan>
+        </div>
+        <div className="sm:col-span-2">
+          <Alan>
+            <Etiket htmlFor={`dz-not-${id}`}>Not</Etiket>
+            <MetinAlani id={`dz-not-${id}`} name="aciklama" rows={2} defaultValue={aciklama} />
+          </Alan>
+        </div>
+      </div>
+      {hata && <p className="mt-2 text-sm text-[#ff7a70]">{hata}</p>}
+      <div className="mt-3 flex gap-2">
+        <Dugme type="submit" disabled={bekliyor}>
+          {bekliyor ? "Kaydediliyor…" : "Düzeltmeyi kaydet"}
+        </Dugme>
+        <button type="button" onClick={() => setAcik(false)} className="rounded-md border border-white/20 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10">
+          Vazgeç
+        </button>
+      </div>
+    </form>
   );
 }
 

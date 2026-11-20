@@ -5,7 +5,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
 import { dosyaSecenekleriGetir } from "@/modules/avukat/lib/dosya-secenekleri";
 import { dosyaEtiketiYaz } from "@/modules/dava-dosyasi/lib/cari-sistem";
-import { DekontEkleDugmesi, KayitSilDugmesi, TeyitEylemleri, YeniOdemeFormu } from "./formlar";
+import { DekontEkleDugmesi, KayitDuzenleDugmesi, KayitSilDugmesi, TeyitEylemleri, YeniOdemeFormu } from "./formlar";
 
 const para = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 const gun = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", year: "numeric" });
@@ -122,7 +122,20 @@ export default async function ParaTrafigiKaydetSayfasi({ searchParams }: { searc
               {x.durum !== "TEYIT_EDILDI" && (
                 <div className="flex flex-wrap items-end justify-between gap-2">
                   <TeyitEylemleri id={x.id} yetkili={yetkili && x.durum === "TEYIT_BEKLIYOR"} kendiKaydi={x.olusturanId === k.kullaniciId} musteriSecimi={musteriler} />
-                  {(x.olusturanId === k.kullaniciId || yetkili) && <KayitSilDugmesi id={x.id} />}
+                  {(x.olusturanId === k.kullaniciId || yetkili) && (
+                    <div className="flex items-center gap-4">
+                      <KayitDuzenleDugmesi
+                        id={x.id}
+                        tutar={Number(x.tutar)}
+                        tarih={x.tarih.toISOString().slice(0, 10)}
+                        odeyenAdi={x.odeyenAdi ?? ""}
+                        aciklama={x.aciklama ?? ""}
+                        dosyaId={x.dosyaId ?? ""}
+                        dosyalar={dosyaSecenekleri}
+                      />
+                      <KayitSilDugmesi id={x.id} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
