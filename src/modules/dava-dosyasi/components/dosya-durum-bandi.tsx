@@ -47,7 +47,6 @@ export function DosyaDurumBandi({
   const [girdiGidis, setGirdiGidis] = useState(1);
   const [girdiDiger, setGirdiDiger] = useState("");
   const [girdiYeniNo, setGirdiYeniNo] = useState("");
-  const [gecmisAcik, setGecmisAcik] = useState(false);
   const aktifRef = useRef<HTMLLIElement | null>(null);
 
   // Dar ekranda cizgi yatay kayar; secili adim gorunur alana gelsin.
@@ -144,10 +143,73 @@ export function DosyaDurumBandi({
         : "border-dashed border-white/30 text-white/60 hover:border-[#8fb4e8] hover:text-white"
     }`;
 
+  // Tek bir tur icin adim cizgisi. salt=true: gecmis tur (tiklanamaz, soluk).
+  const cizgi = (sira: number, aktifId: string | null, salt: boolean) => (
+    <ol
+      className={`m-0 flex min-w-0 list-none snap-x snap-mandatory gap-0 overflow-x-auto px-1 pb-1 pt-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+        salt ? "basis-full opacity-60" : "order-3 basis-full sm:order-2 sm:basis-0 sm:flex-1"
+      }`}
+      aria-label="Dosya durum kodu"
+    >
+      {yol.map((s, i) => {
+        const aktif = s.id === aktifId;
+        const gecildi = sira > i;
+        return (
+          <li key={s.id} ref={aktif && !salt ? aktifRef : undefined} className="relative min-w-[6rem] flex-1 snap-center">
+            {/* Cizgi noktanin tam ortasindan gecer (nokta merkezi 8.5px, cizgi 3px). */}
+            {i > 0 && (
+              <span aria-hidden className={`absolute left-0 top-[7px] h-[3px] w-1/2 ${sira >= i ? "bg-[var(--accent)]" : "bg-white/15"}`} />
+            )}
+            {i < yol.length - 1 && (
+              <span aria-hidden className={`absolute right-0 top-[7px] h-[3px] w-1/2 ${gecildi ? "bg-[var(--accent)]" : "bg-white/15"}`} />
+            )}
+            <button
+              type="button"
+              onClick={() => iste(s.id)}
+              disabled={bekliyor || salt}
+              aria-pressed={aktif}
+              title={salt ? undefined : aktif ? "Seçimi kaldırmak için tıklayın" : `Durumu "${s.etiket}" yap`}
+              className="group relative flex w-full flex-col items-center gap-1 px-1 text-center outline-none disabled:cursor-default"
+            >
+              <span
+                className={`relative z-[1] h-[17px] w-[17px] rounded-full border-[3px] transition ${
+                  aktif
+                    ? "border-[var(--accent)] bg-[var(--accent)] shadow-[0_0_0_4px_rgba(143,180,232,0.25)]"
+                    : gecildi
+                      ? "border-[var(--accent)] bg-[var(--accent)]"
+                      : "border-white/25 bg-[#2f343c] group-hover:border-[#8fb4e8] group-focus-visible:border-[#8fb4e8]"
+                }`}
+              />
+              <span className={`text-[11px] leading-tight sm:text-xs ${aktif ? "font-bold text-white" : "font-medium text-white/60 group-hover:text-white"}`}>
+                {salt ? s.etiket : gorunenAd(s)}
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+
   return (
     <div
       className={`glass mb-3 rounded-2xl border border-[var(--accent)]/30 bg-gradient-to-r from-[var(--accent-soft)] to-transparent px-3 py-2.5 sm:px-4 sm:py-3 ${bekliyor ? "opacity-80" : ""}`}
     >
+      {/* Gecmis turlar: her "Yeni Esas" yeni bir cizgi acar; eskiler ustte soluk, yeni cizgi altta. */}
+      {turGecmisi.map((t) => {
+        const sira = yol.findIndex((s) => s.etiket === t.durum);
+        return (
+          <div key={t.tur} className="mb-2 border-b border-white/10 pb-2">
+            <p className="text-[11px] font-semibold text-white/70">
+              <span className="uppercase tracking-[0.14em] text-[#8fb4e8]">{t.tur}. Tur</span>
+              {t.dosyaNo ? ` · ${t.dosyaNo}` : ""}
+              {` → ${t.neden}`}
+              {t.yeniDosyaNo ? ` (yeni esas: ${t.yeniDosyaNo})` : ""}
+              {` · ${tarihBicimi.format(new Date(t.tarih))}`}
+            </p>
+            {cizgi(sira, sira >= 0 ? yol[sira].id : null, true)}
+          </div>
+        );
+      })}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:gap-y-3">
         <div className="order-1 min-w-0 flex-1 sm:min-w-[9rem] sm:flex-none">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8fb4e8]">Dosya durumu</p>
@@ -155,14 +217,9 @@ export function DosyaDurumBandi({
             {seciliSecenek ? gorunenAd(seciliSecenek) : "Seçilmedi"}
           </p>
           {turGecmisi.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setGecmisAcik((a) => !a)}
-              aria-expanded={gecmisAcik}
-              className="mt-0.5 rounded-full border border-[var(--accent)]/50 px-2 py-0.5 text-[11px] font-semibold text-[#8fb4e8] hover:border-[var(--accent)]"
-            >
-              {turGecmisi.length + 1}. Tur · geçmiş {gecmisAcik ? "▴" : "▾"}
-            </button>
+            <span className="mt-0.5 inline-block rounded-full border border-[var(--accent)]/50 px-2 py-0.5 text-[11px] font-semibold text-[#8fb4e8]">
+              {turGecmisi.length + 1}. Tur
+            </span>
           )}
           {gidisli(seciliSecenek?.kod) && (
             <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/60">
@@ -174,50 +231,7 @@ export function DosyaDurumBandi({
           )}
         </div>
 
-        <ol className="order-3 m-0 flex min-w-0 basis-full list-none snap-x snap-mandatory gap-0 overflow-x-auto px-1 pb-1 pt-1.5 [scrollbar-width:none] sm:order-2 sm:basis-0 sm:flex-1 [&::-webkit-scrollbar]:hidden" aria-label="Dosya durum kodu">
-          {yol.map((s, i) => {
-            const aktif = s.id === secili;
-            const gecildi = seciliSira > i;
-            return (
-              <li key={s.id} ref={aktif ? aktifRef : undefined} className="relative min-w-[6rem] flex-1 snap-center">
-                {/* Cizgi noktanin tam ortasindan gecer (nokta merkezi 8.5px, cizgi 3px). Sol yarim secili adima kadar, sag yarim secili adimdan once dolu. */}
-                {i > 0 && (
-                  <span
-                    aria-hidden
-                    className={`absolute left-0 top-[7px] h-[3px] w-1/2 ${seciliSira >= i ? "bg-[var(--accent)]" : "bg-white/15"}`}
-                  />
-                )}
-                {i < yol.length - 1 && (
-                  <span
-                    aria-hidden
-                    className={`absolute right-0 top-[7px] h-[3px] w-1/2 ${gecildi ? "bg-[var(--accent)]" : "bg-white/15"}`}
-                  />
-                )}
-                <button
-                  type="button"
-                  onClick={() => iste(s.id)}
-                  disabled={bekliyor}
-                  aria-pressed={aktif}
-                  title={aktif ? "Seçimi kaldırmak için tıklayın" : `Durumu "${s.etiket}" yap`}
-                  className="group relative flex w-full flex-col items-center gap-1 px-1 text-center outline-none"
-                >
-                  <span
-                    className={`relative z-[1] h-[17px] w-[17px] rounded-full border-[3px] transition ${
-                      aktif
-                        ? "border-[var(--accent)] bg-[var(--accent)] shadow-[0_0_0_4px_rgba(143,180,232,0.25)]"
-                        : gecildi
-                          ? "border-[var(--accent)] bg-[var(--accent)]"
-                          : "border-white/25 bg-[#2f343c] group-hover:border-[#8fb4e8] group-focus-visible:border-[#8fb4e8]"
-                    }`}
-                  />
-                  <span className={`text-[11px] leading-tight sm:text-xs ${aktif ? "font-bold text-white" : "font-medium text-white/60 group-hover:text-white"}`}>
-                    {gorunenAd(s)}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
+        {cizgi(seciliSira, secili, false)}
 
         {(yanYol || digerSecenek) && (
           <div className="order-2 flex shrink-0 flex-wrap items-center gap-2 sm:order-3">
@@ -298,20 +312,6 @@ export function DosyaDurumBandi({
             Vazgeç
           </button>
         </div>
-      )}
-      {gecmisAcik && turGecmisi.length > 0 && (
-        <ul className="mt-3 space-y-1.5 rounded-xl border border-white/15 bg-black/15 px-3 py-2 text-xs text-white/80">
-          {turGecmisi.map((t) => (
-            <li key={t.tur}>
-              <b className="text-white">{t.tur}. Tur</b>
-              {t.dosyaNo ? ` · ${t.dosyaNo}` : ""}
-              {t.durum ? ` · son durum: ${t.durum}${t.gidis && t.gidis > 1 ? ` (${t.gidis}. gidiş)` : ""}` : ""}
-              {` → ${t.neden}`}
-              {t.yeniDosyaNo ? ` (yeni esas: ${t.yeniDosyaNo})` : ""}
-              {` · ${tarihBicimi.format(new Date(t.tarih))}`}
-            </li>
-          ))}
-        </ul>
       )}
       {hata && <p className="mt-2 text-xs text-[#ff7a70]">{hata}</p>}
     </div>
