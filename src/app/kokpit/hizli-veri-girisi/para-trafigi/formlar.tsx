@@ -7,7 +7,7 @@ import { Alan, Etiket, Girdi, MetinAlani } from "@/core/ui/form";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { Dugme } from "@/core/ui/button";
 import { DosyaSecici, type DosyaSeciciSecenegi } from "@/core/ui/dosya-secici";
-import { gelenOdemeDekontEkle, gelenOdemeDuzenle, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
+import { gelenOdemeDekontEkle, gelenOdemeDuzeltmeKarari, gelenOdemeDuzeltmeTalebiVer, gelenOdemeDuzenle, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
 
 export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }) {
   const router = useRouter();
@@ -313,6 +313,129 @@ export function KayitDuzenleDugmesi({
         </button>
       </div>
     </form>
+  );
+}
+
+// Teyitli kayıt için düzeltme TALEBİ: teyit verenin onayına gider.
+export function DuzeltmeTalebiDugmesi({ id, tutar, tarih, odeyenAdi, aciklama }: { id: string; tutar: number; tarih: string; odeyenAdi: string; aciklama: string }) {
+  const router = useRouter();
+  const [acik, setAcik] = useState(false);
+  const [hata, setHata] = useState("");
+  const [bekliyor, basla] = useTransition();
+  if (!acik)
+    return (
+      <button type="button" onClick={() => setAcik(true)} className="text-xs text-[#8fd8ff] hover:underline">
+        Düzeltme talebi aç
+      </button>
+    );
+  return (
+    <form
+      action={(fd) => {
+        setHata("");
+        basla(async () => {
+          const s = await gelenOdemeDuzeltmeTalebiVer(id, fd);
+          if (s.hata) setHata(s.hata);
+          else {
+            setAcik(false);
+            router.refresh();
+          }
+        });
+      }}
+      className="mt-3 w-full rounded-xl border border-white/15 bg-black/10 p-3"
+    >
+      <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-white/60">Teyitli kaydı düzeltme talebi</p>
+      <p className="mb-2 text-xs text-white/45">Bu kayıt teyitli olduğu için değişiklik hemen uygulanmaz; teyidi veren yetkilinin onayına gider. Onaylanınca cari/havuz kaydı da güncellenir.</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Alan>
+          <Etiket htmlFor={`dt-tutar-${id}`}>Doğru tutar (TL)</Etiket>
+          <ParaGirdisi id={`dt-tutar-${id}`} name="tutar" required defaultValue={tutar} />
+        </Alan>
+        <Alan>
+          <Etiket htmlFor={`dt-tarih-${id}`}>Tarih</Etiket>
+          <Girdi id={`dt-tarih-${id}`} name="tarih" type="date" required defaultValue={tarih} />
+        </Alan>
+        <div className="sm:col-span-2">
+          <Alan>
+            <Etiket htmlFor={`dt-odeyen-${id}`}>Ödeyen</Etiket>
+            <Girdi id={`dt-odeyen-${id}`} name="odeyenAdi" defaultValue={odeyenAdi} />
+          </Alan>
+        </div>
+        <div className="sm:col-span-2">
+          <Alan>
+            <Etiket htmlFor={`dt-not-${id}`}>Not</Etiket>
+            <MetinAlani id={`dt-not-${id}`} name="aciklama" rows={2} defaultValue={aciklama} />
+          </Alan>
+        </div>
+        <div className="sm:col-span-2">
+          <Alan>
+            <Etiket htmlFor={`dt-gerekce-${id}`}>Düzeltme gerekçesi</Etiket>
+            <Girdi id={`dt-gerekce-${id}`} name="gerekce" required placeholder="örn. tutarı yanlış girdim" />
+          </Alan>
+        </div>
+      </div>
+      {hata && <p className="mt-2 text-sm text-[#ff7a70]">{hata}</p>}
+      <div className="mt-3 flex gap-2">
+        <Dugme type="submit" disabled={bekliyor}>
+          {bekliyor ? "Gönderiliyor…" : "Onaya gönder"}
+        </Dugme>
+        <button type="button" onClick={() => setAcik(false)} className="rounded-md border border-white/20 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10">
+          Vazgeç
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// Onay bekleyen düzeltme talebi: eski → yeni; yetkili onaylar/reddeder.
+export function DuzeltmeKarari({
+  talepId,
+  onaylayabilir,
+  ozet,
+}: {
+  talepId: string;
+  onaylayabilir: boolean;
+  ozet: { talepEden: string; gerekce: string; satirlar: { ad: string; eski: string; yeni: string }[] };
+}) {
+  const router = useRouter();
+  const [hata, setHata] = useState("");
+  const [not, setNot] = useState("");
+  const [bekliyor, basla] = useTransition();
+  function karar(onay: boolean) {
+    setHata("");
+    basla(async () => {
+      const s = await gelenOdemeDuzeltmeKarari(talepId, onay, not);
+      if (s.hata) setHata(s.hata);
+      else router.refresh();
+    });
+  }
+  return (
+    <div className="mt-3 rounded-xl border border-[#f2b04c]/40 bg-[#f2b04c]/10 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-[#f2b04c]">Düzeltme talebi onay bekliyor</p>
+      <p className="mt-1 text-xs text-white/60">
+        {ozet.talepEden} · gerekçe: {ozet.gerekce}
+      </p>
+      <ul className="mt-1 text-sm text-white/80">
+        {ozet.satirlar.map((x) => (
+          <li key={x.ad}>
+            {x.ad}: <span className="text-white/50 line-through">{x.eski}</span> → <b>{x.yeni}</b>
+          </li>
+        ))}
+      </ul>
+      {onaylayabilir ? (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <input value={not} onChange={(e) => setNot(e.target.value)} placeholder="Karar notu (isteğe bağlı)" className="min-w-[12rem] flex-1 rounded-md border border-white/20 bg-black/20 px-3 py-1.5 text-xs text-white outline-none focus:border-[var(--accent)]" />
+          <button type="button" disabled={bekliyor} onClick={() => karar(true)} className="rounded-md bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-[#0b1d36] disabled:opacity-50">
+            Onayla ve uygula
+          </button>
+          <button type="button" disabled={bekliyor} onClick={() => karar(false)} className="rounded-md border border-[#ff7a70]/60 px-3 py-1.5 text-xs font-semibold text-[#ff9b92] hover:bg-[#ff7a70]/10">
+            Reddet
+          </button>
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-white/45">Teyidi veren yetkilinin kararı bekleniyor.</p>
+      )}
+      {hata && <p className="mt-1 text-xs text-[#ff7a70]">{hata}</p>}
+    </div>
   );
 }
 

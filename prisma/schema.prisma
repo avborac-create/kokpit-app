@@ -2185,3 +2185,28 @@ model GelenOdemeKaydi {
   @@index([dosyaId])
   @@map("gelen_odeme_kayitlari")
 }
+
+// Teyitli gelen odeme kaydinda duzeltme talebi: teyit edenin onayina sunulur; onaylaninca cari/havuz kaydi da guncellenir.
+model GelenOdemeDuzeltmeTalebi {
+  id              String    @id @default(cuid())
+  kayitId         String
+  talepEdenId     String?
+  eskiTutar       Decimal   @db.Decimal(14, 2)
+  eskiTarih       DateTime
+  eskiOdeyenAdi   String?
+  eskiAciklama    String?
+  yeniTutar       Decimal   @db.Decimal(14, 2)
+  yeniTarih       DateTime
+  yeniOdeyenAdi   String?
+  yeniAciklama    String?
+  gerekce         String?
+  durum           String    @default("BEKLIYOR")
+  kararVerenId    String?
+  kararZamani     DateTime?
+  kararNotu       String?
+  olusturmaTarihi DateTime  @default(now())
+
+  @@index([kayitId])
+  @@index([durum])
+  @@map("gelen_odeme_duzeltme_talepleri")
+}

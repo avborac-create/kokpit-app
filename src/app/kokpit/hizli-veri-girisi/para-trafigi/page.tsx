@@ -5,7 +5,8 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
 import { dosyaSecenekleriGetir } from "@/modules/avukat/lib/dosya-secenekleri";
 import { dosyaEtiketiYaz } from "@/modules/dava-dosyasi/lib/cari-sistem";
-import { DekontEkleDugmesi, KayitDuzenleDugmesi, KayitSilDugmesi, TeyitEylemleri, YeniOdemeFormu } from "./formlar";
+import { duzeltmeOnaylayabilirMi } from "../duzeltme-onay";
+import { DekontEkleDugmesi, DuzeltmeKarari, DuzeltmeTalebiDugmesi, KayitDuzenleDugmesi, KayitSilDugmesi, TeyitEylemleri, YeniOdemeFormu } from "./formlar";
 
 const para = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 const gun = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", year: "numeric" });
@@ -27,6 +28,10 @@ export default async function ParaTrafigiKaydetSayfasi({ searchParams }: { searc
     dosyaSecenekleriGetir(),
     ekonomiDuzenleyebilirMi(),
   ]);
+  const talepler = await prisma.gelenOdemeDuzeltmeTalebi.findMany({
+    where: { kayitId: { in: kayitlar.map((x) => x.id) }, durum: "BEKLIYOR" },
+  });
+  const talepVar = new Map(talepler.map((t) => [t.kayitId, t]));
   const dosyaIdleri = [...new Set(kayitlar.map((x) => x.dosyaId).filter((v): v is string => !!v))];
   const [dosyalar, muvekkiller, kullanicilar] = await Promise.all([
     prisma.davaDosyasi.findMany({
@@ -34,14 +39,15 @@ export default async function ParaTrafigiKaydetSayfasi({ searchParams }: { searc
       select: { id: true, kayitNo: true, altSiraNo: true, buroNo: true, dosyaNo: true, anaDosya: { select: { kayitNo: true } } },
     }),
     prisma.dosyaMuvekkili.findMany({ where: { dosyaId: { in: dosyaIdleri } }, select: { dosyaId: true, musteri: { select: { id: true, adSoyadUnvan: true } } } }),
-    prisma.kullanici.findMany({ select: { id: true, adSoyad: true } }),
+    prisma.kullanici.findMany({ select: { id: true, adSoyad: true, aktifMi: true } }),
   ]);
   const dosyaEtiketi = new Map(dosyalar.map((d) => [d.id, dosyaEtiketiYaz(d)]));
   const kisi = new Map(kullanicilar.map((u) => [u.id, u.adSoyad]));
+  const kullaniciAktif = new Map(kullanicilar.map((u) => [u.id, u.aktifMi]));
 
   const bekleyenler = kayitlar.filter((x) => x.durum === "TEYIT_BEKLIYOR");
   const bekleyenToplam = bekleyenler.reduce((t, x) => t + Number(x.tutar), 0);
-  const liste = sekme === "acik" ? kayitlar.filter((x) => x.durum !== "TEYIT_EDILDI") : kayitlar;
+  const liste = sekme === "acik" ? kayitlar.filter((x) => x.durum !== "TEYIT_EDILDI" || talepVar.has(x.id)) : kayitlar;
 
   return (
     <div className="mx-auto max-w-4xl pt-3">
@@ -119,6 +125,32 @@ export default async function ParaTrafigiKaydetSayfasi({ searchParams }: { searc
                   {kisi.get(x.teyitEdenId ?? "") ?? "Muhasebe"} teyit etti{x.teyitZamani ? ` · ${gun.format(x.teyitZamani)}` : ""} · {x.dosyaId ? "dosyanın Para Trafiği hesabına işlendi" : "Para Havuzu’na alındı"}
                 </p>
               )}
+              {x.durum === "TEYIT_EDILDI" &&
+                (() => {
+                  const t = talepVar.get(x.id);
+                  if (t) {
+                    const satirlar: { ad: string; eski: string; yeni: string }[] = [];
+                    if (Number(t.eskiTutar) !== Number(t.yeniTutar)) satirlar.push({ ad: "Tutar", eski: para.format(Number(t.eskiTutar)), yeni: para.format(Number(t.yeniTutar)) });
+                    if (t.eskiTarih.getTime() !== t.yeniTarih.getTime()) satirlar.push({ ad: "Tarih", eski: gun.format(t.eskiTarih), yeni: gun.format(t.yeniTarih) });
+                    if ((t.eskiOdeyenAdi ?? "") !== (t.yeniOdeyenAdi ?? "")) satirlar.push({ ad: "Ödeyen", eski: t.eskiOdeyenAdi || "—", yeni: t.yeniOdeyenAdi || "—" });
+                    if ((t.eskiAciklama ?? "") !== (t.yeniAciklama ?? "")) satirlar.push({ ad: "Not", eski: t.eskiAciklama || "—", yeni: t.yeniAciklama || "—" });
+                    return (
+                      <DuzeltmeKarari
+                        talepId={t.id}
+                        onaylayabilir={duzeltmeOnaylayabilirMi({ kullaniciId: k.kullaniciId, yetkili, talepEdenId: t.talepEdenId, teyitEdenId: x.teyitEdenId, teyitEdenAktif: kullaniciAktif.get(x.teyitEdenId ?? "") ?? false })}
+                        ozet={{ talepEden: kisi.get(t.talepEdenId ?? "") ?? "—", gerekce: t.gerekce ?? "—", satirlar }}
+                      />
+                    );
+                  }
+                  if (x.olusturanId === k.kullaniciId || yetkili) {
+                    return (
+                      <div className="mt-2">
+                        <DuzeltmeTalebiDugmesi id={x.id} tutar={Number(x.tutar)} tarih={x.tarih.toISOString().slice(0, 10)} odeyenAdi={x.odeyenAdi ?? ""} aciklama={x.aciklama ?? ""} />
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               {x.durum !== "TEYIT_EDILDI" && (
                 <div className="flex flex-wrap items-end justify-between gap-2">
                   <TeyitEylemleri id={x.id} yetkili={yetkili && x.durum === "TEYIT_BEKLIYOR"} kendiKaydi={x.olusturanId === k.kullaniciId} musteriSecimi={musteriler} />
