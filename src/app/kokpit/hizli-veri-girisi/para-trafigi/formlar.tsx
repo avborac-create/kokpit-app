@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import { Alan, Etiket, Girdi, MetinAlani } from "@/core/ui/form";
@@ -18,9 +18,7 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
   const [yukleniyor, setYukleniyor] = useState(false);
   const bugun = new Date().toISOString().slice(0, 10);
 
-  async function dosyaSec(liste: FileList | null) {
-    const d = liste?.[0];
-    if (!d) return;
+  async function yukle(d: File) {
     setYukleniyor(true);
     setHata("");
     try {
@@ -32,6 +30,29 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
       setYukleniyor(false);
     }
   }
+
+  function dosyaSec(liste: FileList | null) {
+    const d = liste?.[0];
+    if (d) void yukle(d);
+  }
+
+  // Panodaki görseli (ekran görüntüsü / kopyalanan fotoğraf) Ctrl+V ile yapıştır
+  const yukleRef = useRef(yukle);
+  useEffect(() => {
+    yukleRef.current = yukle;
+  });
+  useEffect(() => {
+    function yapistir(e: ClipboardEvent) {
+      const dosya = Array.from(e.clipboardData?.files ?? []).find((f) => f.type.startsWith("image/") || f.type === "application/pdf");
+      if (!dosya) return;
+      e.preventDefault();
+      const uzanti = dosya.type === "application/pdf" ? "pdf" : (dosya.type.split("/")[1] || "png").replace("jpeg", "jpg");
+      const ad = !dosya.name || /^image\.\w+$/i.test(dosya.name) ? `yapistirilan-dekont-${Date.now()}.${uzanti}` : dosya.name;
+      void yukleRef.current(new File([dosya], ad, { type: dosya.type }));
+    }
+    document.addEventListener("paste", yapistir);
+    return () => document.removeEventListener("paste", yapistir);
+  }, []);
 
   return (
     <form
@@ -63,6 +84,7 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
         <div className="sm:col-span-2">
           <Alan>
             <Etiket htmlFor="go-dekont">Dekont (fotoğraf veya PDF)</Etiket>
+            <p className="mb-1 text-xs text-white/45">Dosya seçebilir ya da kopyaladığınız görseli bu sayfada <b>Ctrl+V</b> ile yapıştırabilirsiniz.</p>
             <input
               id="go-dekont"
               type="file"
