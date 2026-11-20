@@ -25,7 +25,16 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
       const s = await upload(`isler/dekont/${crypto.randomUUID()}-${d.name}`, d, { access: "private", handleUploadUrl: "/api/isler/blob-upload" });
       setBelge({ url: s.url, ad: d.name, tur: d.type });
     } catch (e) {
-      setHata("Yüklenemedi: " + (e instanceof Error ? e.message : "bilinmeyen hata"));
+      let ayrinti = "";
+      try {
+        const r = await fetch("/api/isler/blob-upload", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ type: "blob.generate-client-token", payload: { pathname: `isler/dekont/${d.name}`, clientPayload: null, multipart: false } }),
+        });
+        if (!r.ok) ayrinti = ` (sunucu ${r.status}: ${(await r.text()).slice(0, 200)})`;
+      } catch {}
+      setHata("Yüklenemedi: " + (e instanceof Error ? e.message : "bilinmeyen hata") + ayrinti);
     } finally {
       setYukleniyor(false);
     }
