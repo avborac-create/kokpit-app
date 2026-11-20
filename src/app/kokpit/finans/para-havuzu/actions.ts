@@ -5,6 +5,7 @@ import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { ekonomiYetkisiniDogrula } from "@/core/auth/finans-yetki";
 import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
+import { hesapIdAl } from "@/core/hesap/hesaplar";
 import { dosyaEtiketiYaz } from "@/modules/dava-dosyasi/lib/cari-sistem";
 
 const yuvarla = (n: number) => Math.round(n * 100) / 100;
@@ -28,6 +29,7 @@ export async function havuzGirisiEkle(formData: FormData): Promise<{ hata?: stri
         kaynak: String(formData.get("kaynak") ?? "").trim() || null,
         aciklama: String(formData.get("aciklama") ?? "").trim() || null,
         odemeYontemiId: String(formData.get("odemeYontemiId") ?? "") || null,
+        hesapId: await hesapIdAl(formData),
         olusturanId: k?.kullaniciId ?? null,
       },
     });

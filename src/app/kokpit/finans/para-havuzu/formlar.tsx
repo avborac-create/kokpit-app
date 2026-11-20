@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
+import { HesapSecici } from "@/core/ui/hesap-secici";
+import type { HesapSecenegi } from "@/core/hesap/hesaplar";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { Dugme } from "@/core/ui/button";
 import { OnayliButon } from "@/core/ui/onayli-buton";
@@ -12,7 +14,7 @@ import { havuzDagit, havuzDagitimiGeriAl, havuzGirisiEkle, havuzGirisiSil, muvek
 type Yontem = { id: string; etiket: string };
 type Musteri = { id: string; ad: string };
 
-export function YeniHavuzGirisi({ yontemler }: { yontemler: Yontem[] }) {
+export function YeniHavuzGirisi({ yontemler, hesaplar }: { yontemler: Yontem[]; hesaplar: HesapSecenegi[] }) {
   const router = useRouter();
   const [hata, setHata] = useState("");
   const [bekliyor, basla] = useTransition();
@@ -48,6 +50,10 @@ export function YeniHavuzGirisi({ yontemler }: { yontemler: Yontem[] }) {
         <Alan>
           <Etiket htmlFor="ph-kaynak">Kimden / hangi hesaptan</Etiket>
           <Girdi id="ph-kaynak" name="kaynak" placeholder="örn. havale gönderen adı" />
+        </Alan>
+        <Alan>
+          <Etiket htmlFor="ph-hesap">Hangi hesaba girdi?</Etiket>
+          <HesapSecici id="ph-hesap" hesaplar={hesaplar} />
         </Alan>
         <Alan>
           <Etiket htmlFor="ph-yontem">Ödeme şekli</Etiket>

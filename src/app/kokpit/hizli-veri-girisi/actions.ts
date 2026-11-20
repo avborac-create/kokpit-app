@@ -6,6 +6,7 @@ import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
 import { pushGonder } from "@/core/bildirim/push";
 import { duzeltmeOnaylayabilirMi } from "./duzeltme-onay";
+import { hesapIdAl } from "@/core/hesap/hesaplar";
 
 const yuvarla = (n: number) => Math.round(n * 100) / 100;
 
@@ -38,8 +39,10 @@ export async function gelenOdemeKaydet(formData: FormData): Promise<{ hata?: str
     const sebep = String(formData.get("aciklama") ?? "").trim().slice(0, 1000);
     const sebepSonra = formData.get("sebepSonra") === "1";
     if (!sebep && !sebepSonra) throw new Error("Paranın geliş sebebini yazın ya da “Sebebi sonra yazacağım” kutusunu işaretleyin.");
+    const hesapId = await hesapIdAl(formData);
     const kayit = await prisma.gelenOdemeKaydi.create({
       data: {
+        hesapId,
         tarih: new Date(tarihHam),
         tutar,
         odeyenAdi: odeyen,
@@ -63,6 +66,24 @@ export async function gelenOdemeKaydet(formData: FormData): Promise<{ hata?: str
           sorumluId: k.kullaniciId,
           olusturanId: k.kullaniciId,
           kaynak: `odeme-dekont:${kayit.id}`,
+          tur: "PARCA",
+          sinif: "ANA",
+          zamanBaskisi: "TESLIM",
+          vade: new Date(bugun),
+        },
+      });
+      revalidatePath("/kokpit/isler");
+    }
+    if (!hesapId) {
+      // Hangi hesaba geldigi bilinmiyor: gorev ac; hesap secilince otomatik kapanir. Hesapsiz kayit teyit edilemez.
+      const bugun = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
+      await prisma.is.create({
+        data: {
+          baslik: `Paranın geldiği hesabı belirle: ${tutar.toLocaleString("tr-TR")} TL${odeyen ? ` — ${odeyen}` : ""}`.slice(0, 200),
+          aciklama: "Gelen ödeme, hangi hesaba (büro / nakit / avukatın hesabı) geldiği belirtilmeden kaydedildi. Hızlı Veri Girişi › Para Trafiği Kaydet sayfasında ilgili kaydın “Hesabı değiştir” seçeneğiyle hesabı seçin; görev kendiliğinden kapanır. Hesap seçilmeden kayıt teyit edilemez.",
+          sorumluId: k.kullaniciId,
+          olusturanId: k.kullaniciId,
+          kaynak: `odeme-hesap:${kayit.id}`,
           tur: "PARCA",
           sinif: "ANA",
           zamanBaskisi: "TESLIM",
@@ -171,6 +192,34 @@ export async function gelenOdemeIncelemeyiBirak(id: string): Promise<{ hata?: st
 }
 
 // Teyit: yalniz finans yetkilisi/yonetici; kaydi giren kisi KENDI kaydini teyit edemez.
+// Paranin hangi hesaba geldigini degistirir (teyitli kayit dahil: bakiyeyi degistirmez, yalniz hesap bilgisidir). Iz birakir.
+export async function gelenOdemeHesapDegistir(id: string, hesapId: string): Promise<{ hata?: string }> {
+  try {
+    const k = await mevcutKullanici();
+    if (!k) throw new Error("Oturum bulunamadı.");
+    const o = await prisma.gelenOdemeKaydi.findUnique({ where: { id } });
+    if (!o) throw new Error("Kayıt bulunamadı.");
+    if (o.olusturanId !== k.kullaniciId && !(await ekonomiDuzenleyebilirMi())) throw new Error("Bu kaydın hesabını değiştirme yetkiniz yok.");
+    const h = await prisma.paraHesabi.findUnique({ where: { id: hesapId } });
+    if (!h) throw new Error("Hesap seçin.");
+    const eskiAd = o.hesapId ? ((await prisma.paraHesabi.findUnique({ where: { id: o.hesapId }, select: { ad: true } }))?.ad ?? "?") : "belirtilmemiş";
+    const iz = `Hesap değiştirildi: ${eskiAd} → ${h.ad} (${k.adSoyad ?? k.kullaniciId}, ${new Date().toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul" })})`;
+    await prisma.$transaction([
+      prisma.gelenOdemeKaydi.update({ where: { id }, data: { hesapId, teyitNotu: [o.teyitNotu, iz].filter(Boolean).join("\n") } }),
+      ...(o.havuzGirisiId ? [prisma.paraHavuzuGirisi.update({ where: { id: o.havuzGirisiId }, data: { hesapId } })] : []),
+      prisma.is.updateMany({
+        where: { kaynak: `odeme-hesap:${id}`, durum: { not: "TAMAMLANDI" } },
+        data: { durum: "TAMAMLANDI", tamamlanmaTarihi: new Date(), guncellemeTarihi: new Date() },
+      }),
+    ]);
+    revalidatePath("/kokpit/isler");
+    yenile(o.dosyaId);
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "Değiştirilemedi." };
+  }
+}
+
 export async function gelenOdemeTeyitEt(id: string, musteriIdSecimi = ""): Promise<{ hata?: string }> {
   try {
     const k = await mevcutKullanici();
@@ -180,6 +229,7 @@ export async function gelenOdemeTeyitEt(id: string, musteriIdSecimi = ""): Promi
     if (o.durum === "TEYIT_EDILDI") throw new Error("Bu ödeme zaten teyit edilmiş.");
     if (o.olusturanId === k.kullaniciId) throw new Error("Kaydı giren kişi kendi kaydını teyit edemez.");
     if (!o.aciklama?.trim()) throw new Error("Paranın geliş sebebi yazılmamış; önce “Düzelt” ile sebebi yazın.");
+    if (!o.hesapId) throw new Error("Paranın hangi hesaba geldiği belirtilmemiş; önce “Hesabı değiştir” ile hesabı seçin.");
 
     await prisma.$transaction(async (tx) => {
       let cariHareketId: string | null = null;
@@ -197,7 +247,7 @@ export async function gelenOdemeTeyitEt(id: string, musteriIdSecimi = ""): Promi
         cariHareketId = h.id;
       } else {
         const g = await tx.paraHavuzuGirisi.create({
-          data: { tarih: o.tarih, tutar: o.tutar, kaynak: o.odeyenAdi, aciklama: o.aciklama, olusturanId: k.kullaniciId },
+          data: { tarih: o.tarih, tutar: o.tutar, kaynak: o.odeyenAdi, aciklama: o.aciklama, hesapId: o.hesapId, olusturanId: k.kullaniciId },
         });
         havuzGirisiId = g.id;
       }

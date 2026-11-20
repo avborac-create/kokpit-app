@@ -1,4 +1,6 @@
 import { Alan, Etiket, Girdi, MetinAlani, Secim } from "@/core/ui/form";
+import { HesapSecici } from "@/core/ui/hesap-secici";
+import { aktifHesaplar } from "@/core/hesap/hesaplar";
 import { DosyaSecici } from "@/core/ui/dosya-secici";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
@@ -13,6 +15,7 @@ export type MasrafDuzenlemeVerisi = {
   aciklama: string;
   yansitmaHedefi?: "MUVEKKIL" | "BURO" | "BORCLU";
   karsiTarafId?: string | null;
+  hesapId?: string | null;
 };
 
 export async function MasrafFormu({
@@ -38,7 +41,8 @@ export async function MasrafFormu({
   // "Karsi Tarafa / Borcluya" secilince opsiyonel secilebilecek karsi taraflar.
   karsiTaraflar?: { id: string; ad: string }[];
 }) {
-  const [cariKodlar, turler] = await Promise.all([
+  const [hesaplar, cariKodlar, turler] = await Promise.all([
+    aktifHesaplar(),
     secenekleriGetir("cari_kod"),
     secenekleriGetir("masraf_turu"),
   ]);
@@ -84,6 +88,10 @@ export async function MasrafFormu({
         karsiTaraflar={karsiTaraflar}
         varsayilanKarsiTarafId={duzenlemeVerisi?.karsiTarafId}
       />
+      <Alan>
+        <Etiket htmlFor={`${idOnEki}hesapId`}>Masraf hangi hesaptan çıktı?</Etiket>
+        <HesapSecici id={`${idOnEki}hesapId`} hesaplar={hesaplar} defaultValue={duzenlemeVerisi?.hesapId} />
+      </Alan>
       <div className="col-span-1 sm:col-span-2 md:col-span-4">
         <Alan>
           <Etiket htmlFor={`${idOnEki}aciklama`}>Açıklama</Etiket>

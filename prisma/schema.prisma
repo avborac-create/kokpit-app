@@ -763,6 +763,10 @@ model DosyaMasrafi {
   aciklama String
   tutar    Decimal  @db.Decimal(14, 2)
 
+  // Masraf hangi PARA HESABINDAN cikti (buro hesabi / nakit kasa / sigortali avukatin hesabi...).
+  // Bos = varsayilan buro hesabi. Bkz. ParaHesabi.
+  hesapId String?
+
   // Yanlis girilen bir masraf artik SILINMEK yerine IPTAL EDILEBILIR (bkz.
   // ARCHITECTURE.md) - satir kalici olarak durur, sadece Cari Hesap'a
   // dahil edilmez. Nullable: eski kayitlar NULL kalir, hesaplamada NULL
@@ -2111,6 +2115,7 @@ model ParaHavuzuGirisi {
   kaynak         String?
   aciklama       String?
   odemeYontemiId String?
+  hesapId        String?
   olusturanId    String?
   olusturmaTarihi DateTime @default(now())
 
@@ -2173,6 +2178,8 @@ model GelenOdemeKaydi {
   dosyaId         String?
   musteriId       String?
   durum           String    @default("TEYIT_BEKLIYOR")
+  // Para hangi PARA HESABINA geldi (bos = bilinmiyor; "hesabi sonra belirle" gorevi acilir).
+  hesapId         String?
   olusturanId     String?
   teyitEdenId     String?
   teyitZamani     DateTime?
@@ -2244,4 +2251,48 @@ model Gelistirme {
 
   @@index([akis])
   @@map("gelistirmeler")
+}
+
+
+// ============================================================
+// Para Hesaplari: paranin FIZIKEN hangi hesapta durdugu / hangisinden ciktigi.
+// Her para girisi/cikisi (masraf, gelen odeme, para havuzu, kasa) bir hesaba baglanir.
+// tur: BURO (buro banka hesabi) | NAKIT (nakit kasa) | AVUKAT (sigortali avukatin kisisel hesabi) | DIGER.
+// KISISEL hesaplarda (AVUKAT/DIGER) hareketler buro ile hesap sahibi arasinda ALACAK/BORC dogurur:
+// hesaptan cikan masraf -> buro sahibe borclanir; hesaba gelen para -> sahip buroya borclanir.
+// Mahsup (HesapMahsubu) bu borcu kapatir; yanlis mahsup iptal edilebilir (silinmez).
+// ============================================================
+model ParaHesabi {
+  id            String   @id @default(cuid())
+  ad            String
+  tur           String   @default("BURO")
+  sahipAdi      String?
+  sahipId       String?
+  iban          String?
+  varsayilanMi  Boolean  @default(false)
+  aktifMi       Boolean  @default(true)
+  sira          Int      @default(0)
+  olusturmaTarihi DateTime @default(now())
+
+  mahsuplar HesapMahsubu[]
+
+  @@map("para_hesaplari")
+}
+
+model HesapMahsubu {
+  id          String     @id @default(cuid())
+  hesapId     String
+  hesap       ParaHesabi @relation(fields: [hesapId], references: [id], onDelete: Cascade)
+  // BUROYA_AKTARILDI (sahip, hesabindaki buro parasini buroya yatirdi) | SAHIBE_ODENDI (buro, sahibin cebinden cikan masrafi ona odedi)
+  yon         String
+  tarih       DateTime
+  tutar       Decimal    @db.Decimal(14, 2)
+  aciklama    String?
+  olusturanId String?
+  iptalZamani DateTime?
+  iptalEdenId String?
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([hesapId])
+  @@map("hesap_mahsuplari")
 }

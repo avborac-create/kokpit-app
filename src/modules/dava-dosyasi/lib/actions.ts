@@ -1,5 +1,6 @@
 "use server";
 
+import { hesapIdAl } from "@/core/hesap/hesaplar";
 import { silmeSifresiniDogrula } from "@/core/auth/silme-dogrulama";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
@@ -970,6 +971,7 @@ export async function dosyaMasrafiEkle(dosyaId: string, formData: FormData) {
       tutar,
       yansitmaHedefi: yansitmaHedefiAl(formData),
       karsiTarafId: masrafKarsiTarafiAl(formData),
+      hesapId: await hesapIdAl(formData),
     },
   });
 
@@ -1002,6 +1004,7 @@ export async function dosyaMasrafiGuncelle(dosyaId: string, masrafId: string, fo
       tutar,
       yansitmaHedefi: yansitmaHedefiAl(formData),
       karsiTarafId: masrafKarsiTarafiAl(formData),
+      ...(formData.has("hesapId") ? { hesapId: await hesapIdAl(formData) } : {}),
     },
   });
 

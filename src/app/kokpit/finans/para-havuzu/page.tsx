@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { aktifHesaplar } from "@/core/hesap/hesaplar";
 import { prisma } from "@/core/db/prisma";
 import { modulErisimiVarMi } from "@/core/auth/modul-izni";
 import { secenekleriGetir } from "@/core/secenek/secenek-service";
@@ -61,7 +62,7 @@ export default async function ParaHavuzuSayfasi({ searchParams }: { searchParams
         </div>
       </div>
 
-      <YeniHavuzGirisi yontemler={yontemler} />
+      <YeniHavuzGirisi yontemler={yontemler} hesaplar={await aktifHesaplar()} />
 
       <div className="mb-3 flex gap-2">
         {[

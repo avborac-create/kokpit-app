@@ -17,6 +17,7 @@ const GRUPLAR: Grup[] = [
     renk: "#f2b04c",
     kartlar: [
       { ad: "Kasa / Nakit Yönetimi", aciklama: "Nakit tahsilatlar, personele avans/ödeme, bankaya yatırma, kod bazlı takip ve gün sonu sayımı.", yol: "/kokpit/finans/kasa", aktif: true },
+      { ad: "Para Hesapları", aciklama: "Büro hesabı, nakit kasa ve sigortalı avukatın kişisel hesabı: hangi para nereden çıktı/nereye geldi, büro ile avukat arasındaki mahsup.", yol: "/kokpit/finans/hesaplar", aktif: true },
       { ad: "Banka", aciklama: "Banka hesapları, hareketler ve mutabakat.", yol: "/kokpit/finans/banka", aktif: false },
     ],
   },

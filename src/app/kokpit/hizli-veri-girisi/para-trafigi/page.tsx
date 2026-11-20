@@ -6,6 +6,7 @@ import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
 import { dosyaSecenekleriGetir } from "@/modules/avukat/lib/dosya-secenekleri";
 import { dosyaEtiketiYaz } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { duzeltmeOnaylayabilirMi } from "../duzeltme-onay";
+import { aktifHesaplar } from "@/core/hesap/hesaplar";
 import {
   SatirSecimKutusu,
   TopluIslemCubugu,
@@ -15,6 +16,7 @@ import {
   DekontEkleDugmesi,
   DuzeltmeKarari,
   DuzeltmeTalebiDugmesi,
+  HesapDegistirDugmesi,
   KayitDuzenleDugmesi,
   KayitSilDugmesi,
   OtomatikYenile,
@@ -54,6 +56,8 @@ export default async function ParaTrafigiKaydetSayfasi({
   const { g } = await searchParams;
   const sekme = g === "hepsi" ? "hepsi" : "acik";
 
+  const hesaplar = await aktifHesaplar();
+  const hesapAdlari = new Map(hesaplar.map((h) => [h.id, h.ad]));
   const [kayitlar, dosyaSecenekleri, yetkili] = await Promise.all([
     prisma.gelenOdemeKaydi.findMany({
       orderBy: [{ olusturmaTarihi: "desc" }],
@@ -157,7 +161,7 @@ export default async function ParaTrafigiKaydetSayfasi({
       </div>
 
       <OtomatikYenile />
-      <YeniOdemeFormu dosyalar={dosyaSecenekleri} />
+      <YeniOdemeFormu dosyalar={dosyaSecenekleri} hesaplar={hesaplar} />
 
       <div className="mb-3 flex gap-2">
         {[
@@ -216,6 +220,11 @@ export default async function ParaTrafigiKaydetSayfasi({
                       <span className="font-normal text-white/70">Gönderen kişi: </span>
                       {x.odeyenAdi || "belirtilmedi"}
                     </p>
+                    {(x.olusturanId === k.kullaniciId || yetkili) ? (
+                      <HesapDegistirDugmesi id={x.id} hesapId={x.hesapId ?? ""} hesapAdi={hesapAdlari.get(x.hesapId ?? "") ?? ""} hesaplar={hesaplar} />
+                    ) : (
+                      <p className="mt-1 text-xs text-white/60">Hesap: <b>{hesapAdlari.get(x.hesapId ?? "") ?? "belirtilmedi"}</b></p>
+                    )}
                     {x.dosyaId ? (
                       (() => {
                         const d = dosyaBilgi.get(x.dosyaId);

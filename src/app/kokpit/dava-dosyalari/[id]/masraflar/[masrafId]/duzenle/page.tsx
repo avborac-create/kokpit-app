@@ -22,6 +22,7 @@ export default async function MasrafDuzenlemeSayfasi({
     aciklama: masraf.aciklama,
     yansitmaHedefi: masraf.yansitmaHedefi,
     karsiTarafId: masraf.karsiTarafId,
+    hesapId: masraf.hesapId,
   };
   const karsiTaraflar = await prisma.karsiTaraf.findMany({
     where: { dosyalar: { some: { dosyaId: id } } },

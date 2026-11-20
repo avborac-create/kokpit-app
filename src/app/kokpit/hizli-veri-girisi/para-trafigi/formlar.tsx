@@ -7,9 +7,11 @@ import { Alan, Etiket, Girdi, MetinAlani } from "@/core/ui/form";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { Dugme } from "@/core/ui/button";
 import { DosyaSecici, type DosyaSeciciSecenegi } from "@/core/ui/dosya-secici";
-import { gelenOdemeDekontEkle, gelenOdemeDuzeltmeKarari, gelenOdemeDuzeltmeTalebiVer, gelenOdemeDuzenle, gelenOdemeIncelemeyeAl, gelenOdemeIncelemeyiBirak, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
+import { HesapSecici } from "@/core/ui/hesap-secici";
+import type { HesapSecenegi } from "@/core/hesap/hesaplar";
+import { gelenOdemeDekontEkle, gelenOdemeDuzeltmeKarari, gelenOdemeDuzeltmeTalebiVer, gelenOdemeDuzenle, gelenOdemeIncelemeyeAl, gelenOdemeIncelemeyiBirak, gelenOdemeHesapDegistir, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
 
-export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }) {
+export function YeniOdemeFormu({ dosyalar, hesaplar }: { dosyalar: DosyaSeciciSecenegi[]; hesaplar: HesapSecenegi[] }) {
   const router = useRouter();
   const [hata, setHata] = useState("");
   const [bekliyor, basla] = useTransition();
@@ -136,6 +138,13 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
         </div>
         <div className="sm:col-span-2">
           <Alan>
+            <Etiket htmlFor="go-hesap">Para hangi hesaba geldi?</Etiket>
+            <HesapSecici id="go-hesap" hesaplar={hesaplar} defaultValue={hesaplar.find((h) => h.varsayilanMi)?.id ?? ""} bosSecenek="Bilmiyorum, sonra belirlenecek (görev açılır)" />
+            <p className="mt-1 text-xs text-white/45">Büro hesabına mı, sigortalı avukatın kendi hesabına mı geldiğini seçin. Kişisel hesaba gelen para büro ile hesap sahibi arasında alacak/borç olarak izlenir.</p>
+          </Alan>
+        </div>
+        <div className="sm:col-span-2">
+          <Alan>
             <Etiket htmlFor="go-dosya">Dosya (biliyorsanız)</Etiket>
             <DosyaSecici id="go-dosya" name="dosyaId" dosyalar={dosyalar} bosSecenek="Bilmiyorum, sonra belirlenecek" placeholder="KN no, esas no ya da müvekkil adı yazın…" />
           </Alan>
@@ -236,6 +245,62 @@ export function TeyitEylemleri({ id, yetkili, kendiKaydi, musteriSecimi, incelem
         </div>
       )}
       {hata && <p className="text-xs text-[#ff7a70]">{hata}</p>}
+    </div>
+  );
+}
+
+// Kaydin hesabini gosterir/degistirir (teyitli kayit dahil; bakiyeyi degistirmez, iz birakir).
+export function HesapDegistirDugmesi({ id, hesapId, hesapAdi, hesaplar }: { id: string; hesapId: string; hesapAdi: string; hesaplar: HesapSecenegi[] }) {
+  const router = useRouter();
+  const [acik, setAcik] = useState(false);
+  const [hata, setHata] = useState("");
+  const [bekliyor, basla] = useTransition();
+  const [secili, setSecili] = useState(hesapId);
+  return (
+    <div className="mt-1 text-xs text-white/60">
+      <span>
+        Hesap: <b className={hesapId ? "text-white/80" : "text-[#f2b04c]"}>{hesapAdi || "belirtilmedi"}</b>
+      </span>{" "}
+      {!acik && (
+        <button type="button" onClick={() => setAcik(true)} className="text-[#8fd8ff] hover:underline">
+          Hesabı değiştir
+        </button>
+      )}
+      {acik && (
+        <span className="ml-1 inline-flex flex-wrap items-center gap-2">
+          <select value={secili} onChange={(e) => setSecili(e.target.value)} className="rounded-md border border-white/20 bg-black/20 px-2 py-1 text-xs text-white">
+            <option value="">Seçin…</option>
+            {hesaplar.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.ad}
+                {h.sahipAdi ? ` — ${h.sahipAdi}` : ""}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            disabled={bekliyor || !secili}
+            onClick={() =>
+              basla(async () => {
+                setHata("");
+                const s = await gelenOdemeHesapDegistir(id, secili);
+                if (s.hata) setHata(s.hata);
+                else {
+                  setAcik(false);
+                  router.refresh();
+                }
+              })
+            }
+            className="rounded-md bg-[var(--accent)] px-2 py-1 text-xs font-semibold text-[#0b1d36] disabled:opacity-50"
+          >
+            Kaydet
+          </button>
+          <button type="button" onClick={() => setAcik(false)} className="text-white/50 hover:underline">
+            Vazgeç
+          </button>
+        </span>
+      )}
+      {hata && <span className="ml-2 text-[#ff7a70]">{hata}</span>}
     </div>
   );
 }
