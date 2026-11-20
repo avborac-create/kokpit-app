@@ -17,6 +17,7 @@ import {
   DuzeltmeTalebiDugmesi,
   KayitDuzenleDugmesi,
   KayitSilDugmesi,
+  OtomatikYenile,
   TeyitEylemleri,
   YeniOdemeFormu,
 } from "./formlar";
@@ -155,6 +156,7 @@ export default async function ParaTrafigiKaydetSayfasi({
         </div>
       </div>
 
+      <OtomatikYenile />
       <YeniOdemeFormu dosyalar={dosyaSecenekleri} />
 
       <div className="mb-3 flex gap-2">
@@ -185,7 +187,11 @@ export default async function ParaTrafigiKaydetSayfasi({
             </p>
           )}
           {liste.map((x) => {
-            const d = DURUMLAR[x.durum] ?? DURUMLAR.TEYIT_BEKLIYOR;
+            const incelemede = x.durum === "TEYIT_BEKLIYOR" && !!x.incelemeyeAlanId;
+            const d = incelemede
+              ? { ad: `İnceleniyor · ${kisi.get(x.incelemeyeAlanId ?? "") ?? "Muhasebe"}`, sinif: "bg-[#6db8ff]/20 text-[#8fd8ff]" }
+              : (DURUMLAR[x.durum] ?? DURUMLAR.TEYIT_BEKLIYOR);
+            const incelemeDurumu: "yok" | "ben" | "baskasi" = !incelemede ? "yok" : x.incelemeyeAlanId === k.kullaniciId ? "ben" : "baskasi";
             const musteriler =
               x.dosyaId && !x.musteriId
                 ? muvekkiller
@@ -304,6 +310,11 @@ export default async function ParaTrafigiKaydetSayfasi({
                     >
                       {d.ad}
                     </span>
+                    {incelemede && x.incelemeZamani && (
+                      <p className="mt-1 text-[11px] text-white/40">
+                        {x.incelemeZamani.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul" })} itibarıyla
+                      </p>
+                    )}
                   </div>
                 </div>
                 {x.durum === "TEYIT_EDILEMEDI" && x.teyitNotu && (
@@ -394,6 +405,7 @@ export default async function ParaTrafigiKaydetSayfasi({
                       yetkili={yetkili && x.durum === "TEYIT_BEKLIYOR"}
                       kendiKaydi={x.olusturanId === k.kullaniciId}
                       musteriSecimi={musteriler}
+                      inceleme={incelemeDurumu}
                     />
                     {(x.olusturanId === k.kullaniciId || yetkili) && (
                       <div className="flex items-center gap-4">

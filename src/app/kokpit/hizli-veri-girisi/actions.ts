@@ -129,6 +129,47 @@ export async function gelenOdemeDekontEkle(id: string, belgeUrl: string, belgeAd
   }
 }
 
+// Muhasebe kaydi "incelemeye alir": kaydi giren kisiye "Inceleniyor" olarak gorunur. Teyit/ret yerine gecmez;
+// geri alinabilir (incelemeyi birak). Baska biri inceliyorsa devralinabilir.
+export async function gelenOdemeIncelemeyeAl(id: string): Promise<{ hata?: string }> {
+  try {
+    const k = await mevcutKullanici();
+    if (!k || !(await ekonomiDuzenleyebilirMi())) throw new Error("Bu işlem için yetkiniz yok.");
+    const o = await prisma.gelenOdemeKaydi.findUnique({ where: { id } });
+    if (!o) throw new Error("Kayıt bulunamadı.");
+    if (o.durum !== "TEYIT_BEKLIYOR") throw new Error("Yalnız teyit bekleyen kayıt incelemeye alınabilir.");
+    if (o.olusturanId === k.kullaniciId) throw new Error("Kaydı giren kişi kendi kaydını incelemeye alamaz.");
+    await prisma.gelenOdemeKaydi.update({ where: { id }, data: { incelemeyeAlanId: k.kullaniciId, incelemeZamani: new Date() } });
+    if (o.olusturanId && o.incelemeyeAlanId !== k.kullaniciId) {
+      await pushGonder([o.olusturanId], {
+        baslik: "🔍 Ödemeniz inceleniyor",
+        metin: `${k.adSoyad}: ${Number(o.tutar).toLocaleString("tr-TR")} TL${o.odeyenAdi ? ` — ${o.odeyenAdi}` : ""}`.slice(0, 180),
+        url: "/kokpit/hizli-veri-girisi/para-trafigi",
+        etiket: `odeme-${id}`,
+      });
+    }
+    yenile(o.dosyaId);
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "İncelemeye alınamadı." };
+  }
+}
+
+export async function gelenOdemeIncelemeyiBirak(id: string): Promise<{ hata?: string }> {
+  try {
+    const k = await mevcutKullanici();
+    if (!k) throw new Error("Oturum bulunamadı.");
+    const o = await prisma.gelenOdemeKaydi.findUnique({ where: { id } });
+    if (!o) throw new Error("Kayıt bulunamadı.");
+    if (o.incelemeyeAlanId !== k.kullaniciId && !(await ekonomiDuzenleyebilirMi())) throw new Error("Bu işlem için yetkiniz yok.");
+    await prisma.gelenOdemeKaydi.update({ where: { id }, data: { incelemeyeAlanId: null, incelemeZamani: null } });
+    yenile(o.dosyaId);
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "Bırakılamadı." };
+  }
+}
+
 // Teyit: yalniz finans yetkilisi/yonetici; kaydi giren kisi KENDI kaydini teyit edemez.
 export async function gelenOdemeTeyitEt(id: string, musteriIdSecimi = ""): Promise<{ hata?: string }> {
   try {
@@ -166,6 +207,8 @@ export async function gelenOdemeTeyitEt(id: string, musteriIdSecimi = ""): Promi
           durum: "TEYIT_EDILDI",
           teyitEdenId: k.kullaniciId,
           teyitZamani: new Date(),
+          incelemeyeAlanId: null,
+          incelemeZamani: null,
           cariHareketId,
           havuzGirisiId,
           ...(musteriIdSecimi && !o.musteriId ? { musteriId: musteriIdSecimi } : {}),
@@ -199,7 +242,7 @@ export async function gelenOdemeTeyitEdilemedi(id: string, neden: string): Promi
     const sebep = neden.trim().slice(0, 500) || "Hesapta görünmüyor / tutarsız";
     await prisma.gelenOdemeKaydi.update({
       where: { id },
-      data: { durum: "TEYIT_EDILEMEDI", teyitEdenId: k.kullaniciId, teyitZamani: new Date(), teyitNotu: sebep },
+      data: { durum: "TEYIT_EDILEMEDI", teyitEdenId: k.kullaniciId, teyitZamani: new Date(), teyitNotu: sebep, incelemeyeAlanId: null, incelemeZamani: null },
     });
     if (o.olusturanId) {
       await pushGonder([o.olusturanId], {

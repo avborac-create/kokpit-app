@@ -2179,11 +2179,26 @@ model GelenOdemeKaydi {
   teyitNotu       String?
   cariHareketId   String?
   havuzGirisiId   String?
+  // Muhasebe kaydi "incelemeye aldi" (henuz teyit/ret yok): kaydi girene "Inceleniyor" olarak gorunur.
+  incelemeyeAlanId String?
+  incelemeZamani   DateTime?
   olusturmaTarihi DateTime  @default(now())
 
   @@index([durum])
   @@index([dosyaId])
   @@map("gelen_odeme_kayitlari")
+}
+
+// Yoneticinin baska bir kullanici gozuyle calismasinin izi (kim, kimin adina, ne zaman).
+model AdinaCalismaKaydi {
+  id              String    @id @default(cuid())
+  yoneticiId      String
+  hedefKullaniciId String
+  baslangic       DateTime  @default(now())
+  bitis           DateTime?
+
+  @@index([yoneticiId, baslangic])
+  @@map("adina_calisma_kayitlari")
 }
 
 // Teyitli gelen odeme kaydinda duzeltme talebi: teyit edenin onayina sunulur; onaylaninca cari/havuz kaydi da guncellenir.

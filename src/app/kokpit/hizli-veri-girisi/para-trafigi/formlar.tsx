@@ -7,7 +7,7 @@ import { Alan, Etiket, Girdi, MetinAlani } from "@/core/ui/form";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
 import { Dugme } from "@/core/ui/button";
 import { DosyaSecici, type DosyaSeciciSecenegi } from "@/core/ui/dosya-secici";
-import { gelenOdemeDekontEkle, gelenOdemeDuzeltmeKarari, gelenOdemeDuzeltmeTalebiVer, gelenOdemeDuzenle, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
+import { gelenOdemeDekontEkle, gelenOdemeDuzeltmeKarari, gelenOdemeDuzeltmeTalebiVer, gelenOdemeDuzenle, gelenOdemeIncelemeyeAl, gelenOdemeIncelemeyiBirak, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
 
 export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }) {
   const router = useRouter();
@@ -166,7 +166,19 @@ export function YeniOdemeFormu({ dosyalar }: { dosyalar: DosyaSeciciSecenegi[] }
   );
 }
 
-export function TeyitEylemleri({ id, yetkili, kendiKaydi, musteriSecimi }: { id: string; yetkili: boolean; kendiKaydi: boolean; musteriSecimi: { id: string; ad: string }[] }) {
+// Acik sayfa kendiliginden tazelenir: muhasebe teyit/inceleme yaptiginda kayit giren aninda gorur.
+export function OtomatikYenile({ saniye = 15 }: { saniye?: number }) {
+  const router = useRouter();
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, saniye * 1000);
+    return () => clearInterval(t);
+  }, [router, saniye]);
+  return null;
+}
+
+export function TeyitEylemleri({ id, yetkili, kendiKaydi, musteriSecimi, inceleme = "yok" }: { id: string; yetkili: boolean; kendiKaydi: boolean; musteriSecimi: { id: string; ad: string }[]; inceleme?: "yok" | "ben" | "baskasi" }) {
   const router = useRouter();
   const [hata, setHata] = useState("");
   const [bekliyor, basla] = useTransition();
@@ -196,6 +208,15 @@ export function TeyitEylemleri({ id, yetkili, kendiKaydi, musteriSecimi }: { id:
                 </option>
               ))}
             </select>
+          )}
+          {inceleme === "ben" ? (
+            <button type="button" disabled={bekliyor} onClick={() => calistir(() => gelenOdemeIncelemeyiBirak(id))} className="rounded-md border border-white/20 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10">
+              İncelemeyi bırak
+            </button>
+          ) : (
+            <button type="button" disabled={bekliyor} onClick={() => calistir(() => gelenOdemeIncelemeyeAl(id))} className="rounded-md border border-[#6db8ff]/60 px-3 py-1.5 text-xs font-semibold text-[#8fd8ff] hover:bg-[#6db8ff]/10">
+              {inceleme === "baskasi" ? "İncelemeyi devral" : "İncelemeye al"}
+            </button>
           )}
           <button type="button" disabled={bekliyor} onClick={() => calistir(() => gelenOdemeTeyitEt(id, musteri))} className="rounded-md bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-[#0b1d36] disabled:opacity-50">
             Hesapta göründü, teyit et

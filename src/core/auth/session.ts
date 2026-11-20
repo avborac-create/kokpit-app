@@ -23,7 +23,30 @@ export type OturumVerisi = {
   eposta: string;
   rol: KullaniciRolu;
   buroRolu: BuroRolu;
+  // Doluysa: yonetici baska bir kullanicinin gozuyle calisiyor; bu alan GERCEK oturum sahibidir.
+  gercekKullanici?: { kullaniciId: string; adSoyad: string };
 };
+
+// "Kullanici gozuyle calis": yalniz gercek yoneticinin oturumuna bagli, imzali ayri cookie.
+export const ADINA_COOKIE_ADI = "kokpit_adina";
+
+export async function adinaTokeniOlustur(yoneticiId: string, hedefId: string): Promise<string> {
+  return new SignJWT({ yoneticiId, hedefId })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("8h")
+    .sign(gizliAnahtar());
+}
+
+export async function adinaTokeniDogrula(token: string | undefined, yoneticiId: string): Promise<string | null> {
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, gizliAnahtar());
+    return payload.yoneticiId === yoneticiId ? (payload.hedefId as string) : null;
+  } catch {
+    return null;
+  }
+}
 
 export async function oturumTokeniOlustur(veri: OturumVerisi): Promise<string> {
   return new SignJWT({ ...veri })

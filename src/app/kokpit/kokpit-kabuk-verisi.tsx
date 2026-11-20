@@ -1,4 +1,6 @@
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
+import { prisma } from "@/core/db/prisma";
+import { AdinaCalisSecici, AdinaCalisSeridi } from "@/core/auth/adina-calis-arayuz";
 import { menuDuzeniniGetir } from "@/core/menu/queries";
 import { beklenenIsSayisi } from "./isler/sorgu";
 import { cmkOzetSayilariniHesapla } from "@/modules/cmk-dosyalari/lib/queries";
@@ -47,5 +49,15 @@ export async function KenarCubuguVerisi() {
 // bilesen.
 export async function UstBilgiVerisi() {
   const kullanici = await mevcutKullanici();
-  return <UstBilgiRozeti kullaniciAdSoyad={kullanici?.adSoyad} kullaniciRol={kullanici?.rol} buroRolu={kullanici?.buroRolu} />;
+  const gercekYonetici = !!kullanici && !kullanici.gercekKullanici && kullanici.rol === "YONETICI";
+  const secenekler = gercekYonetici
+    ? (await prisma.kullanici.findMany({ where: { aktifMi: true, id: { not: kullanici.kullaniciId } }, select: { id: true, adSoyad: true }, orderBy: { adSoyad: "asc" } })).map((u) => ({ id: u.id, ad: u.adSoyad }))
+    : [];
+  return (
+    <div className="flex items-center gap-3">
+      <UstBilgiRozeti kullaniciAdSoyad={kullanici?.adSoyad} kullaniciRol={kullanici?.rol} buroRolu={kullanici?.buroRolu} />
+      {gercekYonetici && <AdinaCalisSecici kullanicilar={secenekler} />}
+      {kullanici?.gercekKullanici && <AdinaCalisSeridi hedefAd={kullanici.adSoyad} gercekAd={kullanici.gercekKullanici.adSoyad} />}
+    </div>
+  );
 }
