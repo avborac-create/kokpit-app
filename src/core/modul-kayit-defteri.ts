@@ -58,6 +58,7 @@ export const MODUL_KAYIT_DEFTERI: ModulTanimi[] = [
     aktif: true,
     rolGorebilir: ["YONETICI"],
   },
+  { anahtar: "gelistirmeler", ad: "Geliştirmeler", yol: "/kokpit/gelistirmeler", aktif: true, rolGorebilir: ["YONETICI"] },
   {
     anahtar: "ayarlar",
     ad: "Ayarlar",

@@ -16,6 +16,7 @@ import {
   AvukatIkonu,
   CezaDosyalariIkonu,
   OnerilerIkonu,
+  GelistirmelerIkonu,
   AyarlarIkonu,
   OkKirilimIkonu,
 } from "./kenar-cubugu-ikonlari";
@@ -141,6 +142,9 @@ export function KenarCubugu({
             <BolumBasligi>Yönetim</BolumBasligi>
             <Grup>
               <MenuBagi modul={modulHaritasi.get("oneriler")!} ikon={OnerilerIkonu} renk="#d65db1" seciliMi={yol.startsWith("/kokpit/oneriler")} sonMu={sonMu(modulHaritasi.get("oneriler")!.yol)} rozetSayisi={oneriSayisi} />
+              {gorunurMu("gelistirmeler") && (
+                <MenuBagi modul={modulHaritasi.get("gelistirmeler")!} ikon={GelistirmelerIkonu} renk="#7c5cff" seciliMi={yol.startsWith("/kokpit/gelistirmeler")} sonMu={sonMu(modulHaritasi.get("gelistirmeler")!.yol)} />
+              )}
             </Grup>
           </div>
         )}

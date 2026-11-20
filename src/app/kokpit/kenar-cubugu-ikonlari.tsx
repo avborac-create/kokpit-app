@@ -194,6 +194,16 @@ export function OnerilerIkonu(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function GelistirmelerIkonu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Taban {...props}>
+      <path d="M7 6 3.5 10 7 14" />
+      <path d="m13 6 3.5 4-3.5 4" />
+      <path d="m11 4.5-2 11" />
+    </Taban>
+  );
+}
+
 export function AyarlarIkonu(props: SVGProps<SVGSVGElement>) {
   return (
     <Taban {...props}>

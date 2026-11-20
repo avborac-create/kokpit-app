@@ -2225,3 +2225,23 @@ model GelenOdemeDuzeltmeTalebi {
   @@index([durum])
   @@map("gelen_odeme_duzeltme_talepleri")
 }
+
+// Yazilim gelistirme paneli (Yonetici > Gelistirmeler): buroda istenen her ozellik once buraya girer.
+// akis = is akisi (TALEP, PLANLANDI, YAPILIYOR, TEST, YAYINDA, REDDEDILDI);
+// olgunluk = PROTOTIP, BETA, KARARLI, LTS, KULLANIMDAN_KALKIYOR.
+model Gelistirme {
+  id               String    @id @default(cuid())
+  baslik           String
+  aciklama         String?
+  modul            String?
+  akis             String    @default("TALEP")
+  olgunluk         String    @default("PROTOTIP")
+  yayinTarihi      DateTime?
+  olusturanId      String?
+  gecmis           Json      @default("[]")
+  olusturmaTarihi  DateTime  @default(now())
+  guncellemeTarihi DateTime  @updatedAt
+
+  @@index([akis])
+  @@map("gelistirmeler")
+}
