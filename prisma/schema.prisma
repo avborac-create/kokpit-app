@@ -2096,3 +2096,42 @@ model DurusmaMasrafi {
   @@index([personelId, tarih])
   @@map("durusma_masraflari")
 }
+
+// ============================================================
+// Para Havuzu: hangi dosya/muvekkile ait oldugu belli olmayan gelen paralar.
+// Giris -> (istenirse) muvekkile -> (istenirse) dosyaya dagitilir. Dagitim,
+// muvekkilin Para Trafigi hesabina ALACAK (dosya bos ya da dolu) yazar.
+// ============================================================
+model ParaHavuzuGirisi {
+  id             String   @id @default(cuid())
+  tarih          DateTime
+  tutar          Decimal  @db.Decimal(14, 2)
+  // Parayi kim yatirdi / hangi hesaptan geldi (serbest metin)
+  kaynak         String?
+  aciklama       String?
+  odemeYontemiId String?
+  olusturanId    String?
+  olusturmaTarihi DateTime @default(now())
+
+  dagitimlar ParaHavuzuDagitimi[]
+
+  @@index([tarih])
+  @@map("para_havuzu_girisleri")
+}
+
+model ParaHavuzuDagitimi {
+  id            String           @id @default(cuid())
+  girisId       String
+  giris         ParaHavuzuGirisi @relation(fields: [girisId], references: [id], onDelete: Cascade)
+  musteriId     String
+  dosyaId       String?
+  tutar         Decimal          @db.Decimal(14, 2)
+  tarih         DateTime
+  // Olusan cari kayit (geri alinirken silinir)
+  cariHareketId String?
+  olusturanId   String?
+  olusturmaTarihi DateTime @default(now())
+
+  @@index([girisId])
+  @@map("para_havuzu_dagitimlari")
+}

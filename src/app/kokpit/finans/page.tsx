@@ -11,6 +11,13 @@ const ALT_MODULLER = [
     aktif: true,
   },
   {
+    anahtar: "para-havuzu", renk: "#2fb5c9",
+    ad: "Para Havuzu",
+    aciklama: "Hangi dosyaya ait olduğu belli olmayan gelen paralar: önce havuza girilir, sonra müvekkile ya da dosyaya aktarılır.",
+    yol: "/kokpit/finans/para-havuzu",
+    aktif: true,
+  },
+  {
     anahtar: "musteri-iliskileri", renk: "#8b6cf0",
     ad: "Müvekkil Finansal İlişkiler",
     aciklama: "Cari hesap yönetimi, tahsilat/masraf tasnifi ve dosya bazlı bakiye takibi.",
