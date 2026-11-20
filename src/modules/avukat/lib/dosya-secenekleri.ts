@@ -15,13 +15,25 @@ export async function dosyaSecenekleriGetir(yalnizIcra = false): Promise<DosyaSe
       birimAdi: true,
       konu: true,
       muvekkiller: { select: { musteri: { select: { adSoyadUnvan: true } } } },
+      karsiTaraflar: { select: { karsiTaraf: { select: { ad: true } } } },
     },
   });
-  return dosyalar.map((d) => ({
-    id: d.id,
-    etiket: [kayitNoGoster(d.kayitNo), d.birimAdi, d.dosyaNo ?? "Esas no yok", d.konu].filter(Boolean).join(" · "),
-    ayrinti: d.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", "),
-  }));
+  // Arama icin temel bilgiler hep elin altinda: birim, dosya no, konu, muvekkil ve karsi taraf.
+  return dosyalar.map((d) => {
+    const muvekkil = d.muvekkiller.map((m) => m.musteri.adSoyadUnvan).join(", ");
+    const karsi = d.karsiTaraflar.map((k) => k.karsiTaraf.ad).filter(Boolean).join(", ");
+    return {
+      id: d.id,
+      etiket: [kayitNoGoster(d.kayitNo), d.dosyaNo ?? "Esas no yok", d.konu].filter(Boolean).join(" · "),
+      ayrinti: [
+        `Birim: ${d.birimAdi || "belirtilmemiş"}`,
+        muvekkil && `Müvekkil: ${muvekkil}`,
+        karsi && `Karşı taraf: ${karsi}`,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    };
+  });
 }
 
 export async function kullaniciSecenekleriGetir() {
