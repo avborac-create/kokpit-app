@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
+import { silebilirMi } from "@/core/auth/yetki";
 import { pushGonder } from "@/core/bildirim/push";
 import { duzeltmeOnaylayabilirMi } from "./duzeltme-onay";
 import { hesapIdAl } from "@/core/hesap/hesaplar";
@@ -227,7 +228,9 @@ export async function gelenOdemeTeyitEt(id: string, musteriIdSecimi = ""): Promi
     const o = await prisma.gelenOdemeKaydi.findUnique({ where: { id } });
     if (!o) throw new Error("Kayıt bulunamadı.");
     if (o.durum === "TEYIT_EDILDI") throw new Error("Bu ödeme zaten teyit edilmiş.");
-    if (o.olusturanId === k.kullaniciId) throw new Error("Kaydı giren kişi kendi kaydını teyit edemez.");
+    // Istisna: YONETICI kendi kaydini teyit edebilir; muhasebeye bilgi gider, muhasebe teyidi geri cekebilir.
+    const yoneticiKendiKaydi = o.olusturanId === k.kullaniciId && silebilirMi(k.rol);
+    if (o.olusturanId === k.kullaniciId && !yoneticiKendiKaydi) throw new Error("Kaydı giren kişi kendi kaydını teyit edemez.");
     if (!o.aciklama?.trim()) throw new Error("Paranın geliş sebebi yazılmamış; önce “Düzelt” ile sebebi yazın.");
     if (!o.hesapId) throw new Error("Paranın hangi hesaba geldiği belirtilmemiş; önce “Hesabı değiştir” ile hesabı seçin.");
 
@@ -261,11 +264,24 @@ export async function gelenOdemeTeyitEt(id: string, musteriIdSecimi = ""): Promi
           incelemeZamani: null,
           cariHareketId,
           havuzGirisiId,
+          ...(yoneticiKendiKaydi
+            ? { teyitNotu: [o.teyitNotu, `Yönetici kendi girdiği kaydı teyit etti (${k.adSoyad ?? k.kullaniciId}, ${new Date().toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul" })}); muhasebe geri çekebilir.`].filter(Boolean).join("\n") }
+            : {}),
           ...(musteriIdSecimi && !o.musteriId ? { musteriId: musteriIdSecimi } : {}),
         },
       });
     });
-    if (o.olusturanId) {
+    if (yoneticiKendiKaydi) {
+      const muhasebe = (await prisma.kullanici.findMany({ where: { aktifMi: true, finansYetkilisiMi: true, id: { not: k.kullaniciId } }, select: { id: true } })).map((x) => x.id);
+      if (muhasebe.length > 0) {
+        await pushGonder(muhasebe, {
+          baslik: "ℹ️ Yönetici kendi kaydını teyit etti",
+          metin: `${k.adSoyad}: ${Number(o.tutar).toLocaleString("tr-TR")} TL${o.odeyenAdi ? ` — ${o.odeyenAdi}` : ""}. Kontrol edin; gerekirse teyidi geri çekin.`.slice(0, 180),
+          url: "/kokpit/hizli-veri-girisi/para-trafigi",
+          etiket: `odeme-yonetici-teyit-${id}`,
+        });
+      }
+    } else if (o.olusturanId) {
       await pushGonder([o.olusturanId], {
         baslik: "✅ Ödeme teyit edildi",
         metin: `${Number(o.tutar).toLocaleString("tr-TR")} TL${o.odeyenAdi ? ` — ${o.odeyenAdi}` : ""}`.slice(0, 180),
@@ -278,6 +294,51 @@ export async function gelenOdemeTeyitEt(id: string, musteriIdSecimi = ""): Promi
     return {};
   } catch (e) {
     return { hata: e instanceof Error ? e.message : "Teyit edilemedi." };
+  }
+}
+
+// Teyidi GERI CEK: muhasebe (finans yetkilisi/yonetici) teyitli kaydi tekrar "teyit bekliyor"a dusurur.
+// Cari hareket / havuz girisi geri alinir (havuzdan dagitim yapildiysa once dagitim geri alinmali). Iz birakir.
+export async function gelenOdemeTeyidiGeriCek(id: string, neden: string): Promise<{ hata?: string }> {
+  try {
+    const k = await mevcutKullanici();
+    if (!k || !(await ekonomiDuzenleyebilirMi())) throw new Error("Teyidi geri çekme yetkiniz yok.");
+    const o = await prisma.gelenOdemeKaydi.findUnique({ where: { id } });
+    if (!o) throw new Error("Kayıt bulunamadı.");
+    if (o.durum !== "TEYIT_EDILDI") throw new Error("Bu kayıt teyitli değil.");
+    const sebep = neden.trim().slice(0, 500);
+    if (!sebep) throw new Error("Geri çekme sebebini yazın.");
+    if (o.havuzGirisiId) {
+      const dagitilan = await prisma.paraHavuzuDagitimi.count({ where: { girisId: o.havuzGirisiId } });
+      if (dagitilan > 0) throw new Error("Bu para Para Havuzu'ndan dağıtılmış; önce dağıtımı geri alın.");
+    }
+    const iz = `Teyit geri çekildi (${k.adSoyad ?? k.kullaniciId}, ${new Date().toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul" })}): ${sebep}`;
+    await prisma.$transaction(async (tx) => {
+      await tx.gelenOdemeKaydi.update({
+        where: { id },
+        data: { durum: "TEYIT_BEKLIYOR", teyitEdenId: null, teyitZamani: null, cariHareketId: null, havuzGirisiId: null, teyitNotu: [o.teyitNotu, iz].filter(Boolean).join("\n") },
+      });
+      if (o.cariHareketId) await tx.cariHareketi.delete({ where: { id: o.cariHareketId } });
+      if (o.havuzGirisiId) await tx.paraHavuzuGirisi.delete({ where: { id: o.havuzGirisiId } });
+      await tx.gelenOdemeDuzeltmeTalebi.updateMany({
+        where: { kayitId: id, durum: "BEKLIYOR" },
+        data: { durum: "REDDEDILDI", kararVerenId: k.kullaniciId, kararZamani: new Date(), kararNotu: "Teyit geri çekildi" },
+      });
+    });
+    const bildirilecek = [o.olusturanId, o.teyitEdenId].filter((x): x is string => !!x && x !== k.kullaniciId);
+    if (bildirilecek.length > 0) {
+      await pushGonder(bildirilecek, {
+        baslik: "↩️ Ödeme teyidi geri çekildi",
+        metin: `${Number(o.tutar).toLocaleString("tr-TR")} TL${o.odeyenAdi ? ` — ${o.odeyenAdi}` : ""}: ${sebep}`.slice(0, 180),
+        url: "/kokpit/hizli-veri-girisi/para-trafigi",
+        etiket: `odeme-${id}`,
+      });
+    }
+    revalidatePath("/kokpit", "layout");
+    yenile(o.dosyaId);
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "Geri çekilemedi." };
   }
 }
 

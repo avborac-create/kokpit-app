@@ -6,6 +6,7 @@ import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
 import { dosyaSecenekleriGetir } from "@/modules/avukat/lib/dosya-secenekleri";
 import { dosyaEtiketiYaz } from "@/modules/dava-dosyasi/lib/cari-sistem";
 import { duzeltmeOnaylayabilirMi } from "../duzeltme-onay";
+import { silebilirMi } from "@/core/auth/yetki";
 import { aktifHesaplar } from "@/core/hesap/hesaplar";
 import {
   SatirSecimKutusu,
@@ -17,6 +18,7 @@ import {
   DuzeltmeKarari,
   DuzeltmeTalebiDugmesi,
   HesapDegistirDugmesi,
+  TeyidiGeriCekDugmesi,
   KayitDuzenleDugmesi,
   KayitSilDugmesi,
   OtomatikYenile,
@@ -340,6 +342,10 @@ export default async function ParaTrafigiKaydetSayfasi({
                       : "Para Havuzu’na alındı"}
                   </p>
                 )}
+                {x.durum === "TEYIT_EDILDI" && x.teyitNotu && (
+                  <p className="mt-1 whitespace-pre-line text-xs text-[#ffcf6b]">{x.teyitNotu}</p>
+                )}
+                {x.durum === "TEYIT_EDILDI" && yetkili && <TeyidiGeriCekDugmesi id={x.id} />}
                 {x.durum === "TEYIT_EDILDI" &&
                   (() => {
                     const t = talepVar.get(x.id);
@@ -412,7 +418,7 @@ export default async function ParaTrafigiKaydetSayfasi({
                     <TeyitEylemleri
                       id={x.id}
                       yetkili={yetkili && x.durum === "TEYIT_BEKLIYOR"}
-                      kendiKaydi={x.olusturanId === k.kullaniciId}
+                      kendiKaydi={x.olusturanId === k.kullaniciId && !silebilirMi(k.rol)}
                       musteriSecimi={musteriler}
                       inceleme={incelemeDurumu}
                     />

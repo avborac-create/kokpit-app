@@ -9,7 +9,7 @@ import { Dugme } from "@/core/ui/button";
 import { DosyaSecici, type DosyaSeciciSecenegi } from "@/core/ui/dosya-secici";
 import { HesapSecici } from "@/core/ui/hesap-secici";
 import type { HesapSecenegi } from "@/core/hesap/hesaplar";
-import { gelenOdemeDekontEkle, gelenOdemeDuzeltmeKarari, gelenOdemeDuzeltmeTalebiVer, gelenOdemeDuzenle, gelenOdemeIncelemeyeAl, gelenOdemeIncelemeyiBirak, gelenOdemeHesapDegistir, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt } from "../actions";
+import { gelenOdemeDekontEkle, gelenOdemeDuzeltmeKarari, gelenOdemeDuzeltmeTalebiVer, gelenOdemeDuzenle, gelenOdemeIncelemeyeAl, gelenOdemeIncelemeyiBirak, gelenOdemeHesapDegistir, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt, gelenOdemeTeyidiGeriCek } from "../actions";
 
 export function YeniOdemeFormu({ dosyalar, hesaplar }: { dosyalar: DosyaSeciciSecenegi[]; hesaplar: HesapSecenegi[] }) {
   const router = useRouter();
@@ -241,6 +241,47 @@ export function TeyitEylemleri({ id, yetkili, kendiKaydi, musteriSecimi, incelem
           <input value={neden} onChange={(e) => setNeden(e.target.value)} placeholder="Neden (ör. tutar farklı, hesapta görünmüyor)" className="min-w-[16rem] flex-1 rounded-md border border-white/20 bg-black/20 px-3 py-1.5 text-xs text-white outline-none focus:border-[var(--accent)]" />
           <button type="button" disabled={bekliyor} onClick={() => calistir(() => gelenOdemeTeyitEdilemedi(id, neden))} className="rounded-md border border-[#ff7a70]/60 px-3 py-1.5 text-xs font-semibold text-[#ff9b92] hover:bg-[#ff7a70]/10">
             Teyit edilemedi olarak işaretle
+          </button>
+        </div>
+      )}
+      {hata && <p className="text-xs text-[#ff7a70]">{hata}</p>}
+    </div>
+  );
+}
+
+// Muhasebe: teyitli kaydin teyidini sebep yazarak geri ceker (kayit tekrar "teyit bekliyor"a doner).
+export function TeyidiGeriCekDugmesi({ id }: { id: string }) {
+  const router = useRouter();
+  const [acik, setAcik] = useState(false);
+  const [neden, setNeden] = useState("");
+  const [hata, setHata] = useState("");
+  const [bekliyor, basla] = useTransition();
+  return (
+    <div className="mt-2 flex flex-col gap-2">
+      {!acik ? (
+        <button type="button" onClick={() => setAcik(true)} className="self-start rounded-md border border-[#ff7a70]/60 px-3 py-1.5 text-xs text-[#ff9b92] hover:bg-[#ff7a70]/10">
+          Teyidi geri çek
+        </button>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <input value={neden} onChange={(e) => setNeden(e.target.value)} placeholder="Geri çekme sebebi (zorunlu)" className="min-w-[16rem] flex-1 rounded-md border border-white/20 bg-black/20 px-3 py-1.5 text-xs text-white outline-none focus:border-[var(--accent)]" />
+          <button
+            type="button"
+            disabled={bekliyor}
+            onClick={() => {
+              setHata("");
+              basla(async () => {
+                const s = await gelenOdemeTeyidiGeriCek(id, neden);
+                if (s.hata) setHata(s.hata);
+                else router.refresh();
+              });
+            }}
+            className="rounded-md border border-[#ff7a70]/60 px-3 py-1.5 text-xs font-semibold text-[#ff9b92] hover:bg-[#ff7a70]/10 disabled:opacity-50"
+          >
+            Geri çekmeyi onayla
+          </button>
+          <button type="button" onClick={() => setAcik(false)} className="text-xs text-white/60">
+            Vazgeç
           </button>
         </div>
       )}
