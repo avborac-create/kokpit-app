@@ -203,11 +203,11 @@ export default async function ParaTrafigiKaydetSayfasi({
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-white/60">
-                      {gun.format(x.tarih)} · giren:{" "}
+                      {gun.format(x.tarih)} · Oluşturan:{" "}
                       {kisi.get(x.olusturanId ?? "") ?? "—"}
                     </p>
                     <p className="mt-0.5 font-medium text-white">
-                      <span className="font-normal text-white/50">Gönderen kişi: </span>
+                      <span className="font-normal text-white/70">Gönderen kişi: </span>
                       {x.odeyenAdi || "belirtilmedi"}
                     </p>
                     {x.dosyaId ? (
