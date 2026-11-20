@@ -7,6 +7,7 @@ import { isDetayiYukle } from "./detay-veri";
 import { donemBasi } from "./hafta";
 import { YanPanel } from "./yan-panel";
 import { OdakKutusu } from "./odak-kutusu";
+import { DekontGonder } from "./dekont-gonder";
 import { ekonomiDuzenleyebilirMi } from "@/core/auth/finans-yetki";
 import { sistemYoneticisiMi } from "@/core/auth/yetki";
 import type { Oge, OgeDurumu, OgeTuru, Tekrar, TakvimKodu } from "../takvim/tipler";
@@ -53,6 +54,16 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
     .filter((i) => !i.vade || i.vade.toISOString().slice(0, 10) <= bugun)
     .map((i) => ({ id: i.id, baslik: i.baslik.replace(/^Müvekkilden bakiye istenecek:\s*/, ""), dosyaId: (i.kaynak ?? "").split(":")[1] ?? "" }));
   const eksiErtelenen = eksiIsleri.length - eksiUyarilari.length;
+  // Teyit bekleyen dekont gorevleri: sorumlusuna ve finans yetkililerine/yoneticiye gorunur.
+  const dekontTum = await prisma.is.findMany({
+    where: { kaynak: { startsWith: "dekont:" }, durum: { not: "TAMAMLANDI" } },
+    orderBy: { olusturmaTarihi: "asc" },
+    select: { id: true, baslik: true, sorumluId: true, olusturmaTarihi: true },
+  });
+  const dekontIsleri = dekontTum.filter((i) => hepsiniGorur || i.sorumluId === k?.kullaniciId || (k && sistemYoneticisiMi(k.rol)));
+  // Varsayilan sorumlu: finans yetkilisi "Ebru" varsa o, yoksa ilk finans yetkilisi, yoksa kullanicinin kendisi.
+  const finansKisileri = await prisma.kullanici.findMany({ where: { aktifMi: true, finansYetkilisiMi: true }, select: { id: true, adSoyad: true }, orderBy: { adSoyad: "asc" } });
+  const dekontVarsayilanId = (finansKisileri.find((x) => /ebru/i.test(x.adSoyad)) ?? finansKisileri[0])?.id ?? k?.kullaniciId ?? "";
   // Soldaki panelde secili kisi ("buro" ya da kisi id'si); yoksa kullanicinin kendisi.
   const secili = kisi && (kisi === "buro" || kisiler.some((x) => x.id === kisi)) ? kisi : kimin === "buro" ? "buro" : (k?.kullaniciId ?? "buro");
   // Kisiye ozel takvim: kisiye atanmis (ya da kisinin olusturup kimseye atamadigi) buro takvimi ogeleri.
@@ -93,13 +104,37 @@ export default async function IslerSayfasi({ searchParams }: { searchParams: Pro
     <div className="max-w-7xl pt-3">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-white">Görevler</h1>
+        <div className="ml-auto">
+          <DekontGonder kisiler={kisiler} varsayilanId={dekontVarsayilanId} />
+        </div>
         {k && sistemYoneticisiMi(k.rol) && (
-          <Link href="/kokpit/isler/yonetim" className="ml-auto rounded-lg border border-[var(--accent)]/50 bg-[var(--accent)]/15 px-3 py-1.5 text-sm font-semibold text-white hover:bg-[var(--accent)]/25">
+          <Link href="/kokpit/isler/yonetim" className="rounded-lg border border-[var(--accent)]/50 bg-[var(--accent)]/15 px-3 py-1.5 text-sm font-semibold text-white hover:bg-[var(--accent)]/25">
             Görev Yönetimi (yönetici)
           </Link>
         )}
       </div>
       <p className="mb-5 mt-1 text-sm text-white/55">Sizden beklenen her şey burada. Görünümü (liste ya da kanban) kendiniz seçebilirsiniz; bir göreve tıklayınca sağda ayrıntısı açılır.</p>
+      {dekontIsleri.length > 0 && (
+        <section aria-label="Teyit bekleyen dekontlar" className="mb-5 rounded-2xl border border-[#ff7a70]/50 bg-[#ff7a70]/[0.08] p-3">
+          <h2 className="mb-1.5 flex items-center gap-2 px-1 text-[15px] font-semibold text-[#ff9b92]">
+            ⚠️ Teyit bekleyen dekont / evrak
+            <span className="rounded-full bg-[#ff7a70]/25 px-2 text-xs">{dekontIsleri.length}</span>
+          </h2>
+          <p className="mb-2 px-1 text-xs text-white/60">Bankadan teyit edilip Para Trafiği&apos;ne işlenene ve görev kapatılana kadar burada kalır.</p>
+          <ul className="flex flex-col gap-1">
+            {dekontIsleri.map((i) => (
+              <li key={i.id}>
+                <Link href={`/kokpit/isler?is=${i.id}`} scroll={false} className="flex flex-wrap items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-white hover:bg-white/10">
+                  <span className="min-w-0 flex-1 truncate">{i.baslik}</span>
+                  <span className="shrink-0 text-xs text-white/55">
+                    {ad.get(i.sorumluId ?? "") ?? "Atanmadı"} · {i.olusturmaTarihi.toLocaleDateString("tr-TR", { day: "numeric", month: "long", timeZone: "Europe/Istanbul" })}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <OdakKutusu
         bugun={bugun}
         kartlar={odaklar.map((o) => ({ id: o.is.id, baslik: o.is.baslik, durum: o.is.durum, tur: o.is.tur, vade: o.is.vade ? o.is.vade.toISOString().slice(0, 10) : "", maddeToplam: o.is.maddeler.length, maddeTamam: o.is.maddeler.filter((m) => m.tamam).length, sorumluAd: o.is.sorumluId ? (ad.get(o.is.sorumluId) ?? "—") : "Atanmadı" }))}

@@ -58,6 +58,59 @@ export async function isEkle(baslik: string, sorumluId: string, aciklama: string
   return { id: is.id };
 }
 
+// WhatsApp'tan/kagit olarak gelen dekont ya da evrak: fotografi/PDF'i yukleyip tek adimda
+// atanmis, teslim tarihi bugun olan bir gorev acar. Gorev "dekont:" kaynaklidir; kapatilana
+// kadar sorumlunun Gorevler sayfasinda uyari kutusunda durur (evrak gozden kacmasin).
+export async function dekontGoreviOlustur(sorumluId: string, not: string, ekler: YeniEk[]): Promise<{ hata?: string; id?: string }> {
+  const k = await girisli();
+  const gecerli = ekler.filter((e) => e.url.startsWith("https://") && e.url.includes("/isler/")).slice(0, 10);
+  if (gecerli.length === 0) return { hata: "Önce dekont/evrak dosyasını yükleyin." };
+  const atanan = sorumluId || k.kullaniciId;
+  const notMetni = not.trim();
+  const bugun = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
+  const aciklama = [
+    "Gelen ödeme dekontu. Yapılacaklar:",
+    "1) Paranın büro hesabına geçtiğini bankadan teyit edin.",
+    "2) Hangi dosya/müvekkil için geldiğini belirleyin (bilinmiyorsa avukata sorun).",
+    "3) Para Trafiği'ne işleyin; sonra bu görevi kapatın.",
+    notMetni ? `Not: ${notMetni}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, 2000);
+  const is = await prisma.is.create({
+    data: {
+      baslik: `Gelen dekont: teyit et ve sisteme işle${notMetni ? ` — ${notMetni.split("\n")[0].slice(0, 90)}` : ""}`,
+      aciklama,
+      sorumluId: atanan,
+      olusturanId: k.kullaniciId,
+      kaynak: "dekont:gelen",
+      tur: "PARCA",
+      sinif: "ANA",
+      zamanBaskisi: "TESLIM",
+      vade: new Date(bugun),
+    },
+    select: { id: true },
+  });
+  await prisma.isYorumu.create({
+    data: {
+      isId: is.id,
+      yazanId: k.kullaniciId,
+      metin: notMetni.slice(0, 2000) || "Dekont ektedir.",
+      ekler: { create: gecerli.map((e) => ({ isId: is.id, url: e.url, ad: e.ad.slice(0, 200), tur: e.tur.slice(0, 100) })) },
+    },
+  });
+  await dekontBildir(is.id, atanan, k.kullaniciId, k.adSoyad);
+  revalidatePath("/kokpit/isler");
+  return { id: is.id };
+}
+
+async function dekontBildir(isId: string, atanan: string, yapanId: string, yapanAd: string) {
+  if (atanan !== yapanId) {
+    await pushGonder([atanan], { baslik: "📎 Yeni dekont: teyit bekliyor", metin: `${yapanAd} bir dekont gönderdi.`, url: `/kokpit/isler?is=${isId}`, etiket: `is-${isId}` });
+  }
+}
+
 async function durumDegistir_(isId: string, durum: string) {
   const k = await girisli();
   const d = DURUMLAR.find((x) => x.anahtar === durum);
