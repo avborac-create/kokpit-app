@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alan, Etiket, Girdi, Secim } from "@/core/ui/form";
 import { GonderButonu } from "@/core/ui/gonder-butonu";
 import { ParaGirdisi } from "@/core/ui/para-girdisi";
@@ -79,7 +79,10 @@ export function VirmanFormu({
   mevcutBakiye,
   kaynaklar,
   tahsilatlar,
+  disaridanDoldur,
 }: {
+  // Defterde secilen satirlarin toplami bu forma aktarilsin mi ("Seçilenleri virman yap").
+  disaridanDoldur?: boolean;
   action: (formData: FormData) => void;
   hedefler: { id: string; etiket: string }[];
   sabitHedefId?: string;
@@ -102,6 +105,19 @@ export function VirmanFormu({
   // "Tamamini aktar" ile doldurulan tutar (alan yeniden olusturularak doldurulur).
   const [doldurulan, setDoldurulan] = useState<{ sayac: number; tutar: number } | null>(null);
   const kaynakBakiyesi = kaynaklar ? kaynaklar.find((k) => k.deger === seciliKaynak)?.bakiye : mevcutBakiye;
+
+  useEffect(() => {
+    if (!disaridanDoldur) return;
+    const dinle = (e: Event) => {
+      const tutar = (e as CustomEvent<{ tutar: number }>).detail?.tutar;
+      if (!tutar) return;
+      setDoldurulan((o) => ({ sayac: (o?.sayac ?? 0) + 1, tutar }));
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      (formRef.current?.elements.namedItem("hedefHesapId") as HTMLElement | null)?.focus?.();
+    };
+    window.addEventListener("virman-tutar-doldur", dinle);
+    return () => window.removeEventListener("virman-tutar-doldur", dinle);
+  }, [disaridanDoldur]);
 
   function tahsilatSec(id: string) {
     const t = tahsilatlar?.find((x) => x.id === id) ?? null;

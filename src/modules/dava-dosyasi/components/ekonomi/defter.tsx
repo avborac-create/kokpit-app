@@ -163,6 +163,7 @@ export function Defter({
       <input
         type="checkbox"
         data-toplu={`${s.duzenle.tip}:${s.duzenle.id}`}
+        data-tutar={tutarOf(s)}
         aria-label="Kaydı seç"
         className="h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)] opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
       />
@@ -311,6 +312,7 @@ export function Defter({
                       <input
                         type="checkbox"
                         data-toplu={`${s.duzenle.tip}:${s.duzenle.id}`}
+        data-tutar={tutarOf(s)}
                         aria-label="Kaydı seç"
                         className="h-4 w-4 cursor-pointer accent-[var(--accent)]"
                       />

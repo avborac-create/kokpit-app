@@ -81,6 +81,17 @@ export function TopluSecim({ children, virmanHedefleri }: { children: ReactNode;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Secili satirlarin hesaptaki net tutari (yalnizca hesabi arttiranlar toplanir) -> Virman formuna aktarilir.
+  function virmanFormunaAktar() {
+    const toplam = kutular()
+      .filter((k) => k.checked)
+      .reduce((n, k) => n + (Number(k.dataset.tutar) || 0), 0);
+    const tutar = Math.round(toplam * 100) / 100;
+    if (tutar <= 0) return setHata("Seçili kayıtların toplamı aktarılabilir bir tutar değil.");
+    setHata(null);
+    window.dispatchEvent(new CustomEvent("virman-tutar-doldur", { detail: { tutar } }));
+  }
+
   function tumunuSec() {
     const hepsi = kutular();
     const yeni = !hepsi.every((k) => k.checked);
@@ -129,6 +140,11 @@ export function TopluSecim({ children, virmanHedefleri }: { children: ReactNode;
             <Dugme type="button" varyant="ikincil" boyut="kompakt" disabled={beklemede || !tarih} onClick={tarihUygula}>
               Tarihi değiştir
             </Dugme>
+            {!virmanHedefleri && (
+              <Dugme type="button" varyant="ikincil" boyut="kompakt" onClick={virmanFormunaAktar}>
+                ⇄ Seçilenleri virman yap
+              </Dugme>
+            )}
             {virmanHedefleri && virmanHedefleri.length > 0 && (
               <>
                 <Secim

@@ -949,6 +949,7 @@ async function HesapSekmesi({
           <VirmanFormu
             action={virmanYap.bind(null, kapsam.musteriId, kapsamDosyaId)}
             hedefler={hedefler.filter((h) => h.id !== hesap.id)}
+            disaridanDoldur
             dosyalar={dosyalar}
             sabitDosyaId={kapsam.dosyaId}
             mevcutBakiye={paraBakiyesi}
