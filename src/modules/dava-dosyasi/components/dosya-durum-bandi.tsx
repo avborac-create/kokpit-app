@@ -62,6 +62,12 @@ export function DosyaDurumBandi({
   const seciliSira = yol.findIndex((s) => s.id === secili);
   const onayHedefi = onayBekleyen ? secenekler.find((x) => x.id === onayBekleyen) : undefined;
 
+  // Yeni Esas secilince yeni cizgi (tur) acilir. Dosya zaten Yeni Esas'taysa ama
+  // hic tur kaydi yoksa (ozellikten once girilmis durum) yine yeni tur acilir.
+  function yeniTurGerekir(hedefKod?: string) {
+    return yeniEsasMi(hedefKod) && (!yeniEsasMi(seciliSecenek?.kod) || turGecmisi.length === 0);
+  }
+
   // Gosterilecek ad: "Istinaf'ta (2. gidis)" ya da kullanicinin yazdigi diger durum adi.
   function gorunenAd(s: DurumSecenegi | null | undefined) {
     if (!s) return "";
@@ -95,7 +101,7 @@ export function DosyaDurumBandi({
     setSecili(yeni || null);
     setGidis(yeniGidis);
     setDiger(yeniDiger);
-    const yeniTur = yeniEsasMi(hedef?.kod) && !yeniEsasMi(seciliSecenek?.kod) && !!yeni;
+    const yeniTur = yeniTurGerekir(hedef?.kod) && !!yeni;
     startTransition(async () => {
       try {
         if (yeniTur) {
@@ -221,6 +227,21 @@ export function DosyaDurumBandi({
               {turGecmisi.length + 1}. Tur
             </span>
           )}
+          {secili && yeniEsasMi(seciliSecenek?.kod) && turGecmisi.length === 0 && (
+            <button
+              type="button"
+              disabled={bekliyor}
+              onClick={() => {
+                setHata(null);
+                setOnayBekleyen(secili);
+                setGirdiYeniNo("");
+              }}
+              className="mt-1 block rounded-full border border-dashed border-[var(--accent)]/60 px-2.5 py-0.5 text-[11px] font-semibold text-[#8fb4e8] hover:bg-white/10"
+              title="Önceki süreci üst çizgiye taşır, yeni esas için alta yeni çizgi açar"
+            >
+              + Yeni esas için yeni çizgi aç
+            </button>
+          )}
           {gidisli(seciliSecenek?.kod) && (
             <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/60">
               Gidiş sayısı
@@ -280,7 +301,7 @@ export function DosyaDurumBandi({
               className="min-w-[14rem] rounded-lg border border-white/30 bg-black/20 px-3 py-1.5 text-xs text-white outline-none focus:border-[var(--accent)]"
             />
           )}
-          {yeniEsasMi(onayHedefi?.kod) && !yeniEsasMi(seciliSecenek?.kod) && (
+          {yeniTurGerekir(onayHedefi?.kod) && (
             <label className="flex items-center gap-2 text-xs">
               Yeni esas no
               <input
