@@ -31,6 +31,8 @@ export function YerindeDuzenle({
   const [virmanModu, setVirmanModu] = useState(false);
   const [hizliKalan, setHizliKalan] = useState(false);
   const virmanMi = duzenle.tip === "virman";
+  // "Hedefi değiştir" kısayolu: yalnızca hedef hesap seçtirir; tarih/tutar/not aynen kalır.
+  const [hedefOdak, setHedefOdak] = useState(false);
   const [hedefBilgisi, setHedefBilgisi] = useState<{ hedefId: string | null; hedefler: { id: string; etiket: string }[] } | null>(null);
 
   function ac() {
@@ -47,6 +49,7 @@ export function YerindeDuzenle({
         return;
       }
       setAcik(false);
+      setHedefOdak(false);
       router.refresh();
     });
   }
@@ -79,6 +82,16 @@ export function YerindeDuzenle({
       <button type="button" onClick={ac} className="text-xs text-[#6db8ff] hover:underline">
         Düzenle
       </button>
+      {virman && virmanMi && (
+        <button
+          type="button"
+          onClick={() => { setHedefOdak(true); ac(); }}
+          title="Para yanlış hesaba virman edildiyse hedef hesabı değiştirir (silmeden)"
+          className="whitespace-nowrap rounded-md bg-[#8b5cf6]/20 px-1.5 py-0.5 text-[11px] text-[#c4b5fd] hover:bg-[#8b5cf6]/30"
+        >
+          ⇄ Hedefi değiştir
+        </button>
+      )}
       {virman && !virmanMi && virmanKalan && virmanKalan > 0.001 && (
         <button
           type="button"
@@ -96,7 +109,7 @@ export function YerindeDuzenle({
       )}
       {acik &&
         createPortal(
-          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4" onClick={() => { setAcik(false); setVirmanModu(false); setHizliKalan(false); }}>
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4" onClick={() => { setAcik(false); setVirmanModu(false); setHizliKalan(false); setHedefOdak(false); }}>
             {virmanModu && virman ? (
               <form action={virmanYap} className="popover w-full max-w-md rounded-2xl p-5" onClick={(e) => e.stopPropagation()}>
                 <h3 className="mb-1 text-base font-semibold text-white">⇄ Bu Ödemeden Virman Yap</h3>
@@ -142,9 +155,11 @@ export function YerindeDuzenle({
               className="popover w-full max-w-md rounded-2xl p-5"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="mb-1 text-base font-semibold text-white">{virmanMi ? "Virmanı Düzenle" : "Kaydı Düzenle"}</h3>
+              <h3 className="mb-1 text-base font-semibold text-white">{hedefOdak ? "Hedef Hesabı Değiştir" : virmanMi ? "Virmanı Düzenle" : "Kaydı Düzenle"}</h3>
               <p className="mb-4 text-xs text-white/45">
-                {virmanMi
+                {hedefOdak
+                  ? "Para yanlış hesaba aktarıldıysa doğru hesabı seçin. Tutar ve tarih değişmez; kayıt silinmez, değişiklik işlem günlüğüne yazılır."
+                  : virmanMi
                   ? "Hedef hesap, tarih, tutar ve not, virmanın iki tarafındaki kayıtta birlikte değişir. Para Trafiği eksiye düşemez."
                   : "Tarih, tutar, açıklama, ödeme şekli ve para kaynağı düzeltilebilir. Para Trafiği, virmanla kullanılmış tutarın altına indirilemez."}
               </p>
@@ -160,18 +175,27 @@ export function YerindeDuzenle({
                   </Secim>
                 </Alan>
               )}
-              <Alan>
-                <Etiket htmlFor="yd-tarih">Tarih</Etiket>
-                <Girdi id="yd-tarih" name="tarih" type="date" required defaultValue={duzenle.tarih} />
-              </Alan>
-              <Alan>
-                <Etiket htmlFor="yd-tutar">Tutar</Etiket>
-                <ParaGirdisi id="yd-tutar" name="tutar" required defaultValue={duzenle.tutar} />
-              </Alan>
-              <Alan>
-                <Etiket htmlFor="yd-aciklama">{virmanMi ? "Not (virman açıklamasına eklenir)" : "Açıklama"}</Etiket>
-                <Girdi id="yd-aciklama" name="aciklama" defaultValue={duzenle.aciklama} />
-              </Alan>
+              {hedefOdak ? (
+                <>
+                  <input type="hidden" name="tarih" value={duzenle.tarih} />
+                  <input type="hidden" name="tutar" value={String(duzenle.tutar)} />
+                </>
+              ) : (
+                <>
+                  <Alan>
+                    <Etiket htmlFor="yd-tarih">Tarih</Etiket>
+                    <Girdi id="yd-tarih" name="tarih" type="date" required defaultValue={duzenle.tarih} />
+                  </Alan>
+                  <Alan>
+                    <Etiket htmlFor="yd-tutar">Tutar</Etiket>
+                    <ParaGirdisi id="yd-tutar" name="tutar" required defaultValue={duzenle.tutar} />
+                  </Alan>
+                  <Alan>
+                    <Etiket htmlFor="yd-aciklama">{virmanMi ? "Not (virman açıklamasına eklenir)" : "Açıklama"}</Etiket>
+                    <Girdi id="yd-aciklama" name="aciklama" defaultValue={duzenle.aciklama} />
+                  </Alan>
+                </>
+              )}
               {!virmanMi && yontemler && (
                 <Alan>
                   <Etiket htmlFor="yd-yontem">Ödeme Şekli</Etiket>
@@ -199,7 +223,7 @@ export function YerindeDuzenle({
                     ⇄ Virman yap
                   </Dugme>
                 )}
-                <Dugme type="button" varyant="ikincil" onClick={() => setAcik(false)}>
+                <Dugme type="button" varyant="ikincil" onClick={() => { setAcik(false); setHedefOdak(false); }}>
                   Vazgeç
                 </Dugme>
                 <Dugme type="submit" disabled={beklemede}>
