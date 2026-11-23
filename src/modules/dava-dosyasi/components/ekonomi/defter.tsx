@@ -168,12 +168,21 @@ export function Defter({
         className="h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)] opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
       />
     ) : null;
-  const etiketler = (s: Satir) => (
-    <>
-      {s.borcludan && <span className="ml-2 whitespace-nowrap rounded-full bg-[#ffb340]/15 px-2 py-0.5 text-[11px] text-[#ffb340]">Karşı taraftan</span>}
-      {s.odemeYontemi && <span className="ml-2 whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2 py-0.5 text-[11px] text-[#6db8ff]">{s.odemeYontemi}</span>}
-    </>
-  );
+  // Sade satir: ödeme şekli (ör. Mokka United), "karşı taraftan" ve virman notu satırda görünmez;
+  // yalnızca o kaydın detayını isteyen "Detay" düğmesine basınca açılır.
+  const etiketler = (s: Satir) => {
+    if (!s.odemeYontemi && !s.borcludan && !s.detayNotu) return null;
+    return (
+      <details className="mt-1 text-[12px] [&_summary::-webkit-details-marker]:hidden">
+        <summary className="inline-block cursor-pointer select-none rounded-md border border-white/15 px-1.5 py-0.5 text-[11px] text-white/55 hover:text-white/85">Detay</summary>
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          {s.odemeYontemi && <span className="rounded-full bg-[#6db8ff]/15 px-2 py-0.5 text-[11px] text-[#6db8ff]">{s.odemeYontemi}</span>}
+          {s.borcludan && <span className="rounded-full bg-[#ffb340]/15 px-2 py-0.5 text-[11px] text-[#ffb340]">Karşı taraftan</span>}
+          {s.detayNotu && <span className="text-white/70">{s.detayNotu}</span>}
+        </div>
+      </details>
+    );
+  };
   const altBilgi = (s: Satir) => `${gunAy.format(s.tarih)}${dosyaSutunu ? ` · ${s.dosyaEtiketi ?? "havuz"}` : ""}`;
   const kalanSatiri = (
     <div className="mx-1 mt-3 flex items-center justify-between text-sm">
@@ -334,16 +343,7 @@ export function Defter({
                 )}
                 <td className={`px-2 py-3 text-white/85 md:px-4 ${kompakt ? "md:min-w-[12rem]" : ""}`}>
                   <span className="whitespace-pre-line">{s.aciklama}</span>
-                  {s.borcludan && (
-                    <span className="ml-2 whitespace-nowrap rounded-full bg-[#ffb340]/15 px-2 py-0.5 text-[11px] text-[#ffb340]">
-                      Karşı taraftan
-                    </span>
-                  )}
-                  {s.odemeYontemi && (
-                    <span className="ml-2 whitespace-nowrap rounded-full bg-[#6db8ff]/15 px-2 py-0.5 text-[11px] text-[#6db8ff]">
-                      {s.odemeYontemi}
-                    </span>
-                  )}
+                  {etiketler(s)}
                   <div className="mt-1 space-y-1.5 md:hidden">
                     <span className="block text-[11px] text-white/45">
                       {tarihBicimi.format(s.tarih)} · Bakiye: <span className={renk(s.bakiye)}>{para.format(s.bakiye)}</span>
