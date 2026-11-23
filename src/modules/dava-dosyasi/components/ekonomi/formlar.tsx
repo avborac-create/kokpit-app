@@ -87,7 +87,7 @@ export function VirmanFormu({
   sabitDosyaId?: string;
   mevcutBakiye: number;
   // Paranin nereden alinacagi: havuz / dosya para trafigi / baska bir hesaptaki fazla odeme.
-  kaynaklar?: { deger: string; etiket: string }[];
+  kaynaklar?: { deger: string; etiket: string; bakiye?: number }[];
   // Para girislerinden (tahsilatlar) biri secilirse tutar ve aciklama otomatik dolar.
   tahsilatlar?: { id: string; etiket: string; tutar: number; aciklama: string }[];
 }) {
@@ -98,6 +98,10 @@ export function VirmanFormu({
   const [borcAciklamaAcik, setBorcAciklamaAcik] = useState(false);
   const [varsayilanAciklama, setVarsayilanAciklama] = useState("");
   const [tahsilat, setTahsilat] = useState<{ id: string; tutar: number; aciklama: string } | null>(null);
+  const [seciliKaynak, setSeciliKaynak] = useState(kaynaklar?.[0]?.deger);
+  // "Tamamini aktar" ile doldurulan tutar (alan yeniden olusturularak doldurulur).
+  const [doldurulan, setDoldurulan] = useState<{ sayac: number; tutar: number } | null>(null);
+  const kaynakBakiyesi = kaynaklar ? kaynaklar.find((k) => k.deger === seciliKaynak)?.bakiye : mevcutBakiye;
 
   function tahsilatSec(id: string) {
     const t = tahsilatlar?.find((x) => x.id === id) ?? null;
@@ -144,7 +148,7 @@ export function VirmanFormu({
       {kaynaklar && (
         <Alan>
           <Etiket htmlFor="vf-kaynak">Para Nereden</Etiket>
-          <Secim id="vf-kaynak" name="kaynak" defaultValue={kaynaklar[0]?.deger}>
+          <Secim id="vf-kaynak" name="kaynak" defaultValue={kaynaklar[0]?.deger} onChange={(e) => setSeciliKaynak(e.target.value)}>
             {kaynaklar.map((k) => (
               <option key={k.deger} value={k.deger}>
                 {k.etiket}
@@ -178,9 +182,26 @@ export function VirmanFormu({
       <Alan>
         <Etiket htmlFor="vf-tutar">
           Tutar{" "}
-          {!kaynaklar && <span className="text-xs text-white/40">(aktarılabilir: {tl(mevcutBakiye)})</span>}
+          {kaynakBakiyesi !== undefined && (
+            <span className="text-xs text-white/40">(aktarılabilir: {tl(kaynakBakiyesi)})</span>
+          )}
         </Etiket>
-        <ParaGirdisi key={`t-${tahsilat?.id ?? ""}`} id="vf-tutar" name="tutar" required defaultValue={tahsilat?.tutar} />
+        <ParaGirdisi
+          key={`t-${tahsilat?.id ?? ""}-${doldurulan?.sayac ?? 0}`}
+          id="vf-tutar"
+          name="tutar"
+          required
+          defaultValue={doldurulan?.tutar ?? tahsilat?.tutar}
+        />
+        {kaynakBakiyesi !== undefined && kaynakBakiyesi > 0 && (
+          <button
+            type="button"
+            onClick={() => setDoldurulan({ sayac: (doldurulan?.sayac ?? 0) + 1, tutar: Math.round(kaynakBakiyesi * 100) / 100 })}
+            className="mt-1 self-start text-xs text-[var(--accent)] hover:underline"
+          >
+            Tamamını aktar (hesabı sıfırla)
+          </button>
+        )}
       </Alan>
       <Alan>
         <Etiket htmlFor="vf-borc">

@@ -955,6 +955,9 @@ async function HesapSekmesi({
             kaynaklar={[
               {
                 deger: `hesap:${hesap.id}`,
+                bakiye: kapsam.dosyaId
+                  ? Math.max(0, hesap.tutulanHesapMi ? (ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0) : -(ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0))
+                  : undefined,
                 etiket: kapsam.dosyaId
                   ? `${hesap.no} - ${hesap.ad} — aktarılabilir ${para.format(Math.max(0, hesap.tutulanHesapMi ? (ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0) : -(ozetHesaplar.find((o) => o.hesapId === hesap.id)?.bakiye ?? 0)))}`
                   : `${hesap.no} - ${hesap.ad} — seçilen dosyadaki tutar`,
