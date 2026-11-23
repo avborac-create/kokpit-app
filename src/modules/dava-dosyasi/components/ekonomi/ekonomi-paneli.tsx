@@ -940,8 +940,9 @@ async function HesapSekmesi({
         </>
       ) : (
         <>
-          <h3 className="mb-1 mt-6 text-sm font-semibold text-white">↪ Bu Hesaptaki Bakiyeyi Başka Hesaba Aktar (hesaplar arası virman)</h3>
-          <p className="mb-2 text-xs text-white/45">
+          <h3 className="mb-1 mt-6 text-sm font-semibold text-white">↪ Virman</h3>
+          <p className="mb-2 text-[10px] leading-snug text-white/30">
+            Bu hesaptaki bakiyeyi başka hesaba aktarır (hesaplar arası virman).
             Bu hesapta duran tutarı (fazla ödeme / adliyede duran para) istediğiniz başka bir hesaba aktarın; bu hesaptan Borç olarak düşer, hedef hesaba Alacak yazılır.
             Örn. 108 - Avans bakiyesini 102 - Harcama hesabına, 103 - Bloke Para&apos;yı adliye hesabına, adliyeden dönen parayı geri aktarabilirsiniz.
           </p>
