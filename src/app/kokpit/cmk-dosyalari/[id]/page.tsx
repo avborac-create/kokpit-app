@@ -4,6 +4,7 @@ import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { cmkDosyasiGetir } from "@/modules/cmk-dosyalari/lib/queries";
 import { DOSYA_DURUMU_ETIKETLERI } from "@/modules/cmk-dosyalari/lib/sabitler";
+import { DosyaOzeti } from "@/modules/cmk-dosyalari/components/dosya-ozeti";
 import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
 
 export default async function CMKDosyasiSayfasi({ params }: { params: Promise<{ id: string }> }) {
@@ -45,7 +46,7 @@ export default async function CMKDosyasiSayfasi({ params }: { params: Promise<{ 
           </Link>
         </div>
       </div>
-      {dosya.notlar && <p className="glass mb-4 whitespace-pre-line rounded-2xl p-4 text-sm text-white/70">{dosya.notlar}</p>}
+      {dosya.notlar && <DosyaOzeti notlar={dosya.notlar} />}
       <EvrakPaneli dosyaId={id} evraklar={kayitlar} />
     </div>
   );
