@@ -6,6 +6,38 @@ import { cmkDosyasiGetir } from "@/modules/cmk-dosyalari/lib/queries";
 import { DOSYA_DURUMU_ETIKETLERI } from "@/modules/cmk-dosyalari/lib/sabitler";
 import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
 
+/** Not satirlarini "ETIKET: metin" diye ayirir; etiketsiz satirlar duz metin kalir. */
+function notSatirlari(notlar: string) {
+  return notlar
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => {
+      const m = s.match(/^([A-ZÇĞİÖŞÜ0-9][A-ZÇĞİÖŞÜ0-9 /.\-]{1,30}?(?: \([^)]{1,25}\))?):\s+(.*)$/);
+      return m ? { etiket: m[1], metin: m[2] } : { etiket: "", metin: s };
+    });
+}
+
+function DosyaOzeti({ notlar }: { notlar: string }) {
+  const satirlar = notSatirlari(notlar);
+  return (
+    <details className="glass mb-4 rounded-2xl text-sm text-white/75">
+      <summary className="flex cursor-pointer select-none items-center justify-between gap-3 rounded-2xl px-4 py-3 text-white/90 hover:bg-white/5">
+        <span className="font-medium">Dosya özeti</span>
+        <span className="text-xs text-white/45">{satirlar.length} başlık · açmak/kapatmak için tıklayın</span>
+      </summary>
+      <dl className="max-h-[50vh] space-y-2 overflow-y-auto px-4 pb-4 pt-1">
+        {satirlar.map((s, i) => (
+          <div key={i} className="grid gap-x-3 border-t border-white/10 pt-2 sm:grid-cols-[11rem_1fr]">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[#6db8ff]">{s.etiket}</dt>
+            <dd className="leading-relaxed">{s.metin}</dd>
+          </div>
+        ))}
+      </dl>
+    </details>
+  );
+}
+
 export default async function CMKDosyasiSayfasi({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const dosya = await cmkDosyasiGetir(id);
@@ -45,7 +77,7 @@ export default async function CMKDosyasiSayfasi({ params }: { params: Promise<{ 
           </Link>
         </div>
       </div>
-      {dosya.notlar && <p className="glass mb-4 whitespace-pre-line rounded-2xl p-4 text-sm text-white/70">{dosya.notlar}</p>}
+      {dosya.notlar && <DosyaOzeti notlar={dosya.notlar} />}
       <EvrakPaneli dosyaId={id} evraklar={kayitlar} />
     </div>
   );
