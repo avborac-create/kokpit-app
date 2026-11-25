@@ -21,7 +21,6 @@ import {
   TeyidiGeriCekDugmesi,
   KayitDuzenleDugmesi,
   KayitSilDugmesi,
-  ManuelVeriIsareti,
   OtomatikYenile,
   TeyitEylemleri,
   YeniOdemeFormu,
@@ -197,7 +196,9 @@ export default async function ParaTrafigiKaydetSayfasi({
             const incelemede = x.durum === "TEYIT_BEKLIYOR" && !!x.incelemeyeAlanId;
             const d = incelemede
               ? { ad: `İnceleniyor · ${kisi.get(x.incelemeyeAlanId ?? "") ?? "Muhasebe"}`, sinif: "bg-[#6db8ff]/20 text-[#8fd8ff]" }
-              : (DURUMLAR[x.durum] ?? DURUMLAR.TEYIT_BEKLIYOR);
+              : x.durum === "TEYIT_EDILDI" && x.tamamlanmaBicimi === "DOSYADA_KAYITLI"
+                ? { ad: "Tamamlandı · dosyada zaten kayıtlı", sinif: "bg-[#b58cff]/20 text-[#cbb0ff]" }
+                : (DURUMLAR[x.durum] ?? DURUMLAR.TEYIT_BEKLIYOR);
             const incelemeDurumu: "yok" | "ben" | "baskasi" = !incelemede ? "yok" : x.incelemeyeAlanId === k.kullaniciId ? "ben" : "baskasi";
             const musteriler =
               x.dosyaId && !x.musteriId
@@ -281,12 +282,6 @@ export default async function ParaTrafigiKaydetSayfasi({
                         Dosya belirsiz (teyitte Para Havuzu’na düşer)
                       </p>
                     )}
-                    <ManuelVeriIsareti
-                      id={x.id}
-                      acik={x.manuelVeri}
-                      iz={x.manuelVeri ? `${kisi.get(x.manuelVeriIsaretleyenId ?? "") ?? "—"}${x.manuelVeriZamani ? ` · ${gun.format(x.manuelVeriZamani)}` : ""}` : ""}
-                      degistirebilir={x.olusturanId === k.kullaniciId || yetkili}
-                    />
                     {x.aciklama ? (
                       <p className="mt-1 text-sm text-white/70">
                         <span className="text-white/40">Geliş sebebi:</span>{" "}
@@ -342,11 +337,14 @@ export default async function ParaTrafigiKaydetSayfasi({
                 )}
                 {x.durum === "TEYIT_EDILDI" && (
                   <p className="mt-2 text-xs text-white/45">
-                    {kisi.get(x.teyitEdenId ?? "") ?? "Muhasebe"} teyit etti
+                    {kisi.get(x.teyitEdenId ?? "") ?? "Muhasebe"}{" "}
+                    {x.tamamlanmaBicimi === "DOSYADA_KAYITLI" ? "dosyada zaten kayıtlı olarak tamamladı" : "teyit etti"}
                     {x.teyitZamani ? ` · ${gun.format(x.teyitZamani)}` : ""} ·{" "}
-                    {x.dosyaId
-                      ? "dosyanın Para Trafiği hesabına işlendi"
-                      : "Para Havuzu’na alındı"}
+                    {x.tamamlanmaBicimi === "DOSYADA_KAYITLI"
+                      ? "dosyaya yeni cari hareket eklenmedi"
+                      : x.dosyaId
+                        ? "dosyanın Para Trafiği hesabına işlendi"
+                        : "Para Havuzu’na alındı"}
                   </p>
                 )}
                 {x.durum === "TEYIT_EDILDI" && x.teyitNotu && (

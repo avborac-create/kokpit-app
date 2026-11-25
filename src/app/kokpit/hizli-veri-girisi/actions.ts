@@ -54,7 +54,6 @@ export async function gelenOdemeKaydet(formData: FormData): Promise<{ hata?: str
         dosyaId,
         musteriId,
         olusturanId: k.kullaniciId,
-        ...(formData.get("manuelVeri") === "1" ? { manuelVeri: true, manuelVeriIsaretleyenId: k.kullaniciId, manuelVeriZamani: new Date() } : {}),
       },
       select: { id: true },
     });
@@ -317,7 +316,7 @@ export async function gelenOdemeTeyidiGeriCek(id: string, neden: string): Promis
     await prisma.$transaction(async (tx) => {
       await tx.gelenOdemeKaydi.update({
         where: { id },
-        data: { durum: "TEYIT_BEKLIYOR", teyitEdenId: null, teyitZamani: null, cariHareketId: null, havuzGirisiId: null, teyitNotu: [o.teyitNotu, iz].filter(Boolean).join("\n") },
+        data: { durum: "TEYIT_BEKLIYOR", tamamlanmaBicimi: "TEYIT", teyitEdenId: null, teyitZamani: null, cariHareketId: null, havuzGirisiId: null, teyitNotu: [o.teyitNotu, iz].filter(Boolean).join("\n") },
       });
       if (o.cariHareketId) await tx.cariHareketi.delete({ where: { id: o.cariHareketId } });
       if (o.havuzGirisiId) await tx.paraHavuzuGirisi.delete({ where: { id: o.havuzGirisiId } });
@@ -371,20 +370,42 @@ export async function gelenOdemeTeyitEdilemedi(id: string, neden: string): Promi
   }
 }
 
-// "Manuel veri girilmis" isaretini acar/kapatir (yanlis isaretlenirse geri alinir). Teyitli kayitta da calisir:
-// bakiyeyi degistirmez, yalnizca bilgi notudur; kim/ne zaman iziyle saklanir.
-export async function gelenOdemeManuelIsaretle(id: string, deger: boolean): Promise<{ hata?: string }> {
+// "Dosyada zaten kayitli": para dosyaya baska yoldan islenmis. Kayit TAMAMLANMIS sayilir (durum TEYIT_EDILDI) ama
+// tamamlanma bicimi DOSYADA_KAYITLI olarak ayrisir; yeni cari hareket/havuz girisi OLUSTURULMAZ (cift bakiye olmasin).
+// Para hesabi toplamina yine girer (para o hesaba gelmistir). Yetki kurallari teyitle aynidir. Geri alma: "Teyidi geri cek".
+export async function gelenOdemeDosyadaKayitli(id: string, not: string): Promise<{ hata?: string }> {
   try {
     const k = await mevcutKullanici();
-    if (!k) throw new Error("Oturum bulunamadı.");
-    const o = await prisma.gelenOdemeKaydi.findUnique({ where: { id }, select: { olusturanId: true, dosyaId: true } });
+    if (!k || !(await ekonomiDuzenleyebilirMi())) throw new Error("Bu işlem için yetkiniz yok.");
+    const o = await prisma.gelenOdemeKaydi.findUnique({ where: { id } });
     if (!o) throw new Error("Kayıt bulunamadı.");
-    if (o.olusturanId !== k.kullaniciId && !(await ekonomiDuzenleyebilirMi())) throw new Error("Bu kaydı değiştirme yetkiniz yok.");
-    await prisma.gelenOdemeKaydi.update({ where: { id }, data: { manuelVeri: deger, manuelVeriIsaretleyenId: k.kullaniciId, manuelVeriZamani: new Date() } });
+    if (o.durum === "TEYIT_EDILDI") throw new Error("Bu kayıt zaten tamamlanmış.");
+    const yoneticiKendiKaydi = o.olusturanId === k.kullaniciId && silebilirMi(k.rol);
+    if (o.olusturanId === k.kullaniciId && !yoneticiKendiKaydi) throw new Error("Kaydı giren kişi kendi kaydını tamamlayamaz.");
+    if (!o.dosyaId) throw new Error("“Dosyada zaten kayıtlı” için önce kayda dosya seçin (“Düzelt”).");
+    if (!o.hesapId) throw new Error("Paranın hangi hesaba geldiği belirtilmemiş; önce “Hesabı değiştir” ile hesabı seçin.");
+    const aciklama = not.trim().slice(0, 500);
+    if (!aciklama) throw new Error("Dosyada nerede kayıtlı olduğunu kısaca yazın (ör. 12 Kas tarihli masraf avansı kaydı).");
+    const iz = `Dosyada zaten kayıtlı olarak tamamlandı (${k.adSoyad ?? k.kullaniciId}, ${new Date().toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul" })}): ${aciklama}${yoneticiKendiKaydi ? " [yönetici kendi kaydını tamamladı; muhasebe geri çekebilir]" : ""}`;
+    await prisma.gelenOdemeKaydi.update({
+      where: { id },
+      data: {
+        durum: "TEYIT_EDILDI",
+        tamamlanmaBicimi: "DOSYADA_KAYITLI",
+        teyitEdenId: k.kullaniciId,
+        teyitZamani: new Date(),
+        incelemeyeAlanId: null,
+        incelemeZamani: null,
+        cariHareketId: null,
+        havuzGirisiId: null,
+        teyitNotu: [o.teyitNotu, iz].filter(Boolean).join("\n"),
+      },
+    });
+    revalidatePath("/kokpit", "layout");
     yenile(o.dosyaId);
     return {};
   } catch (e) {
-    return { hata: e instanceof Error ? e.message : "Kaydedilemedi." };
+    return { hata: e instanceof Error ? e.message : "Tamamlanamadı." };
   }
 }
 
