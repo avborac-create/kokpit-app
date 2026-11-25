@@ -4,6 +4,7 @@ import { prisma } from "@/core/db/prisma";
 import { mevcutKullanici } from "@/core/auth/mevcut-kullanici";
 import { cmkDosyasiGetir } from "@/modules/cmk-dosyalari/lib/queries";
 import { DOSYA_DURUMU_ETIKETLERI } from "@/modules/cmk-dosyalari/lib/sabitler";
+import { MuvekkilBilgileri } from "@/modules/cmk-dosyalari/components/muvekkil-bilgileri";
 import { EvrakPaneli, type EvrakKaydi } from "@/modules/cmk-dosyalari/components/evrak-paneli";
 
 /** Not satirlarini "ETIKET: metin" diye ayirir; etiketsiz satirlar duz metin kalir. */
@@ -49,6 +50,7 @@ export default async function CMKDosyasiSayfasi({ params }: { params: Promise<{ 
     where: { cmkDosyasiId: id, OR: [{ ozelKullaniciId: null }, { ozelKullaniciId: kullanici?.kullaniciId ?? "-" }] },
     select: { id: true, ad: true, klasor: true, evrakTarihi: true, mimeTipi: true, boyutBayt: true, onizlemeTuru: true, ozelKullaniciId: true },
   });
+  const nufusKisileri = await prisma.cMKNufusKisisi.findMany({ where: { cmkDosyasiId: id }, orderBy: [{ sira: "asc" }, { createdAt: "asc" }] });
   const kayitlar: EvrakKaydi[] = evraklar.map(({ ozelKullaniciId, ...e }) => ({
     ...e,
     ozel: ozelKullaniciId !== null,
@@ -78,6 +80,7 @@ export default async function CMKDosyasiSayfasi({ params }: { params: Promise<{ 
           </Link>
         </div>
       </div>
+      <MuvekkilBilgileri dosyaId={id} kisiler={nufusKisileri} nufusNotu={dosya.nufusNotu} />
       {dosya.notlar && <DosyaOzeti notlar={dosya.notlar} />}
       <EvrakPaneli dosyaId={id} evraklar={kayitlar} />
     </div>

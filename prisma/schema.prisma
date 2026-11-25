@@ -1134,8 +1134,12 @@ model CMKDosyasi {
 
   notlar String?
 
+  // Nufus kayit ornegi ust bilgileri (il/ilce/mahalle, cilt-hane, yerlesim yeri, kaynak tarihi) - serbest metin.
+  nufusNotu String?
+
   evraklar      CMKEvrak[]
   takvimOgeleri TakvimOgesi[]
+  nufusKisileri CMKNufusKisisi[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2300,4 +2304,34 @@ model HesapMahsubu {
 
   @@index([hesapId])
   @@map("hesap_mahsuplari")
+}
+
+// "Muvekkil Bilgileri": nufus kayit ornegindeki kisiler (muvekkil + aile fertleri).
+// Elle girilir/duzeltilir/silinir; en son kimin degistirdigi satirda tutulur.
+model CMKNufusKisisi {
+  id           String      @id @default(cuid())
+  cmkDosyasiId String
+  cmkDosyasi   CMKDosyasi  @relation(fields: [cmkDosyasiId], references: [id], onDelete: Cascade)
+
+  sira         Int         @default(0)
+  bsn          String?
+  yakinlik     String // Kendisi, Babasi, Annesi, Kardesi...
+  cinsiyet     String? // E | K
+  tckn         String?
+  ad           String
+  soyad        String?
+  babaAdi      String?
+  anaAdi       String?
+  dogumYeri    String?
+  dogumTarihi  DateTime?   @db.Date
+  medeniHal    String?
+  tescilTarihi DateTime?   @db.Date
+  olaylar      String?
+
+  degistirenAd String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([cmkDosyasiId])
+  @@map("cmk_nufus_kisileri")
 }

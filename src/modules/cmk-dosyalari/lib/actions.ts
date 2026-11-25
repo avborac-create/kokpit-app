@@ -5,20 +5,12 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import type { CMKDosyaDurumu } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
+import { tcknGecerliMi } from "@/core/metin/tckn";
 import { DOSYA_DURUMU_ETIKETLERI } from "@/modules/cmk-dosyalari/lib/sabitler";
 
 function metinYaAlNull(formData: FormData, alan: string): string | null {
   const deger = String(formData.get(alan) ?? "").trim();
   return deger === "" ? null : deger;
-}
-
-/** T.C. kimlik no: 11 hane, ilk hane 0 degil, son iki hane sağlama kuralına uymalı. */
-function tcknGecerliMi(t: string): boolean {
-  if (!/^[1-9]\d{10}$/.test(t)) return false;
-  const d = t.split("").map(Number);
-  const on = ((d[0] + d[2] + d[4] + d[6] + d[8]) * 7 - (d[1] + d[3] + d[5] + d[7])) % 10;
-  const onBir = d.slice(0, 10).reduce((a, b) => a + b, 0) % 10;
-  return d[9] === ((on + 10) % 10) && d[10] === onBir;
 }
 
 function tarihYaAlNull(formData: FormData, alan: string): Date | null {
