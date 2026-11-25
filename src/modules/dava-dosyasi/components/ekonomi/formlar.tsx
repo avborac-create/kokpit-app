@@ -39,12 +39,18 @@ export function BorcFormu({
   dosyalar,
   sabitDosyaId,
   aciklamaIpucu,
+  tutarEtiketi = "Borç Tutarı",
+  aciklamaEtiketi = "Neye İstinaden",
+  butonMetni = "Borçlandır",
 }: {
   action: (formData: FormData) => void;
   hesapId: string;
   dosyalar: DosyaSecenegi[];
   sabitDosyaId?: string;
   aciklamaIpucu?: string;
+  tutarEtiketi?: string;
+  aciklamaEtiketi?: string;
+  butonMetni?: string;
 }) {
   return (
     <form action={action} className={kutu}>
@@ -55,15 +61,15 @@ export function BorcFormu({
         <Girdi id="bf-tarih" name="tarih" type="date" required defaultValue={bugun()} />
       </Alan>
       <Alan>
-        <Etiket htmlFor="bf-tutar">Borç Tutarı</Etiket>
+        <Etiket htmlFor="bf-tutar">{tutarEtiketi}</Etiket>
         <ParaGirdisi id="bf-tutar" name="tutar" required />
       </Alan>
       <Alan>
-        <Etiket htmlFor="bf-aciklama">Neye İstinaden</Etiket>
+        <Etiket htmlFor="bf-aciklama">{aciklamaEtiketi}</Etiket>
         <Girdi id="bf-aciklama" name="aciklama" placeholder={aciklamaIpucu ?? "ör. dosyanın hizmet bedeli"} />
       </Alan>
       <div className="flex items-end">
-        <GonderButonu>Borçlandır</GonderButonu>
+        <GonderButonu>{butonMetni}</GonderButonu>
       </div>
     </form>
   );

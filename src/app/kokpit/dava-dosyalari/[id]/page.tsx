@@ -212,10 +212,10 @@ export default async function DavaDosyasiDetaySayfasi({
   // istenecek tutar. Para hesabinda bakiye = alacak - borc (zaten artisi muvekkil lehine); digerlerinde
   // bakiye = borc - alacak oldugundan isaret ters cevrilir. Adliyede tutulan hesaplar uyari disi.
   const bakiyeEtiketleri = dosyaEkonomisi.hesaplar
-    .filter((h) => !h.tutulanHesapMi)
+    .filter((h) => !h.tutulanHesapMi || h.iadeHesabiMi)
     .map((h) => {
-      const tutar = Math.round((h.paraHesabiMi ? h.bakiye : -h.bakiye) * 100) / 100;
-      return { hesapId: h.hesapId, ad: h.ad, tutar, artiMi: tutar > 0, karsiTarafMi: h.grup === "BORCLU", karsiParaMi: h.grup === "BORCLU" && h.paraHesabiMi };
+      const tutar = Math.round((h.paraHesabiMi || h.iadeHesabiMi ? h.bakiye : -h.bakiye) * 100) / 100;
+      return { hesapId: h.hesapId, ad: h.ad, tutar, artiMi: tutar > 0, karsiTarafMi: h.grup === "BORCLU", karsiParaMi: h.grup === "BORCLU" && h.paraHesabiMi, iadeMi: h.iadeHesabiMi };
     })
     .filter((e) => e.tutar !== 0);
 
@@ -592,12 +592,14 @@ export default async function DavaDosyasiDetaySayfasi({
                       {grup.map((e) => (
                         <li
                           key={e.hesapId}
-                          title={e.karsiParaMi ? "Karşı taraftan gelen ve henüz bir hesaba aktarılmamış para." : e.karsiTarafMi ? (e.artiMi ? "Karşı tarafın bu hesapta fazla ödediği tutar." : "Karşı taraftan (borçludan) tahsil edilmesi gereken tutar.") : e.artiMi ? "Müvekkil adına dosyada duran para: dosya için kullanılabilir, başka hesaba virman yapılabilir ya da müvekkile iade edilir." : "Müvekkilden istenmesi gereken tutar."}
+                          title={e.iadeMi ? "Müvekkile geri ödenmesi gereken tutar. İade yapılınca 109 hesabına 'İade edildi' kaydı girin; görev kendiliğinden kapanır." : e.karsiParaMi ? "Karşı taraftan gelen ve henüz bir hesaba aktarılmamış para." : e.karsiTarafMi ? (e.artiMi ? "Karşı tarafın bu hesapta fazla ödediği tutar." : "Karşı taraftan (borçludan) tahsil edilmesi gereken tutar.") : e.artiMi ? "Müvekkil adına dosyada duran para: dosya için kullanılabilir, başka hesaba virman yapılabilir ya da müvekkile iade edilir." : "Müvekkilden istenmesi gereken tutar."}
                           className={`flex items-baseline justify-between gap-4 text-sm ${arti ? "text-[#32d74b]" : "text-[#ff7a70]"}`}
                         >
                           <span className="min-w-0 truncate">
                             {e.ad}
                             {(e.karsiParaMi || e.karsiTarafMi) && <span className="ml-1 text-[11px] opacity-70">(karşı taraf)</span>}
+                            {e.iadeMi && <span className="ml-1 text-[11px] opacity-70">(müvekkile iade)</span>}
+                            {e.iadeMi && <span className="ml-1 text-[11px] opacity-70">(müvekkile iade)</span>}
                           </span>
                           <b className="shrink-0 tabular-nums">{paraFormatlayici.format(Math.abs(e.tutar))}</b>
                         </li>

@@ -1519,6 +1519,9 @@ model CariHesap {
   // bakiye = Alacak - Borc (orada duran tutar); muvekkilin borcu sayilmaz, netten dusulmez,
   // ayri gosterilir. Iade edilebilir olan (teminat) borc satiriyla geri doner.
   tutulanHesapMi  Boolean  @default(false)
+  // Muvekkile IADE edilecek para hesabi (109): fazla kalan tutar buraya virmanlanir, iade yapilinca BORC dusulur.
+  // tutulanHesapMi ile birlikte calisir (net bakiyeye girmez) ama adliyede tutulan toplamina degil, "iade edilecek" toplamina yazilir.
+  iadeHesabiMi    Boolean  @default(false)
   // Eski cari_kod listesindeki karsiligi (DosyaMasrafi.cariKod ile eslestirme).
   eskiKod         String?  @unique
   aktifMi         Boolean  @default(true)

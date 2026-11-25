@@ -71,6 +71,8 @@ export type HesapOzeti = {
   grup: "MUVEKKIL" | "BORCLU" | "ADLIYE";
   // Ucuncu kisi/kurumda tutulan para (adliye teminati/harcamasi): bakiye = Alacak - Borc
   tutulanHesapMi: boolean;
+  // Muvekkile iade edilecek para hesabi (109): "tutulan" sayilir ama adliye toplamina girmez.
+  iadeHesabiMi: boolean;
   borc: number;
   alacak: number;
   bakiye: number;
@@ -82,6 +84,8 @@ export type KapsamOzeti = {
   digerBorclar: number;
   // Adliyede vb. tutulan toplam (muvekkilin borcu sayilmaz, netten dusulmez)
   tutulanToplam: number;
+  // 109 hesabinda muvekkile iade edilmeyi bekleyen toplam
+  iadeBekleyen: number;
   net: number;
 };
 
@@ -216,6 +220,7 @@ export async function kapsamOzeti(kapsam: Kapsam): Promise<KapsamOzeti> {
       masrafHesabiMi: h.masrafHesabiMi,
       grup: h.grup,
       tutulanHesapMi: h.tutulanHesapMi,
+      iadeHesabiMi: h.iadeHesabiMi,
       borc,
       alacak,
       bakiye: h.paraHesabiMi || h.tutulanHesapMi ? alacak - borc : borc - alacak,
@@ -224,8 +229,9 @@ export async function kapsamOzeti(kapsam: Kapsam): Promise<KapsamOzeti> {
 
   const paraBakiyesi = ozetler.filter((o) => o.paraHesabiMi && o.grup === "MUVEKKIL").reduce((t, o) => t + o.bakiye, 0);
   const digerBorclar = ozetler.filter((o) => !o.paraHesabiMi && !o.tutulanHesapMi).reduce((t, o) => t + o.bakiye, 0);
-  const tutulanToplam = ozetler.filter((o) => o.tutulanHesapMi).reduce((t, o) => t + o.bakiye, 0);
-  return { hesaplar: ozetler, paraBakiyesi, digerBorclar, tutulanToplam, net: digerBorclar - paraBakiyesi };
+  const tutulanToplam = ozetler.filter((o) => o.tutulanHesapMi && !o.iadeHesabiMi).reduce((t, o) => t + o.bakiye, 0);
+  const iadeBekleyen = ozetler.filter((o) => o.iadeHesabiMi).reduce((t, o) => t + o.bakiye, 0);
+  return { hesaplar: ozetler, paraBakiyesi, digerBorclar, tutulanToplam, iadeBekleyen, net: digerBorclar - paraBakiyesi };
 }
 
 // Virman satirinin okunur aciklamasi. Kayitta "<no>-<AD> VİRMAN[ — not]" yazar ve

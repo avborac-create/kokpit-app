@@ -588,6 +588,12 @@ async function OzetSekmesi({
                         <span className="tabular-nums text-[#ffb340]">{para.format(d.ozet.tutulanToplam)}</span>
                       </p>
                     )}
+                    {d.ozet.iadeBekleyen !== 0 && (
+                      <p className="flex justify-between gap-3 text-white/60">
+                        <span>Müvekkile iade edilecek</span>
+                        <span className="tabular-nums text-[#32d74b]">{para.format(d.ozet.iadeBekleyen)}</span>
+                      </p>
+                    )}
                   </div>
                   {satirlar.length > 0 && (
                     <div className="mt-2 space-y-0.5 border-t border-white/10 pt-2 text-[11px] text-white/50">
@@ -776,7 +782,7 @@ async function HesapSekmesi({
     .map((h) => {
       const bakiye = ozetHesaplar.find((o) => o.hesapId === h.id)?.bakiye ?? 0;
       const tutar = Math.max(0, h.tutulanHesapMi ? bakiye : -bakiye);
-      const tur = h.tutulanHesapMi ? "orada duran tutar" : "fazla ödeme";
+      const tur = h.iadeHesabiMi ? "iade edilecek tutar" : h.tutulanHesapMi ? "orada duran tutar" : "fazla ödeme";
       return {
         tutar,
         deger: `hesap:${h.id}`,
@@ -965,6 +971,25 @@ async function HesapSekmesi({
               },
             ]}
           />
+          {hesap.iadeHesabiMi && (
+            <>
+              <h3 className="mb-1 mt-6 text-sm font-semibold text-white">↩ Müvekkile İade Edildi</h3>
+              <p className="mb-2 text-xs text-white/45">
+                Parayı müvekkile gerçekten gönderdiğinizde buraya yazın; bu hesaptaki tutar düşer ve iade görevi kapanır. Dekont henüz yoksa boş bırakıp daha sonra kaydı
+                düzenleyebilirsiniz. Yanlış girdiyseniz satırdaki Düzenle / Sil ile düzeltilir.
+              </p>
+              <BorcFormu
+                action={borcEkle.bind(null, kapsam.musteriId)}
+                hesapId={hesap.id}
+                dosyalar={dosyalar}
+                sabitDosyaId={kapsam.dosyaId}
+                tutarEtiketi="İade Edilen Tutar"
+                aciklamaEtiketi="Nasıl / Dekont"
+                aciklamaIpucu="ör. IBAN'a havale, dekont no"
+                butonMetni="İade Edildi"
+              />
+            </>
+          )}
           {!hesap.tutulanHesapMi && !hesap.masrafHesabiMi && (
             <>
               <h3 className="mb-1 mt-6 text-sm font-semibold text-white">+ Para Girişi (Alacak)</h3>

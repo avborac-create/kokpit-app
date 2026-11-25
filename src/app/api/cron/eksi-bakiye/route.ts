@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { eksiBakiyeGorevleriniGuncelle } from "@/modules/dava-dosyasi/lib/eksi-bakiye-gorevi";
+import { iadeGorevleriniGuncelle } from "@/modules/dava-dosyasi/lib/iade-gorevi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,5 +10,8 @@ export const maxDuration = 60;
 export async function GET(request: Request) {
   const sir = process.env.CRON_SECRET;
   if (!sir || request.headers.get("authorization") !== `Bearer ${sir}`) return NextResponse.json({ hata: "Yetkisiz" }, { status: 401 });
-  return NextResponse.json(await eksiBakiyeGorevleriniGuncelle());
+  const eksi = await eksiBakiyeGorevleriniGuncelle();
+  // Ayni gunluk calismada: 109 iade hesabinda bekleyen tutarlar icin gorev ac / kapat.
+  const iade = await iadeGorevleriniGuncelle(undefined, true);
+  return NextResponse.json({ ...eksi, iade });
 }

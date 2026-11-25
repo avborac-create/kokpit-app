@@ -27,6 +27,7 @@ const GRUPLAR: Grup[] = [
     renk: "#8b6cf0",
     kartlar: [
       { ad: "Müvekkil Finansal İlişkiler", aciklama: "Cari hesaplar: para trafiği, masraf, vekalet, bloke para ve dosya bazlı bakiye takibi.", yol: "/kokpit/finans/musteri-iliskileri", aktif: true },
+      { ad: "İadesi Bekleyen Tutarlar", aciklama: "Dosyalarda artan ve müvekkile geri ödenecek paralar (109 - İade Edilecek Tutarlar): kim, hangi dosya, ne kadar bekliyor.", yol: "/kokpit/finans/iade-bekleyenler", aktif: true },
       { ad: "Müvekkilden İstenen Paralar", aciklama: "İstenen ödemeler: ne zaman istendi, geldi mi, hangi hesaba geldi; para geldi teyidi.", yol: "/kokpit/finans/istenen-paralar", aktif: true },
     ],
   },

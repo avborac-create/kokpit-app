@@ -13,6 +13,7 @@ import { MUVEKKILE_ODEME } from "@/modules/dava-dosyasi/lib/tasnif-sabitleri";
 import { eksiyeDusmeKontrolu, paraBakiyesi } from "@/modules/dava-dosyasi/lib/para-bakiye";
 import { cariGunlukle } from "@/core/gunluk/islem-gunlugu";
 import { smmGorevleriniGuncelle } from "@/modules/dava-dosyasi/lib/smm-gorevi";
+import { iadeGorevleriniGuncelle } from "@/modules/dava-dosyasi/lib/iade-gorevi";
 
 // Vekalet hesaplarina para girdiyse serbest meslek makbuzu gorevi acilir; gorev acilamazsa asil islem bozulmaz.
 async function smmKontrol(dosyaIdleri: string[]) {
@@ -20,6 +21,16 @@ async function smmKontrol(dosyaIdleri: string[]) {
     await smmGorevleriniGuncelle(dosyaIdleri);
   } catch (hata) {
     console.error("SMM gorevi acilamadi", hata);
+  }
+}
+
+// 109 Iade hesabinda bakiye varsa gorev acilir, sifirlandiysa kapanir; gorev acilamazsa asil islem bozulmaz.
+async function iadeKontrol(musteriId: string, dosyaId: string | null) {
+  if (!dosyaId) return;
+  try {
+    await iadeGorevleriniGuncelle({ musteriId, dosyaId });
+  } catch (hata) {
+    console.error("Iade gorevi guncellenemedi", hata);
   }
 }
 
@@ -144,6 +155,16 @@ async function borcEkle_(musteriId: string, formData: FormData) {
   await dosyaMuvekkilinMi(musteriId, dosyaId);
   const hesap = await prisma.cariHesap.findUnique({ where: { id: hesapId } });
   if (!hesap || hesap.paraHesabiMi || hesap.masrafHesabiMi) throw new Error("Bu hesaba buradan borç yazılamaz.");
+  const tutar = tutarAl(formData);
+  const aciklama = metin(formData, "aciklama");
+  if (hesap.iadeHesabiMi) {
+    // 109 Iade hesabinda BORC = muvekkile iade EDILDI; orada duran tutardan fazlasi iade edilemez.
+    const ozet = await kapsamOzeti({ musteriId, dosyaId });
+    const duran = Math.max(0, ozet.hesaplar.find((h) => h.hesapId === hesap.id)?.bakiye ?? 0);
+    if (tutar > duran + 0.001) {
+      throw new Error(`${hesap.no} - ${hesap.ad} hesabında bu dosyada iade edilecek tutar ${duran.toLocaleString("tr-TR")} TL; daha fazlası iade edilemez.`);
+    }
+  }
   await prisma.cariHareketi.create({
     data: {
       musteriId,
@@ -151,10 +172,11 @@ async function borcEkle_(musteriId: string, formData: FormData) {
       hesapId,
       yon: "BORC",
       tarih: tarihAl(formData),
-      tutar: tutarAl(formData),
-      aciklama: metin(formData, "aciklama") || null,
+      tutar,
+      aciklama: hesap.iadeHesabiMi ? (aciklama ? `MÜVEKKİLE İADE EDİLDİ — ${aciklama}` : "MÜVEKKİLE İADE EDİLDİ") : aciklama || null,
     },
   });
+  await iadeKontrol(musteriId, dosyaId);
   yenile();
 }
 
@@ -263,6 +285,7 @@ async function virmanYap_(musteriId: string, kapsamDosyaId: string, formData: Fo
     await borcYaz();
   });
   await smmKontrol([dosyaId]);
+  await iadeKontrol(musteriId, dosyaId);
   yenile();
 }
 
@@ -280,12 +303,15 @@ async function hataDondur(is: () => Promise<void>): Promise<{ hata?: string }> {
 async function hareketSil_(id: string, sifre?: string): Promise<{ hata?: string }> {
   return hataDondur(async () => {
     await silmeYetkisiniDogrula(sifre);
+    let silinen: { musteriId: string; dosyaId: string | null } | null = null;
     await prisma.$transaction(async (tx) => {
       const h = await tx.cariHareketi.findUnique({ where: { id } });
       if (!h) return;
       await tx.cariHareketi.delete({ where: { id } });
       await eksiyeDusmeKontrolu(tx, h.musteriId, h.dosyaId);
+      silinen = { musteriId: h.musteriId, dosyaId: h.dosyaId };
     });
+    { const s = silinen as { musteriId: string; dosyaId: string | null } | null; if (s) await iadeKontrol(s.musteriId, s.dosyaId); }
     yenile();
   });
 }
@@ -293,12 +319,15 @@ async function hareketSil_(id: string, sifre?: string): Promise<{ hata?: string 
 async function virmanSil_(virmanId: string, sifre?: string): Promise<{ hata?: string }> {
   return hataDondur(async () => {
     await silmeYetkisiniDogrula(sifre);
+    let silinen: { musteriId: string; dosyaId: string | null } | null = null;
     await prisma.$transaction(async (tx) => {
       const satirlar = await tx.cariHareketi.findMany({ where: { virmanId } });
       await tx.cariHareketi.deleteMany({ where: { virmanId } });
       const ilk = satirlar[0];
       if (ilk) await eksiyeDusmeKontrolu(tx, ilk.musteriId, ilk.dosyaId);
+      if (ilk) silinen = { musteriId: ilk.musteriId, dosyaId: ilk.dosyaId };
     });
+    { const s = silinen as { musteriId: string; dosyaId: string | null } | null; if (s) await iadeKontrol(s.musteriId, s.dosyaId); }
     yenile();
   });
 }
@@ -321,6 +350,7 @@ async function hareketGuncelle_(id: string, formData: FormData) {
     await eksiyeDusmeKontrolu(tx, h.musteriId, h.dosyaId);
     return { musteriId: h.musteriId, dosyaId: h.dosyaId, hesapNo: h.hesap.no };
   });
+  await iadeKontrol(donus.musteriId, donus.dosyaId);
   yenile();
   redirect(
     `/kokpit/finans/musteri-iliskileri/${donus.musteriId}/cari-hesap?sayfa=${donus.dosyaId ?? "genel"}&alt=${donus.hesapNo}`,
@@ -334,6 +364,7 @@ async function satirGuncelle_(tip: "hareket" | "virman", id: string, formData: F
   try {
     const tutar = tutarAl(formData);
     const tarih = tarihAl(formData);
+    let etkilenen: { musteriId: string; dosyaId: string | null } | null = null;
     if (tip === "virman") {
       await yoneticiyiDogrula();
       await prisma.$transaction(async (tx) => {
@@ -368,6 +399,7 @@ async function satirGuncelle_(tip: "hareket" | "virman", id: string, formData: F
           gorulen.add(anahtar);
           await eksiyeDusmeKontrolu(tx, s.musteriId, s.dosyaId);
         }
+        if (satirlar[0]) etkilenen = { musteriId: satirlar[0].musteriId, dosyaId: satirlar[0].dosyaId };
       });
     } else {
       const aciklama = metin(formData, "aciklama") || null;
@@ -385,8 +417,11 @@ async function satirGuncelle_(tip: "hareket" | "virman", id: string, formData: F
           },
         });
         await eksiyeDusmeKontrolu(tx, h.musteriId, h.dosyaId);
+        etkilenen = { musteriId: h.musteriId, dosyaId: h.dosyaId };
       });
     }
+    const e = etkilenen as { musteriId: string; dosyaId: string | null } | null;
+    if (e) await iadeKontrol(e.musteriId, e.dosyaId);
     yenile();
     return {};
   } catch (e) {
