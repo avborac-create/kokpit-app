@@ -54,6 +54,7 @@ export async function gelenOdemeKaydet(formData: FormData): Promise<{ hata?: str
         dosyaId,
         musteriId,
         olusturanId: k.kullaniciId,
+        ...(formData.get("manuelVeri") === "1" ? { manuelVeri: true, manuelVeriIsaretleyenId: k.kullaniciId, manuelVeriZamani: new Date() } : {}),
       },
       select: { id: true },
     });
@@ -363,6 +364,23 @@ export async function gelenOdemeTeyitEdilemedi(id: string, neden: string): Promi
         etiket: `odeme-${id}`,
       });
     }
+    yenile(o.dosyaId);
+    return {};
+  } catch (e) {
+    return { hata: e instanceof Error ? e.message : "Kaydedilemedi." };
+  }
+}
+
+// "Manuel veri girilmis" isaretini acar/kapatir (yanlis isaretlenirse geri alinir). Teyitli kayitta da calisir:
+// bakiyeyi degistirmez, yalnizca bilgi notudur; kim/ne zaman iziyle saklanir.
+export async function gelenOdemeManuelIsaretle(id: string, deger: boolean): Promise<{ hata?: string }> {
+  try {
+    const k = await mevcutKullanici();
+    if (!k) throw new Error("Oturum bulunamadı.");
+    const o = await prisma.gelenOdemeKaydi.findUnique({ where: { id }, select: { olusturanId: true, dosyaId: true } });
+    if (!o) throw new Error("Kayıt bulunamadı.");
+    if (o.olusturanId !== k.kullaniciId && !(await ekonomiDuzenleyebilirMi())) throw new Error("Bu kaydı değiştirme yetkiniz yok.");
+    await prisma.gelenOdemeKaydi.update({ where: { id }, data: { manuelVeri: deger, manuelVeriIsaretleyenId: k.kullaniciId, manuelVeriZamani: new Date() } });
     yenile(o.dosyaId);
     return {};
   } catch (e) {

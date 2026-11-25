@@ -21,6 +21,7 @@ import {
   TeyidiGeriCekDugmesi,
   KayitDuzenleDugmesi,
   KayitSilDugmesi,
+  ManuelVeriIsareti,
   OtomatikYenile,
   TeyitEylemleri,
   YeniOdemeFormu,
@@ -213,7 +214,7 @@ export default async function ParaTrafigiKaydetSayfasi({
                   {secilebilirIdler.includes(x.id) && (
                     <SatirSecimKutusu id={x.id} />
                   )}
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-[1_1_16rem]">
                     <p className="text-sm text-white/60">
                       {gun.format(x.tarih)} · Oluşturan:{" "}
                       {kisi.get(x.olusturanId ?? "") ?? "—"}
@@ -255,7 +256,7 @@ export default async function ParaTrafigiKaydetSayfasi({
                             ).filter(([, v]) => v)
                           : [];
                         return (
-                          <div className="mt-1 rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-sm">
+                          <div className="mt-1 min-w-0 rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-sm">
                             <Link
                               href={`/kokpit/dava-dosyalari/${x.dosyaId}`}
                               className="font-medium text-[#6db8ff] hover:underline"
@@ -263,11 +264,11 @@ export default async function ParaTrafigiKaydetSayfasi({
                               {dosyaEtiketi.get(x.dosyaId) ?? "Dosya"}
                             </Link>
                             {bilgiler.length > 0 && (
-                              <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
+                              <dl className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-xs">
                                 {bilgiler.map(([ad, v]) => (
                                   <div key={ad} className="contents">
                                     <dt className="text-white/40">{ad}</dt>
-                                    <dd className="text-white/75">{v}</dd>
+                                    <dd className="break-words text-white/75">{v}</dd>
                                   </div>
                                 ))}
                               </dl>
@@ -280,6 +281,12 @@ export default async function ParaTrafigiKaydetSayfasi({
                         Dosya belirsiz (teyitte Para Havuzu’na düşer)
                       </p>
                     )}
+                    <ManuelVeriIsareti
+                      id={x.id}
+                      acik={x.manuelVeri}
+                      iz={x.manuelVeri ? `${kisi.get(x.manuelVeriIsaretleyenId ?? "") ?? "—"}${x.manuelVeriZamani ? ` · ${gun.format(x.manuelVeriZamani)}` : ""}` : ""}
+                      degistirebilir={x.olusturanId === k.kullaniciId || yetkili}
+                    />
                     {x.aciklama ? (
                       <p className="mt-1 text-sm text-white/70">
                         <span className="text-white/40">Geliş sebebi:</span>{" "}
@@ -312,7 +319,7 @@ export default async function ParaTrafigiKaydetSayfasi({
                       </a>
                     )}
                   </div>
-                  <div className="text-right">
+                  <div className="ml-auto text-right">
                     <p className="text-lg font-semibold tabular-nums text-white">
                       {para.format(Number(x.tutar))}
                     </p>

@@ -9,7 +9,7 @@ import { Dugme } from "@/core/ui/button";
 import { DosyaSecici, type DosyaSeciciSecenegi } from "@/core/ui/dosya-secici";
 import { HesapSecici } from "@/core/ui/hesap-secici";
 import type { HesapSecenegi } from "@/core/hesap/hesaplar";
-import { gelenOdemeDekontEkle, gelenOdemeDuzeltmeKarari, gelenOdemeDuzeltmeTalebiVer, gelenOdemeDuzenle, gelenOdemeIncelemeyeAl, gelenOdemeIncelemeyiBirak, gelenOdemeHesapDegistir, gelenOdemeKaydet, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt, gelenOdemeTeyidiGeriCek } from "../actions";
+import { gelenOdemeDekontEkle, gelenOdemeDuzeltmeKarari, gelenOdemeDuzeltmeTalebiVer, gelenOdemeDuzenle, gelenOdemeIncelemeyeAl, gelenOdemeIncelemeyiBirak, gelenOdemeHesapDegistir, gelenOdemeKaydet, gelenOdemeManuelIsaretle, gelenOdemeSil, gelenOdemeTeyitEdilemedi, gelenOdemeTeyitEt, gelenOdemeTeyidiGeriCek } from "../actions";
 
 export function YeniOdemeFormu({ dosyalar, hesaplar }: { dosyalar: DosyaSeciciSecenegi[]; hesaplar: HesapSecenegi[] }) {
   const router = useRouter();
@@ -20,6 +20,7 @@ export function YeniOdemeFormu({ dosyalar, hesaplar }: { dosyalar: DosyaSeciciSe
   const [yukleniyor, setYukleniyor] = useState(false);
   const [dekontSonra, setDekontSonra] = useState(false);
   const [sebepSonra, setSebepSonra] = useState(false);
+  const [manuel, setManuel] = useState(false);
   const bugun = new Date().toISOString().slice(0, 10);
 
   async function yukle(d: File) {
@@ -82,6 +83,7 @@ export function YeniOdemeFormu({ dosyalar, hesaplar }: { dosyalar: DosyaSeciciSe
           fd.set("belgeTur", belge.tur);
         } else fd.set("dekontSonra", "1");
         if (sebepSonra) fd.set("sebepSonra", "1");
+        if (manuel) fd.set("manuelVeri", "1");
         basla(async () => {
           const s = await gelenOdemeKaydet(fd);
           if (s.hata) setHata(s.hata);
@@ -89,6 +91,7 @@ export function YeniOdemeFormu({ dosyalar, hesaplar }: { dosyalar: DosyaSeciciSe
             setBelge(null);
             setDekontSonra(false);
             setSebepSonra(false);
+            setManuel(false);
             setAnahtar((a) => a + 1);
             router.refresh();
           }
@@ -160,6 +163,14 @@ export function YeniOdemeFormu({ dosyalar, hesaplar }: { dosyalar: DosyaSeciciSe
               </span>
             </label>
           </Alan>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="flex items-start gap-2 text-sm text-white/70">
+            <input type="checkbox" checked={manuel} onChange={(e) => setManuel(e.target.checked)} className="mt-0.5" />
+            <span>
+              Manuel veri girilmiş <span className="text-white/45">(bilgiler dekonttan/bankadan değil elle yazıldı; kayıtta işaret olarak görünür, sonradan kaldırılabilir)</span>
+            </span>
+          </label>
         </div>
       </div>
       <p className="mt-3 text-xs text-white/50">
@@ -601,6 +612,41 @@ export function DekontEkleDugmesi({ id }: { id: string }) {
         <input type="file" accept="image/*,application/pdf" className="hidden" disabled={yukleniyor} onChange={(e) => e.target.files?.[0] && void yukle(e.target.files[0])} />
       </label>
       {hata && <p className="mt-1 text-xs text-[#ff9b92]">{hata}</p>}
+    </div>
+  );
+}
+
+// "Manuel veri girilmiş" rozeti + aç/kapat (yanlış işaret geri alınır; iz: kim, ne zaman).
+export function ManuelVeriIsareti({ id, acik, iz, degistirebilir }: { id: string; acik: boolean; iz: string; degistirebilir: boolean }) {
+  const router = useRouter();
+  const [hata, setHata] = useState("");
+  const [bekliyor, basla] = useTransition();
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+      {acik && (
+        <span className="rounded-full bg-[#b58cff]/20 px-2.5 py-0.5 font-medium text-[#cbb0ff]" title={iz}>
+          ✎ Manuel veri girilmiş
+        </span>
+      )}
+      {acik && iz && <span className="text-white/40">{iz}</span>}
+      {degistirebilir && (
+        <button
+          type="button"
+          disabled={bekliyor}
+          onClick={() =>
+            basla(async () => {
+              setHata("");
+              const s = await gelenOdemeManuelIsaretle(id, !acik);
+              if (s.hata) setHata(s.hata);
+              else router.refresh();
+            })
+          }
+          className="text-[#8fd8ff] hover:underline disabled:opacity-50"
+        >
+          {acik ? "İşareti kaldır" : "Manuel veri girildi olarak işaretle"}
+        </button>
+      )}
+      {hata && <span className="text-[#ff7a70]">{hata}</span>}
     </div>
   );
 }

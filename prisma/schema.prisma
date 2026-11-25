@@ -2198,6 +2198,10 @@ model GelenOdemeKaydi {
   // Muhasebe kaydi "incelemeye aldi" (henuz teyit/ret yok): kaydi girene "Inceleniyor" olarak gorunur.
   incelemeyeAlanId String?
   incelemeZamani   DateTime?
+  // "Manuel veri girilmis": bilgiler dekont/banka kaydindan degil elle yazildi. Her durumda acilip kapatilabilir; iz birakir.
+  manuelVeri            Boolean   @default(false)
+  manuelVeriIsaretleyenId String?
+  manuelVeriZamani      DateTime?
   olusturmaTarihi DateTime  @default(now())
 
   @@index([durum])
