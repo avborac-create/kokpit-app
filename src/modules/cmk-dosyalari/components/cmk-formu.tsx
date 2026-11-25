@@ -60,6 +60,10 @@ export function CMKFormu({
         <Etiket htmlFor="telefon">Telefon</Etiket>
         <TelefonGirdisi id="telefon" name="telefon" defaultValue={dosya?.telefon ?? ""} />
       </Alan>
+      <Alan>
+        <Etiket htmlFor="tckn">TCKN</Etiket>
+        <Girdi id="tckn" name="tckn" inputMode="numeric" maxLength={11} placeholder="11 haneli (isteğe bağlı)" defaultValue={dosya?.tckn ?? ""} />
+      </Alan>
       <div className="flex flex-col justify-end gap-2 pb-4">
         <label className="flex items-center gap-2 text-sm text-white/70">
           <input

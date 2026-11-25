@@ -67,6 +67,7 @@ export default async function CMKDosyasiSayfasi({ params }: { params: Promise<{ 
           <p className="mt-1 text-sm text-white/55">
             {dosya.birim} · {dosya.dosyaNo} — {dosya.suc}
           </p>
+          {dosya.tckn && <p className="mt-1 text-sm text-white/55">TCKN: <span className="select-all font-mono text-white/80">{dosya.tckn}</span></p>}
         </div>
         <div className="flex items-center gap-3">
           <span className="whitespace-nowrap rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs text-[#6db8ff]">

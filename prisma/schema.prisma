@@ -1113,6 +1113,8 @@ model CMKDosyasi {
   // gerekmez.
   adSoyad String
   telefon String?
+  // Muvekkilin T.C. kimlik no (istege bagli, 11 hane, sunucuda dogrulanir).
+  tckn    String?
 
   smsGonderilebilirMi   Boolean @default(false)
   cmkGorevlendirmeVarMi Boolean @default(true)
