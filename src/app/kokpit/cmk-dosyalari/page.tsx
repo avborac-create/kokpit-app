@@ -151,18 +151,18 @@ export default async function CMKDosyalariSayfasi({
         <table className="w-full text-left text-sm">
           <thead className="text-white/50">
             <tr>
-              <th className="px-4 py-3 font-medium">Dosya</th>
-              <th className="px-4 py-3 font-medium">SMS</th>
-              <th className="px-4 py-3 font-medium">CMK</th>
-              <th className="px-4 py-3 font-medium">Müvekkil</th>
-              <th className="px-4 py-3 font-medium">Suç</th>
-              <th className="px-4 py-3 font-medium">Birim</th>
-              <th className="px-4 py-3 font-medium">Dosya No</th>
-              <th className="px-4 py-3 font-medium">Duruşma Tarihi</th>
-              <th className="px-4 py-3 font-medium">Dosya Durumu</th>
-              <th className="px-4 py-3 font-medium">Hüküm</th>
-              <th className="px-4 py-3 font-medium">Ceza Miktarı</th>
-              <th className="px-4 py-3 font-medium">Sonraki Kontrol</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">Dosya</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">SMS</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">CMK</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">Müvekkil</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">Suç</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">Birim</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">Dosya No</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">Duruşma Tarihi</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">Dosya Durumu</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">Hüküm</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">Ceza Miktarı</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">Sonraki Kontrol</th>
             </tr>
           </thead>
           <tbody>
@@ -200,7 +200,7 @@ export default async function CMKDosyalariSayfasi({
                       {dosya.cmkGorevlendirmeVarMi ? "✓" : "—"}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="min-w-[11rem] px-4 py-3">
                     <Link
                       href={`/kokpit/cmk-dosyalari/${dosya.id}`}
                       className="font-medium text-white hover:text-[#6db8ff] hover:underline"
@@ -211,9 +211,9 @@ export default async function CMKDosyalariSayfasi({
                       <p className="text-xs text-white/35">Müvekkil fihristinde bağlı</p>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-white/85">{dosya.suc}</td>
-                  <td className="px-4 py-3 text-white/60">{dosya.birim}</td>
-                  <td className="px-4 py-3 text-white/60">{dosya.dosyaNo}</td>
+                  <td className="min-w-[16rem] max-w-[22rem] px-4 py-3 text-white/85"><span title={dosya.suc} className="line-clamp-2">{dosya.suc}</span></td>
+                  <td className="min-w-[10rem] px-4 py-3 text-white/60">{dosya.birim}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-white/60">{dosya.dosyaNo}</td>
                   <td className="px-4 py-3 text-white/60">
                     {dosya.durusmaTarihi ? (
                       <span className="whitespace-nowrap">
@@ -238,8 +238,8 @@ export default async function CMKDosyalariSayfasi({
                       {DOSYA_DURUMU_ETIKETLERI[dosya.dosyaDurumu]}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-white/60">{dosya.hukum ?? "—"}</td>
-                  <td className="px-4 py-3 text-white/60">{dosya.cezaMiktari ?? "—"}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-white/60">{dosya.hukum ?? "—"}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-white/60">{dosya.cezaMiktari ?? "—"}</td>
                   <td className="px-4 py-3 text-white/60">
                     {dosya.sonrakiKontrolTarihi ? (
                       <span className="whitespace-nowrap">
